@@ -24,9 +24,8 @@ describe('P3b premultiplication tables', () => {
     }
     expect(parseRow(T()['rt.0']!).every((v) => v === 0)).toBe(true);
   });
-  // TODO(lane C): color.unpremul rounds p*255/a to nearest; Flash uses the reciprocal form above (differs by 1 for
-  // ~30% of (p, a) pairs). Matters for getPixel32 results and for paletteMap/ColorMatrix inputs.
-  it.fails('engine color.unpremul equals Flash\'s un-premultiply — TODO lane C', () => {
+  // color.unpremul uses Flash's reciprocal form (lane P); canvas writes keep the lossless unpremulRound.
+  it('engine color.unpremul equals Flash\'s un-premultiply', () => {
     for (let a = 1; a < 255; a++) for (let p = 0; p <= a; p++) expect(unpremul(p, a)).toBe(flashUnpremul(p, a));
   });
 });

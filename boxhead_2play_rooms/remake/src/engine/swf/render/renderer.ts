@@ -45,8 +45,9 @@ export const renderConfig = { filters: true, masks: true };
 /** Render statistics of the last frame (gallery / perf panel). */
 export const renderStats = { objects: 0, filtered: 0, filterCacheHits: 0, masks: 0 };
 
-/** Cumulative filter computations by backend (perf probes). */
-export const filterStats = { gl: 0, cpu: 0 };
+/** Cumulative filter computations by backend and time spent (ms) in their steps (perf probes). */
+export const filterStats = { gl: 0, cpu: 0, msContent: 0, msFilter: 0, msCopy: 0 };
+const now = (): number => (typeof performance !== 'undefined' ? performance.now() : 0);
 
 // ==================================================================================================== entry points
 
@@ -256,7 +257,12 @@ function drawScriptMasked(o: DisplayObject, ctx: Ctx, m: M6, cx: ColorTransform 
 
 // ==================================================================================================== filters
 
-interface FilterCache { key: string; canvas: AnyCanvas; ctx: Ctx; w: number; h: number }
+/**
+ * Per-object filter cache. `valid` = the canvas holds the result for `key`; `missed` = the previous render missed.
+ * An object whose key changes on consecutive renders (animated content, jittering rollover filters, the XSI shadow
+ * layer during pre-rendering) is drawn straight from the GL output without the extra copy into its cache canvas.
+ */
+interface FilterCache { key: string; canvas: AnyCanvas | null; ctx: Ctx | null; w: number; h: number; valid: boolean; missed: boolean }
 
 function bitmapSig(o: DisplayObject, depth = 0): string {
   if (o.$kind === 'bitmap') { const b = (o as Bitmap).$bmd; return `${b.id ?? 0}:${b.version}`; }
@@ -299,52 +305,77 @@ function drawFiltered(o: DisplayObject, ctx: Ctx, m0: M6, cx: ColorTransform | n
   const key = `${o.$ver}|${m.a},${m.b},${m.c},${m.d}|${fx},${fy}|${W}x${H}|${ds}|${o.$fkey}|` +
     `${alphaOnly ? '' : cxKey(cx!)}|${clipped ? `${X},${Y}` : ''}|${bitmapSig(o)}`;
   let cache = o.$fcache as FilterCache | null;
-  if (!cache || cache.key !== key) {
+  const a = alphaOnly && cx ? cxAlphaOnlyFactor(cx) : 1;
+  if (cache && cache.key === key && cache.valid && cache.canvas) {
+    renderStats.filterCacheHits++;
+    cache.missed = false;
+  } else {
     const useGL = glFiltersEnabled();
+    const volatile = useGL && !!cache && cache.missed && cache.key !== key;
     const scratch = acquire(W, H, !useGL);
     try {
+      let t0 = now();
       drawContent(o, scratch.ctx, { a: m.a, b: m.b, c: m.c, d: m.d, tx: fx, ty: fy }, null, ds, NORMAL);
       scratch.ctx.setTransform(1, 0, 0, 1, 0, 0);
+      let t1 = now();
+      filterStats.msContent += t1 - t0;
       const out = useGL ? glFilterImage(scratch.canvas, 0, 0, W, H, filters, ds, { cx: alphaOnly ? null : cxToFixed(cx!) }) : null;
+      t0 = now();
+      filterStats.msFilter += t0 - t1;
+      if (out && volatile) {
+        // changed again since the last render: composite straight from the GL output, leave the cache stale
+        cache!.key = key; cache!.valid = false; cache!.missed = true;
+        filterStats.gl++;
+        if (a > 0) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          const prev = ctx.globalAlpha;
+          ctx.globalAlpha = prev * a;
+          ctx.drawImage(out, 0, 0, W, H, X, Y, W, H);
+          ctx.globalAlpha = prev;
+        }
+        return;
+      }
       if (out) {
         // GPU path: no readback; the filtered result is copied into the cache canvas
-        if (!cache || cache.canvas.width < W || cache.canvas.height < H) {
-          const c = createCanvas(Math.max(W, cache?.canvas.width ?? 0), Math.max(H, cache?.canvas.height ?? 0));
-          cache = { key, canvas: c.canvas, ctx: c.ctx, w: W, h: H };
+        if (!cache || !cache.canvas || cache.canvas.width < W || cache.canvas.height < H) {
+          const c = createCanvas(Math.max(W, cache?.canvas?.width ?? 0), Math.max(H, cache?.canvas?.height ?? 0));
+          cache = { key, canvas: c.canvas, ctx: c.ctx, w: W, h: H, valid: true, missed: true };
           o.$fcache = cache;
         }
-        cache.key = key; cache.w = W; cache.h = H;
-        const cc = cache.ctx;
+        cache.key = key; cache.w = W; cache.h = H; cache.valid = true; cache.missed = true;
+        const cc = cache.ctx!;
         cc.setTransform(1, 0, 0, 1, 0, 0);
         cc.globalAlpha = 1;
         cc.globalCompositeOperation = 'source-over';
-        cc.clearRect(0, 0, cache.canvas.width, cache.canvas.height);
+        cc.clearRect(0, 0, cache.canvas!.width, cache.canvas!.height);
         cc.drawImage(out, 0, 0, W, H, 0, 0, W, H);
+        t1 = now();
+        filterStats.msCopy += t1 - t0;
         filterStats.gl++;
       } else {
-      filterStats.cpu++;
-      const img = scratch.ctx.getImageData(0, 0, W, H);
-      premultiplyInPlace(img.data);
-      const out = applyFiltersToPixels({ data: img.data, width: W, height: H }, filters, ds);
-      if (!alphaOnly) applyCxToPixels(out, cx!);
-      unpremultiplyInPlace(out.data);
-      if (!cache || cache.canvas.width < W || cache.canvas.height < H) {
-        const c = createCanvas(W, H);
-        cache = { key, canvas: c.canvas, ctx: c.ctx, w: W, h: H };
-        o.$fcache = cache;
-      }
-      cache.key = key; cache.w = W; cache.h = H;
-      const outImg = new ImageData(out.data.length === W * H * 4 ? out.data as ImageDataArray : new Uint8ClampedArray(out.data) as ImageDataArray, W, H);
-      cache.ctx.setTransform(1, 0, 0, 1, 0, 0);
-      cache.ctx.clearRect(0, 0, cache.canvas.width, cache.canvas.height);
-      cache.ctx.putImageData(outImg, 0, 0);
+        // CPU reference path (no WebGL2, backend 'cpu', or GL failure)
+        filterStats.cpu++;
+        const img = scratch.ctx.getImageData(0, 0, W, H);
+        premultiplyInPlace(img.data);
+        const res = applyFiltersToPixels({ data: img.data, width: W, height: H }, filters, ds);
+        if (!alphaOnly) applyCxToPixels(res, cx!);
+        unpremultiplyInPlace(res.data);
+        if (!cache || !cache.canvas || cache.canvas.width < W || cache.canvas.height < H) {
+          const c = createCanvas(W, H);
+          cache = { key, canvas: c.canvas, ctx: c.ctx, w: W, h: H, valid: true, missed: true };
+          o.$fcache = cache;
+        }
+        cache.key = key; cache.w = W; cache.h = H; cache.valid = true; cache.missed = true;
+        const outImg = new ImageData(res.data.length === W * H * 4 ? res.data as ImageDataArray : new Uint8ClampedArray(res.data) as ImageDataArray, W, H);
+        cache.ctx!.setTransform(1, 0, 0, 1, 0, 0);
+        cache.ctx!.clearRect(0, 0, cache.canvas!.width, cache.canvas!.height);
+        cache.ctx!.putImageData(outImg, 0, 0);
       }
     } finally {
       release(scratch);
     }
-  } else renderStats.filterCacheHits++;
-  const a = alphaOnly && cx ? cxAlphaOnlyFactor(cx) : 1;
-  if (a <= 0) return;
+  }
+  if (a <= 0 || !cache?.canvas) return;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   const prev = ctx.globalAlpha;
   ctx.globalAlpha = prev * a;

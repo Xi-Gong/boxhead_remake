@@ -181,6 +181,17 @@ async function main(): Promise<void> {
     });
     console.log(`backend=${backend} scale=${scale} ${useElectron ? 'electron' : 'chrome'} gpu=${gpu}`);
     await phase('intro', () => waitFor(page, "window.__game?.state?.() === 'State_Main'", 120_000));
+    {
+      // intro animation once the XSI background pre-render is done (steady state)
+      const lg = await page.evaluate(() => (window as unknown as { __perf: PerfLog }).__perf);
+      const lastXsi = lg.xsi.length ? lg.xsi[lg.xsi.length - 1]!.t + lg.xsi[lg.xsi.length - 1]!.d : 0;
+      const introEf = lg.ef.filter((e) => e.s === 'State_Intro' && e.t > lastXsi);
+      if (introEf.length > 1) {
+        const st = stats(lg, 'intro (after XSI)', introEf[0]!.t, introEf[introEf.length - 1]!.t + 0.001);
+        phases.push(st);
+        console.log(`intro after XSI: frames ${st.frames} EF/s ${st.efPerSec.toFixed(1)} frame p95 ${st.frameP95.toFixed(1)} max ${st.frameMax.toFixed(1)} ms`);
+      }
+    }
     await phase('intro->main', () => waitFor(page, "window.__game.main().mcScreen?._name === '_Screen_Main' && window.__game.main().mcScreen.mNormal === true"));
     await phase('main idle', () => sleep(1500));
     // rollover on the first menu item
@@ -218,6 +229,14 @@ async function main(): Promise<void> {
     const xsiTotal = log.xsi.reduce((s, e) => s + e.d, 0);
     const xsiApply = log.applyFilter.filter((e) => e.k?.endsWith(':glow')).reduce((s, e) => s + e.d, 0);
     console.log(`XSI RenderToBitmap total ${xsiTotal.toFixed(0)} ms over ${log.xsi.length} calls (glow applyFilter ${xsiApply.toFixed(0)} ms)`);
+    const xs = log.xsi.map((e) => e.d).sort((x, y) => x - y);
+    const pct = (p: number): number => xs.length ? xs[Math.min(xs.length - 1, Math.floor(xs.length * p))]! : 0;
+    if (xs.length) console.log(`XSI per call: median ${pct(0.5).toFixed(2)} p90 ${pct(0.9).toFixed(2)} max ${pct(1).toFixed(1)} ms; span ${(log.xsi[log.xsi.length - 1]!.t - log.xsi[0]!.t).toFixed(0)} ms from first to last call`);
+    const xsiDraw = log.draw.filter((d) => d.k?.includes('XSI_DI')).reduce((t, d) => t + d.d, 0);
+    console.log(`XSI container BitmapData.draw total ${xsiDraw.toFixed(0)} ms`);
+    const fst = await page.evaluate(async () => (await import('/src/engine/swf/render/renderer.ts' as string)).filterStats).catch(() => null);
+    const gst = await page.evaluate(async () => (await import('/src/engine/flash/filters/gl.ts' as string)).glFilterStats).catch(() => null);
+    console.log('renderer filterStats', JSON.stringify(fst), 'gl', JSON.stringify(gst));
     const draws = [...log.draw].sort((a, b) => b.d - a.d).slice(0, 8);
     console.log('slowest BitmapData.draw:', draws.map((d) => `${d.k} ${d.d.toFixed(1)}ms`).join(', '));
     if (profileOut) console.log(profileOut);

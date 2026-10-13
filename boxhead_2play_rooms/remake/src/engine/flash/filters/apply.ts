@@ -42,7 +42,7 @@
  *   writes position-dependent colour garbage there; alpha matches).
  */
 import type { BitmapFilter, BevelFilter, BlurFilter, ColorMatrixFilter, DropShadowFilter, GlowFilter, GradientGlowFilter } from '../filters.ts';
-import type { Pixels } from '../color.ts';
+import { unpremul, type Pixels } from '../color.ts';
 
 export type { Pixels } from '../color.ts';
 
@@ -476,8 +476,8 @@ function applyGradientGlow(src: Pixels, f: GradientGlowFilter, s: number): Pixel
 
 // ------------------------------------------------------------------ color matrix
 
-/** Flash un-premultiply (getPixel32 / filters): min(255, (p·⌊65280/a⌋ + 127) >> 8); a = 0 gives 0. */
-export const flashUnpremul = (p: number, a: number): number => (a === 0 ? 0 : a === 255 ? p : Math.min(255, (p * Math.floor(65280 / a) + 127) >> 8));
+/** Flash un-premultiply (getPixel32): min(255, (p·⌊65280/a⌋ + 127) >> 8); a = 0 gives 0 (= color.unpremul). */
+export const flashUnpremul = unpremul;
 
 /** Un-premultiply used by ColorMatrixFilter: round(p·255/a), max 255 (closest fit to the FP32 goldens, ±1). */
 const cmUnpremul = (p: number, a: number): number => (a === 0 ? 0 : a === 255 ? p : Math.min(255, Math.round((p * 255) / a)));

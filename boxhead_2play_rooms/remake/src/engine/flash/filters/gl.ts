@@ -17,7 +17,11 @@
  *   tests/browser/run-filters-gl.ts compares this backend with the CPU reference (synthetic buffers + library
  *   symbols); max channel difference must be <= 2 (measured: 0 on all integer-blur cases).
  * Color transforms of filtered display objects and the "opaque target" conversion of BitmapData.applyFilter are
- * applied in the final present pass with the exact integer maths of color.ts (applyCxToPixels / unpremultiply).
+ * applied in the final present pass with the exact integer maths of color.ts (applyCxToPixels with Flash's
+ * un-premultiply / the lossless round-to-nearest un-premultiply for opaque targets).
+ * PIPELINE COST per run: one texSubImage2D (canvas -> texture, GPU copy; BitmapData sources are uploaded straight
+ * from their canvas into a zero-padded frame, no staging canvas), 2·quality+2 small passes, one drawImage back.
+ * Programs are compiled and exercised once at load (warmUpGLFilters) so the first real filter has no compile hitch.
  *
  * BACKEND CHOICE: `filterBackend.current` = 'gl' (default when WebGL2 works) or 'cpu'. Override with the URL
  * parameter `?filterBackend=cpu` or `globalThis.__BOXHEAD_FILTER_BACKEND__ = 'cpu'` before the engine loads, or call
@@ -26,7 +30,9 @@
  * CPU-ONLY PATHS that remain: BitmapData.applyFilter with ColorMatrixFilter (in-place brightness fast path and the
  * un-premultiplied CPU path), paletteMap, colorTransform, draw() with non-alpha colour transforms of bitmaps.
  */
-import type { BitmapFilter, BevelFilter, BlurFilter, ColorMatrixFilter, DropShadowFilter, GlowFilter, GradientGlowFilter } from '../filters.ts';
+import {
+  BevelFilter, BlurFilter, ColorMatrixFilter, DropShadowFilter, GlowFilter, GradientGlowFilter, type BitmapFilter,
+} from '../filters.ts';
 import type { CxFixed, Pixels } from '../color.ts';
 import {
   bevelParams, blurKernel, deviceBlur, dropShadowParams, glowParams, gradientGlowParams, offset256,
@@ -247,6 +253,8 @@ uniform ivec4 uAdd;
 uniform int uOpaque;
 int fdiv256(int x) { return x >= 0 ? x / 256 : -((-x + 255) / 256); }
 int cxch(int c, int m, int a) { return clamp(fdiv256(c * m) + a, 0, 255); }
+// Flash un-premultiply (color.unpremul) for colour transforms; lossless round-to-nearest (unpremulRound) for opaque
+ivec3 unpremulFlash(ivec3 c, int a) { return a == 255 ? c : min(ivec3(255), (c * (65280 / a) + 127) >> 8); }
 ivec3 unpremul(ivec3 c, int a) { return min(ivec3(255), (c * 255 + (a >> 1)) / a); }
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
@@ -254,7 +262,7 @@ void main() {
   ivec4 c = u8v(texelFetch(uSrc, p, 0));
   if (uCx == 1 && c.a > 0) {
     int a = c.a;
-    ivec3 u = unpremul(c.rgb, a);
+    ivec3 u = unpremulFlash(c.rgb, a);
     int na = cxch(a, uMul.a, uAdd.a);
     ivec3 n = ivec3(cxch(u.r, uMul.r, uAdd.r), cxch(u.g, uMul.g, uAdd.g), cxch(u.b, uMul.b, uAdd.b));
     c = ivec4((n * na + 127) / 255, na);
@@ -687,28 +695,48 @@ function fail(e: unknown): null {
 
 // ==================================================================================================== public API
 
+/** Placement of the uploaded source rect inside a larger, otherwise transparent filter frame. */
+export interface GLFrame { w: number; h: number; x: number; y: number }
+
+/** Make the upload texture a w×h frame (grow-only); zero it unless the upload covers it entirely. */
+function prepareUpload(c: GLFilterContext, w: number, h: number, covered: boolean): void {
+  const gl = c.gl;
+  c.ensure(c.up, w, h);
+  if (!covered) {
+    c.target(c.up, w, h);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  }
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, c.up.tex);
+}
+
 /**
  * Filter the w×h region at (sx, sy) of a canvas-like image source (its pixels are taken as the premultiplied
- * contents, i.e. exactly what is stored in the canvas) and leave the result in the top-left w×h corner of the
- * returned canvas, valid until the next call (draw it with drawImage(c, 0, 0, w, h, dx, dy, w, h)).
- * Returns null when the GL backend is not selected / unavailable / the region is too large: use the CPU path.
+ * contents, i.e. exactly what is stored in the canvas) and leave the result in the top-left corner of the returned
+ * canvas, valid until the next call (draw it with drawImage(c, 0, 0, W, H, dx, dy, W, H)). With `frame`, the source
+ * rect is placed at (frame.x, frame.y) of a transparent frame.w × frame.h image (padding without a staging canvas)
+ * and the result has the frame's size. Returns null when the GL backend is not selected / unavailable / the region
+ * is too large: use the CPU path.
  */
 export function glFilterImage(source: TexImageSource, sx: number, sy: number, w: number, h: number,
-  filters: readonly BitmapFilter[], deviceScale: number, opts?: GLFilterOptions): AnyCanvas | null {
+  filters: readonly BitmapFilter[], deviceScale: number, opts?: GLFilterOptions, frame?: GLFrame): AnyCanvas | null {
   if (filterBackend.current !== 'gl') return null;
   const c = getContext();
-  if (!c || w <= 0 || h <= 0 || w > c.maxSize || h > c.maxSize) return null;
+  const FW = frame ? frame.w : w, FH = frame ? frame.h : h, fx = frame ? frame.x : 0, fy = frame ? frame.y : 0;
+  if (!c || FW <= 0 || FH <= 0 || FW > c.maxSize || FH > c.maxSize) return null;
   try {
     const gl = c.gl;
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, c.up.tex);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-    gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, sx);
-    gl.pixelStorei(gl.UNPACK_SKIP_ROWS, sy);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, source);
-    gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0);
-    gl.pixelStorei(gl.UNPACK_SKIP_ROWS, 0);
-    c.up.w = w; c.up.h = h;
+    prepareUpload(c, FW, FH, fx === 0 && fy === 0 && w === FW && h === FH);
+    if (w > 0 && h > 0) {
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, sx);
+      gl.pixelStorei(gl.UNPACK_SKIP_ROWS, sy);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, fx, fy, w, h, gl.RGBA, gl.UNSIGNED_BYTE, source);
+      gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0);
+      gl.pixelStorei(gl.UNPACK_SKIP_ROWS, 0);
+    }
+    w = FW; h = FH;
     const out = runChain(c, c.up, w, h, filters, deviceScale);
     present(c, out, w, h, opts, null);
     glFilterStats.runs++;
@@ -726,12 +754,10 @@ export function glFilterPixels(src: Pixels, filters: readonly BitmapFilter[], de
   if (!c || w <= 0 || h <= 0 || w > c.maxSize || h > c.maxSize) return null;
   try {
     const gl = c.gl;
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, c.up.tex);
+    prepareUpload(c, w, h, true);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE,
       new Uint8Array(src.data.buffer, src.data.byteOffset, w * h * 4));
-    c.up.w = w; c.up.h = h;
     let out = runChain(c, c.up, w, h, filters, deviceScale);
     if (opts?.cx || opts?.opaque) {
       const dst = otherRGBA(c, out);
@@ -765,3 +791,18 @@ export function glReadOutput(w: number, h: number): Uint8ClampedArray | null {
   }
   return data;
 }
+
+/**
+ * Compile every program and run each pass type once on a tiny buffer, so the first real filter (intro logo, XSI
+ * pre-render) does not pay the shader compile / driver translation cost (~100-300 ms with ANGLE/D3D11).
+ */
+export function warmUpGLFilters(): void {
+  if (filterBackend.current !== 'gl' || !getContext()) return;
+  const px: Pixels = { data: new Uint8ClampedArray(4 * 4 * 4).fill(255), width: 4, height: 4 };
+  glFilterPixels(px, [new BlurFilter(3.5, 2, 1), new GlowFilter(), new DropShadowFilter(), new BevelFilter(),
+    new GradientGlowFilter(2, 45, [0xff0000, 0xffffff], [0, 1], [0, 255]), new ColorMatrixFilter()], 2,
+  { cx: { rm: 128, gm: 256, bm: 256, am: 256, ro: 1, go: 0, bo: 0, ao: 0 }, opaque: true });
+}
+
+// Browsers: warm up while the game is still loading its assets (idle main thread).
+if (typeof document !== 'undefined' && typeof setTimeout === 'function') setTimeout(() => { try { warmUpGLFilters(); } catch { /* CPU fallback */ } }, 0);

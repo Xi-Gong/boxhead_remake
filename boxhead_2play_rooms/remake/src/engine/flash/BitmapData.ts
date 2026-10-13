@@ -18,16 +18,21 @@
  * precision.
  *
  * Flash semantics reproduced (Flash Player traces in the Ruffle AVM1 test corpus + Ruffle's implementation):
- *   - size must be 1..2880 (SWF8) or the object is invalid: width/height read -1 and every method is a no-op;
- *     dispose() makes width/height read -1 as well.
+ *   - size must be 1..2880 (SWF8) or the object is invalid: width/height read undefined (oracle P3) and every method is
+ *     a no-op; dispose() makes width/height read -1.
  *   - rectangle fields are converted with ToInt32 (truncation), points with truncation toward zero.
  *   - copyPixels: without alphaBitmap, mergeAlpha defaults to false; with an alphaBitmap it defaults to true.
  *     Pixels are composited (source-over) when mergeAlpha is true or when a transparent source is copied into an
  *     opaque bitmap; otherwise they are replaced (including alpha). With an alphaBitmap, pixels outside the
  *     alphaBitmap are left untouched and the source alpha is multiplied by the alphaBitmap's alpha.
  *   - draw(): the clip rectangle is in DESTINATION coordinates; matrix tx/ty are quantised to twips; a BitmapData
- *     source with a translation-only matrix is blitted at floor(tx), floor(ty); 'alpha'/'erase' blend modes with a
- *     BitmapData source are no-ops.
+ *     source with a translation-only matrix is placed at tx, ty snapped DOWN to 1/4 px (oracle P3: 10.4999 -> 10.25),
+ *     nearest-sampled, with anti-aliased (coverage) edges when the position is fractional, smoothing on or off;
+ *     'alpha'/'erase' blend modes with a BitmapData source are no-ops. A display-object source is drawn with its OWN
+ *     filters applied (oracle P4) but without its own matrix / colour transform / visibility / blend mode.
+ *   - applyFilter runs on the WebGL2 filter backend (filters/gl.ts, no readback) when available, else on the CPU
+ *     reference (filters/apply.ts); ColorMatrixFilter always uses the CPU paths below.
+ *   - getPixel / getPixel32 / paletteMap / colorTransform see Flash's un-premultiplied values (color.unpremul).
  *   - paletteMap: output = rArr[r] + gArr[g] + bArr[b] + aArr[a] (32-bit wrap) on un-premultiplied source values;
  *     a missing array is the identity for that channel (i << shift); undefined entries count as 0; non-transparent
  *     targets keep the RGB and force alpha 0xFF.
@@ -36,15 +41,16 @@
 import { ColorTransform, Matrix, Point, Rectangle } from './geom.ts';
 import type { BitmapFilter, ColorMatrixFilter } from './filters.ts';
 import { applyFilterToPixels, filterPadding } from './filters/apply.ts';
+import { glFilterImage, glFiltersEnabled } from './filters/gl.ts';
 import {
-  applyCxToImageData, argbAlpha, cssARGB, cxAlphaOnlyFactor, premultiplyInPlace, toInt32, toUint32,
-  unpremultiplyInPlace, type Pixels,
+  applyCxToImageData, argbAlpha, cssARGB, cxAlphaOnlyFactor, premul, premultiplyInPlace, toInt32, toUint32, unpremul,
+  unpremultiplyFlashInPlace, unpremultiplyInPlace, type Pixels,
 } from './color.ts';
 
 /** Anything that can be rendered by BitmapData.draw (implemented by engine/swf DisplayObject, lane E). */
 export interface IDrawable {
   /**
-   * Render this object's CONTENT (its graphics/children, NOT its own matrix/colorTransform/filters/visibility) into
+   * Render this object's CONTENT (its graphics/children and its own filters, NOT its own matrix/colorTransform/visibility) into
    * `ctx`, whose current transform maps this object's local logical space to device pixels.
    * `cx` is the accumulated color transform to apply to leaves (null = identity).
    */
@@ -456,6 +462,34 @@ function transformBounds(m: Matrix, x: number, y: number, w: number, h: number):
   return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
 }
 
+/** One run of destination pixels of a 1:1 blit at a fractional offset: dest start, source start, count, coverage. */
+interface CoverageSeg { d: number; s: number; n: number; cov: number }
+
+/**
+ * Columns (or rows) of a 1:1 blit of `size` source pixels placed at fractional device offset `t`: full-coverage pixels
+ * are nearest-sampled (source floor(x + 0.5 - t)) and merged into one run; the partially covered first / last pixel
+ * take the nearest source pixel inside the image with their coverage.
+ */
+function coverageSegments(t: number, size: number): CoverageSeg[] {
+  const out: CoverageSeg[] = [];
+  const x0 = Math.floor(t), x1 = Math.ceil(t + size) - 1;
+  const src = (x: number): number => Math.min(size - 1, Math.max(0, Math.floor(x + 0.5 - t)));
+  const cov = (x: number): number => Math.min(x + 1, t + size) - Math.max(x, t);
+  for (let x = x0; x <= x1;) {
+    const c = cov(x);
+    if (c >= 1) {
+      let n = 1;
+      while (x + n <= x1 && cov(x + n) >= 1) n++;
+      out.push({ d: x, s: src(x), n, cov: 1 });
+      x += n;
+    } else {
+      if (c > 0) out.push({ d: x, s: src(x), n: 1, cov: c });
+      x++;
+    }
+  }
+  return out;
+}
+
 // ==================================================================================================== BitmapData
 
 let nextId = 1;
@@ -509,10 +543,10 @@ export class BitmapData {
     return new CanvasBacking(dw, dh, opaque, fill);
   }
 
-  /** Logical width (-1 when invalid or disposed, as in Flash). */
-  get width(): number { return this.live ? this._w : -1; }
+  /** Logical width (Flash: undefined for an invalid size, -1 after dispose()). */
+  get width(): number { return this.live ? this._w : this.valid ? -1 : (undefined as unknown as number); }
   /** Logical height (-1 when invalid or disposed, as in Flash). */
-  get height(): number { return this.live ? this._h : -1; }
+  get height(): number { return this.live ? this._h : this.valid ? -1 : (undefined as unknown as number); }
   get rectangle(): Rectangle { return this.live ? new Rectangle(0, 0, this._w, this._h) : new Rectangle(0, 0, -1, -1); }
   /** Device pixel size of the backing. */
   get deviceWidth(): number { return Math.round(this._w * this.scale); }
@@ -695,8 +729,12 @@ export class BitmapData {
     const m = matrix && typeof matrix === 'object'
       ? new Matrix(Number(matrix.a), Number(matrix.b), Number(matrix.c), Number(matrix.d), twips(Number(matrix.tx)), twips(Number(matrix.ty)))
       : new Matrix();
-    // a BitmapData source with a translation-only matrix is blitted pixel-aligned at floor(tx), floor(ty)
-    if (isBmd && m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1) { m.tx = Math.floor(m.tx); m.ty = Math.floor(m.ty); }
+    // a BitmapData source with a translation-only matrix is placed at tx/ty snapped DOWN to 1/4 px (oracle P3); a
+    // tiled source (pieces) is kept pixel-aligned (floor) so its tiles cannot show anti-aliased seams
+    if (isBmd && m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1) {
+      const q = source.backing.kind === 'tiled' ? 1 : 4;
+      m.tx = Math.floor(m.tx * q) / q; m.ty = Math.floor(m.ty * q) / q;
+    }
     // canvas setTransform() silently ignores non-finite values: never draw with them
     if (![m.a, m.b, m.c, m.d, m.tx, m.ty].every(Number.isFinite)) return;
     const cx = colorTransform instanceof ColorTransform && !colorTransform.isIdentity() ? colorTransform : null;
@@ -716,6 +754,12 @@ export class BitmapData {
       // strokes/antialiasing (and, without renderBounds, children's filters) spill outside Flash bounds
       const margin = rb ? 1 : BitmapData.drawCullMargin;
       bx0 -= margin; by0 -= margin; bx1 += margin; by1 += margin;
+      // the source's OWN filters are applied (P4): grow by their spill (device px at this scale -> logical)
+      const own = (source as { $filters?: BitmapFilter[] | null }).$filters;
+      if (own && own.length) {
+        const p = filterPadding(own, this.scale), k = 1 / this.scale;
+        bx0 -= p.left * k; by0 -= p.top * k; bx1 += p.right * k; by1 += p.bottom * k;
+      }
     }
     let cx0 = 0, cy0 = 0, cx1 = this._w, cy1 = this._h;
     if (clipRect && typeof clipRect === 'object') {
@@ -754,8 +798,27 @@ export class BitmapData {
     if (alpha <= 0) { if (staged) gpuScratch.release(staged); return; }
     const translationOnly = m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1;
     try {
-      const tx = m.tx, ty = m.ty; // already floored for translation-only matrices (see draw())
+      const tx = m.tx, ty = m.ty; // snapped to 1/4 px (or floored for tiled sources) for translation-only matrices (draw())
       const k = 1 / src.scale;
+      const single = staged ? staged.canvas : src.backing.singleCanvas();
+      if (translationOnly && src.scale === s && single && (!Number.isInteger(s * tx) || !Number.isInteger(s * ty))) {
+        // Flash: nearest-sampled interior, anti-aliased edges with coverage floor(c·255)/255 (oracle P3 drawBD)
+        const px = coverageSegments(s * tx, src.deviceWidth), py = coverageSegments(s * ty, src.deviceHeight);
+        this.backing.paint(R, (ctx, ox, oy) => {
+          ctx.globalCompositeOperation = op as GlobalCompositeOperation;
+          ctx.imageSmoothingEnabled = false;
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          for (const a of py) {
+            for (const b of px) {
+              const c = a.cov * b.cov;
+              if (c <= 0) continue;
+              ctx.globalAlpha = alpha * (c >= 1 ? 1 : Math.floor(c * 255) / 255);
+              ctx.drawImage(single, b.s, a.s, b.n, a.n, b.d - ox, a.d - oy, b.n, a.n);
+            }
+          }
+        }, userClip);
+        return;
+      }
       this.backing.paint(R, (ctx, ox, oy) => {
         ctx.globalAlpha = alpha;
         ctx.globalCompositeOperation = op as GlobalCompositeOperation;
@@ -925,6 +988,10 @@ export class BitmapData {
       return 0;
     }
 
+    if (filter.kind !== 'colorMatrix' && glFiltersEnabled() && this.applyFilterGL(sourceBitmap, filter, sx, sy, w, h, dx, dy)) {
+      this.touch();
+      return 0;
+    }
     const scale = sourceBitmap.scale;
     const pad = filterPadding([filter], scale);
     const srcDev = sourceBitmap.devRect(sx, sy, w, h);
@@ -941,6 +1008,54 @@ export class BitmapData {
     this.processRegion(sourceBitmap, srcDev, destDev, pad, (px) => applyFilterToPixels(px, filter, scale));
     this.touch();
     return 0;
+  }
+
+  /**
+   * applyFilter on the WebGL2 backend: the padded source region is staged into a GPU scratch canvas (pieces, no
+   * readback), filtered by glFilterImage and drawn back over the destination rect (replace semantics; opaque targets get
+   * un-premultiplied colour with alpha 255, like processRegion). Returns false when GL is unavailable for this call.
+   */
+  private applyFilterGL(src: BitmapData, filter: BitmapFilter, sx: number, sy: number, w: number, h: number, dx: number, dy: number): boolean {
+    const scale = src.scale;
+    const pad = filterPadding([filter], scale);
+    const srcDev = src.devRect(sx, sy, w, h);
+    const ix = srcDev.x - pad.left, iy = srcDev.y - pad.top;
+    const iw = srcDev.w + pad.left + pad.right, ih = srcDev.h + pad.top + pad.bottom;
+    const inter = drIntersect({ x: ix, y: iy, w: iw, h: ih }, { x: 0, y: 0, w: src.deviceWidth, h: src.deviceHeight });
+    const single = src.backing.singleCanvas();
+    // single-canvas source: upload the region straight from it into a padded frame (no staging canvas / extra flush)
+    const stage = single ? null : gpuScratch.acquire(iw, ih);
+    try {
+      let out: CanvasImageSource | null;
+      const opts = { opaque: !this.transparent };
+      if (single) {
+        out = inter
+          ? glFilterImage(single, inter.x, inter.y, inter.w, inter.h, [filter], scale, opts, { w: iw, h: ih, x: inter.x - ix, y: inter.y - iy })
+          : glFilterImage(single, 0, 0, 0, 0, [filter], scale, opts, { w: iw, h: ih, x: 0, y: 0 });
+      } else {
+        if (inter) {
+          stage!.ctx.imageSmoothingEnabled = false;
+          src.backing.pieces(inter, (img, px, py, pw, ph, gx, gy, css) => {
+            if (img) stage!.ctx.drawImage(img, px, py, pw, ph, gx - ix, gy - iy, pw, ph);
+            else if (css) { stage!.ctx.fillStyle = css; stage!.ctx.fillRect(gx - ix, gy - iy, pw, ph); }
+          });
+        }
+        out = glFilterImage(stage!.canvas, 0, 0, iw, ih, [filter], scale, opts);
+      }
+      if (!out) return false;
+      const res = out;
+      const dest: DRect = src.scale === this.scale
+        ? { x: this.dev(dx), y: this.dev(dy), w: srcDev.w, h: srcDev.h }
+        : this.devRect(dx, dy, w, h);
+      this.backing.paint(dest, (ctx, ox, oy) => {
+        ctx.clearRect(dest.x - ox, dest.y - oy, dest.w, dest.h);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(res, pad.left, pad.top, srcDev.w, srcDev.h, dest.x - ox, dest.y - oy, dest.w, dest.h);
+      }, true);
+      return true;
+    } finally {
+      if (stage) gpuScratch.release(stage);
+    }
   }
 
   /**
@@ -1006,11 +1121,11 @@ export class BitmapData {
         const [m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19] = M as unknown as number[];
         for (let i = 0; i < d.length; i += 4) {
           const R = d[i]!, G = d[i + 1]!, B = d[i + 2]!, A = d[i + 3]!;
-          // Uint8ClampedArray stores round-half-even clamped values, matching the 8-bit unorm write of Flash/GPU paths
-          d[i] = m0! * R + m1! * G + m2! * B + m3! * A + m4!;
-          d[i + 1] = m5! * R + m6! * G + m7! * B + m8! * A + m9!;
-          d[i + 2] = m10! * R + m11! * G + m12! * B + m13! * A + m14!;
-          d[i + 3] = opaque ? 255 : m15! * R + m16! * G + m17! * B + m18! * A + m19!;
+          // Flash floors the matrix result (oracle P5); the Uint8ClampedArray store clamps
+          d[i] = Math.floor(m0! * R + m1! * G + m2! * B + m3! * A + m4!);
+          d[i + 1] = Math.floor(m5! * R + m6! * G + m7! * B + m8! * A + m9!);
+          d[i + 2] = Math.floor(m10! * R + m11! * G + m12! * B + m13! * A + m14!);
+          d[i + 3] = opaque ? 255 : Math.floor(m15! * R + m16! * G + m17! * B + m18! * A + m19!);
         }
         out.push({ img, x: destDev.x + ox, y: destDev.y + oy });
       }
@@ -1045,7 +1160,7 @@ export class BitmapData {
     const opaque = !this.transparent;
     const map = (px: Pixels): Pixels => {
       const d = px.data;
-      unpremultiplyInPlace(d);
+      unpremultiplyFlashInPlace(d);
       for (let i = 0; i < d.length; i += 4) {
         const v = (R[d[i]!]! + G[d[i + 1]!]! + B[d[i + 2]!]! + A[d[i + 3]!]!) >>> 0;
         const a = opaque ? 255 : v >>> 24;
@@ -1081,7 +1196,7 @@ export class BitmapData {
       const d = this.devRect(x0, y0, x1 - x0, y1 - y0);
       const opaque = !this.transparent;
       this.processRegion(this, d, d, { left: 0, top: 0, right: 0, bottom: 0 }, (px) => {
-        unpremultiplyInPlace(px.data);
+        unpremultiplyFlashInPlace(px.data);
         applyCxToImageData(px.data, cx);
         if (opaque) for (let i = 3; i < px.data.length; i += 4) px.data[i] = 255;
         premultiplyInPlace(px.data);
@@ -1096,7 +1211,11 @@ export class BitmapData {
   private readPixelARGB(x: number, y: number): number {
     const img = this.backing.read({ x: this.dev(x), y: this.dev(y), w: 1, h: 1 });
     const d = img.data;
-    return ((d[3]! << 24) | (d[0]! << 16) | (d[1]! << 8) | d[2]!) >>> 0;
+    // canvas ImageData is un-premultiplied with round-to-nearest (lossless): recover the stored premultiplied value,
+    // then un-premultiply it the way Flash's getPixel32 does
+    const a = d[3]!;
+    const fl = (c: number): number => (a === 0 || a === 255 ? c : unpremul(premul(c, a), a));
+    return ((a << 24) | (fl(d[0]!) << 16) | (fl(d[1]!) << 8) | fl(d[2]!)) >>> 0;
   }
 
   /** RGB of the pixel (un-premultiplied, no alpha). Out of bounds -> 0. */

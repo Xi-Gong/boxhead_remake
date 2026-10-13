@@ -174,8 +174,25 @@ function drawChecks(cfg: Config): void {
   d.draw(src, new Matrix(2, 0, 0, 2, 10, 10));
   expectPixel(`${L} draw scaled (nearest) [0]`, d, 11, 11, 0xffff0000, 0);
   expectPixel(`${L} draw scaled (nearest) [1]`, d, 12, 10, 0xff00ff00, 0);
+  // translation-only: tx/ty snap DOWN to 1/4 px (20.9 -> 20.75, 20.2 -> 20), nearest sampling, coverage edges (oracle P3)
   d.draw(src, new Matrix(1, 0, 0, 1, 20.9, 20.2));
-  expectPixel(`${L} draw translation-only floors tx/ty`, d, 20, 20, 0xffff0000, 0);
+  expectPixel(`${L} draw translation-only: quarter-pixel snap, interior`, d, 21, 20, 0xffff0000, 0);
+  // at 2x the backing resolves the quarter pixels: getPixel32 reads the device pixel at (2x, 2y)
+  const one = cfg.scale === 1;
+  expectPixel(`${L} draw translation-only: quarter-pixel snap, edge coverage`, d, 20, 20, one ? 0x40ff0000 : 0, 3);
+  {
+    // P3 golden drawBD:10.5 / 10.25: 5-px red row -> 7F | FF FF FF FF | 7F  and  BF | FF.. | 3F
+    const row = new BitmapData(5, 1, true, 0xffff0000);
+    const t = new BitmapData(20, 4, true, 0);
+    t.draw(row, new Matrix(1, 0, 0, 1, 10.5, 1));
+    expectPixel(`${L} draw at x 10.5: left edge 50%`, t, 10, 1, one ? 0x7fff0000 : 0, 3);
+    expectPixel(`${L} draw at x 10.5: interior`, t, 12, 1, 0xffff0000, 0);
+    expectPixel(`${L} draw at x 10.5: right edge 50%`, t, 15, 1, one ? 0x7fff0000 : 0xffff0000, 3);
+    const t2 = new BitmapData(20, 4, true, 0);
+    t2.draw(row, new Matrix(1, 0, 0, 1, 10.4999, 1));
+    expectPixel(`${L} draw at x 10.4999 (-> 10.25): left edge 75%`, t2, 10, 1, one ? 0xbfff0000 : 0x7fff0000, 3);
+    expectPixel(`${L} draw at x 10.4999 (-> 10.25): right edge 25%`, t2, 15, 1, one ? 0x3fff0000 : 0x7fff0000, 3);
+  }
   d.draw(src, new Matrix(1, 0, 0, 1, 30, 0), new ColorTransform(1, 1, 1, 0.5));
   expectPixel(`${L} draw alpha colorTransform`, d, 30, 0, 0x80ff0000, 3);
   d.draw(src, new Matrix(1, 0, 0, 1, 30, 10), new ColorTransform(0, 1, 1, 1, 0, 0, 255, 0));

@@ -4,6 +4,8 @@
  * Conventions:
  *   - ARGB numbers are uint32 (0xAARRGGBB), un-premultiplied, as used by the Flash API.
  *   - `Pixels` buffers are PREMULTIPLIED RGBA8 (see filters/apply.ts); canvas ImageData is UN-premultiplied.
+ *   - Premultiply = round(c·a/255) (Flash, P3b). Flash un-premultiplies with min(255,(p·⌊65280/a⌋+127)>>8) (unpremul);
+ *     canvas writes use the lossless round-to-nearest inverse (unpremulRound / unpremultiplyInPlace).
  *   - Color transforms are applied the way Flash Player does it: multipliers in 8.8 fixed point (truncated),
  *     offsets truncated to integers, c' = clamp(((c * mult8) >> 8) + offset, 0, 255) on un-premultiplied channels,
  *     and fully transparent pixels are left untouched (an alpha offset does not make them visible).
@@ -111,8 +113,16 @@ export function cssWithCx(rgb: number, alpha255: number, cx: ColorTransform | Cx
 
 /** Premultiply one channel: round(c * a / 255). */
 export const premul = (c: number, a: number): number => ((c * a + 127) / 255) | 0;
-/** Un-premultiply one channel: round(c * 255 / a), clamped. */
-export const unpremul = (c: number, a: number): number => (a === 0 ? 0 : Math.min(255, ((c * 255 + (a >> 1)) / a) | 0));
+/**
+ * Un-premultiply one channel the way Flash does (getPixel32, colour transforms, paletteMap input; oracle P3b, fitted
+ * to all 32,639 (value, alpha) pairs): min(255, (c·⌊65280/a⌋ + 127) >> 8). NOT lossless with premul().
+ */
+export const unpremul = (c: number, a: number): number => (a === 0 ? 0 : a === 255 ? c : Math.min(255, (c * Math.floor(65280 / a) + 127) >> 8));
+/**
+ * Un-premultiply to canvas ImageData: round(c·255/a), clamped. Lossless with premul() (and with the browser's own
+ * premultiply in putImageData), so a premultiplied buffer survives a canvas write unchanged.
+ */
+export const unpremulRound = (c: number, a: number): number => (a === 0 ? 0 : Math.min(255, ((c * 255 + (a >> 1)) / a) | 0));
 
 /** In place: un-premultiplied RGBA8 (canvas ImageData) -> premultiplied. */
 export function premultiplyInPlace(d: Uint8ClampedArray | Uint8Array): void {
@@ -126,8 +136,20 @@ export function premultiplyInPlace(d: Uint8ClampedArray | Uint8Array): void {
   }
 }
 
-/** In place: premultiplied RGBA8 -> un-premultiplied (canvas ImageData convention). */
+/** In place: premultiplied RGBA8 -> un-premultiplied for a canvas write (lossless round trip, see unpremulRound). */
 export function unpremultiplyInPlace(d: Uint8ClampedArray | Uint8Array): void {
+  for (let i = 0; i < d.length; i += 4) {
+    const a = d[i + 3]!;
+    if (a === 255) continue;
+    if (a === 0) { d[i] = 0; d[i + 1] = 0; d[i + 2] = 0; continue; }
+    d[i] = unpremulRound(d[i]!, a);
+    d[i + 1] = unpremulRound(d[i + 1]!, a);
+    d[i + 2] = unpremulRound(d[i + 2]!, a);
+  }
+}
+
+/** In place: premultiplied RGBA8 -> un-premultiplied values as Flash reports them (unpremul: getPixel32, paletteMap). */
+export function unpremultiplyFlashInPlace(d: Uint8ClampedArray | Uint8Array): void {
   for (let i = 0; i < d.length; i += 4) {
     const a = d[i + 3]!;
     if (a === 255) continue;

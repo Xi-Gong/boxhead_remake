@@ -22,8 +22,12 @@ describe('BitmapData (NullBacking)', () => {
     for (const [w, h] of [[0, 10], [10, 0], [2881, 10], [10, 2881], [-5, 10]]) {
       const bad = new BitmapData(w!, h!);
       expect(bad.valid).toBe(false);
-      expect([bad.width, bad.height]).toEqual([-1, -1]);
+      // Flash (oracle P3): an invalid size gives an object WITHOUT width/height (undefined, not -1)
+      expect([bad.width, bad.height]).toEqual([undefined, undefined]);
     }
+    const gone = new BitmapData(4, 4);
+    gone.dispose();
+    expect([gone.width, gone.height]).toEqual([-1, -1]); // dispose(): -1
   });
 
   it('per-instance scale option and device size (BIG ONE 87x32 px at 2x)', () => {
