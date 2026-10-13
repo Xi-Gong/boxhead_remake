@@ -355,7 +355,9 @@ export function pickIn(mc: MovieClip, gx: number, gy: number): Interactive | nul
     } else if (c instanceof Button) {
       if (c.$hitGlobal(gx, gy, true)) return c;
     } else if (c instanceof TextField) {
-      if (c.$type === 'input' && c.$hitGlobal(gx, gy, true)) return c;
+      // Lane X1: a non-selectable field (e.g. the debrief name after SEND SCORE: selectable = false) takes no mouse
+      // focus and shows no I-beam in Flash; the mouse passes through it.
+      if (c.$type === 'input' && c.$selectable && c.$hitGlobal(gx, gy, true)) return c;
     }
   }
   return null;

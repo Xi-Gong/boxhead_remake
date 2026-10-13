@@ -27,7 +27,8 @@ export function golden(id: string): Golden {
 }
 
 export function goldenIds(): string[] {
-  return readdirSync(GOLDEN_DIR).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)).sort();
+  // csm_* are pixel goldens of the FlashType probes with their own test (tests/unit/oracle/flashtype.test.ts)
+  return readdirSync(GOLDEN_DIR).filter((f) => f.endsWith('.json') && !f.startsWith('csm_')).map((f) => f.slice(0, -5)).sort();
 }
 
 /** Merge the results of several goldens (chunked cross-player probes). */

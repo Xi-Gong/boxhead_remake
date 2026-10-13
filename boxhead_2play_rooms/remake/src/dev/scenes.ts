@@ -7,6 +7,7 @@ import { MovieClip, _root, toAS2String } from '../engine/runtime.ts';
 import { getFrameScript, registerFrameScript } from '../engine/swf/Player.ts';
 import { SoundEngine } from '../engine/platform/AudioEngine.ts';
 import { seedRandom } from '../engine/flash/rng.ts';
+import { Key } from '../engine/flash/input.ts';
 import { strokeSnapConfig } from '../engine/flash/strokeSnap.ts';
 import { renderConfig } from '../engine/swf/render/renderer.ts';
 import { CMain, World } from '../game/packages.ts';
@@ -31,6 +32,13 @@ function freeze(mc: MovieClip): void {
 }
 
 function noSpawn(): boolean { return false; }
+
+/** CMain._this.<dotted path> ('' = CMain itself). */
+function resolvePath(M: any, path: string): any {
+  let o = M;
+  for (const k of path.split('.').filter(Boolean)) o = o?.[k];
+  return o;
+}
 
 class SceneDriver {
   frames = 0;
@@ -66,6 +74,16 @@ class SceneDriver {
         if (this.wait < s.n) { this.wait++; return false; }
         this.wait = 0;
         return true;
+      case 'call': { const o = resolvePath(M, s.target); o[s.fn](...(s.args ?? [])); return true; }
+      case 'set': resolvePath(M, s.target)[s.prop] = s.value; return true;
+      case 'key': {
+        // what the AS driver does: Key.getCode() answers the code, then the listener's onKeyDown runs
+        const getCode = Key.getCode;
+        (Key as any).getCode = (): number => s.code;
+        try { resolvePath(M, s.target).onKeyDown(); } finally { (Key as any).getCode = getCode; }
+        return true;
+      }
+      case 'waitAtLeast': return resolvePath(M, s.target)?.[s.prop] >= s.value;
     }
   }
 

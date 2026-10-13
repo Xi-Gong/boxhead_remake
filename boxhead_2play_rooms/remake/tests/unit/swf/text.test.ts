@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { FontDef, StaticTextDef } from '../../../src/shared/assetSchema.ts';
+import type { EditTextDef, FontDef, StaticTextDef } from '../../../src/shared/assetSchema.ts';
+import { ByteReader } from '../../../tools/swf/ByteReader.ts';
+import { alignZoneFloat16, parseCsmTextSettings, parseDefineFontAlignZones } from '../../../tools/swf/text.ts';
+import { csmTextSettings } from '../../../tools/oracle/visual/csmProbe.ts';
 import { decodeXml, getBuild, getFla, xmlElements } from './helpers.ts';
 
 const { lib, raw } = getBuild();
@@ -155,5 +158,66 @@ describe('DefineText / DefineEditText', () => {
     const device = edits.filter((e) => e.t === 'edit' && !e.useOutlines);
     expect(device.map((e) => e.id)).toEqual([3]);
     expect(lib.chars[373]).toMatchObject({ t: 'edit', readOnly: false, maxLength: 10, html: true, fontId: 370, height: 26 });
+  });
+});
+
+describe('FlashType tags (DefineFontAlignZones, CSMTextSettings)', () => {
+  const outline = (f: FontDef, ch: string) => {
+    const g = f.glyphs.find((x) => x.code === ch.charCodeAt(0))!;
+    const n = [...g.d.matchAll(/-?\d+(\.\d+)?/g)].map((m) => Number(m[0]));
+    const xs = n.filter((_, i) => i % 2 === 0), ys = n.filter((_, i) => i % 2 === 1);
+    return { xMin: Math.min(...xs), yMin: Math.min(...ys), i: f.glyphs.indexOf(g) };
+  };
+
+  it('FLOAT16 zone values have no implicit leading 1 (mantissa * 2^(exp-16) EM-1024 units)', () => {
+    expect(alignZoneFloat16(0)).toBe(0);
+    expect(alignZoneFloat16(0x4288)).toBe(648); // Calibri cap height (outline 647..650)
+    expect(alignZoneFloat16(0x3fb9)).toBe(476.5); // Calibri x-height
+    expect(alignZoneFloat16(0x36b2)).toBe(86.25); // Calibri 'H' left stem (outline x 86)
+    expect(alignZoneFloat16(0x8000 | 0x4288)).toBe(-648);
+  });
+
+  it('every font has one zone record per glyph; hints; values match the outlines', () => {
+    const hints: Record<number, number> = {};
+    for (const f of fonts) {
+      expect(f.alignZones, f.name).toBeDefined();
+      expect(f.alignZones!.zones).toHaveLength(f.glyphs.length);
+      hints[f.id] = f.alignZones!.hint;
+      f.glyphs.forEach((g, i) => {
+        const z = f.alignZones!.zones[i];
+        if (g.code === 32) expect(z).toBeNull();
+        else expect(z?.[1], `${f.name} ${String.fromCharCode(g.code)}`).toBe(0); // y = baseline
+      });
+    }
+    expect(hints).toEqual({ 2: 1, 23: 1, 25: 1, 205: 2, 323: 1, 324: 1, 370: 1, 753: 1 });
+    const calibri = lib.chars[23] as FontDef;
+    const z = (ch: string) => calibri.alignZones!.zones[outline(calibri, ch).i]!;
+    expect(z('H')).toEqual([86.25, 0, 378, 648]);
+    for (const ch of 'ABEHKLMNPRTXZ') expect(z(ch)[3], ch).toBe(648); // cap height
+    for (const ch of 'abcdeghkmnopqrsuvwxyz') expect(z(ch)[3], ch).toBe(476.5); // x-height
+    for (const ch of 'BDEFHIKLNPRbhklmnpr') expect(Math.abs(z(ch)[0] - outline(calibri, ch).xMin), ch).toBeLessThan(2.5); // stem x
+    expect(Math.abs(z('-')[3] + outline(calibri, '-').yMin)).toBeLessThan(1); // top of the hyphen
+  });
+
+  it('104 CSMTextSettings: all FlashType, thickness/sharpness 0; gridFit subpixel except edit texts 24, 57, 58 (pixel)', () => {
+    const withCsm = Object.values(lib.chars).filter((c) => (c.t === 'text' || c.t === 'edit') && c.csm) as (StaticTextDef | EditTextDef)[];
+    expect(withCsm).toHaveLength(104);
+    expect(withCsm.filter((c) => c.t === 'text')).toHaveLength(87);
+    for (const c of withCsm) expect(c.csm).toMatchObject({ flashType: true, thickness: 0, sharpness: 0 });
+    expect(withCsm.filter((c) => c.csm!.gridFit === 1).map((c) => c.id).sort((a, b) => a - b)).toEqual([24, 57, 58]);
+    expect(withCsm.filter((c) => c.csm!.gridFit !== 1).every((c) => c.csm!.gridFit === 2)).toBe(true);
+    expect((lib.chars[206] as StaticTextDef).csm).toEqual({ flashType: true, gridFit: 2, thickness: 0, sharpness: 0 });
+    expect((lib.chars[503] as StaticTextDef).csm).toBeUndefined(); // "normal" anti-aliased static text
+  });
+
+  it('parses synthetic tags (probe encoder round trip)', () => {
+    const tag = csmTextSettings(77, { flashType: true, gridFit: 1, thickness: -12.5, sharpness: 200 });
+    const body = tag.subarray(2); // short tag header
+    const r = new ByteReader(body);
+    expect(parseCsmTextSettings(r)).toEqual({ textId: 77, csm: { flashType: true, gridFit: 1, thickness: -12.5, sharpness: 200 } });
+    expect(r.remaining).toBe(1); // reserved UI8
+    const zb = Uint8Array.of(5, 0, 0x80, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0xb2, 0x36, 0, 0, 0xc6, 0x3a, 0x88, 0x42, 3);
+    const zr = parseDefineFontAlignZones(new ByteReader(zb), 2);
+    expect(zr).toEqual({ fontId: 5, zones: { hint: 2, zones: [null, [86.25, 0, 177.5, 648]] } });
   });
 });

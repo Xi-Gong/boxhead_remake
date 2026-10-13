@@ -1,0 +1,12 @@
+{
+ "fx-objects": {
+  "scene": "fx-objects",
+  "title": "Objects: fake wall damage frames + fading, mine / charge pack / pickup, grenade, cluster shell, rocket, fireball",
+  "mismatch": 1.3186848958333333,
+  "masked": 1.3186848958333333,
+  "mae": 2.539775390625,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ }
+}

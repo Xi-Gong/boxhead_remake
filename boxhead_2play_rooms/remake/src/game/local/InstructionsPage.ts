@@ -5,6 +5,7 @@
 // main menu. The frame is assembled from original characters (localSymbols.ts); text uses the embedded fonts with
 // the menus' styles (Arial Rounded MT Bold headings with the menu drop shadow, Calibri body, white glow).
 import { TextFormat, flash, proto, registerClass } from '../../engine/runtime.ts';
+import { CInput, CMain } from '../packages.ts';
 import { CScreen } from '../Screen/CScreen.ts';
 import { SCREEN_INSTRUCTIONS_LINKAGE } from './localSymbols.ts';
 
@@ -56,6 +57,34 @@ export const INSTRUCTIONS = {
   ],
 } as const;
 
+/** Short label of a Flash key code for the page (CInput.mValidKeys names without the quotes). */
+export function keyLabel(code: number): string {
+  if (code === 32) return 'SPACE';
+  const name: unknown = CInput.mValidKeys?.[code]?.mName;
+  if (typeof name !== 'string') return `KEY ${code}`;
+  const quoted = /^'(.*)'$/.exec(name);
+  return (quoted ? quoted[1]! : name).replace(/^ARROW /, '').replace(/^NUM PD '(.)'$/, 'NUM $1').trim() || name;
+}
+
+/**
+ * Lane X1: the key rows of a player from the CURRENT save (CONTROLS window), so the page never contradicts a rebinding.
+ * Falls back to the defaults of INSTRUCTIONS when the save is not available (tools / tests without a game).
+ */
+export function playerKeyRows(p: 1 | 2): (readonly [string, string])[] {
+  const sd = CMain.mSaveData;
+  const def = p === 1 ? INSTRUCTIONS.player1.keys : INSTRUCTIONS.player2.keys;
+  if (!sd || !CInput.mValidKeys) return def.map((r) => [r[0], r[1]] as const);
+  const k = (a: string): number => Number(sd[`mPlayer${p}_Key${a}`]);
+  const move = [k('MoveUp'), k('MoveLeft'), k('MoveDown'), k('MoveRight')];
+  const arrows = move.join() === '38,37,40,39';
+  return [
+    ['Move', arrows ? 'Arrow keys' : move.map(keyLabel).join('  ')],
+    ['Shoot', keyLabel(k('Shoot'))],
+    ['Next weapon', keyLabel(k('NextWeapon'))],
+    ['Previous weapon', keyLabel(k('PrevWeapon'))],
+  ];
+}
+
 function glow(): any[] {
   return [new flash.filters.GlowFilter(0xffffff, 1, 6, 6, 6, 2)];
 }
@@ -99,10 +128,11 @@ export class CScreen_Instructions extends CScreen {
       const pl = players[p]!;
       const x = p === 0 ? 40 : 340;
       this.Text(x, 62, 270, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', pl.title).filters = menuShadow();
-      for (let i = 0; i < pl.keys.length; i++) {
+      const keys = playerKeyRows((p + 1) as 1 | 2);
+      for (let i = 0; i < keys.length; i++) {
         const y = 88 + i * 19;
-        this.Text(x, y, 120, 20, 'Calibri', 14, INK, true, 'left', pl.keys[i]![0]).filters = glow();
-        this.Text(x + 120, y, 150, 20, 'Calibri', 14, 0x000000, true, 'left', pl.keys[i]![1]).filters = glow();
+        this.Text(x, y, 120, 20, 'Calibri', 14, INK, true, 'left', keys[i]![0]).filters = glow();
+        this.Text(x + 120, y, 175, 20, 'Calibri', 14, 0x000000, true, 'left', keys[i]![1]).filters = glow();
       }
       this.Text(x, 166, 280, 36, 'Calibri', 12, INK, false, 'left', pl.note, true).filters = glow();
     }

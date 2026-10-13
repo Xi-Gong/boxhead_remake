@@ -1,5 +1,6 @@
 /**
- * Fonts and text: DefineFont3, DefineText / DefineText2, DefineEditText.
+ * Fonts and text: DefineFont3, DefineText / DefineText2, DefineEditText, and the FlashType tags
+ * DefineFontAlignZones (73) and CSMTextSettings (74).
  *
  * DefineFont3 glyph coordinates are 20x finer than DefineFont/2 (EM square = 1024 * 20 units), so "EM units where
  * 1 EM = 1024" are Font3 values / 20 — the same conversion as twips -> px, which lets glyph outlines reuse the shape
@@ -7,7 +8,9 @@
  * consistently oriented regardless of whether the glyph uses FillStyle0 or FillStyle1.
  */
 import type { ByteReader } from './ByteReader.ts';
-import type { EditTextDef, FontDef, FontGlyph, StaticTextDef, TextRecord } from '../../src/shared/assetSchema.ts';
+import type {
+  CsmSettings, EditTextDef, FontAlignZones, FontDef, FontGlyph, StaticTextDef, TextRecord,
+} from '../../src/shared/assetSchema.ts';
 import { readMatrix, readRect, readRectTwips, readRGB, readRGBA } from './records.ts';
 import { readShapeRecords } from './shapes.ts';
 import { chainContours, emptyStats, layerize, pathData, shapeRecsToPathRecs, type ConvertStats } from './shapeConvert.ts';
@@ -158,4 +161,55 @@ export function parseDefineEditText(r: ByteReader): EditTextDef {
   def.varName = r.string();
   if (hasText) def.initialText = r.string();
   return def;
+}
+
+// ---------------------------------------------------------------------------------------------- FlashType tags
+
+/**
+ * FLOAT16 of DefineFontAlignZones. The SWF spec calls it a half float (1 sign, 5 exponent, 10 mantissa bits), but the
+ * Flash IDE stores the mantissa WITHOUT the implicit leading 1: value = mantissa * 2^(exponent - 26) EM, i.e.
+ * mantissa * 2^(exponent - 16) in 1024-unit EM units. Checked against the glyph outlines of every font in this SWF,
+ * e.g. Calibri cap height 0x4288 -> 648 (outline 647..650), x-height 0x3fb9 -> 476.5 (outline 476..478), 'H' stem
+ * 0x36b2 -> 86.25 (outline 86), 'l' stem 0x366d -> 77.6 (76.5); IEEE decoding gives values that are not even a
+ * linear function of the outline heights (3.27 for 648, 1.93 for 476.5).
+ */
+export function alignZoneFloat16(v: number): number {
+  const m = v & 0x3ff, e = (v >> 10) & 0x1f;
+  const x = m * 2 ** (e - 16);
+  return v & 0x8000 ? -x : x;
+}
+
+/**
+ * DefineFontAlignZones (73): FontID UI16, CSMTableHint UB[2], Reserved UB[6], then one ZONERECORD per glyph until the
+ * end of the tag: NumZoneData UI8 (2), NumZoneData x (FLOAT16, FLOAT16), Reserved UB[6], ZoneMaskY UB[1],
+ * ZoneMaskX UB[1]. The spec reads each pair as (AlignmentCoordinate, Range) of the X then the Y zone; the values in
+ * this SWF are laid out [x, y, xRange, yRange] instead (y is 0 for every glyph, xRange is the distance between two
+ * stems, yRange the cap/x-height) — they are kept in file order, see FontAlignZones in the schema.
+ */
+export function parseDefineFontAlignZones(r: ByteReader, numGlyphs: number): { fontId: number; zones: FontAlignZones } {
+  const fontId = r.u16();
+  const hint = r.ub(2);
+  r.ub(6);
+  const zones: FontAlignZones['zones'] = [];
+  while (r.remaining > 0 && zones.length < numGlyphs) {
+    const n = r.u8();
+    const v: number[] = [];
+    for (let i = 0; i < n * 2; i++) v.push(alignZoneFloat16(r.u16()));
+    const mask = r.u8() & 3;
+    while (v.length < 4) v.push(0);
+    zones.push(mask ? [v[0]!, v[1]!, v[2]!, v[3]!] : null);
+  }
+  return { fontId, zones: { hint, zones } };
+}
+
+/**
+ * CSMTextSettings (74): TextID UI16, UseFlashType UB[2], GridFit UB[3], Reserved UB[3], Thickness F32, Sharpness F32,
+ * Reserved UI8. It follows the DefineText / DefineEditText it applies to.
+ */
+export function parseCsmTextSettings(r: ByteReader): { textId: number; csm: CsmSettings } {
+  const textId = r.u16();
+  const useFlashType = r.ub(2), gridFit = r.ub(3);
+  r.ub(3);
+  const thickness = r.f32(), sharpness = r.f32();
+  return { textId, csm: { flashType: useFlashType === 1, gridFit, thickness, sharpness } };
 }

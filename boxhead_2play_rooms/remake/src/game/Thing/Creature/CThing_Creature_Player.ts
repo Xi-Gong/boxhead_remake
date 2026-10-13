@@ -282,9 +282,13 @@ export class CThing_Creature_Player extends CThing_Creature {
   }
 
   SelectWeapon(tWeaponName?: any): void {
-    const _loc2_ = this.mWeapons[tWeaponName].mThing;
+    // [BC] generated/disasm/Thing.Creature.CThing_Creature_Player.txt @475711: AS2 reads members of undefined as
+    // undefined (no throw). mWeapons / the entry can be undefined when a Death Match load races the pause key
+    // (CWorld.InitCleanUp -> ResetWeapons -> here before the player's InitWeapons ran); the original is a silent
+    // no-op in that case (`!undefined.WeaponEmpty()` = true, then `undefined.mActive` = undefined = falsy).
+    const _loc2_ = this.mWeapons?.[tWeaponName]?.mThing;
     // AS2: undefined.WeaponEmpty() is undefined -> !undefined is true (the mActive test then decides).
-    if (!_loc2_?.WeaponEmpty() && this.mWeapons[tWeaponName].mActive) {
+    if (!_loc2_?.WeaponEmpty() && this.mWeapons?.[tWeaponName]?.mActive) {
       // AS2: mWeapon_Current is undefined on the very first selection.
       const _loc3_ = this.mWeapon_Current?.mNameID;
       this.mWeapon_Current = _loc2_;

@@ -43,3 +43,17 @@ export function initialContentSize(workArea: { width: number; height: number }, 
   while (steps > 20 && (steps * 32 > maxW || steps * 24 > maxH)) steps--;
   return { width: steps * 32, height: steps * 24 };
 }
+
+/** The subset of Electron's before-input-event `Input` the fullscreen shortcut needs. */
+export interface ShortcutInput { type: string; key: string; code?: string; alt?: boolean; isAutoRepeat?: boolean }
+
+/**
+ * Lane X1: F11 or Alt+Enter (main or numpad Enter) toggles real window fullscreen in the main process (the page never
+ * sees them). 'toggle' on the first key-down, 'swallow' on its auto-repeats, undefined for every other input.
+ */
+export function fullscreenShortcut(input: ShortcutInput): 'toggle' | 'swallow' | undefined {
+  if (input.type !== 'keyDown') return undefined;
+  const hit = input.key === 'F11' || (!!input.alt && (input.key === 'Enter' || input.code === 'Enter' || input.code === 'NumpadEnter'));
+  if (!hit) return undefined;
+  return input.isAutoRepeat ? 'swallow' : 'toggle';
+}

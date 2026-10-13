@@ -95,7 +95,8 @@ export const DEVIATIONS: Deviation[] = [
       '"State_Instructions" (a state that existed empty in CMain) which shows the local screen "Screen_Instructions" ' +
       'through CScreen_Collection (original cross-fade transition, "Back to menu" returns to State_Main). The screen is a ' +
       'synthetic library sprite made of original characters (menu background #198, logo #10, back tab #257 + _Icon_Back ' +
-      '#260) with text in the embedded fonts: controls of both players, pause, the three modes, the weapons in unlock order.',
+      '#260) with text in the embedded fonts: controls of both players (the CURRENT bindings of the CONTROLS window, so a ' +
+      'rebinding is reflected), pause, the three modes, the weapons in unlock order.',
   },
   {
     id: 'LOCAL_HIGHSCORES',
@@ -135,5 +136,18 @@ export const DEVIATIONS: Deviation[] = [
       'getBytesLoaded() == getBytesTotal() and the LOADING bar only shows the original >= 0.5 s minimum of root frame 21. ' +
       'The browser build shows its own progress text while fetching, and a "Click to start" overlay when audio needs a ' +
       'user gesture (lane D).',
+  },
+  // ---------------------------------------------------------------------------------------------- lane X1 (UI)
+  {
+    id: 'LOW_QUALITY_VECTOR_AA',
+    file: 'engine/swf/render/renderer.ts (no LOW path); game logic: CSaveData.mDetail -> _root._quality',
+    description:
+      'Right-click "Quality: LOW" (CSaveData.mDetail = false -> _root._quality "LOW" inside a room) reproduces every ' +
+      'game-side effect of the original: zombie cap 40, no score pop-ups, no corpse fade, no brightness flash, no random ' +
+      'bullet-hit sparks, Death Match views scaled without smoothing (tests/sim/ui_options.test.ts). Flash additionally ' +
+      'rasterises VECTOR SHAPES without anti-aliasing at LOW (visible on the HUD multiplier-timer arc and on bullet / ' +
+      'railgun trails; text stays smooth - reference captures room-01-low / paused-low). Canvas2D always anti-aliases ' +
+      'paths, and emulating it per shape (coverage threshold through getImageData) would make LOW slower than BEST, so ' +
+      'the remake keeps anti-aliased shapes at LOW.',
   },
 ];

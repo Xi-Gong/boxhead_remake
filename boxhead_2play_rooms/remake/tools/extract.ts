@@ -21,7 +21,7 @@ import { extractRooms, writeRoomReports, type RoomReport } from './rooms/extract
 import { extractXsi } from './xsi/extractXsi.ts';
 
 /** Bump when the output format/semantics change without a source change being detectable. */
-export const EXTRACTOR_VERSION = 1;
+export const EXTRACTOR_VERSION = 2; // 2: FontDef.alignZones, StaticTextDef/EditTextDef.csm (FlashType)
 
 export interface Manifest {
   swfSha256: string;

@@ -13,7 +13,7 @@
 import { app, BrowserWindow, ipcMain, Menu, protocol, screen, shell } from 'electron';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { aspectLockedBounds, initialContentSize } from './aspect.ts';
+import { aspectLockedBounds, fullscreenShortcut, initialContentSize } from './aspect.ts';
 
 const APP_SCHEME = 'app';
 const APP_HOST = 'game';
@@ -155,10 +155,10 @@ function createWindow(): void {
   // F11 / Alt+Enter work even while the page captures every key.
   win.webContents.on('before-input-event', (event, input) => {
     if (input.type !== 'keyDown') return;
-    const fs = input.key === 'F11' || (input.alt && (input.key === 'Enter' || input.code === 'Enter' || input.code === 'NumpadEnter'));
+    const fs = fullscreenShortcut(input);
     if (fs) {
       event.preventDefault();
-      if (!input.isAutoRepeat) toggleFullscreen();
+      if (fs === 'toggle') toggleFullscreen();
     } else if (!app.isPackaged && input.key === 'F12') {
       event.preventDefault();
       win?.webContents.toggleDevTools();

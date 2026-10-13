@@ -109,8 +109,11 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const player = projectorExe(args.find((a) => a.startsWith('--player='))?.split('=')[1] ?? '28');
   const ids = args.filter((a) => !a.startsWith('--'));
-  const scenes = ids.length ? SCENES.filter((s) => ids.includes(s.id)) : SCENES;
+  const scenes = ids.length ? SCENES.filter((s) => ids.includes(s.id)) : [...SCENES];
   if (ids.length && scenes.length !== ids.length) throw new Error(`unknown scene in ${ids.join(' ')}; known: ${SCENES.map((s) => s.id).join(' ')}`);
+  // remake-only screens (scope replacements) have no original counterpart
+  for (const s of scenes.filter((x) => x.remakeOnly)) console.log(`${s.id.padEnd(16)} skip (remake only)`);
+  scenes.splice(0, scenes.length, ...scenes.filter((x) => !x.remakeOnly));
   const manifestPath = join(REF_DIR, 'manifest.json');
   const manifest: Record<string, RefResult & { title: string; capturedAt: string }> =
     existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : {};

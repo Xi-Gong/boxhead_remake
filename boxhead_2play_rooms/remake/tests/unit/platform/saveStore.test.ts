@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { SharedObject } from '../../../src/engine/flash/SharedObject.ts';
 import type { KeyValueStorage } from '../../../src/engine/flash/SharedObject.ts';
-import { parseSettings, SaveStore } from '../../../src/engine/platform/SaveStore.ts';
+import { defaultRenderScale, parseSettings, SaveStore } from '../../../src/engine/platform/SaveStore.ts';
 import { buildMenuRows, renderScaleRow } from '../../../src/engine/platform/ContextMenu.ts';
 import { ContextMenu, ContextMenuItem } from '../../../src/engine/flash/stubs.ts';
 import { computeFit } from '../../../src/engine/platform/Presenter.ts';
@@ -128,6 +128,32 @@ describe('Settings (renderScale) and context-menu rows', () => {
     rows[3]!.select();
     expect(SaveStore.renderScale).toBe(1);
     expect(buildMenuRows(undefined, root, [renderScaleRow()])[0]!.separatorBefore).toBe(false);
+  });
+
+  it('lane X1: the Render row says when a changed scale applies (cached bitmaps keep the boot scale)', () => {
+    SaveStore.activeRenderScale = 2; // what main.ts sets at boot
+    expect(renderScaleRow().caption).toBe('Render: 2x');
+    renderScaleRow().select();
+    expect(SaveStore.renderScale).toBe(1);
+    expect(renderScaleRow().caption).toBe('Render: 1x (after restart)');
+    renderScaleRow().select();
+    expect(renderScaleRow().caption).toBe('Render: 2x');
+    // a restart with the stored 1x
+    SaveStore.renderScale = 1;
+    SaveStore._forget();
+    SaveStore.activeRenderScale = SaveStore.renderScale;
+    expect(renderScaleRow().caption).toBe('Render: 1x');
+  });
+
+  it('lane X1: default render scale is 2x, 1x on low-memory devices (deviceMemory <= 2 GB) unless stored', () => {
+    expect(defaultRenderScale(undefined)).toBe(2);
+    expect(defaultRenderScale(8)).toBe(2);
+    expect(defaultRenderScale(4)).toBe(2);
+    expect(defaultRenderScale(2)).toBe(1);
+    expect(defaultRenderScale(0.5)).toBe(1);
+    expect(parseSettings(null, 1).renderScale).toBe(1);
+    expect(parseSettings('{"renderScale":2}', 1).renderScale).toBe(2);
+    expect(parseSettings(null, 8).renderScale).toBe(2);
   });
 });
 

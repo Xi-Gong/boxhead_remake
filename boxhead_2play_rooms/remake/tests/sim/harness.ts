@@ -80,6 +80,14 @@ export interface HeadlessGameOptions {
    * State_SelectWorld_DeathMatch (no intro, no screen yet). Death Match only.
    */
   debugBoot?: boolean;
+  /**
+   * Lane X1 (UI tests): stop in the menus instead of starting a room - 'Intro' right after boot, 'Main' once the main
+   * menu is up (the intro played), 'Select' on the level selection of `mode` (through the main menu button when
+   * fullBoot, else SetState). room / difficulty / options are then NOT written to the save.
+   */
+  menuOnly?: 'Intro' | 'Main' | 'Select';
+  /** Lane X1: do not write difficulty / level index / options into the save (test the stored values as they are). */
+  keepSave?: boolean;
 }
 
 export interface PlayerSnapshot {
@@ -393,21 +401,26 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   const sd = m.constructor.mSaveData ?? (CMain as any).mSaveData;
   const o = opts.options ?? {};
   // options window fields (CScreen_SelectWorld.RegisterButton_Option writes CMain.mSaveData[field] = value)
-  sd.mDifficulty = opts.difficulty ?? 0;
-  if (o.gameSpeed !== undefined) sd.mGameSpeed = o.gameSpeed;
-  if (o.devils !== undefined) sd.mDevilsActive = o.devils;
-  if (o.collisions !== undefined) sd.mCollisionsActive = o.collisions;
-  if (o.damage !== undefined) sd.mDamageActive = o.damage;
-  if (o.gameAmount !== undefined) sd.mGameAmount = o.gameAmount;
-  if (o.detail !== undefined) sd.mDetail = o.detail;
-  if (o.p1Character !== undefined) sd.mPlayer1_CharacterIndex = o.p1Character;
-  if (o.p2Character !== undefined) sd.mPlayer2_CharacterIndex = o.p2Character;
-  sd['mLevelIndex_' + mode] = room - 1;
+  const keepSave = opts.keepSave || opts.menuOnly !== undefined;
+  if (!keepSave) {
+    sd.mDifficulty = opts.difficulty ?? 0;
+    if (o.gameSpeed !== undefined) sd.mGameSpeed = o.gameSpeed;
+    if (o.devils !== undefined) sd.mDevilsActive = o.devils;
+    if (o.collisions !== undefined) sd.mCollisionsActive = o.collisions;
+    if (o.damage !== undefined) sd.mDamageActive = o.damage;
+    if (o.gameAmount !== undefined) sd.mGameAmount = o.gameAmount;
+    if (o.detail !== undefined) sd.mDetail = o.detail;
+    if (o.p1Character !== undefined) sd.mPlayer1_CharacterIndex = o.p1Character;
+    if (o.p2Character !== undefined) sd.mPlayer2_CharacterIndex = o.p2Character;
+    sd['mLevelIndex_' + mode] = room - 1;
+  }
+  if (opts.menuOnly === 'Intro') return game;
 
   if (opts.debugBoot) {
     // already on its way to the Death Match level selection
-  } else if (opts.fullBoot) {
+  } else if (opts.fullBoot || opts.menuOnly === 'Main') {
     if (!game.waitScreen('State_Main', 'Screen_Main', 3000)) throw new Error(`no State_Main (state ${state()})`);
+    if (opts.menuOnly === 'Main') return game;
     const btn = { Single: 'mcSinglePlay', Coop: 'mcCoopPlay', DeathMatch: 'mcDeathPlay' }[mode];
     const b = m.mcScreen[btn];
     b.onRelease.call(b);
@@ -417,10 +430,11 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   if (!stepUntil(() => state() === 'State_SelectWorld_' + mode && m.mcScreen?._CLASSID_ === 'CScreen_SelectWorld' && m.mcScreen.mNormal === true, 600, BOOT_ERROR_LIMIT)) {
     throw new Error(`no level selection (state ${state()}, errors ${errors[0]})`);
   }
+  if (opts.menuOnly === 'Select') return game;
   if (o.infiniteLife) _global.mInfinateLife = true;
   // the level icon's own button (CScreen_SelectWorld.ChangeLevel installs it): LoadLevel(CMain.mSaveData[sdField])
   const icons = m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons;
-  m.mcScreen.ChangeLevel(m.mcScreen.mcSubScreen.mcLevel_Selection, room - 1);
+  m.mcScreen.ChangeLevel(m.mcScreen.mcSubScreen.mcLevel_Selection, keepSave ? sd['mLevelIndex_' + mode] : room - 1);
   seedRandom(seed ^ 0x5eed);
   icons._Button.onRelease.call(icons._Button);
   if (!stepUntil(() => state() === 'State_RunWorld' && world()?.mLoaded === true, 3000, BOOT_ERROR_LIMIT)) {

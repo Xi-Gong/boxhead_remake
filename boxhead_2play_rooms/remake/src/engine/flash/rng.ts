@@ -26,13 +26,24 @@ export function seedRandom(seed: number): void {
 
 export function isSeeded(): boolean { return seeded; }
 
+/**
+ * Optional replacement source for `Math.random()` ONLY (dev visual scenes, lane X2: src/dev/fxScenes.ts installs the
+ * same Park-Miller LCG the injected AS1 driver installs as Math.random in the original). `random(n)` keeps using the
+ * internal generator, exactly like Flash, where the AVM1 random opcode does not go through Math.random.
+ */
+let mathRandomSource: (() => number) | undefined;
+
+export function setMathRandomSource(fn: (() => number) | undefined): void {
+  mathRandomSource = fn;
+}
+
 /** Replacement for AS2 Math.random(): float in [0, 1). */
 export function mathRandom(): number {
-  return next32() / 4294967296;
+  return mathRandomSource ? mathRandomSource() : next32() / 4294967296;
 }
 
 /** AS2 global `random(n)`: integer in [0, n) (0 when n <= 0). */
 export function random(n: number): number {
   if (!(n > 0)) return 0;
-  return Math.floor(mathRandom() * Math.floor(n));
+  return Math.floor((next32() / 4294967296) * Math.floor(n));
 }

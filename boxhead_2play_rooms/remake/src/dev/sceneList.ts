@@ -34,7 +34,15 @@ export type SceneStep =
   /** wait until CMain._this.mcWorld.mTick >= tick */
   | { op: 'waitTick'; tick: number }
   /** block n frames */
-  | { op: 'waitFrames'; n: number };
+  | { op: 'waitFrames'; n: number }
+  /** Lane X1: CMain._this.<target>[fn](...args); target is a dotted member path ('mcScreen._Retry', '' = CMain itself) */
+  | { op: 'call'; target: string; fn: string; args?: (number | string | boolean)[] }
+  /** Lane X1: CMain._this.<target>[prop] = value */
+  | { op: 'set'; target: string; prop: string; value: number | string | boolean }
+  /** Lane X1: a key press seen by a Key listener: Key.getCode() returns `code`, then CMain._this.<target>.onKeyDown() */
+  | { op: 'key'; target: string; code: number }
+  /** Lane X1: wait until CMain._this.<target>[prop] >= value */
+  | { op: 'waitAtLeast'; target: string; prop: string; value: number };
 
 export interface SceneDef {
   id: string;
@@ -44,6 +52,8 @@ export interface SceneDef {
   expected?: string[];
   /** Stage rectangles holding EXPECTED differences (excluded from the 'outside masks' number of compare.ts). */
   masks?: { x: number; y: number; w: number; h: number; why: string }[];
+  /** Lane X1: a remake-only screen (scope replacement without an original counterpart): no reference capture. */
+  remakeOnly?: boolean;
 }
 
 /** Save fields set on the first active frame (the CSaveData prototype defaults, made explicit). */
@@ -93,6 +103,11 @@ const room = (mode: 'Single' | 'Coop' | 'DeathMatch', n: number, tick = 11): Sce
 ];
 
 const pad2 = (n: number): string => (n < 10 ? `0${n}` : String(n));
+/** room() with extra steps right after its noSpawn (e.g. save fields the room reads). */
+const roomWith = (extra: SceneStep[], mode: 'Single' | 'Coop' | 'DeathMatch', n: number): SceneStep[] => { const r = room(mode, n); return [r[0]!, ...extra, ...r.slice(1)]; };
+const rel = (target: string): SceneStep => ({ op: 'call', target, fn: 'onRelease' });
+const WIN_OPT = 'mcScreen.mcWindow_Options';
+const WIN_CTL = 'mcScreen.mcWindow_Controls';
 
 export const SCENES: SceneDef[] = [
   { id: 'main', title: 'Main menu', steps: [{ op: 'state', state: 'State_Main' }, { op: 'waitScreen', id: 'Screen_Main' }, { op: 'waitFrames', n: 4 }], expected: [PROMO_MAIN], masks: [MASK_YOUTUBE, ...PROMO_MASKS] },
@@ -124,6 +139,113 @@ export const SCENES: SceneDef[] = [
     steps: [...room('Single', 1), { op: 'complete', value: 'quit' }, { op: 'waitScreen', id: 'Screen_Debrief' }, { op: 'waitFrames', n: 4 }],
     expected: [PROMO_DEBRIEF, 'Screen_Debrief: SEND SCORE / highscore list are the local replacements (src/game/scope.ts)'],
     masks: PROMO_MASKS,
+  },  // ------------------------------------------------------------------------------- lane X1: UI / non-combat scenes
+  {
+    id: 'intro-logo', title: 'Intro: Sean Cooper logo held at frame 120 (of 250)',
+    steps: [{ op: 'waitScreen', id: 'Screen_Intro' }, { op: 'waitAtLeast', target: 'mcScreen._Logo_SeanCooper', prop: '_currentframe', value: 100 },
+      { op: 'call', target: 'mcScreen._Logo_SeanCooper', fn: 'gotoAndStop', args: [120] }],
+    expected: ['Screen_Intro: the CrazyMonkeyGames logo is removed by src/game/scope.ts (it plays after this logo in the original)'],
+  },
+  {
+    id: 'transition', title: 'Cross-fade Main -> Select world (Single), half-way through the 10-tick transition',
+    steps: [{ op: 'state', state: 'State_Main' }, { op: 'waitScreen', id: 'Screen_Main' }, { op: 'waitFrames', n: 2 },
+      { op: 'state', state: 'State_SelectWorld_Single' }, { op: 'waitFrames', n: 6 }],
+    expected: [PROMO_MAIN, PROMO_SELECT], masks: [MASK_YOUTUBE, ...PROMO_MASKS],
+  },
+  {
+    id: 'main-hover', title: 'Main menu: SINGLE PLAY rolled over (alpha 100 + random DropShadow/Blur every frame)',
+    steps: [{ op: 'state', state: 'State_Main' }, { op: 'waitScreen', id: 'Screen_Main' }, { op: 'call', target: 'mcScreen.mcSinglePlay', fn: 'onRollOver' }, { op: 'waitFrames', n: 3 }],
+    expected: [PROMO_MAIN, 'the roll-over filters are random (Math.random / random): the hovered item jitters differently'],
+    masks: [MASK_YOUTUBE, ...PROMO_MASKS],
+  },
+  {
+    id: 'select-coop-changed', title: 'Select world (Coop): room 18, player 1 SWAT, player 2 BAMBO',
+    steps: [...select('Coop'), rel('mcScreen.mcSubScreen.mcLevel_Selection.bLeft'), rel('mcScreen.mcSubScreen.mcPlayer1_Character.bRight'),
+      rel('mcScreen.mcSubScreen.mcPlayer2_Character.bLeft'), { op: 'waitFrames', n: 2 }],
+    expected: [PROMO_SELECT], masks: PROMO_MASKS,
+  },
+  {
+    id: 'options-set', title: 'Options window: Nightmare, Fast, collisions / devils / friendly fire off, first to 50',
+    steps: [...select('Single'), { op: 'screenCall', fn: 'WindowOptions_Open' },
+      ...['_Level_Nightmare', '_Speed_Fast', '_Devils_Off', '_Collide_Off', '_Damage_Off', '_Game4'].map((n) => rel(`${WIN_OPT}.${n}._Button`)),
+      { op: 'waitFrames', n: 2 }],
+    expected: [PROMO_SELECT], masks: PROMO_MASKS_WINDOW,
+  },
+  {
+    id: 'controls-presskey', title: 'Controls window (Coop) waiting for a key ("PRESS A KEY")',
+    steps: [...select('Coop'), { op: 'screenCall', fn: 'WindowControls_Open' }, rel(`${WIN_CTL}.mcPlayer1.mcChangeKey_Shoot`), { op: 'waitFrames', n: 3 }],
+    expected: [PROMO_SELECT], masks: PROMO_MASKS_WINDOW,
+  },
+  {
+    id: 'controls-invalid', title: 'Controls window: an unknown key (F2) shows "INVALID KEY!"',
+    steps: [...select('Coop'), { op: 'screenCall', fn: 'WindowControls_Open' }, rel(`${WIN_CTL}.mcPlayer2.mcChangeKey_MoveUp`), { op: 'waitFrames', n: 2 },
+      { op: 'key', target: `${WIN_CTL}.mKeyListener`, code: 113 }, { op: 'waitFrames', n: 1 }],
+    expected: [PROMO_SELECT], masks: PROMO_MASKS_WINDOW,
+  },
+  {
+    id: 'controls-rebound', title: 'Controls window after rebinding: P1 shoot = K, P2 up = ARROW UP (duplicates are allowed)',
+    steps: [...select('Coop'), { op: 'screenCall', fn: 'WindowControls_Open' }, rel(`${WIN_CTL}.mcPlayer1.mcChangeKey_Shoot`),
+      { op: 'key', target: `${WIN_CTL}.mKeyListener`, code: 75 }, rel(`${WIN_CTL}.mcPlayer2.mcChangeKey_MoveUp`),
+      { op: 'key', target: `${WIN_CTL}.mKeyListener`, code: 38 }, { op: 'waitFrames', n: 2 }],
+    expected: [PROMO_SELECT], masks: PROMO_MASKS_WINDOW,
+  },
+  {
+    id: 'debrief-name', title: 'Debrief with a typed name',
+    steps: [...room('Single', 1), { op: 'complete', value: 'quit' }, { op: 'waitScreen', id: 'Screen_Debrief' },
+      { op: 'set', target: 'mcScreen.mUsername', prop: 'text', value: 'ZED 42' }, { op: 'waitFrames', n: 2 }],
+    expected: [PROMO_DEBRIEF], masks: PROMO_MASKS,
+  },
+  {
+    id: 'debrief-disabled', title: 'Debrief when devils were off (SEND SCORE disabled: alpha 50)',
+    steps: [...roomWith([{ op: 'save', field: 'mDevilsActive', value: 0 }], 'Single', 1), { op: 'complete', value: 'quit' }, { op: 'waitScreen', id: 'Screen_Debrief' }, { op: 'waitFrames', n: 2 }],
+    expected: [PROMO_DEBRIEF], masks: PROMO_MASKS,
+  },
+  {
+    id: 'winner-p1', title: 'Death Match result: PLAYER 1 WINS (BAMBO)',
+    steps: [...room('DeathMatch', 1), { op: 'complete', value: 'player1 wins' }, { op: 'waitScreen', id: 'Screen_Debrief_Winner' }, { op: 'waitFrames', n: 2 }],
+    expected: [PROMO_DEBRIEF], masks: PROMO_MASKS,
+  },
+  {
+    id: 'winner-p2', title: 'Death Match result: PLAYER 2 WINS (SWAT)',
+    steps: [...room('DeathMatch', 1), { op: 'complete', value: 'player2 wins' }, { op: 'waitScreen', id: 'Screen_Debrief_Winner' }, { op: 'waitFrames', n: 2 }],
+    expected: [PROMO_DEBRIEF], masks: PROMO_MASKS,
+  },
+  {
+    id: 'dm-01-switched', title: 'Death Match room 1 after the frags-HUD side switch (player 1 view on the left)',
+    steps: [...room('DeathMatch', 1), { op: 'call', target: 'mcWorld.mHud.mcPlayerFrags.mcSwitchSides', fn: 'onRelease' }, { op: 'waitTick', tick: 13 }],
+  },
+  { id: 'dm-paused', title: 'Death Match pause screen', steps: [...room('DeathMatch', 1), { op: 'pause' }, { op: 'waitFrames', n: 2 }] },
+  {
+    id: 'room-01-low', title: 'Single room 1 with Quality LOW (mDetail off -> _root._quality LOW inside the room)',
+    steps: roomWith([{ op: 'save', field: 'mDetail', value: false }], 'Single', 1),
+  },
+  {
+    id: 'dm-01-low', title: 'Death Match room 1 with Quality LOW (split views drawn without smoothing)',
+    steps: roomWith([{ op: 'save', field: 'mDetail', value: false }], 'DeathMatch', 1),
+  },
+  {
+    id: 'paused-low', title: 'Pause screen with Quality LOW (vector shapes aliased, embedded-font text still smooth)',
+    steps: [...roomWith([{ op: 'save', field: 'mDetail', value: false }], 'Single', 1), { op: 'pause' }, { op: 'waitFrames', n: 2 }],
+  },
+  // every level preview of LevelIcons_Single (Single selection, room n via the saved index; 9 = select-single)
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((n): SceneDef => ({
+    id: `level-icon-${pad2(n)}`, title: `Select world (Single): level preview ${n}`,
+    steps: [{ op: 'save', field: 'mLevelIndex_Single', value: n - 1 }, ...select('Single'), { op: 'waitFrames', n: 2 }],
+    expected: [PROMO_SELECT], masks: PROMO_MASKS,
+  })),
+  // remake-only screens (scope replacements, no original counterpart)
+  {
+    id: 'instructions', title: 'Local instructions page (remake only)', remakeOnly: true,
+    steps: [{ op: 'state', state: 'State_Main' }, { op: 'waitScreen', id: 'Screen_Main' }, { op: 'state', state: 'State_Instructions' }, { op: 'waitScreen', id: 'Screen_Instructions' }, { op: 'waitFrames', n: 2 }],
+  },
+  {
+    id: 'highscores-select', title: 'Local highscore table of BIG BOXY from the level icon (remake only)', remakeOnly: true,
+    steps: [...select('Single'), { op: 'screenCall', fn: 'LoadHighScore', args: [8] }, { op: 'waitFrames', n: 2 }],
+  },
+  {
+    id: 'highscores-debrief', title: 'Local highscore table after SEND SCORE (remake only)', remakeOnly: true,
+    steps: [...room('Single', 1), { op: 'complete', value: 'quit' }, { op: 'waitScreen', id: 'Screen_Debrief' },
+      { op: 'set', target: 'mcScreen.mUsername', prop: 'text', value: 'ZED' }, rel('mcScreen._SendScore'), { op: 'waitFrames', n: 2 }],
   },
 ];
 

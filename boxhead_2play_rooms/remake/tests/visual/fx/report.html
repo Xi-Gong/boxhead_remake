@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Effect fidelity report</title><style>
+body{font:14px system-ui,sans-serif;background:#1b1b1b;color:#ddd;margin:16px}h2 small{color:#999;font-weight:normal}
+.row{display:flex;gap:8px;flex-wrap:wrap}figure{margin:0}figure img{width:640px;height:480px;image-rendering:pixelated;display:block;border:1px solid #444}
+figcaption{color:#aaa;font-size:12px}b{color:#fff}</style></head><body><h1>Boxhead 2Play Rooms remake - effect fidelity</h1>
+<p>Generated 2026-10-13T05:00:16.927Z by tests/visual/compareFx.ts.</p><section id="fx-objects"><h2>fx-objects <small>Objects: fake wall damage frames + fading, mine / charge pack / pickup, grenade, cluster shell, rocket, fireball</small></h2>
+<p>mismatch <b>1.32%</b> &middot; outside masks <b>1.32%</b> &middot; MAE 2.54<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-objects.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-objects.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-objects-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section></body></html>

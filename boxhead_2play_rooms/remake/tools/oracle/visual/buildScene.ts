@@ -31,8 +31,16 @@ function stepAS(s: SceneStep): string {
     case 'waitState': return `return M.fState == M.${ident(s.state)};`;
     case 'waitTick': return `return M.mcWorld.mTick >= ${s.tick};`;
     case 'waitFrames': return `if (__wait < ${s.n}) { __wait++; return false; } __wait = 0; return true;`;
+    case 'call': return `M${path(s.target)}.${ident(s.fn)}(${(s.args ?? []).map(lit).join(', ')}); return true;`;
+    case 'set': return `M${path(s.target)}.${ident(s.prop)} = ${lit(s.value)}; return true;`;
+    // Key's native methods are read-only: clear the flags first (ASSetPropFlags(obj, props, set, clear))
+    case 'key': return `ASSetPropFlags(Key, "getCode", 0, 7); Key.getCode = function () { return ${s.code}; }; M${path(s.target)}.onKeyDown(); return true;`;
+    case 'waitAtLeast': return `return M${path(s.target)}.${ident(s.prop)} >= ${s.value};`;
   }
 }
+
+/** ".a.b" for a dotted member path ('' = M itself), every segment checked. */
+const path = (p: string): string => p.split('.').filter(Boolean).map((k) => '.' + ident(k)).join('');
 
 export function sceneSoName(scene: SceneDef): string {
   return `oracle_vis_${scene.id.replace(/[^A-Za-z0-9]/g, '_')}`;

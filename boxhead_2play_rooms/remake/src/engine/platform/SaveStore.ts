@@ -2,9 +2,9 @@
  * Persistent storage for the remake.                                   OWNER: lane D (platform)
  *
  * - Game saves: AS2 `SharedObject.getLocal('BXHD_2PLAY_6')` (engine/flash/SharedObject.ts) -> localStorage `SO:<name>`.
- * - Remake settings (not part of the original save): `renderScale` (1 | 2, default 2), localStorage `boxhead.settings`.
- *   Changing renderScale only stores it and emits a change event; it is applied on the next level load / restart
- *   (the coordinator/lane E decide when to re-rasterise).
+ * - Remake settings (not part of the original save): `renderScale` (1 | 2, default 2; 1 on low-memory devices),
+ *   localStorage `boxhead.settings`. Changing renderScale stores it and emits a change event; it applies on the next
+ *   start of the app (every cached bitmap is built at the boot scale, see activeRenderScale).
  * Electron: localStorage of the app:// origin lives in `userData/Local Storage`, and the portable exe redirects
  * userData to `<exe dir>/Boxhead2PlayRooms-data` (electron/main.ts), so saves travel with the exe.
  */
@@ -36,9 +36,18 @@ function storage(): KeyValueStorage {
   return memoryStorage;
 }
 
+/**
+ * Lane X1 (plan: "默认 2× 渲染 ... 低内存时自动降为 1×"): the default render scale when nothing is stored - 1x on a
+ * low-memory device (navigator.deviceMemory <= 2 GB: BIG ONE needs ~120 MB of 2x bitmaps), else 2x.
+ */
+export function defaultRenderScale(deviceMemoryGB: number | undefined = typeof navigator !== 'undefined'
+  ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory : undefined): RenderScale {
+  return typeof deviceMemoryGB === 'number' && deviceMemoryGB > 0 && deviceMemoryGB <= 2 ? 1 : 2;
+}
+
 /** Pure: sanitize a stored settings object. */
-export function parseSettings(raw: string | null): Settings {
-  const s: Settings = { ...DEFAULT_SETTINGS };
+export function parseSettings(raw: string | null, deviceMemoryGB?: number): Settings {
+  const s: Settings = { ...DEFAULT_SETTINGS, renderScale: defaultRenderScale(deviceMemoryGB) };
   if (!raw) return s;
   try {
     const o = JSON.parse(raw) as Partial<Record<keyof Settings, unknown>>;
@@ -50,6 +59,8 @@ export function parseSettings(raw: string | null): Settings {
 type Listener = (s: Settings, changed: keyof Settings) => void;
 const listeners = new Set<Listener>();
 let cached: Settings | undefined;
+/** The render scale the running Player was created with (set once at boot by src/main.ts). */
+let activeScale: RenderScale | undefined;
 
 export const SaveStore = {
   get settings(): Readonly<Settings> {
@@ -59,6 +70,14 @@ export const SaveStore = {
 
   get renderScale(): RenderScale { return SaveStore.settings.renderScale; },
   set renderScale(v: RenderScale) { SaveStore.set('renderScale', v === 1 ? 1 : 2); },
+
+  /**
+   * The scale the game is rasterising with right now (main.ts sets it at boot; ?scale= may override the setting).
+   * Every cached bitmap (characters, rooms, effects) is built at this scale, so a changed setting applies on the next
+   * start of the app (the context menu says so).
+   */
+  get activeRenderScale(): RenderScale | undefined { return activeScale; },
+  set activeRenderScale(v: RenderScale | undefined) { activeScale = v; },
 
   set<K extends keyof Settings>(key: K, value: Settings[K]): void {
     const next: Settings = { ...SaveStore.settings, [key]: value };
@@ -89,7 +108,7 @@ export const SaveStore = {
   flushAll(): void { SharedObject._flushAll(); },
 
   /** Tests: use this storage for settings AND SharedObjects. */
-  _setStorage(s: KeyValueStorage | undefined): void { injected = s; cached = undefined; SharedObject._setStorage(s); },
+  _setStorage(s: KeyValueStorage | undefined): void { injected = s; cached = undefined; activeScale = undefined; SharedObject._setStorage(s); },
   /** Tests: forget cached settings (simulate restart). */
   _forget(): void { cached = undefined; },
 };

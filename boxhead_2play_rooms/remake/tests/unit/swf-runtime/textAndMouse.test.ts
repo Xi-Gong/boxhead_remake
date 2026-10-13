@@ -123,6 +123,27 @@ describe('TextField model', () => {
     expect(p.keyInput({ key: 'A', keyCode: 65, type: 'down' })).toBe(false);
   });
 
+  it('a non-selectable input field takes no focus and shows no I-beam (lane X1: debrief name after SEND SCORE)', () => {
+    const json = textLib({ readOnly: false, noSelect: false, maxLength: 5, initialText: '' });
+    const p = Player.fromJson(json);
+    p.enterFrame();
+    const mc = p.root.attachMovie('T', 't', 1)!;
+    mc._x = 100; mc._y = 100;
+    const tf = mc.tf as TextField;
+    p.mouseMove(110, 105);
+    p.mouseDown();
+    p.mouseUp();
+    expect(p.keyInput({ key: 'A', keyCode: 65, type: 'down' })).toBe(true);
+    tf.selectable = false; // CScreen_Debrief.DisableSubmitScore
+    expect(p.keyInput({ key: 'B', keyCode: 66, type: 'down' })).toBe(false);
+    p.mouseMove(111, 105);
+    expect(p.cursor).toBe('default');
+    p.mouseDown();
+    p.mouseUp();
+    expect(p.keyInput({ key: 'C', keyCode: 67, type: 'down' })).toBe(false);
+    expect(tf.text).toBe('A');
+  });
+
   it('restrict patterns', () => {
     expect(restrictAllows('A-Z', 'Q')).toBe(true);
     expect(restrictAllows('A-Z', 'q')).toBe(false);

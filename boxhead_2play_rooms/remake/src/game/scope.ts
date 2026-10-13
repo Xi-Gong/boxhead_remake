@@ -147,10 +147,9 @@ export function applyScope(): void {
     }
     if (this._ViewHighscores) {
       this._ViewHighscores.onRelease = function (this: any): void {
-        if (hasTable(mode) && room >= 0) {
-          CSound.mSamples.Click2.PlaySound();
-          showHighscoreTable(this.pClass, mode, room);
-        }
+        // [BC] generated/disasm/Screen.CScreen_Debrief.txt @621585: the original handler plays no sound (tracker +
+        // getURL only); the level icon's View Highscores does play Click2 (CScreen_SelectWorld, kept as is).
+        if (hasTable(mode) && room >= 0) showHighscoreTable(this.pClass, mode, room);
       };
     }
   };

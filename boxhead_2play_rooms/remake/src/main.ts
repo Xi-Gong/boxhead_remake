@@ -75,6 +75,7 @@ async function boot(): Promise<void> {
   const scaleParam = Number(params.get('scale'));
   const renderScale = scaleParam === 1 || scaleParam === 2 ? scaleParam : SaveStore.renderScale;
   BitmapData.defaultScale = renderScale;
+  SaveStore.activeRenderScale = renderScale;
 
   const assets = new URL('./assets/', document.baseURI);
 
@@ -115,8 +116,14 @@ async function boot(): Promise<void> {
   setTimelineSoundHandler(playTimelineSound);
   // Dev builds only (lane V visual tests): ?scene=<id> drives the game to a fixed screen and freezes it there
   // (src/dev/scenes.ts, ids in src/dev/sceneList.ts). Production builds drop this branch (import.meta.env.DEV = false).
-  const sceneId = import.meta.env.DEV ? params.get('scene') : null;
+  let sceneId = import.meta.env.DEV ? params.get('scene') : null;
   if (sceneId) (await import('./dev/scenes.ts')).installScene(sceneId, { seed: Number(params.get('seed') ?? 1), legacyRender: params.has('legacyRender') });
+  // Dev builds only (lane X2 effect scenes): ?fxscene=<id> (src/dev/fxScenes.ts, ids in src/dev/fxSceneList.ts).
+  const fxSceneId = import.meta.env.DEV && !sceneId ? params.get('fxscene') : null;
+  if (fxSceneId) {
+    (await import('./dev/fxScenes.ts')).installFxScene(fxSceneId, { seed: Number(params.get('seed') ?? 1) });
+    sceneId = fxSceneId;
+  }
 
   // 4) audio unlock (browser: needs a click; Electron: autoplay allowed -> resolves immediately)
   dbg.stage = 'audio';

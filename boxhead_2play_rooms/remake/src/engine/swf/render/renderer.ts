@@ -16,7 +16,8 @@
  *     offset: filtered objects are NOT pixel-snapped - Flash 8/28 draw them at their exact sub-pixel position, see
  *     tools/oracle/visual/snapProbe.ts), the filter list and the device scale are unchanged.
  *   - Static and dynamic text is rasterized on a SOFTWARE canvas and cached per object (drawTextCached): Chrome's GPU
- *     canvas drops thin strokes of small glyph paths entirely at some sub-pixel offsets.
+ *     canvas drops thin strokes of small glyph paths entirely at some sub-pixel offsets. Texts with CSMTextSettings
+ *     UseFlashType are rendered with the measured FlashType model instead (drawFlashTypeStatic / drawFlashTypeEdit).
  *   - cacheAsBitmap and blend modes are not rendered specially (this SWF uses neither in placements).
  */
 import { ColorTransform } from '../../flash/geom.ts';
@@ -34,6 +35,7 @@ import { engine } from '../state.ts';
 import { invert, matScale, mul, transformBounds, type Bounds, type M6 } from '../mat.ts';
 import { cmdsToSvg } from '../paths.ts';
 import type { LaidLine, TextLayout } from '../text.ts';
+import { compositeGlyphs, glyphsBounds, q4, roundHalfEven, type ClipRect, type FtGlyph } from '../flashType.ts';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
@@ -44,9 +46,10 @@ const MASK_CX = new ColorTransform(0, 0, 0, 1, 0, 0, 0, 255);
 
 /**
  * Debug switches (gallery, visual tests): render filters / masks; textCache = software-rasterized text cache
- * (drawTextCached); filterPixelSnap = the old (wrong) pixel snapping of filtered objects, for before/after comparisons.
+ * (drawTextCached); filterPixelSnap = the old (wrong) pixel snapping of filtered objects, for before/after comparisons;
+ * flashType = FlashType rendering of CSMTextSettings texts (off: plain outline anti-aliasing, as before lane T).
  */
-export const renderConfig = { filters: true, masks: true, textCache: true, filterPixelSnap: false };
+export const renderConfig = { filters: true, masks: true, textCache: true, filterPixelSnap: false, flashType: true };
 
 /** Render statistics of the last frame (gallery / perf panel). */
 export const renderStats = { objects: 0, filtered: 0, filterCacheHits: 0, masks: 0 };
@@ -157,13 +160,19 @@ function drawContent(o: DisplayObject, ctx: Ctx, m: M6, cx: ColorTransform | nul
       break;
     case 'text': {
       const t = o as StaticText;
+      if (mode === NORMAL && renderConfig.flashType && t.$def.csm?.flashType && drawFlashTypeStatic(t, ctx, m, cx)) break;
       drawTextCached(t, ctx, m, cx, mode, t.$def.bounds, (c, mm) => drawStaticText(t, c, mm, cx, mode));
       break;
     }
     case 'edit': {
       const tf = o as TextField;
       const r = tf.$rect;
-      if (engine.focus === tf && tf.$type === 'input') drawEditText(tf, ctx, m, cx, mode); // blinking caret: no cache
+      const focused = engine.focus === tf && tf.$type === 'input';
+      if (mode === NORMAL && renderConfig.flashType && tf.$def?.csm?.flashType && drawFlashTypeEdit(tf, ctx, m, cx)) {
+        if (focused) drawCaret(tf, ctx, m, cx);
+        break;
+      }
+      if (focused) drawEditText(tf, ctx, m, cx, mode); // blinking caret: no cache
       else drawTextCached(tf, ctx, m, cx, mode, { xMin: r.x, yMin: r.y, xMax: r.x + r.w, yMax: r.y + r.h }, (c, mm) => drawEditText(tf, c, mm, cx, mode));
       break;
     }
@@ -332,6 +341,159 @@ function drawTextCached(o: DisplayObject, ctx: Ctx, m: M6, cx: ColorTransform | 
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.canvas, 0, 0, W, H, X, Y, W, H);
+}
+
+// ==================================================================================================== FlashType text
+
+/**
+ * Texts with CSMTextSettings UseFlashType ("anti-alias for readability") are rendered with Flash's FlashType model
+ * (../flashType.ts: quarter-pixel positions, grid-fitted alignment zones, distance-field CSM coverage; measured in
+ * Flash Player 28) in DEVICE pixels, so it also grid-fits at render scale 2. The composite is cached per object
+ * RELATIVE to the snapped text origin (X0, Y0): moving the text by any amount only changes where the cached canvas
+ * is blitted, and glyph masks are shared between all texts. Matrices that rotate, skew or mirror fall back to the
+ * outline renderer (Flash itself drops grid fitting there; the game never does it to FlashType text).
+ */
+interface FtCache { key: string; canvas: AnyCanvas | null; ctx: Ctx | null; x0: number; y0: number; w: number; h: number }
+const ftCaches = new WeakMap<DisplayObject, FtCache>();
+interface FtBuild { glyphs: FtGlyph[]; clip: ClipRect; bg?: { rect: ClipRect; color: readonly [number, number, number, number] } }
+
+const ftMatrixOk = (m: M6): boolean => m.b === 0 && m.c === 0 && m.a > 0.01 && m.d > 0.01;
+
+function drawFtCached(o: DisplayObject, ctx: Ctx, X0: number, Y0: number, key: string, gridFit: number, build: () => FtBuild | null): boolean {
+  let c = ftCaches.get(o);
+  if (!c || c.key !== key) {
+    const b = build();
+    if (!b) return false;
+    let bb = glyphsBounds(b.glyphs, gridFit);
+    if (b.bg) bb = bb ? { x0: Math.min(bb.x0, b.bg.rect.x0), y0: Math.min(bb.y0, b.bg.rect.y0), x1: Math.max(bb.x1, b.bg.rect.x1), y1: Math.max(bb.y1, b.bg.rect.y1) } : { ...b.bg.rect };
+    if (bb) bb = { x0: Math.max(bb.x0, b.clip.x0), y0: Math.max(bb.y0, b.clip.y0), x1: Math.min(bb.x1, b.clip.x1), y1: Math.min(bb.y1, b.clip.y1) };
+    const w = bb ? bb.x1 - bb.x0 : 0, h = bb ? bb.y1 - bb.y0 : 0;
+    if (w * h > 4096 * 2048) return false;
+    const prev = c;
+    c = { key, canvas: null, ctx: null, x0: bb?.x0 ?? 0, y0: bb?.y0 ?? 0, w, h };
+    if (bb && w > 0 && h > 0) {
+      const data = new Uint8ClampedArray(w * h * 4);
+      if (b.bg) {
+        const [r, g, bl, a] = b.bg.color;
+        const r0 = b.bg.rect;
+        for (let y = Math.max(r0.y0, bb.y0); y < Math.min(r0.y1, bb.y1); y++) {
+          for (let x = Math.max(r0.x0, bb.x0); x < Math.min(r0.x1, bb.x1); x++) {
+            const i = ((y - bb.y0) * w + (x - bb.x0)) * 4;
+            data[i] = r; data[i + 1] = g; data[i + 2] = bl; data[i + 3] = a;
+          }
+        }
+      }
+      compositeGlyphs(b.glyphs, gridFit, data, w, h, bb.x0, bb.y0, b.clip);
+      const reuse = prev?.canvas && prev.canvas.width >= w && prev.canvas.height >= h ? prev : null;
+      const cc = reuse ? { canvas: reuse.canvas!, ctx: reuse.ctx! } : createCanvas(w, h, true);
+      cc.ctx.setTransform(1, 0, 0, 1, 0, 0);
+      cc.ctx.clearRect(0, 0, cc.canvas.width, cc.canvas.height);
+      cc.ctx.putImageData(new ImageData(data as ImageDataArray, w, h), 0, 0);
+      c.canvas = cc.canvas; c.ctx = cc.ctx;
+    }
+    ftCaches.set(o, c);
+  }
+  if (c.canvas) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(c.canvas, 0, 0, c.w, c.h, X0 + c.x0, Y0 + c.y0, c.w, c.h);
+  }
+  return true;
+}
+
+/** DefineText with CSMTextSettings (FlashType). Returns false when the outline renderer must be used. */
+function drawFlashTypeStatic(o: StaticText, ctx: Ctx, m: M6, cx: ColorTransform | null): boolean {
+  const def = o.$def;
+  const L = engine.library;
+  const tm = def.m;
+  if (!L || !ftMatrixOk(m) || tm.b !== 0 || tm.c !== 0 || !(tm.a > 0) || !(tm.d > 0)) return false;
+  const sx = m.a * tm.a, sy = m.d * tm.d;
+  const mtx = q4(m.a * tm.tx), mty = q4(m.d * tm.ty);
+  // [FlashType] text origin: quarter pixels, round half to even, +1 px right / 1 px up (csmProbe.ts, flashType.ts)
+  const X0 = roundHalfEven(q4(m.tx) + mtx) + 1, Y0 = roundHalfEven(q4(m.ty) + mty) - 1;
+  const cv = ctx.canvas as AnyCanvas | undefined;
+  if (cv) {
+    const b = def.bounds;
+    const x0 = X0 - mtx + b.xMin * m.a, x1 = X0 - mtx + b.xMax * m.a, y0 = Y0 - mty + b.yMin * m.d, y1 = Y0 - mty + b.yMax * m.d;
+    if (x1 < -2 || y1 < -2 || x0 > cv.width + 2 || y0 > cv.height + 2) return true; // off canvas
+  }
+  const key = `${o.$ver}|${sx},${sy}|${mtx},${mty}|${cx ? cxKey(cx) : ''}`;
+  return drawFtCached(o, ctx, X0, Y0, key, def.csm!.gridFit, () => {
+    const glyphs: FtGlyph[] = [];
+    for (const rec of def.records) {
+      const font = L.font(rec.fontId);
+      if (!font) continue;
+      const col = applyCxToRGBA(rec.color[0], rec.color[1], rec.color[2], rec.color[3], cx);
+      if (col[3] <= 0) continue;
+      // [FlashType] record y relative to the snapped origin (quantized: fractional parent scales must stay on device pixels)
+      const base = Math.round(rec.y * sy);
+      const hint = font.alignZones?.hint ?? 1;
+      let acc = rec.x;
+      for (const g of rec.glyphs) {
+        const fg = font.glyphs[g.i];
+        if (fg?.d) {
+          glyphs.push({ d: fg.d, zone: font.alignZones?.zones[g.i], key: `${font.id}:${g.i}`, sizeX: rec.height * sx, sizeY: rec.height * sy,
+            pen: q4(acc * sx), base, hint, color: col });
+        }
+        acc += g.adv;
+      }
+    }
+    const b = def.bounds;
+    // [FlashType] clipped to the DefineText bounds around the snapped origin (csmProbe clip cases)
+    const clip = { x0: X0 + Math.floor(b.xMin * sx), y0: Y0 + Math.floor(b.yMin * sy), x1: X0 + Math.floor(b.xMax * sx), y1: Y0 + Math.floor(b.yMax * sy) };
+    return { glyphs, clip };
+  });
+}
+
+/** DefineEditText with CSMTextSettings (FlashType), embedded fonts only. False: use the outline renderer. */
+function drawFlashTypeEdit(tf: TextField, ctx: Ctx, m: M6, cx: ColorTransform | null): boolean {
+  const L = engine.library;
+  if (!L || !ftMatrixOk(m) || !tf.$embed || tf.$border) return false;
+  const X0 = roundHalfEven(q4(m.tx)) + 1, Y0 = roundHalfEven(q4(m.ty)) - 1;
+  const key = `${tf.$ver}|${m.a},${m.d}|${cx ? cxKey(cx) : ''}|${tf.$background ? tf.$backgroundColor : ''}`;
+  return drawFtCached(tf, ctx, X0, Y0, key, tf.$def!.csm!.gridFit, () => {
+    const lay = tf.$getLayout();
+    const r = tf.$rect;
+    // [FlashType] centered / right-aligned lines start further right by the trailing letterSpacing that Flash's
+    // textWidth keeps (measured on fields 371/373/536, letterSpacing -2: +1 px centered)
+    const ls = tf.$fmt.letterSpacing;
+    const dx0 = tf.$fmt.align === 'center' ? -ls / 2 : tf.$fmt.align === 'right' ? -ls : 0;
+    const glyphs: FtGlyph[] = [];
+    // [FlashType] the first baseline rounds, but floors when the field leading is negative (measured: fields
+    // 291-297, leading -3, baseline 9.52 draws at 9; leading +2 fields draw at round)
+    const negLead = tf.$fmt.leading < 0;
+    for (const line of lay.lines) {
+      const base = (negLead ? Math.floor((r.y + 2 + line.baseline) * m.d) : Math.round((r.y + 2 + line.baseline) * m.d));
+      for (const g of line.glyphs) {
+        if (g.code === 32 || g.code === 13 || g.code === 10 || g.code === 160) continue;
+        const res = tf.$font(g.fmt);
+        if (!res.font) return null; // device font: outline/canvas path
+        const idx = L.fontCodeMap(res.font).get(g.code);
+        if (idx === undefined) continue;
+        const fg = res.font.glyphs[idx];
+        if (!fg?.d) continue;
+        const c = g.fmt.color;
+        const col = applyCxToRGBA((c >>> 16) & 0xff, (c >>> 8) & 0xff, c & 0xff, 255, cx);
+        if (col[3] <= 0) continue;
+        glyphs.push({ d: fg.d, zone: res.font.alignZones?.zones[idx], key: `${res.font.id}:${idx}`, sizeX: g.fmt.size * m.a, sizeY: g.fmt.size * m.d,
+          pen: q4((r.x + 2 + g.x + dx0) * m.a), base, hint: res.font.alignZones?.hint ?? 1, color: col });
+      }
+    }
+    const rect = { x0: Math.floor(r.x * m.a), y0: Math.floor(r.y * m.d), x1: Math.floor((r.x + r.w) * m.a), y1: Math.floor((r.y + r.h) * m.d) };
+    const bgc = tf.$background ? applyCxToRGBA((tf.$backgroundColor >>> 16) & 0xff, (tf.$backgroundColor >>> 8) & 0xff, tf.$backgroundColor & 0xff, 255, cx) : null;
+    return { glyphs, clip: rect, bg: bgc && bgc[3] > 0 ? { rect, color: bgc } : undefined };
+  });
+}
+
+/** Blinking caret of a focused input field (drawn on top of a cached text). */
+function drawCaret(tf: TextField, ctx: Ctx, m: M6, cx: ColorTransform | null): void {
+  const now = typeof performance !== 'undefined' ? performance.now() : 0;
+  if (((now - engine.caretT0) % 1000) >= 500) return;
+  const r = tf.$rect;
+  const { x, top, h } = caretPos(tf, tf.$getLayout());
+  setT(ctx, m);
+  ctx.fillStyle = colorCss(tf.$fmt.color, cx) ?? '#000';
+  const sc = matScale(m) || 1;
+  ctx.fillRect(r.x + 2 + x, r.y + 2 + top, 1 / sc * Math.max(1, sc / 2), h);
 }
 
 function cxKey(cx: ColorTransform): string {

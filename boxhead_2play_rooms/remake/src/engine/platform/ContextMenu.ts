@@ -9,7 +9,8 @@
  *     (CContextMenu's handlers flip the save flag and rewrite item.caption, which the next opening shows).
  *   - The movie freezes while the menu is open (the classic "right-click to pause"): wire onOpenChange to
  *     Loop.setPaused. Keys are released when it opens.
- * Remake extra (below a separator): "Render: 2x / 1x" -> SaveStore.renderScale (applies on next level load/restart).
+ * Remake extra (below a separator): "Render: 2x / 1x" -> SaveStore.renderScale (applies on the next app start; the
+ * caption adds "(after restart)" while the stored value differs from the running one).
  * The browser's own context menu is always suppressed on the stage.
  */
 import { Key } from '../flash/input.ts';
@@ -50,8 +51,12 @@ export function buildMenuRows(menu: AS2ContextMenu | undefined, target: unknown,
 }
 
 export function renderScaleRow(): MenuRow {
+  // Lane X1: the cached bitmaps keep the boot scale, so a changed setting only applies after a restart - say so
+  // instead of showing a caption that silently does nothing.
+  const stored = SaveStore.renderScale;
+  const active = SaveStore.activeRenderScale;
   return {
-    caption: `Render: ${SaveStore.renderScale}x`,
+    caption: `Render: ${stored}x${active !== undefined && active !== stored ? ' (after restart)' : ''}`,
     enabled: true,
     separatorBefore: true,
     select: () => { SaveStore.renderScale = SaveStore.renderScale === 2 ? 1 : 2; },

@@ -247,6 +247,35 @@ export interface FontDef {
   glyphs: FontGlyph[];
   /** [code1, code2, adjustment(EM units)] */
   kerning?: [number, number, number][];
+  /** DefineFontAlignZones (FlashType grid-fitting data), when the SWF has one for this font. */
+  alignZones?: FontAlignZones;
+}
+
+/**
+ * DefineFontAlignZones (tag 73): FlashType alignment zones (tools/swf/text.ts parseDefineFontAlignZones).
+ * Values are EM units (1024 per EM, like glyph paths) measured from the glyph origin, y UP from the baseline.
+ */
+export interface FontAlignZones {
+  /** CSMTableHint: 0 thin, 1 medium, 2 thick (selects Flash's CSM cutoff table). */
+  hint: number;
+  /**
+   * One entry per glyph (index = glyph index): the record's four FLOAT16 values in file order, or null when its zone
+   * masks are 0 (the space glyph). In this SWF they are [x, y, xRange, yRange]: x = left edge of the first vertical
+   * stem, y = 0 (baseline), xRange = distance to the left edge of a second stem (0 = none), yRange = height of the top
+   * alignment edge (cap height, x-height, top of '-' ...).
+   */
+  zones: ([number, number, number, number] | null)[];
+}
+
+/** CSMTextSettings (tag 74) of a DefineText / DefineEditText character. */
+export interface CsmSettings {
+  /** UseFlashType = 1: "anti-alias for readability" (FlashType / Saffron advanced anti-aliasing). */
+  flashType: boolean;
+  /** GridFit: 0 none, 1 pixel, 2 subpixel. */
+  gridFit: number;
+  /** Thickness (-200..200) and Sharpness (-400..400); 0 = Flash's defaults. */
+  thickness: number;
+  sharpness: number;
 }
 
 export interface TextGlyphEntry { i: number /* glyph index */; adv: number /* px */ }
@@ -269,6 +298,8 @@ export interface StaticTextDef {
   bounds: Rect;
   m: Mat;
   records: TextRecord[];
+  /** CSMTextSettings for this text (absent: none in the SWF = normal anti-aliasing). */
+  csm?: CsmSettings;
 }
 
 export interface EditTextDef {
@@ -299,6 +330,8 @@ export interface EditTextDef {
   useOutlines: boolean;
   autoSize: boolean;
   wasStatic: boolean;
+  /** CSMTextSettings for this field (absent: none in the SWF = normal anti-aliasing). */
+  csm?: CsmSettings;
 }
 
 // ---------------------------------------------------------------- buttons

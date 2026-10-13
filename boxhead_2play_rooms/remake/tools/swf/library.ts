@@ -14,7 +14,9 @@ import { parseDefineShape, type RawShape } from './shapes.ts';
 import { convertShape, type ConvertStats, type ConvertedShape } from './shapeConvert.ts';
 import { parseDefineMorphShape, type RawMorph } from './morph.ts';
 import { parseDefineSprite, parseTimeline, type TimelineCtx } from './sprites.ts';
-import { parseDefineEditText, parseDefineFont3, parseDefineText, type FontParseInfo } from './text.ts';
+import {
+  parseCsmTextSettings, parseDefineEditText, parseDefineFont3, parseDefineFontAlignZones, parseDefineText, type FontParseInfo,
+} from './text.ts';
 import { parseDefineButton2 } from './buttons.ts';
 import { parseDefineBits, parseDefineBitsJpeg23, parseDefineBitsLossless, type DecodedBitmap } from './bitmaps.ts';
 import { parseDefineSound, type DecodedSound } from './sounds.ts';
@@ -107,6 +109,27 @@ export function buildLibrary(swf: SwfFile, classes: Record<string, string> = {})
       case TAG.DefineFont: case TAG.DefineFont2: case TAG.DefineFont4: case TAG.DefineFontInfo: case TAG.DefineFontInfo2:
         ctx.warnings.push(`unsupported font tag ${TAG_NAMES[tag.code]} (not expected in this SWF)`);
         break;
+      case TAG.DefineFontAlignZones: {
+        // follows its DefineFont3; one zone record per glyph
+        const fontId = r.u16();
+        r.pos -= 2;
+        const font = chars[fontId];
+        if (font?.t !== 'font') { ctx.warnings.push(`DefineFontAlignZones for missing font ${fontId}`); break; }
+        const z = parseDefineFontAlignZones(r, font.glyphs.length);
+        if (z.zones.zones.length !== font.glyphs.length || r.remaining) {
+          ctx.warnings.push(`font ${fontId}: ${z.zones.zones.length} align zone records for ${font.glyphs.length} glyphs, ${r.remaining} bytes left`);
+        }
+        font.alignZones = z.zones;
+        break;
+      }
+      case TAG.CSMTextSettings: {
+        // follows the DefineText / DefineEditText it applies to
+        const { textId, csm } = parseCsmTextSettings(r);
+        const t = chars[textId];
+        if (t?.t === 'text' || t?.t === 'edit') t.csm = csm;
+        else ctx.warnings.push(`CSMTextSettings for ${t ? t.t : 'missing'} character ${textId}`);
+        break;
+      }
       case TAG.DefineText: case TAG.DefineText2: add(parseDefineText(r, tag.code)); break;
       case TAG.DefineEditText: add(parseDefineEditText(r)); break;
       case TAG.DefineButton2: add(parseDefineButton2(r, actions)); break;

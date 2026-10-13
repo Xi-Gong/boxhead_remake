@@ -10,7 +10,7 @@ import { buildSceneSwf, sceneSoName, sceneSource } from '../../../tools/oracle/v
 import { compileAS } from '../../../tools/oracle/as1c.ts';
 
 const ROOT = resolve(__dirname, '../../..');
-const OPS = ['state', 'screenCall', 'save', 'noSpawn', 'pause', 'complete', 'waitScreen', 'waitState', 'waitTick', 'waitFrames'];
+const OPS = ['state', 'screenCall', 'save', 'noSpawn', 'pause', 'complete', 'waitScreen', 'waitState', 'waitTick', 'waitFrames', 'call', 'set', 'key', 'waitAtLeast'];
 
 describe('visual scenes (src/dev/sceneList.ts)', () => {
   it('ids are unique and resolvable', () => {
