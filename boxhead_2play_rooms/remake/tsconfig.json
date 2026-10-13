@@ -1,0 +1,12 @@
+{
+  "//": "Whole app (engine + AS2 game port + tests). Loose: the game port mirrors dynamic AS2 code.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "electron/**/*.ts", "vite.config.ts", "vitest.config.ts"]
+}

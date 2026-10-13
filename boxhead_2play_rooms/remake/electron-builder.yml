@@ -1,0 +1,27 @@
+# electron-builder config (lane D). Build: `npm run dist` (portable exe) or `npm run dist:dir` (unpacked folder).
+# Inputs: dist/ (vite build incl. public/assets) + dist-electron/ (node tools/build-electron.ts) + package.json.
+appId: io.github.boxhead-remake.boxhead2playrooms
+productName: Boxhead 2Play Rooms
+copyright: "Boxhead: 2Play Rooms (c) Sean Cooper 2007 - fan remake"
+directories:
+  output: release
+files:
+  - dist/**
+  - dist-electron/**
+  - package.json
+  - "!dist-electron/**/*.map"
+asar: true
+npmRebuild: false
+nodeGypRebuild: false
+buildDependenciesFromSource: false
+compression: normal
+win:
+  icon: build/icon.png
+  target:
+    - target: portable
+      arch: [x64]
+  artifactName: "${productName}-${version}-portable.${ext}"
+portable:
+  artifactName: "${productName}-${version}-portable.${ext}"
+  # Portable exe unpacks to %TEMP% on every start; saves go to <exe dir>/Boxhead2PlayRooms-data (electron/main.ts).
+  unicode: true

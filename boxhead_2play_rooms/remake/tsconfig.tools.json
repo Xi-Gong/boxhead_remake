@@ -1,0 +1,14 @@
+{
+  "//": "Build-time tools run directly by Node 24 type stripping: erasable syntax only (no enums/namespaces/param props), .ts import extensions.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "strict": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["tools/**/*.ts", "src/shared/**/*.ts"]
+}

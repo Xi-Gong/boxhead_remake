@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="data:," />
+  <title>Engine core browser checks (lane C)</title>
+  <style>
+    body { margin: 16px; background: #222; color: #ddd; font: 13px system-ui, sans-serif; }
+    .fail { color: #f66; } .pass { color: #6c6; }
+    canvas { image-rendering: pixelated; border: 1px solid #555; margin: 4px; background: repeating-conic-gradient(#444 0 25%, #333 0 50%) 0 0 / 16px 16px; }
+  </style>
+</head>
+<body>
+  <h3>BitmapData / filters / Graphics — browser checks</h3>
+  <pre id="log"></pre>
+  <div id="snaps"></div>
+  <script type="module" src="./engine.ts"></script>
+</body>
+</html>
