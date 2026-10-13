@@ -292,6 +292,21 @@ export function glyphMask(g: FtGlyph, gridFit: number): { ix: number; mask: Glyp
 export interface ClipRect { x0: number; y0: number; x1: number; y1: number }
 
 /**
+ * The DefineText-bounds clip for drawFlashTypeStatic, in the GLYPH frame (device px relative to the snapped text
+ * origin, which the blit adds back at the end). Bounds are CHAR-local while the glyphs' pen/base already absorbed
+ * the char matrix translation into the origin, so the clip is (bounds - tm.t) * m.linear. Two 0.1.1 bugs are baked
+ * into this contract: adding X0/Y0 outright (every centred text vanished) and dropping the tm.t shift (texts whose
+ * DefineText matrix translates, e.g. all main-menu labels, were clipped to their last glyph).
+ */
+export function staticTextClip(
+  b: { xMin: number; yMin: number; xMax: number; yMax: number },
+  m: { a: number; d: number }, tm: { tx: number; ty: number },
+): ClipRect {
+  return { x0: Math.floor((b.xMin - tm.tx) * m.a), y0: Math.floor((b.yMin - tm.ty) * m.d),
+    x1: Math.floor((b.xMax - tm.tx) * m.a), y1: Math.floor((b.yMax - tm.ty) * m.d) };
+}
+
+/**
  * Composite glyphs into an RGBA (straight alpha, sRGB) buffer of w x h whose top-left device pixel is (ox, oy).
  * Overlapping glyphs blend over each other like Flash's per-glyph fills.
  */

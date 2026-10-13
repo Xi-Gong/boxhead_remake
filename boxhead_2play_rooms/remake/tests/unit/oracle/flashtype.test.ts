@@ -9,7 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { CharDef, FontDef, StaticTextDef } from '../../../src/shared/assetSchema.ts';
-import { compositeGlyphs, q4, roundHalfEven, snapThird, csmCutoffs, isLightText, glyphMask, type FtGlyph } from '../../../src/engine/swf/flashType.ts';
+import { compositeGlyphs, q4, roundHalfEven, snapThird, csmCutoffs, isLightText, glyphMask, glyphsBounds, staticTextClip, type FtGlyph } from '../../../src/engine/swf/flashType.ts';
 import { getBuild } from '../swf/helpers.ts';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -142,5 +142,62 @@ describe('FlashType model vs Flash Player 28', () => {
     const g: FtGlyph = { d: font.glyphs[gi]!.d, zone: font.alignZones!.zones[gi], key: '23:H', sizeX: 14, sizeY: 14,
       pen: 10 + 1 / 3, base: 20, hint: 1, color: [0, 0, 0, 255] };
     expect(glyphMask(g, 2)!.mask).toBe(glyphMask({ ...g }, 2)!.mask);
+  });
+});
+
+describe('FlashType renderer clip frame (regression 0.1.1: centred menu text vanished)', () => {
+  // drawFtCached composites glyphs ORIGIN-RELATIVE (pen/base without X0/Y0; the blit adds X0/Y0 at the end), so the
+  // DefineText-bounds clip must be origin-relative too. 0.1.1 computed it absolute (X0 + b.xMin * sx): every text
+  // centred or right on screen got an inverted intersection (w < 0), a null composite canvas and a SILENT skip —
+  // the whole main menu lost its buttons at every scale while left-aligned options text survived.
+  it('static-text clips stay in the glyph frame at k=1 and k=2: the drawFtCached intersection never inverts', () => {
+    const k0 = 1; // unscaled text-unit divisor used below (records are in text units at k=1)
+    const texts = Object.values(chars).filter((c) => (c as { t?: string }).t === 'text' && (c as StaticTextDef).csm?.flashType) as StaticTextDef[];
+    expect(texts.length).toBeGreaterThan(20);
+    let checked = 0;
+    for (const def of texts) {
+      // text-frame extents of the records (unscaled), to tell genuinely-overlapping bounds from authoring slop:
+      // a text whose records lie wholly outside its declared bounds is clipped away by Flash too (char 81)
+      let penMin = Infinity, penMax = -Infinity, recYMin = Infinity, recYMax = -Infinity;
+      for (const rec of def.records) {
+        let acc = rec.x;
+        for (const g of rec.glyphs) { acc += g.adv; }
+        penMin = Math.min(penMin, rec.x); penMax = Math.max(penMax, acc);
+        recYMin = Math.min(recYMin, rec.y); recYMax = Math.max(recYMax, rec.y + rec.height);
+      }
+      const b = def.bounds;
+      void recYMin; void recYMax; // y extents kept for future use; the 0.1.1 inversion axis is x (the huge X0)
+      // char-local glyph extents (records live at tm.t + records; bounds are char-local)
+      const gxMin = penMin / (k0 * def.m.a) + def.m.tx, gxMax = penMax / (k0 * def.m.a) + def.m.tx;
+      const overlaps = Math.min(gxMax, b.xMax) - Math.max(gxMin, b.xMin) > 2;
+      for (const k of [1, 2]) {
+        const sx = k * def.m.a, sy = k * def.m.d;
+        const glyphs: FtGlyph[] = []; // exactly what drawFlashTypeStatic builds
+        for (const rec of def.records) {
+          const font = chars[rec.fontId] as FontDef;
+          if (font?.t !== 'font') continue;
+          let acc = rec.x;
+          for (const g of rec.glyphs) {
+            const fg = font.glyphs[g.i];
+            if (fg?.d) glyphs.push({ d: fg.d, zone: font.alignZones?.zones[g.i], key: `${font.id}:${g.i}`,
+              sizeX: rec.height * sx, sizeY: rec.height * sy, pen: q4(acc * sx), base: Math.round(rec.y * sy),
+              hint: font.alignZones?.hint ?? 1, color: [0, 0, 0, 255] });
+            acc += g.adv;
+          }
+        }
+        if (!glyphs.length) continue;
+        const bb = glyphsBounds(glyphs, def.csm!.gridFit);
+        expect(bb, `char ${def.id} k=${k}: glyphs must have bounds`).not.toBeNull();
+        const clip = staticTextClip(def.bounds, { a: k, d: k }, def.m);
+        const w = Math.min(bb!.x1, clip.x1) - Math.max(bb!.x0, clip.x0);
+        const h = Math.min(bb!.y1, clip.y1) - Math.max(bb!.y0, clip.y0);
+        if (overlaps) {
+          checked++;
+          expect(w, `char ${def.id} k=${k}: clip x must meet the glyph frame (bb=${JSON.stringify(bb)} clip=${JSON.stringify(clip)})`).toBeGreaterThan(0);
+          expect(h, `char ${def.id} k=${k}: clip y must meet the glyph frame`).toBeGreaterThan(0);
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(40);
   });
 });

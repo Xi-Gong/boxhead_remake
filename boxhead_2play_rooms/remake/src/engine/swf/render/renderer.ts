@@ -35,7 +35,7 @@ import { engine } from '../state.ts';
 import { invert, matScale, mul, transformBounds, type Bounds, type M6 } from '../mat.ts';
 import { cmdsToSvg } from '../paths.ts';
 import type { LaidLine, TextLayout } from '../text.ts';
-import { compositeGlyphs, glyphsBounds, q4, roundHalfEven, type ClipRect, type FtGlyph } from '../flashType.ts';
+import { compositeGlyphs, glyphsBounds, q4, roundHalfEven, staticTextClip, type ClipRect, type FtGlyph } from '../flashType.ts';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
@@ -438,8 +438,9 @@ function drawFlashTypeStatic(o: StaticText, ctx: Ctx, m: M6, cx: ColorTransform 
       }
     }
     const b = def.bounds;
-    // [FlashType] clipped to the DefineText bounds around the snapped origin (csmProbe clip cases)
-    const clip = { x0: X0 + Math.floor(b.xMin * sx), y0: Y0 + Math.floor(b.yMin * sy), x1: X0 + Math.floor(b.xMax * sx), y1: Y0 + Math.floor(b.yMax * sy) };
+    // [FlashType] clipped to the DefineText bounds in the glyph frame (csmProbe clip cases); staticTextClip owns
+    // the frame contract (0.1.1 bugs: absolute clip killed centred text; missing tm.t shift clipped menu labels)
+    const clip = staticTextClip(b, m, tm);
     return { glyphs, clip };
   });
 }
@@ -725,7 +726,7 @@ function patternFor(img: CanvasImageSource, repeat: boolean): CanvasPattern | nu
   return e.n;
 }
 
-function paintFill(ctx: Ctx, L: Library, style: FillStyle, path: Path2D, cx: ColorTransform | null, mode: number, bounds: Rect): void {
+function paintFill(ctx: Ctx, L: Library, style: FillStyle, path: Path2D, cx: ColorTransform | null, mode: number, bounds: Rect, seal = 0): void {
   if (mode === MASK) {
     ctx.fillStyle = '#000';
     ctx.fill(path, 'evenodd');
@@ -734,7 +735,23 @@ function paintFill(ctx: Ctx, L: Library, style: FillStyle, path: Path2D, cx: Col
   switch (style.t) {
     case 'solid': {
       const css = solidCss(style.c, cx);
-      if (css) { ctx.fillStyle = css; ctx.fill(path, 'evenodd'); }
+      if (css) {
+        ctx.fillStyle = css;
+        ctx.fill(path, 'evenodd');
+        if (seal > 0) {
+          // Conflation seal (lane X2): adjacent fills AA their shared edge against transparency, leaving a
+          // background hairline between different-coloured regions (Flash's rasterizer conflates shared edges).
+          // Stroking the boundary with the fill colour, CLIPPED to the region itself, covers the under-covered
+          // interior half of the seam without widening the region's outer silhouette.
+          ctx.save();
+          ctx.clip(path, 'evenodd');
+          ctx.lineWidth = seal;
+          ctx.lineJoin = 'round';
+          ctx.strokeStyle = css;
+          ctx.stroke(path);
+          ctx.restore();
+        }
+      }
       return;
     }
     case 'linear':
@@ -838,7 +855,7 @@ function drawShape(o: Shape, ctx: Ctx, m: M6, cx: ColorTransform | null, ds: num
   for (const layer of def.layers) {
     for (const f of layer.fills) {
       const style = layer.fillStyles[f.s];
-      if (style) paintFill(ctx, L, style, L.path2d(f), cx, mode, def.bounds);
+      if (style) paintFill(ctx, L, style, L.path2d(f), cx, mode, def.bounds, mode === NORMAL && layer.fills.length > 1 ? 1 / scale : 0);
     }
     if (mode === MASK) continue;
     for (const s of layer.strokes) {
@@ -894,7 +911,7 @@ function drawMorph(o: MorphShape, ctx: Ctx, m: M6, cx: ColorTransform | null, ds
       const key = `${li}:${f.s}`;
       let st = sc!.fills.get(key);
       if (!st) { st = lerpFill(pair[0], pair[1], t); sc!.fills.set(key, st); }
-      paintFill(ctx, L, st, p, cx, mode, bounds);
+      paintFill(ctx, L, st, p, cx, mode, bounds, mode === NORMAL && layer.fills.length > 1 ? 1 / scale : 0);
     });
     if (mode === MASK) return;
     if (!fl.strokeP2D) fl.strokeP2D = fl.strokes.map((c) => (c.length ? new Path2D(cmdsToSvg(c)) : null));
