@@ -1,0 +1,64 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Effect fidelity report</title><style>
+body{font:14px system-ui,sans-serif;background:#1b1b1b;color:#ddd;margin:16px}h2 small{color:#999;font-weight:normal}
+.row{display:flex;gap:8px;flex-wrap:wrap}figure{margin:0}figure img{width:640px;height:480px;image-rendering:pixelated;display:block;border:1px solid #444}
+figcaption{color:#aaa;font-size:12px}b{color:#fff}</style></head><body><h1>Boxhead 2Play Rooms remake - effect fidelity</h1>
+<p>Generated 2026-10-13T12:06:18.225Z by tests/visual/compareFx.ts.</p><section id="fx-objects"><h2>fx-objects <small>Objects: fake wall damage frames + fading, mine / charge pack / pickup, grenade, cluster shell, rocket, fireball</small></h2>
+<p>mismatch <b>0.44%</b> &middot; outside masks <b>0.44%</b> &middot; MAE 0.75<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-objects.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-objects.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-objects-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-explosion-frames"><h2>fx-explosion-frames <small>Effect.Explosion frames 0..17, smoke cloud, bullet hit spark and rocket smoke frames</small></h2>
+<p>mismatch <b>0.48%</b> &middot; outside masks <b>0.48%</b> &middot; MAE 1.37<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-explosion-frames.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-explosion-frames.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-explosion-frames-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-explosion-live-12"><h2>fx-explosion-live-12 <small>Live explosions (100 + 400 damage) at tick 11, first frame: shake (0, -15) and brightness flash 0.8</small></h2>
+<p>mismatch <b>0.19%</b> &middot; outside masks <b>0.19%</b> &middot; MAE 0.38<br>
+<small>original: tick=12|paused=false|loaded=true|draw=32,2|shake=0,-30|bright=0.8<br>remake: tick=12|paused=false|loaded=true|draw=32,2|shake=0,-30|bright=0.8<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-explosion-live-12.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-explosion-live-12.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-explosion-live-12-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-explosion-live-14"><h2>fx-explosion-live-14 <small>Live explosions (100 + 400 damage) at tick 11, tick 3: shake (0, -3.75), brightness 0.4</small></h2>
+<p>mismatch <b>0.19%</b> &middot; outside masks <b>0.19%</b> &middot; MAE 0.42<br>
+<small>original: tick=14|paused=false|loaded=true|draw=32,2|shake=0,-30|bright=0.8<br>remake: tick=14|paused=false|loaded=true|draw=32,2|shake=0,-30|bright=0.8<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-explosion-live-14.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-explosion-live-14.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-explosion-live-14-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-muzzle"><h2>fx-muzzle <small>Muzzle flashes of pistol / UZI / shotgun / railgun in 8 directions (+ pistol at half directions)</small></h2>
+<p>mismatch <b>0.29%</b> &middot; outside masks <b>0.29%</b> &middot; MAE 0.63<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-muzzle.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-muzzle.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-muzzle-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-tracers"><h2>fx-tracers <small>Bullet tracers (0.5 px #CCCCCC, alpha 75) and railgun beams (2 px #9966FF, alpha 56.25) in 16 directions</small></h2>
+<p>mismatch <b>0.29%</b> &middot; outside masks <b>0.29%</b> &middot; MAE 0.63<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-tracers.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-tracers.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-tracers-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-decals"><h2>fx-decals <small>Blood splat (4 frames x 3 rotations) and scorch mark (3 rotations) decals, y-scale 0.6, masked to bare floor</small></h2>
+<p>mismatch <b>0.31%</b> &middot; outside masks <b>0.31%</b> &middot; MAE 0.67<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-decals.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-decals.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-decals-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-xsi-30"><h2>fx-xsi-30 <small>Player skins 3 / 0 (Coop): stand 16 directions, walk 8 x frame 2, weapon stances, hit, dying, dead</small></h2>
+<p>mismatch <b>2.88%</b> &middot; outside masks <b>2.88%</b> &middot; MAE 3.84<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-xsi-30.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-xsi-30.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-xsi-30-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-xsi-12"><h2>fx-xsi-12 <small>Player skins 1 / 2 (Coop): stand 16 directions, walk 8 x frame 2, weapon stances, hit, dying, dead</small></h2>
+<p>mismatch <b>3.24%</b> &middot; outside masks <b>3.24%</b> &middot; MAE 4.05<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-xsi-12.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-xsi-12.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-xsi-12-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section>
+<section id="fx-xsi-monsters"><h2>fx-xsi-monsters <small>Zombie and devil: stand, walk, attack, hit, dying, dead in every direction</small></h2>
+<p>mismatch <b>2.33%</b> &middot; outside masks <b>2.33%</b> &middot; MAE 2.87<br>
+<small>original: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>remake: tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0<br>LCG: -1 / -1</small></p>
+<div class="row"><figure><img src="reference/fx-xsi-monsters.png"><figcaption>original (Flash Player 28)</figcaption></figure>
+<figure><img src="remake/fx-xsi-monsters.png"><figcaption>remake 1x</figcaption></figure>
+<figure><img src="fx-xsi-monsters-diff.png"><figcaption>diff (red = mismatch, yellow = AA)</figcaption></figure></div></section></body></html>

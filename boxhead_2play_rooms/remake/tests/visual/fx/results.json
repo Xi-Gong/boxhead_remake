@@ -1,0 +1,102 @@
+{
+ "fx-objects": {
+  "scene": "fx-objects",
+  "title": "Objects: fake wall damage frames + fading, mine / charge pack / pickup, grenade, cluster shell, rocket, fireball",
+  "mismatch": 0.435546875,
+  "masked": 0.435546875,
+  "mae": 0.7510633680555555,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ },
+ "fx-explosion-frames": {
+  "scene": "fx-explosion-frames",
+  "title": "Effect.Explosion frames 0..17, smoke cloud, bullet hit spark and rocket smoke frames",
+  "mismatch": 0.4817708333333333,
+  "masked": 0.4817708333333333,
+  "mae": 1.3685611979166667,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ },
+ "fx-explosion-live-12": {
+  "scene": "fx-explosion-live-12",
+  "title": "Live explosions (100 + 400 damage) at tick 11, first frame: shake (0, -15) and brightness flash 0.8",
+  "mismatch": 0.1904296875,
+  "masked": 0.1904296875,
+  "mae": 0.3812109375,
+  "refWorld": "tick=12|paused=false|loaded=true|draw=32,2|shake=0,-30|bright=0.8",
+  "remWorld": "tick=12|paused=false|loaded=true|draw=32,2|shake=0,-30|bright=0.8",
+  "lcg": "-1 / -1"
+ },
+ "fx-explosion-live-14": {
+  "scene": "fx-explosion-live-14",
+  "title": "Live explosions (100 + 400 damage) at tick 11, tick 3: shake (0, -3.75), brightness 0.4",
+  "mismatch": 0.18619791666666666,
+  "masked": 0.18619791666666666,
+  "mae": 0.4238465711805556,
+  "refWorld": "tick=14|paused=false|loaded=true|draw=32,2|shake=0,-30|bright=0.8",
+  "remWorld": "tick=14|paused=false|loaded=true|draw=32,2|shake=0,-30|bright=0.8",
+  "lcg": "-1 / -1"
+ },
+ "fx-muzzle": {
+  "scene": "fx-muzzle",
+  "title": "Muzzle flashes of pistol / UZI / shotgun / railgun in 8 directions (+ pistol at half directions)",
+  "mismatch": 0.2877604166666667,
+  "masked": 0.2877604166666667,
+  "mae": 0.6317936197916667,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ },
+ "fx-tracers": {
+  "scene": "fx-tracers",
+  "title": "Bullet tracers (0.5 px #CCCCCC, alpha 75) and railgun beams (2 px #9966FF, alpha 56.25) in 16 directions",
+  "mismatch": 0.2890625,
+  "masked": 0.2890625,
+  "mae": 0.6268999565972222,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ },
+ "fx-decals": {
+  "scene": "fx-decals",
+  "title": "Blood splat (4 frames x 3 rotations) and scorch mark (3 rotations) decals, y-scale 0.6, masked to bare floor",
+  "mismatch": 0.3056640625,
+  "masked": 0.3056640625,
+  "mae": 0.6729752604166667,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ },
+ "fx-xsi-30": {
+  "scene": "fx-xsi-30",
+  "title": "Player skins 3 / 0 (Coop): stand 16 directions, walk 8 x frame 2, weapon stances, hit, dying, dead",
+  "mismatch": 2.8815104166666665,
+  "masked": 2.8815104166666665,
+  "mae": 3.8390180121527777,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ },
+ "fx-xsi-12": {
+  "scene": "fx-xsi-12",
+  "title": "Player skins 1 / 2 (Coop): stand 16 directions, walk 8 x frame 2, weapon stances, hit, dying, dead",
+  "mismatch": 3.240234375,
+  "masked": 3.240234375,
+  "mae": 4.05244140625,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ },
+ "fx-xsi-monsters": {
+  "scene": "fx-xsi-monsters",
+  "title": "Zombie and devil: stand, walk, attack, hit, dying, dead in every direction",
+  "mismatch": 2.33203125,
+  "masked": 2.33203125,
+  "mae": 2.8676790364583336,
+  "refWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "remWorld": "tick=13|paused=false|loaded=true|draw=32,32|shake=0,0|bright=0",
+  "lcg": "-1 / -1"
+ }
+}

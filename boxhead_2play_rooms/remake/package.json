@@ -1,0 +1,35 @@
+{
+  "name": "boxhead-2play-rooms-remake",
+  "productName": "Boxhead 2Play Rooms",
+  "version": "0.1.1",
+  "private": true,
+  "description": "1:1 remake of Boxhead: 2Play Rooms (Sean Cooper, 2007) in TypeScript + Canvas2D + Electron",
+  "type": "module",
+  "main": "dist-electron/main.cjs",
+  "scripts": {
+    "extract": "node tools/extract.ts",
+    "disasm": "node tools/disasm.ts",
+    "dev": "npm run extract -- --if-stale && vite",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.strict.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
+    "test": "vitest run",
+    "build": "npm run extract -- --if-stale && node tools/make-icon.ts && npm run typecheck && vite build && node tools/build-electron.ts",
+    "dist": "npm run build && electron-builder --win portable --x64",
+    "dist:dir": "npm run build && electron-builder --win dir --x64",
+    "test:electron": "node tests/unit/platform/electron-smoke.run.ts",
+    "test:electron:packaged": "node tests/unit/platform/electron-smoke.run.ts --packaged-only"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/pngjs": "^6.0.5",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "pixelmatch": "^8.0.0",
+    "playwright-core": "^1.64.0",
+    "pngjs": "^7.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7",
+    "vitest": "^3.2.7"
+  },
+  "author": "Boxhead remake (fan project; original game by Sean Cooper)"
+}

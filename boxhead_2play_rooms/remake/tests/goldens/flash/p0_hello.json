@@ -1,0 +1,14 @@
+{
+ "probe": "p0_hello",
+ "title": "Smoke test: raw assembler trace + double/int push round-trip",
+ "player": "WIN 32,0,0,465",
+ "swfVersion": 8,
+ "generatedBy": "tools/oracle/runProbe.ts",
+ "results": {
+  "hello": "1",
+  "double": "0.1",
+  "int": "-123456",
+  "sum": "3",
+  "branch": "taken"
+ }
+}

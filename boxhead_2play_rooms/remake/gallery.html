@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Boxhead remake — symbol gallery</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; background: #2b2b2b; color: #e6e6e6; font: 13px system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+    #side { width: 300px; display: flex; flex-direction: column; border-right: 1px solid #444; background: #232323; }
+    #side input[type=search] { margin: 8px; padding: 6px; background: #1b1b1b; color: #eee; border: 1px solid #555; border-radius: 4px; }
+    #list { flex: 1; overflow: auto; font: 12px ui-monospace, Consolas, monospace; }
+    #list div { padding: 2px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #list div:hover { background: #333; }
+    #list div.sel { background: #2f4f7f; }
+    #list .t { color: #8a8a8a; }
+    #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    #bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #444; background: #262626; }
+    #bar button, #bar select, #bar input { background: #1b1b1b; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 3px 8px; }
+    #bar input[type=number] { width: 64px; }
+    #view { flex: 1; overflow: auto; padding: 16px; }
+    #stage { display: inline-block; line-height: 0; box-shadow: 0 0 0 1px #555; }
+    #info { width: 320px; overflow: auto; border-left: 1px solid #444; background: #232323; padding: 8px; font: 12px ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+    #wrap { flex: 1; display: flex; min-height: 0; }
+  </style>
+</head>
+<body>
+  <div id="side">
+    <input id="filter" type="search" placeholder="filter: linkage, id, type…" />
+    <div id="list"></div>
+  </div>
+  <div id="main">
+    <div id="bar">
+      <strong id="title">…</strong>
+      <button id="prev" title="previous frame">◀</button>
+      <input id="frame" type="number" min="1" value="1" />
+      <span id="total">/ 1</span>
+      <button id="next" title="next frame">▶</button>
+      <button id="play">play</button>
+      <label>scale <select id="scale"><option>1</option><option selected>2</option><option>4</option></select></label>
+      <label><input id="filters" type="checkbox" checked /> filters</label>
+      <label><input id="bounds" type="checkbox" /> bounds</label>
+      <label>bg <select id="bg"><option value="checker">checker</option><option value="black">black</option><option value="white">white</option><option value="gray">gray</option></select></label>
+      <span id="stats"></span>
+    </div>
+    <div id="wrap">
+      <div id="view"><div id="stage"><canvas id="canvas" width="64" height="64"></canvas></div></div>
+      <div id="info"></div>
+    </div>
+  </div>
+  <script type="module" src="./src/dev/gallery.ts"></script>
+</body>
+</html>
