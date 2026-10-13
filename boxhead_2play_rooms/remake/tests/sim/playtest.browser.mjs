@@ -19,22 +19,30 @@ const URL = process.env.GAME_URL ?? 'http://localhost:5198/';
 // --electron: the same playtest in the Electron shell (unpackaged, serving BOXHEAD_DIST_DIR = generated/qa-dist through
 // app://game/, portable save dir under generated/reports/qa/electron-portable). Build dist-electron first if needed:
 // node tools/build-electron.ts
-const ELECTRON = process.argv.includes('--electron');
+// --packaged: same as --electron but drives the PACKAGED app (release/win-unpacked, built by `npm run dist` / dist:dir —
+// identical content to the portable exe), with its own portable save dir under generated/reports/qa/packaged-portable.
+const PACKAGED = process.argv.includes('--packaged');
+const ELECTRON = PACKAGED || process.argv.includes('--electron');
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const MODES = args.length ? args : ['Single', 'Coop', 'DeathMatch'];
-const TAG = ELECTRON ? 'electron_' : '';
+const TAG = PACKAGED ? 'packaged_' : ELECTRON ? 'electron_' : '';
 const PLAY_MS = Number(process.env.PLAY_MS ?? 20000);
 const MENU_Y = { Single: 226, Coop: 259, DeathMatch: 292 };
 
 const browser = ELECTRON ? undefined : await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
-const report = { url: ELECTRON ? 'electron app://game/index.html (generated/qa-dist)' : URL, modes: {} };
+const report = { url: PACKAGED ? 'packaged release/win-unpacked app://game/index.html' : ELECTRON ? 'electron app://game/index.html (generated/qa-dist)' : URL, modes: {} };
 async function openPage() {
   if (!ELECTRON) {
     const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
     return { page, close: () => page.close(), minimized: async () => false };
   }
-  const app = await _electron.launch({
+  const noThrottle = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
+  const app = PACKAGED ? await _electron.launch({
+    executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'), cwd: ROOT, timeout: 60000,
+    args: noThrottle,
+    env: { ...process.env, PORTABLE_EXECUTABLE_DIR: join(OUT, 'packaged-portable') },
+  }) : await _electron.launch({
     executablePath: createRequire(import.meta.url)('electron'), cwd: ROOT, timeout: 60000,
     // keep rAF running when the window is covered by other windows: Chromium's native Windows occlusion tracking
     // otherwise drops the requestAnimationFrame rate to ~1 Hz for an occluded window (observed: 1 EF/s, 50 EF/s once
