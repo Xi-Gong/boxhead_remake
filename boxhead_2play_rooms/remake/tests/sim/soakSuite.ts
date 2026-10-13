@@ -22,7 +22,10 @@ export const KNOWN_SPAWN_SOLID: readonly { mode: string; room: number; x: number
   { mode: 'DeathMatch', room: 11, x: 16.5, y: 9.5 },
 ];
 
-/** Upper bound of the time (world ticks) a transient thing (effect, shot, corpse) may stay in the collection. */
+/**
+ * Upper bound of the time (world ticks at 25 fps) a transient thing may stay in the collection: effects, shots,
+ * corpses (dying + 2 s dead), pickups dropped by kills (10 s).
+ */
 export const MAX_TRANSIENT_AGE = 300;
 
 export interface SoakExpect {
@@ -46,8 +49,12 @@ export function expectHealthySoak(r: SoakReport, exp: SoakExpect = {}): void {
     expect(known, `${where}: unexpected spawn inside a Solid cell: ${i.cls} ${i.detail}`).toBe(true);
   }
   if (exp.running) expect(r.end.state, `${where}: state`).toBe('State_RunWorld');
+  // camera (CWorld.Process_Tracking): controllable players stay inside the 640x480 view (shake offset removed)
+  expect(r.offscreen, `${where}: player drawn outside the view (px)`).toBeLessThanOrEqual(0);
   // growth: transient things go away, totals stay bounded
-  for (const [cls, age] of Object.entries(r.maxAge)) expect(age, `${where}: ${cls} lifetime`).toBeLessThanOrEqual(MAX_TRANSIENT_AGE);
+  // (lifetimes in seconds scale with the world tick rate: x2 ticks at the fast game speed)
+  const ageLimit = MAX_TRANSIENT_AGE * Math.max(1, r.fps / 25);
+  for (const [cls, age] of Object.entries(r.maxAge)) expect(age, `${where}: ${cls} lifetime`).toBeLessThanOrEqual(ageLimit);
   expect(r.max.things, `${where}: things`).toBeLessThan(r.start.things + 400);
   // spawn caps (HIGH quality)
   expect(r.max.zombies, `${where}: zombie cap`).toBeLessThanOrEqual(60);

@@ -7,6 +7,7 @@ import {
   type Snapshot,
 } from './harness.ts';
 import { Bot, runBots, type BotOptions } from './bots.ts';
+import { CMain } from '../../src/game/packages.ts';
 
 export interface SoakOptions extends HeadlessGameOptions {
   ticks: number;
@@ -41,6 +42,10 @@ export interface SoakReport {
    * first seen, zombies / devils since they died (corpse). Things still present at the end count too.
    */
   maxAge: Record<string, number>;
+  /** World ticks per second of this game (CMain.mFPS while it ran: 12.5 / 25 / 50). */
+  fps: number;
+  /** Single / Coop: how far (px) a controllable player was ever drawn outside the 640x480 view (camera check). */
+  offscreen: number;
 }
 
 export function defaultBots(mode: string, opts: BotOptions[] | undefined): Bot[] {
@@ -53,12 +58,34 @@ function activeEntries(u: any): any[] {
   return (u?.mMultiplierList ?? []).filter((e: any) => e.mActive === true);
 }
 
+/** Run a soak synchronously. */
 export function soak(opts: SoakOptions): SoakReport {
+  const it = soakSteps(opts);
+  for (;;) { const r = it.next(); if (r.done) return r.value; }
+}
+
+/**
+ * Same as soak(), yielding to the event loop every chunk of ticks (long runs: keeps the vitest worker's RPC alive —
+ * a worker blocked for minutes fails the run with "Timeout calling onTaskUpdate").
+ */
+export async function soakAsync(opts: SoakOptions): Promise<SoakReport> {
+  const it = soakSteps(opts);
+  for (;;) {
+    const r = it.next();
+    if (r.done) return r.value;
+    await new Promise((res) => setImmediate(res));
+  }
+}
+
+const CHUNK = 250;
+
+function* soakSteps(opts: SoakOptions): Generator<void, SoakReport, void> {
   const game = createHeadlessGame(opts);
   const bots = defaultBots(game.mode, opts.bots);
   const checker = new InvariantChecker();
   const every = opts.snapshotEvery ?? 250;
   const start = game.snapshot();
+  const fps = (CMain as any).mFPS as number;
   const snapshots: Snapshot[] = [start];
   const thingSeries: number[] = [start.things];
   const max = { things: 0, effects: 0, shots: 0, corpses: 0, creatures: 0, zombies: 0, devils: 0, multiplier: start.multiplier, level: start.level };
@@ -73,19 +100,34 @@ export function soak(opts: SoakOptions): SoakReport {
   const born = new Map<any, number>();
   const maxAge: Record<string, number> = {};
   const DEAD = 32; // Thing.CThing.mFlag_DEAD
-  const done = runBots(game, bots, opts.ticks, (t) => {
+  let t = -1;
+  let offscreen = 0;
+  const onTick = (): void => {
+    t++;
     const w = game.world();
     checker.check(w);
+    if (game.mode !== 'DeathMatch') {
+      for (const p of game.players()) {
+        if (p.mStateID !== 'State_PlayerControl') continue;
+        // screen position in the camera rectangle before the screen shake offset (explosions shake the view by up
+        // to ~32 px; Draw_PlayerPlane adds mShake to mDrawPosition)
+        const sp = w.GetScreenPosition(p.mPosition);
+        const x = sp.x + w.mShake.x, y = sp.y + w.mShake.y;
+        offscreen = Math.max(offscreen, -x, x - w.mScreenSize.x, -y, y - w.mScreenSize.y);
+      }
+    }
     const alive = new Set<any>();
     for (const th of thingList(w)) {
       const c: string = th._CLASSID_;
-      const transient = c.startsWith('CThing_Effect') || c.startsWith('CThing_Shot')
+      const dropped = c === 'CThing_Object_Pickup' && th.mDeleteOnPickup;
+      const transient = dropped || c.startsWith('CThing_Effect') || c.startsWith('CThing_Shot')
         || ((c === 'CThing_Creature_Zombie' || c === 'CThing_Creature_Devil') && th.mFlags & DEAD);
       if (!transient) continue;
+      const key = dropped ? 'CThing_Object_Pickup(dropped)' : c;
       alive.add(th);
       if (!born.has(th)) born.set(th, t);
       const age = t - born.get(th)!;
-      if (!(age <= (maxAge[c] ?? -1))) maxAge[c] = age;
+      if (!(age <= (maxAge[key] ?? -1))) maxAge[key] = age;
     }
     for (const th of [...born.keys()]) if (!alive.has(th)) born.delete(th);
     const st = thingStats(w);
@@ -108,11 +150,19 @@ export function soak(opts: SoakOptions): SoakReport {
       snapshots.push(s);
       thingSeries.push(s.things);
     }
-  });
+  };
+  let done = 0;
+  while (done < opts.ticks) {
+    const want = Math.min(CHUNK, opts.ticks - done);
+    const n = runBots(game, bots, want, onTick);
+    done += n;
+    if (n < want) break;
+    yield;
+  }
   const end = game.snapshot();
   return {
     game, ticks: done, errors: game.errors, issues: checker.issues, start, end, snapshots, max, thingSeries,
-    activations, initialActive, peakMultiplier, levelUps, shots: bots.reduce((n, b) => n + b.shots, 0), maxAge,
+    activations, initialActive, peakMultiplier, levelUps, shots: bots.reduce((n, b) => n + b.shots, 0), maxAge, fps, offscreen,
   };
 }
 

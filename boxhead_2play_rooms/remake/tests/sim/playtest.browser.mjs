@@ -7,30 +7,57 @@
 //   usage: node tests/sim/playtest.browser.mjs [Single|Coop|DeathMatch ...]     (GAME_URL, default http://localhost:5198/)
 // Serve a production build so concurrent source edits (vite HMR full reloads) cannot disturb the run:
 //   npx vite build --outDir generated/qa-dist --emptyOutDir && npx vite preview --outDir generated/qa-dist --port 5198
-import { chromium } from 'playwright-core';
+import { _electron, chromium } from 'playwright-core';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '../../generated/reports/qa');
 mkdirSync(OUT, { recursive: true });
 const URL = process.env.GAME_URL ?? 'http://localhost:5198/';
-const MODES = process.argv.slice(2).length ? process.argv.slice(2) : ['Single', 'Coop', 'DeathMatch'];
+// --electron: the same playtest in the Electron shell (unpackaged, serving BOXHEAD_DIST_DIR = generated/qa-dist through
+// app://game/, portable save dir under generated/reports/qa/electron-portable). Build dist-electron first if needed:
+// node tools/build-electron.ts
+const ELECTRON = process.argv.includes('--electron');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const MODES = args.length ? args : ['Single', 'Coop', 'DeathMatch'];
+const TAG = ELECTRON ? 'electron_' : '';
 const PLAY_MS = Number(process.env.PLAY_MS ?? 20000);
 const MENU_Y = { Single: 226, Coop: 259, DeathMatch: 292 };
 
-const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
-const report = { url: URL, modes: {} };
+const browser = ELECTRON ? undefined : await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
+const report = { url: ELECTRON ? 'electron app://game/index.html (generated/qa-dist)' : URL, modes: {} };
+async function openPage() {
+  if (!ELECTRON) {
+    const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
+    return { page, close: () => page.close(), minimized: async () => false };
+  }
+  const app = await _electron.launch({
+    executablePath: createRequire(import.meta.url)('electron'), cwd: ROOT, timeout: 60000,
+    // keep rAF running when the window is covered by other windows: Chromium's native Windows occlusion tracking
+    // otherwise drops the requestAnimationFrame rate to ~1 Hz for an occluded window (observed: 1 EF/s, 50 EF/s once
+    // in front) — a desktop/test-environment effect, the game's own frame cost is < 1 ms
+    args: ['.', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'],
+    env: { ...process.env, BOXHEAD_DIST_DIR: join(ROOT, 'generated/qa-dist'), PORTABLE_EXECUTABLE_DIR: join(OUT, 'electron-portable') },
+  });
+  const page = await app.firstWindow();
+  // a minimized window gets no requestAnimationFrame (the game loop stalls): such a run is inconclusive, not a failure
+  const minimized = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized() ?? false).catch(() => false);
+  return { page, close: () => app.close(), minimized };
+}
 
 for (const mode of MODES) {
-  const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
+  const { page, close, minimized } = await openPage();
+  let wasMinimized = false;
   const log = [];
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') log.push(`[${m.type()}] ${m.text().slice(0, 500)}`); });
   page.on('pageerror', (e) => log.push(`[pageerror] ${e.message}`));
   page.on('response', (r) => { if (r.status() >= 400) log.push(`[http ${r.status()}] ${r.url()}`); });
   const steps = [];
   const step = (s) => { steps.push(s); console.log(mode, s); };
-  const shot = async (name) => { const p = join(OUT, `${mode}_${name}.png`); await page.screenshot({ path: p }); steps.push(`shot ${p}`); };
+  const shot = async (name) => { const p = join(OUT, `${TAG}${mode}_${name}.png`); await page.screenshot({ path: p }); steps.push(`shot ${p}`); };
   const state = () => page.evaluate(() => window.__game?.state?.());
   const waitFor = async (fn, arg, timeout = 30000) => {
     try { await page.waitForFunction(fn, arg, { timeout, polling: 100 }); return true; } catch { return false; }
@@ -70,7 +97,7 @@ for (const mode of MODES) {
   const result = { ok: false, steps, errors: [], log, world: [] };
   report.modes[mode] = result;
   try {
-    await page.goto(URL);
+    if (!ELECTRON) await page.goto(URL);
     await waitFor(() => window.__game && (window.__game.stage === 'audio' || window.__game.ready || window.__game.stage === 'failed'), null, 120000);
     if (!(await page.evaluate(() => window.__game.ready))) { await page.mouse.click(480, 360); step('clicked the audio-unlock overlay'); }
     await waitFor(() => window.__game.ready || window.__game.stage === 'failed', null, 30000);
@@ -101,6 +128,7 @@ for (const mode of MODES) {
     const nPlayers = mode === 'Single' ? 1 : 2;
     let fireToggle = false;
     while (Date.now() - t0 < PLAY_MS) {
+      if (n % 20 === 0 && await minimized()) wasMinimized = true;
       const s = await page.evaluate((mode) => {
         const w = window.__game.main().mcWorld;
         if (!w?.mThing_Collection) return null;
@@ -198,11 +226,15 @@ for (const mode of MODES) {
   result.consoleErrors = log.filter((l) => /^\[(error|pageerror)/.test(l));
   result.consoleWarnings = log.filter((l) => /^\[warning/.test(l));
   if (result.scriptErrors.length || result.consoleErrors.length) result.ok = false;
+  if (wasMinimized || await minimized()) {
+    result.inconclusive = 'the Electron window was minimized during the run (no requestAnimationFrame -> the loop stalls)';
+    console.log(mode, 'INCONCLUSIVE:', result.inconclusive);
+  }
   console.log(mode, result.ok ? 'OK' : 'FAILED', `script errors ${result.scriptErrors.length}, console errors ${result.consoleErrors.length}, warnings ${result.consoleWarnings.length}`);
   for (const e of [...result.scriptErrors, ...result.consoleErrors].slice(0, 5)) console.log('  ', e.slice(0, 400));
-  await page.close();
+  await close();
 }
-await browser.close();
-writeFileSync(join(OUT, 'playtest_report.json'), JSON.stringify(report, null, 1));
-console.log('report', join(OUT, 'playtest_report.json'));
+await browser?.close();
+writeFileSync(join(OUT, `${TAG}playtest_report.json`), JSON.stringify(report, null, 1));
+console.log('report', join(OUT, `${TAG}playtest_report.json`));
 process.exit(Object.values(report.modes).every((m) => m.ok) ? 0 : 1);
