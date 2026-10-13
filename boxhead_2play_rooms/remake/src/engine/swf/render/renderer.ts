@@ -12,13 +12,16 @@
  *     filterPadding(), filtered by the WebGL2 backend (flash/filters/gl.ts: canvas upload, no readback; lane P) or, as
  *     a fallback, on the CPU by applyFiltersToPixels(), and composited with the object's accumulated color transform
  *     (alpha-only -> globalAlpha; otherwise applied to the filtered pixels, in the GL present pass). The result
- *     is cached per object and reused while the subtree version ($ver), the device matrix (up to translation —
- *     filtered objects are drawn pixel-snapped like Flash's bitmap cache), the filter list and the device scale are
- *     unchanged.
+ *     is cached per object and reused while the subtree version ($ver), the device matrix (incl. the fractional
+ *     offset: filtered objects are NOT pixel-snapped - Flash 8/28 draw them at their exact sub-pixel position, see
+ *     tools/oracle/visual/snapProbe.ts), the filter list and the device scale are unchanged.
+ *   - Static and dynamic text is rasterized on a SOFTWARE canvas and cached per object (drawTextCached): Chrome's GPU
+ *     canvas drops thin strokes of small glyph paths entirely at some sub-pixel offsets.
  *   - cacheAsBitmap and blend modes are not rendered specially (this SWF uses neither in placements).
  */
 import { ColorTransform } from '../../flash/geom.ts';
 import { applyFiltersToPixels, filterPadding } from '../../flash/filters/apply.ts';
+import { snappedPath2D, strokeSnap } from '../../flash/strokeSnap.ts';
 import { glFilterImage, glFiltersEnabled } from '../../flash/filters/gl.ts';
 import {
   applyCxToImageData, applyCxToPixels, applyCxToRGBA, cssRGBA, cxAlphaOnlyFactor, cxToFixed, premultiplyInPlace,
@@ -39,8 +42,11 @@ const NORMAL = 0, MASK = 1;
 /** Color transform turning every visible fill opaque black (mask rendering). */
 const MASK_CX = new ColorTransform(0, 0, 0, 1, 0, 0, 0, 255);
 
-/** Debug switches (gallery): render filters / masks. */
-export const renderConfig = { filters: true, masks: true };
+/**
+ * Debug switches (gallery, visual tests): render filters / masks; textCache = software-rasterized text cache
+ * (drawTextCached); filterPixelSnap = the old (wrong) pixel snapping of filtered objects, for before/after comparisons.
+ */
+export const renderConfig = { filters: true, masks: true, textCache: true, filterPixelSnap: false };
 
 /** Render statistics of the last frame (gallery / perf panel). */
 export const renderStats = { objects: 0, filtered: 0, filterCacheHits: 0, masks: 0 };
@@ -149,12 +155,18 @@ function drawContent(o: DisplayObject, ctx: Ctx, m: M6, cx: ColorTransform | nul
     case 'morph':
       drawMorph(o as MorphShape, ctx, m, cx, ds, mode);
       break;
-    case 'text':
-      drawStaticText(o as StaticText, ctx, m, cx, mode);
+    case 'text': {
+      const t = o as StaticText;
+      drawTextCached(t, ctx, m, cx, mode, t.$def.bounds, (c, mm) => drawStaticText(t, c, mm, cx, mode));
       break;
-    case 'edit':
-      drawEditText(o as TextField, ctx, m, cx, mode);
+    }
+    case 'edit': {
+      const tf = o as TextField;
+      const r = tf.$rect;
+      if (engine.focus === tf && tf.$type === 'input') drawEditText(tf, ctx, m, cx, mode); // blinking caret: no cache
+      else drawTextCached(tf, ctx, m, cx, mode, { xMin: r.x, yMin: r.y, xMax: r.x + r.w, yMax: r.y + r.h }, (c, mm) => drawEditText(tf, c, mm, cx, mode));
       break;
+    }
     case 'bitmap':
       drawBitmapObj(o as Bitmap, ctx, m, cx, ds, mode);
       break;
@@ -274,14 +286,65 @@ function bitmapSig(o: DisplayObject, depth = 0): string {
   return s;
 }
 
+// ==================================================================================================== text cache
+
+/**
+ * Text objects are rasterized on a SOFTWARE (willReadFrequently) canvas, cached per object and blitted at an integer
+ * device offset. Reason: Chrome's GPU canvas (Skia/Ganesh, also in Electron; seen with ANGLE/D3D11 and headless)
+ * drops the coverage of small thin glyph paths ENTIRELY at some sub-pixel offsets - e.g. the 12 px italic Calibri
+ * 'l' / 'd' stems of the options window's "Turns the Friendly damage on/off ..." line vanished at 1x (lane V,
+ * tests/visual). The CPU rasterizer is exact. The key holds the content version, the device matrix (incl. the
+ * fractional offset), the size and the colour transform, so static text costs one drawImage per frame. Mask
+ * rendering (geometry only) draws directly.
+ */
+interface TextCache { key: string; canvas: AnyCanvas; ctx: Ctx }
+const textCaches = new WeakMap<DisplayObject, TextCache>();
+
+function drawTextCached(o: DisplayObject, ctx: Ctx, m: M6, cx: ColorTransform | null, mode: number, bounds: Bounds,
+  draw: (c: Ctx, mm: M6) => void): void {
+  if (mode !== NORMAL || !renderConfig.textCache) { draw(ctx, m); return; }
+  const db = transformBounds(m, bounds);
+  // glyphs (italics, AA) may poke slightly out of the declared text bounds
+  const pad = 3 + Math.ceil(Math.max(Math.abs(m.a), Math.abs(m.b), Math.abs(m.c), Math.abs(m.d)));
+  const X = Math.floor(db.xMin) - pad, Y = Math.floor(db.yMin) - pad;
+  const X1 = Math.ceil(db.xMax) + pad, Y1 = Math.ceil(db.yMax) + pad;
+  const cv = ctx.canvas as AnyCanvas | undefined;
+  if (cv && (X1 < 0 || Y1 < 0 || X > cv.width || Y > cv.height)) return;
+  const W = X1 - X, H = Y1 - Y;
+  if (!(W > 0 && H > 0)) return;
+  if (W * H > 2048 * 1024) { draw(ctx, m); return; }
+  const fx = m.tx - X, fy = m.ty - Y;
+  const key = `${o.$ver}|${m.a},${m.b},${m.c},${m.d}|${fx},${fy}|${W}x${H}|${cx ? cxKey(cx) : ''}`;
+  let c = textCaches.get(o);
+  if (!c || c.key !== key) {
+    if (!c || c.canvas.width < W || c.canvas.height < H) {
+      const cc = createCanvas(Math.max(W, c?.canvas.width ?? 0), Math.max(H, c?.canvas.height ?? 0), true);
+      c = { key, canvas: cc.canvas, ctx: cc.ctx };
+      textCaches.set(o, c);
+    }
+    c.key = key;
+    const tc = c.ctx;
+    tc.setTransform(1, 0, 0, 1, 0, 0);
+    tc.globalAlpha = 1;
+    tc.globalCompositeOperation = 'source-over';
+    tc.clearRect(0, 0, c.canvas.width, c.canvas.height);
+    draw(tc, { a: m.a, b: m.b, c: m.c, d: m.d, tx: fx, ty: fy });
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(c.canvas, 0, 0, W, H, X, Y, W, H);
+}
+
 function cxKey(cx: ColorTransform): string {
   return `${cx.redMultiplier},${cx.greenMultiplier},${cx.blueMultiplier},${cx.alphaMultiplier},${cx.redOffset},${cx.greenOffset},${cx.blueOffset},${cx.alphaOffset}`;
 }
 
 function drawFiltered(o: DisplayObject, ctx: Ctx, m0: M6, cx: ColorTransform | null, ds: number): void {
   const filters = o.$filters!;
-  // Flash draws an object's filter/bitmap cache pixel-snapped: its origin lands on a whole device pixel.
-  const m: M6 = { a: m0.a, b: m0.b, c: m0.c, d: m0.d, tx: Math.round(m0.tx), ty: Math.round(m0.ty) };
+  // NOT pixel-snapped: Flash 8 and 28 draw a filtered object at its exact sub-pixel position, like an unfiltered one
+  // (tools/oracle/visual/snapProbe.ts: squares with an identity ColorMatrix / invisible Glow / DropShadow at
+  // fractional positions and scales have their edges exactly where the unfiltered copies have them). The content
+  // keeps its fractional offset inside the integer-aligned filter canvas (fx, fy below).
+  const m: M6 = renderConfig.filterPixelSnap ? { a: m0.a, b: m0.b, c: m0.c, d: m0.d, tx: Math.round(m0.tx), ty: Math.round(m0.ty) } : m0;
   const lb = o.$boundsWith(null);
   if (!lb) return;
   renderStats.filtered++;
@@ -563,21 +626,42 @@ function paintFill(ctx: Ctx, L: Library, style: FillStyle, path: Path2D, cx: Col
   }
 }
 
-function strokePath(ctx: Ctx, ls: LineStyle, path: Path2D, cx: ColorTransform | null, scale: number, ds: number): void {
+/** Device-space snapped stroke paths, per stroke record (key: device matrix + snap mode). */
+const snapPathCache = new WeakMap<object, { key: string; p: Path2D }>();
+
+/**
+ * Stroke a path with the line style: `path` = its local Path2D, `cmds` = its flat command array (also the key of the
+ * snapped-path cache). `m` is the device matrix (ctx already has it). Strokes whose device width is whole or below
+ * 1 px are snapped to the pixel grid like Flash (flash/strokeSnap.ts) and stroked in device space.
+ */
+function strokePath(ctx: Ctx, ls: LineStyle, path: () => Path2D, cmds: () => readonly number[], cacheKey: object, m: M6,
+  cx: ColorTransform | null, scale: number, ds: number): void {
   const f = ls.fill;
   const c = ls.c ?? (f ? (f.t === 'solid' ? f.c : f.t === 'bitmap' ? undefined : f.stops[0]?.c) : undefined);
   if (!c || scale <= 0) return;
   const css = solidCss(c, cx);
   if (!css) return;
-  let devW = ls.noHScale || ls.noVScale ? ls.w * ds : ls.w * scale;
-  if (!(devW >= 1)) devW = 1; // hairline / thinner than a device pixel
-  ctx.lineWidth = devW / scale;
+  const snap = strokeSnap(ls.noHScale || ls.noVScale ? ls.w * ds : ls.w * scale);
   const cap = ls.startCap ?? 'round';
   ctx.lineCap = cap === 'none' ? 'butt' : cap;
   ctx.lineJoin = ls.join ?? 'round';
   if (ls.join === 'miter') ctx.miterLimit = Math.max(1, ls.miter ?? 3);
   ctx.strokeStyle = css;
-  ctx.stroke(path);
+  if (snap.mode === 0) {
+    ctx.lineWidth = snap.width / scale;
+    ctx.stroke(path());
+    return;
+  }
+  const key = `${m.a},${m.b},${m.c},${m.d},${m.tx},${m.ty},${snap.mode}`;
+  let e = snapPathCache.get(cacheKey);
+  if (!e || e.key !== key) {
+    e = { key, p: snappedPath2D(cmds(), m, snap.mode) };
+    snapPathCache.set(cacheKey, e);
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.lineWidth = snap.width;
+  ctx.stroke(e.p);
+  setT(ctx, m);
 }
 
 // ==================================================================================================== leaves
@@ -597,7 +681,7 @@ function drawShape(o: Shape, ctx: Ctx, m: M6, cx: ColorTransform | null, ds: num
     if (mode === MASK) continue;
     for (const s of layer.strokes) {
       const ls = layer.lineStyles[s.s];
-      if (ls) strokePath(ctx, ls, L.path2d(s), cx, scale, ds);
+      if (ls) strokePath(ctx, ls, () => L.path2d(s), () => L.cmds(s), s, m, cx, scale, ds);
     }
   }
 }
@@ -663,7 +747,8 @@ function drawMorph(o: MorphShape, ctx: Ctx, m: M6, cx: ColorTransform | null, ds
         ls = { ...a, w: lerp(a.w, b.w, t), c: a.c && b.c ? lerpC(a.c, b.c, t) : a.c };
         sc!.lines.set(key, ls);
       }
-      strokePath(ctx, ls, p, cx, scale, ds);
+      const sc2 = fl.strokes[k]!;
+      strokePath(ctx, ls, () => p, () => sc2, sc2, m, cx, scale, ds);
     });
   });
 }

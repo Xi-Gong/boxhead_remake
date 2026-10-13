@@ -30,6 +30,7 @@
 import { ColorTransform, Matrix, Rectangle } from './geom.ts';
 import type { BitmapData } from './BitmapData.ts';
 import { alpha100To255, applyCxToRGBA, cssRGBA, cxAlphaOnlyFactor, toUint32 } from './color.ts';
+import { snappedPath2D, strokeSnap } from './strokeSnap.ts';
 
 type Ctx2D = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -437,7 +438,7 @@ export class Graphics {
           if (item.cache) p.p2d = p2d;
         }
         if (p.kind === 'fill') this.renderFill(c, p.style, p2d, item.cmds, cx, base, patterns);
-        else this.renderLine(c, p.style, p2d, cx, base, devScale, deviceScale);
+        else this.renderLine(c, p.style, p2d, item.cmds, item.closed, cx, base, devScale, deviceScale);
         c.globalAlpha = prevAlpha;
       }
     } finally {
@@ -541,24 +542,31 @@ export class Graphics {
     c.restore();
   }
 
-  private renderLine(c: Ctx2D, style: LineStyle, p2d: Path2D, cx: ColorTransform | null, base: DOMMatrix, devScale: number,
-    deviceScale: number): void {
+  private renderLine(c: Ctx2D, style: LineStyle, p2d: Path2D, cmds: number[], closed: boolean, cx: ColorTransform | null,
+    base: DOMMatrix, devScale: number, deviceScale: number): void {
     const [r, g, b, a] = applyCxToRGBA((style.rgb >>> 16) & 0xff, (style.rgb >>> 8) & 0xff, style.rgb & 0xff, style.alpha, cx);
     if (a <= 0) return;
     c.strokeStyle = cssRGBA(r, g, b, a);
     c.lineCap = style.caps;
     c.lineJoin = style.joints;
     c.miterLimit = style.miterLimit;
-    let deviceWidth: number;
-    if (style.width === 0) deviceWidth = 1;
-    else if (style.noScale !== 'normal') deviceWidth = Math.max(1, style.width * deviceScale);
-    else deviceWidth = style.width * devScale < 1 ? 1 : 0;
-    if (deviceWidth > 0) {
+    // device width; whole widths and hairlines are snapped to the pixel grid like Flash (strokeSnap.ts, lane V probe)
+    const devW = style.width === 0 ? 0 : style.noScale !== 'normal' ? style.width * deviceScale : style.width * devScale;
+    const snap = strokeSnap(devW);
+    if (snap.mode !== 0) {
+      const dp = snappedPath2D(cmds, { a: base.a, b: base.b, c: base.c, d: base.d, tx: base.e, ty: base.f }, snap.mode, closed);
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.lineWidth = snap.width;
+      c.stroke(dp);
+      c.setTransform(base);
+      return;
+    }
+    if (style.noScale !== 'normal') {
       // stroke in device space with a fixed pixel width
       const dp = new Path2D();
       dp.addPath(p2d, base);
       c.setTransform(1, 0, 0, 1, 0, 0);
-      c.lineWidth = deviceWidth;
+      c.lineWidth = snap.width;
       c.stroke(dp);
       c.setTransform(base);
       return;

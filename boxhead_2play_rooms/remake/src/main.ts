@@ -113,11 +113,15 @@ async function boot(): Promise<void> {
   registerButtonActions();
   applyScope();
   setTimelineSoundHandler(playTimelineSound);
+  // Dev builds only (lane V visual tests): ?scene=<id> drives the game to a fixed screen and freezes it there
+  // (src/dev/scenes.ts, ids in src/dev/sceneList.ts). Production builds drop this branch (import.meta.env.DEV = false).
+  const sceneId = import.meta.env.DEV ? params.get('scene') : null;
+  if (sceneId) (await import('./dev/scenes.ts')).installScene(sceneId, { seed: Number(params.get('seed') ?? 1), legacyRender: params.has('legacyRender') });
 
   // 4) audio unlock (browser: needs a click; Electron: autoplay allowed -> resolves immediately)
   dbg.stage = 'audio';
   installAudioUnlock();
-  if (!isElectron()) await unlockAudioOverlay(stage);
+  if (!isElectron() && !sceneId) await unlockAudioOverlay(stage);
   msg.remove();
 
   // 5) player + platform loop (the first tick executes root frame 1)

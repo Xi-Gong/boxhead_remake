@@ -130,19 +130,31 @@ describe('Graphics paint order and Flash path semantics', () => {
     expect(ops[0]!.style).toBe('rgb(18,52,86)');
   });
 
-  it('hairlines are stroked in device space at 1px; thin scaled lines too', () => {
+  it('hairlines are stroked in device space at 1px, snapped to pixel centres; thin scaled lines too', () => {
+    // lane V (strokeProbe): Flash draws a hairline / sub-pixel / whole-width stroke on the pixel grid: device points
+    // of a 1 px line move to floor(v) + 0.5 (src/engine/flash/strokeSnap.ts). Device-space path = built from points.
     const g = new Graphics();
     g.lineStyle(0, 0xff0000, 100);
     g.moveTo(0, 0); g.lineTo(10, 0);
     const { ctx, ops } = fakeCtx(2);
     g.render(ctx, null, 2);
-    expect(ops[0]).toMatchObject({ op: 'stroke', width: 1, device: true });
+    expect(ops[0]).toMatchObject({ op: 'stroke', width: 1 });
+    expect(ops[0]!.cmds.slice(-2)).toEqual([['M', 0.5, 0.5], ['L', 20.5, 0.5]]);
     const t = new Graphics();
     t.lineStyle(0.25, 0);
     t.moveTo(0, 0); t.lineTo(10, 0);
     const r = fakeCtx(2);
     t.render(r.ctx, null, 2);
-    expect(r.ops[0]).toMatchObject({ width: 1, device: true });
+    expect(r.ops[0]).toMatchObject({ width: 1 });
+    expect(r.ops[0]!.cmds.slice(-2)).toEqual([['M', 0.5, 0.5], ['L', 20.5, 0.5]]);
+    // lineStyle(1) at device scale 2 = 2 device px (even): points round to pixel edges
+    const e = new Graphics();
+    e.lineStyle(1, 0);
+    e.moveTo(0.3, 0.3); e.lineTo(10, 0.3);
+    const q = fakeCtx(2);
+    e.render(q.ctx, null, 2);
+    expect(q.ops[0]).toMatchObject({ width: 2 });
+    expect(q.ops[0]!.cmds.slice(-2)).toEqual([['M', 1, 1], ['L', 20, 1]]);
   });
 
   it('XSI DI pattern: invisible lines (alpha 0) and alpha 0 fills are skipped, colour transform applied', () => {
