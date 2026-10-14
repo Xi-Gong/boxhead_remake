@@ -21,7 +21,9 @@ function prng(seed: number): () => number {
 
 const KEYS = [27, 80, 13, 8, 32, 37, 38, 39, 40, 65, 68, 69, 75, 81, 83, 87, 113, 186, 188, 190, 191, 48, 49, 50, 51];
 const STATES = new Set(['State_Init', 'State_Intro', 'State_Main', 'State_Instructions', 'State_SelectWorld_Single', 'State_SelectWorld_Coop',
-  'State_SelectWorld_DeathMatch', 'State_LoadWorld', 'State_LoadingWorld', 'State_InitWorld', 'State_RunWorld', 'State_Debrief', 'State_Debrief_Winner']);
+  'State_SelectWorld_DeathMatch', 'State_LoadWorld', 'State_LoadingWorld', 'State_InitWorld', 'State_RunWorld', 'State_Debrief', 'State_Debrief_Winner',
+  // v0.1.2 SAVE_QUIT_RESUME: transient states of the save & quit / continue wiring.
+  'State_SaveQuitMenu', 'State_Continue']);
 
 function monkey(seed: number, frames: number): { visited: Set<string>; errors: string[] } {
   const g = createHeadlessGame({ mode: 'Single', seed, menuOnly: 'Main' });

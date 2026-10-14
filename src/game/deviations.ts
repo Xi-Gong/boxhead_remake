@@ -162,4 +162,19 @@ export const DEVIATIONS: Deviation[] = [
       're-applied to the rebuilt world and the wave restarts fresh (mid-wave creatures/decals are not carried). Without ' +
       'a checkpoint (e.g. Death Match, or death before the first wave advanced) the original behaviour is untouched.',
   },
+  {
+    id: 'SAVE_QUIT_RESUME',
+    file: 'scope.ts (CHud.Pause wrapper, CMain.State_RunWorld/State_SaveQuitMenu/State_Continue/State_Debrief wrappers, CScreen_Main.Init_Buttons wrapper), local/Resume.ts, local/localSymbols.ts (buildMenuButton)',
+    description:
+      'The original has no mid-run save at all. The remake adds a "SAVE & QUIT" button to the pause screen (drawn at ' +
+      'runtime below QUIT; the original pause screen has a single QUIT) that stores a run snapshot in the game save ' +
+      '(SharedObject BXHD_2PLAY_6 member mResumeData, written only by this button and flushed immediately) and returns ' +
+      'to the main menu - not through the Debrief, so the parked score cannot be submitted and later double-counted. ' +
+      'While a stored run exists the main menu grows a fifth item, CONTINUE (drawn, wired through the original ' +
+      'Register_Button rollover), which rebuilds that room and re-applies the snapshot: current wave (restarting fresh ' +
+      'with the remaining spawn budget), score, DM frag counts, multiplier/combo, player positions/lives/weapons+ammo, ' +
+      'marker and placed room objects, RNG state and tick. Accepted losses: mid-wave creatures/shots/effects, floor ' +
+      'decals, screen shake/brightness, camera smoothing, and the fuse progress of detonating claymores/charge packs. ' +
+      'One slot: a new run, a death or a Death Match decision clears it.',
+  },
 ];

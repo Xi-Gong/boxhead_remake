@@ -3,6 +3,7 @@
 // scope.ts wiring (checkpoint hook, SAVE & QUIT button, CONTINUE) lands in M2/M3 and gets its own tests.
 import { describe, expect, it } from 'vitest';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
+import { SharedObject, type KeyValueStorage } from '../../src/engine/flash/SharedObject.ts';
 import { applyToWorld, capture, clearAll, hasCheckpoint, type RunSnapshot } from '../../src/game/local/Resume.ts';
 import { Thing } from '../../src/game/packages.ts';
 import { createHeadlessGame, type HeadlessGame } from './harness.ts';
@@ -212,6 +213,70 @@ describe('resume: death -> RETRY uses the wave checkpoint (scope wiring)', () =>
     expect(g.world().mUpgrades.mLevelIndex).toBe(cpWave);
     expect(g.world().mHud.nTotalScore).toBe(cpScore);
     expect(g.errors).toEqual([]);
+  });
+});
+
+describe('resume: SAVE & QUIT -> restart -> CONTINUE (scope wiring)', () => {
+  class MapStorage implements KeyValueStorage {
+    readonly map = new Map<string, string>();
+    getItem(k: string): string | null { return this.map.get(k) ?? null; }
+    setItem(k: string, v: string): void { this.map.set(k, v); }
+    removeItem(k: string): void { this.map.delete(k); }
+    json(): Record<string, any> { return JSON.parse(this.map.get('SO:BXHD_2PLAY_6') ?? '{}'); }
+  }
+
+  it('stores the run, offers CONTINUE after a restart, restores it, and drops it on death', () => {
+    const store = new MapStorage();
+    SharedObject._setStorage(store);
+    try {
+      // Session 1: clear wave 1, then SAVE & QUIT from the pause screen.
+      const g1 = createHeadlessGame({ mode: 'Single', room: 2, seed: 61, difficulty: 0 });
+      const bot = new Bot(0);
+      for (let i = 0; i < 8000 && g1.world().mUpgrades.mLevelIndex < 2; i++) runBots(g1, [bot], 1);
+      expect(g1.world().mUpgrades.mLevelIndex).toBe(2);
+      const w1 = g1.world();
+      const score = w1.mHud.nTotalScore;
+      const px = g1.players()[0]!.mPosition.mX, py = g1.players()[0]!.mPosition.mY;
+      g1.saveQuit();
+      expect(g1.waitScreen('State_Main', 'Screen_Main')).toBe(true);
+      expect(g1.main().mcWorld).toBeUndefined(); // the run is parked, not debriefed
+      expect(g1.hasStoredResume()).toBe(true);
+      expect(store.json().mResumeData.wave).toBe(2);
+      expect(store.json().mResumeData.roomLibLink).toBe('ROOM_Single_0002');
+
+      // Session 2 (a restarted app: same storage, everything else rebuilt): the menu offers CONTINUE.
+      const g2 = createHeadlessGame({ mode: 'Single', room: 2, seed: 61, menuOnly: 'Main' });
+      const cont = g2.main().mcScreen.mcContinue;
+      expect(cont).toBeDefined();
+      cont.onRelease.call(cont);
+      expect(g2.waitRunning()).toBe(true);
+      const w2 = g2.world();
+      expect(w2.mWorldLibLink).toBe('ROOM_Single_0002');
+      expect(w2.mUpgrades.mLevelIndex).toBe(2);
+      expect(w2.mHud.nTotalScore).toBe(score);
+      const p2 = g2.players()[0]!;
+      expect(Math.abs(p2.mPosition.mX - px)).toBeLessThan(1e-9);
+      expect(Math.abs(p2.mPosition.mY - py)).toBeLessThan(1e-9);
+
+      // The continued run's death clears the stored run; a fresh menu shows no CONTINUE.
+      let gone = false;
+      for (let i = 0; i < 8000 && !gone; i++) {
+        runBots(g2, [new Bot(0, { passive: true })], 1);
+        gone = g2.world() == undefined || !!(g2.players()[0] && (g2.players()[0].mFlags & Thing.CThing.mFlag_DEAD));
+        if (gone && g2.world() != undefined) gone = false;
+      }
+      expect(g2.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+      expect(g2.hasStoredResume()).toBe(false);
+      g2.exit();
+      expect(g2.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld')).toBe(true);
+      const g3 = createHeadlessGame({ mode: 'Single', room: 2, seed: 61, menuOnly: 'Main' });
+      expect(g3.main().mcScreen.mcContinue).toBeUndefined();
+      expect(g1.errors).toEqual([]);
+      expect(g2.errors).toEqual([]);
+      expect(g3.errors).toEqual([]);
+    } finally {
+      SharedObject._setStorage(undefined);
+    }
   });
 });
 

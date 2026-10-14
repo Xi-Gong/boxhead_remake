@@ -31,7 +31,7 @@ import { registerSpriteScripts, setXsiSource } from '../../src/game/frames/Sprit
 import { registerButtonActions } from '../../src/game/frames/ButtonActions.ts';
 import { applyScope } from '../../src/game/scope.ts';
 import { installLocalSymbols } from '../../src/game/local/localSymbols.ts';
-import { _resetForTests as resetResumeForTests } from '../../src/game/local/Resume.ts';
+import { _resetForTests as resetResumeForTests, hasStored as resumeHasStored } from '../../src/game/local/Resume.ts';
 import { CMain, Screen, Thing, World } from '../../src/game/packages.ts';
 
 export type GameMode = 'Single' | 'Coop' | 'DeathMatch';
@@ -224,6 +224,10 @@ export interface HeadlessGame {
   hash(): string;
   /** Pause screen -> QUIT (what its _Quit button does). */
   quit(): void;
+  /** Pause screen -> SAVE & QUIT (the scope-added _SaveQuit button; deviation SAVE_QUIT_RESUME). */
+  saveQuit(): void;
+  /** True while a stored resume run exists (SharedObject member mResumeData). */
+  hasStoredResume(): boolean;
   /** Debrief screen (Screen_Debrief / Screen_Debrief_Winner) RETRY button (onPress) -> same room again. */
   retry(): void;
   /** Debrief screen EXIT button (onPress) -> level selection. */
@@ -376,6 +380,17 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
       }
       w.mHud.mcScreenPause?._Quit?.onRelease?.call(w.mHud.mcScreenPause._Quit);
     },
+    saveQuit: () => {
+      const w = world();
+      if (!w) return;
+      if (!w.mPaused) {
+        keyDown(KEYS.PAUSE);
+        stepUntil(() => !!w.mPaused, 20);
+        keyUp(KEYS.PAUSE);
+      }
+      w.mHud.mcScreenPause?._SaveQuit?.onRelease?.call(w.mHud.mcScreenPause._SaveQuit);
+    },
+    hasStoredResume: () => resumeHasStored(),
     retry: () => {
       const s = main()?.mcScreen;
       if (!s?._Retry) throw new Error(`no RETRY button on ${s?._CLASSID_}`);

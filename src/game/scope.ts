@@ -10,8 +10,8 @@ import { getFrameScript, registerFrameScript, setInstanceHook } from '../engine/
 import { CMain, CSaveData, CSound, External, Screen, World } from './packages.ts';
 import { hasTable, roomIndexOfLibLink, showHighscoreTable, submitLocalScore } from './local/Highscores.ts';
 import { registerInstructionsPage } from './local/InstructionsPage.ts';
-import { SCREEN_INSTRUCTIONS_LINKAGE } from './local/localSymbols.ts';
-import { armFromCheckpoint, clearAll, consumePending, isArmed, isSuppressing, recordCheckpoint } from './local/Resume.ts';
+import { SCREEN_INSTRUCTIONS_LINKAGE, buildMenuButton } from './local/localSymbols.ts';
+import { armFromCheckpoint, armFromStored, capture, clearAll, clearStored, consumePending, hasStored, isArmed, isSuppressing, recordCheckpoint, writeStored } from './local/Resume.ts';
 
 /**
  * CrazyMonkeyGames sponsor / cross-promotion links, hidden on every screen they appear on (Screen_Main,
@@ -202,5 +202,72 @@ export function applyScope(): void {
   mainProtoResume.State_LoadWorld = function (this: any): void {
     if (!isArmed()) clearAll();
     stateLoadWorld.call(this);
+  };
+
+  // ---- SAVE & QUIT / CONTINUE (deviation SAVE_QUIT_RESUME) -----------------------------------
+  // Pause screen: a second button below QUIT stores the run snapshot and returns to the main menu (NOT through the
+  // Debrief: the run is not over, and its score must not become submittable twice through a later CONTINUE).
+  const hudProto = World.CHud.prototype as any;
+  const hudPause = hudProto.Pause;
+  hudProto.Pause = function (this: any, tState: any): void {
+    hudPause.call(this, tState);
+    if (tState !== true || !this.mcScreenPause) return;
+    const btn = buildMenuButton(this.mcScreenPause, '_SaveQuit', 320, 452, 220, 26, 'SAVE & QUIT', 15);
+    btn.pWorld = this.mWorld;
+    btn.onRelease = function (this: any): void {
+      CSound.mSamples.Click.PlaySound();
+      writeStored(capture(this.pWorld));
+      this.pWorld.mCompleteState = 'savequit';
+    };
+  };
+  // 'savequit' outcome: the same bookkeeping the real outcomes do, then the main menu (the world is deleted once the
+  // screen transition finished, exactly like State_Debrief).
+  const runWorldState = mainProtoResume.State_RunWorld;
+  mainProtoResume.State_RunWorld = function (this: any, flagDraw?: any): void {
+    if (this.mcWorld?.mCompleteState === 'savequit') {
+      CMain.mFPS = 25;
+      this.mcWorld.mPause = true;
+      this.SetState('State_SaveQuitMenu');
+      return;
+    }
+    runWorldState.call(this, flagDraw);
+  };
+  mainProtoResume.State_SaveQuitMenu = function (this: any): void {
+    this.Process_Screen('Screen_Main');
+    this.DeleteWorld();
+    // Once the world is gone this IS the main menu (same screen, same state name as a normal boot).
+    if (!this.mcWorld) this.SetState('State_Main');
+  };
+  // Main menu: CONTINUE appears only while a stored run exists, styled and wired like the original items (the
+  // rollover of Register_Button works on the button's _Contents child).
+  const mainMenuProto = Screen.CScreen_Main.prototype as any;
+  const initButtonsPrev = mainMenuProto.Init_Buttons;
+  mainMenuProto.Init_Buttons = function (this: any): void {
+    initButtonsPrev.call(this);
+    if (hasStored()) {
+      const mc = buildMenuButton(this, 'mcContinue', 320, 359.1, 260, 30, 'CONTINUE', 17);
+      this.Register_Button(mc, 'State_Continue');
+    }
+  };
+  mainProtoResume.State_Continue = function (this: any): void {
+    const snap = armFromStored();
+    if (!snap) {
+      this.SetState('State_Main');
+      return;
+    }
+    this.mWorldLibLink = snap.roomLibLink;
+    this.mReturn_SelectWorld = 'State_SelectWorld_' + snap.gameMode;
+    this.SetState('State_LoadWorld');
+  };
+  // Run over (death / DM winner): drop the stored run. The in-memory checkpoint stays for the debrief RETRY.
+  const stateDebrief = mainProtoResume.State_Debrief;
+  mainProtoResume.State_Debrief = function (this: any): void {
+    clearStored();
+    stateDebrief.call(this);
+  };
+  const stateDebriefWinner = mainProtoResume.State_Debrief_Winner;
+  mainProtoResume.State_Debrief_Winner = function (this: any): void {
+    clearStored();
+    stateDebriefWinner.call(this);
   };
 }

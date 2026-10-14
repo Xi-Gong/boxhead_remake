@@ -123,6 +123,20 @@ export function armFromCheckpoint(): boolean {
   return true;
 }
 
+/**
+ * Arm the CONTINUE path from the stored save (State_Continue). Returns the snapshot (and sets the static game mode
+ * from it) or null when nothing readable is stored. The current run's in-memory checkpoint is dropped: it belongs
+ * to a different run and must not leak into the continued one.
+ */
+export function armFromStored(): RunSnapshot | null {
+  const snap = readStored();
+  if (!snap) return null;
+  pending = snap;
+  checkpoint = null;
+  World.CWorld.mGameMode = snap.gameMode;
+  return snap;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------------------- capture
 
 function capturePlayer(p: any): PlayerState {
