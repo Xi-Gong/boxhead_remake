@@ -59,7 +59,9 @@ const dbg: GameDebug = {
     } : null;
     return {
       bridge: b.phase, msg: b.message, peers: b.hosts.length, peerName: b.peerName,
+      isHost: b.isHost, ready: b.ready, sel: b.sel, bridgeRtt: b.rttMs,
       session: s?.phase, stall: s?.stallReason, rtt: s?.rttMs, mode: s?.mode, startTick: s?.startTick,
+      inputDelay: s?.startOpts?.inputDelay ?? s?.inputDelay ?? null, endReason: s?.endReason ?? null,
       worldTick: s?.world?.mTick, state: (window as any).__game?.state?.(),
       checkpoint: s?.netCheckpoint?.tick ?? null, frames,
     };
@@ -154,6 +156,7 @@ async function boot(): Promise<void> {
   const player = new Player(library, { renderScale });
   dbg.player = player;
   dbg.platform = startPlatform({ container: stage, player, getMenu: () => _root?.menu });
+  lanBridge().setPresenter(dbg.platform.presenter); // LAN DOM overlays track the letterboxed canvas (v0.1.4)
   dbg.platform.presenter.canvas.focus();
   // Local gamepad support (deviation GAMEPAD_INPUT): poll the pads every rAF before the enterFrame batch.
   const gamepad = installGamepad({

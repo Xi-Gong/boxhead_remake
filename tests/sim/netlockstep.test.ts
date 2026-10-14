@@ -10,7 +10,8 @@ import { describe, expect, it } from 'vitest';
 import { setRandomState } from '../../src/engine/flash/rng.ts';
 import { createHeadlessGame, KEYS, type HeadlessGame } from './harness.ts';
 import { NetSlot, packBits, SLOT_ORDER, unpackBit } from '../../src/game/local/Net/NetSlot.ts';
-import { NetSession } from '../../src/game/local/Net/NetSession.ts';
+import { NetSession, _peekLocalFrame } from '../../src/game/local/Net/NetSession.ts';
+import { CMain } from '../../src/game/packages.ts';
 import type { GameConfig, LanMode } from '../../src/game/local/Net/protocol.ts';
 
 // --------------------------------------------------------------------------------------------- helpers
@@ -225,5 +226,69 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     const h1 = run();
     const h2 = run();
     expect(h2).toBe(h1); // the rebuild+continue path is deterministic
+  });
+});
+
+// --------------------------------------------------------------------------- v0.1.4 session config / input delay
+
+describe('LAN session config (v0.1.4)', () => {
+  it('applyConfig imposes and restores BOTH character indices', { timeout: 60000 }, () => {
+    const g = createHeadlessGame({ mode: 'Coop', room: 1, menuOnly: 'Main' });
+    const sd: any = (CMain as any).mSaveData;
+    const p1 = sd.mPlayer1_CharacterIndex, p2 = sd.mPlayer2_CharacterIndex;
+    const sent: any[] = [];
+    const session = new NetSession(1, { send: (m) => sent.push(m) });
+    session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: { ...CFG, charP1: 2, charP2: 1 }, seed: SEED }, g.main());
+    if (!g.waitRunning(3000)) throw new Error(`room did not start (${g.state()}, ${g.errors[0] ?? ''})`);
+    expect(sd.mPlayer1_CharacterIndex).toBe(2); // the host's charP1 reaches the client's save data
+    expect(sd.mPlayer2_CharacterIndex).toBe(1);
+    session.dispose();
+    expect(sd.mPlayer1_CharacterIndex).toBe(p1); // and dispose restores the player's own choices
+    expect(sd.mPlayer2_CharacterIndex).toBe(p2);
+  });
+
+  it('honours start.inputDelay: primes 0..D, sends t+D, prunes behind t-(D+3)', { timeout: 60000 }, () => {
+    const g = createHeadlessGame({ mode: 'Coop', room: 1, menuOnly: 'Main' });
+    const sent: any[] = [];
+    const session = new NetSession(1, { send: (m) => sent.push(m) });
+    session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, inputDelay: 2 }, g.main());
+    if (!g.waitRunning(3000)) throw new Error(`room did not start (${g.state()}, ${g.errors[0] ?? ''})`);
+    expect(session.inputDelay).toBe(2);
+    // onWorldReady primed the D+1 frames 0..2 (with the default delay it would be 0..1).
+    const primed = sent.filter((m) => m.t === 'in' && m.tick <= 2).map((m) => m.tick).sort((a, b) => a - b);
+    expect(primed).toEqual([0, 1, 2]);
+
+    const first = g.world().mTick;
+    for (let T = 0; T < 12; T++) {
+      session.onNetMessage({ t: 'in', tick: T, bits: 0 }); // the remote frame for relative tick T
+      session.onNetMessage({ t: 'in', tick: T + 1, bits: 0 }); // one ahead, so the tick never stalls
+      g.tick(1);
+    }
+    // afterTick sends frame index t+D: with 12 executed ticks the newest is around 12+2.
+    const newest = Math.max(...sent.filter((m) => m.t === 'in').map((m) => m.tick));
+    expect(newest).toBeGreaterThanOrEqual(12);
+    // The buffered window shrinks behind t-(D+3): frames older than 12-5 are gone, recent ones remain.
+    expect(_peekLocalFrame(session, 0)).toBeUndefined();
+    expect(_peekLocalFrame(session, 2)).toBeUndefined();
+    expect(_peekLocalFrame(session, newest)).toBeDefined();
+  });
+
+  it('forfeit records the via reason (timeout vs concede) for the end-screen routing', { timeout: 60000 }, () => {
+    const g = createHeadlessGame({ mode: 'Coop', room: 1, menuOnly: 'Main' });
+    const sent: any[] = [];
+    const session = new NetSession(0, { send: (m) => sent.push(m) });
+    session.startLocalGame({ mode: 'DeathMatch', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED }, g.main());
+    if (!g.waitRunning(3000)) throw new Error(`room did not start (${g.state()}, ${g.errors[0] ?? ''})`);
+    expect(session.endReason).toBeUndefined();
+    session.forfeit('timeout');
+    expect(session.phase).toBe('ended');
+    expect(session.endReason).toBe('timeout');
+    expect(sent.at(-1)).toMatchObject({ t: 'leave', reason: 'forfeit', via: 'timeout' });
+    // The peer's timeout message maps to 'peer-timeout' locally (both route to the main menu).
+    const other = new NetSession(1, { send: () => undefined });
+    other.onNetMessage({ t: 'leave', reason: 'forfeit', via: 'timeout' });
+    expect(other.endReason).toBe('peer-timeout');
+    session.dispose();
+    other.dispose();
   });
 });

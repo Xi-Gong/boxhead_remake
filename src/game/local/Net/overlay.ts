@@ -7,14 +7,21 @@ import { setNetOverlaySync } from './bridge.ts';
 let statusEl: HTMLDivElement | undefined;
 let pingEl: HTMLDivElement | undefined;
 let hideTimer: number | undefined;
+/** True while the status strip uses the prominent (reconnect countdown) style. */
+let prominent = false;
+
+const STYLE_NORMAL = 'position:absolute;left:50%;top:8px;transform:translateX(-50%);padding:6px 18px;'
+  + 'background:rgba(0,0,0,0.72);border:1px solid #9c9c9c;color:#fff;font:bold 15px Calibri,sans-serif;'
+  + 'text-align:center;pointer-events:none;z-index:8;display:none;white-space:pre';
+const STYLE_PROMINENT = 'position:absolute;left:50%;top:10%;transform:translateX(-50%);padding:12px 34px;'
+  + 'background:rgba(64,0,0,0.85);border:2px solid #ef1304;color:#fff;font:bold 22px Calibri,sans-serif;'
+  + 'text-align:center;pointer-events:none;z-index:8;display:none;white-space:pre';
 
 function ensure(): boolean {
   if (typeof document === 'undefined') return false;
   if (!statusEl) {
     statusEl = document.createElement('div');
-    statusEl.style.cssText = 'position:absolute;left:50%;top:8px;transform:translateX(-50%);padding:6px 18px;'
-      + 'background:rgba(0,0,0,0.72);border:1px solid #9c9c9c;color:#fff;font:bold 15px Calibri,sans-serif;'
-      + 'text-align:center;pointer-events:none;z-index:8;display:none;white-space:pre';
+    statusEl.style.cssText = STYLE_NORMAL;
     (document.getElementById('stage') ?? document.body).appendChild(statusEl);
     pingEl = document.createElement('div');
     pingEl.style.cssText = 'position:absolute;right:10px;top:8px;padding:2px 10px;background:rgba(0,0,0,0.55);'
@@ -24,8 +31,15 @@ function ensure(): boolean {
   return true;
 }
 
-function show(text: string): void {
+function show(text: string, big = false): void {
   if (!ensure() || !statusEl) return;
+  if (big !== prominent) {
+    // Swap the stylesheet (keeps display/none semantics; both strings end with display:none, show() sets block).
+    prominent = big;
+    const wasVisible = statusEl.style.display === 'block';
+    statusEl.style.cssText = big ? STYLE_PROMINENT : STYLE_NORMAL;
+    statusEl.style.display = wasVisible ? 'block' : 'none';
+  }
   statusEl.textContent = text;
   statusEl.style.display = 'block';
   if (hideTimer !== undefined) { clearTimeout(hideTimer); hideTimer = undefined; }
@@ -51,8 +65,9 @@ function sync(session: NetSession | null): void {
     if (rtt !== undefined) pingEl.textContent = `${rtt <= 0 ? '<1' : Math.round(rtt)} ms`;
   }
   if (session.phase === 'reconnecting') {
+    // Prominent, and re-synced every 500 ms by the bridge's deadline timer so the seconds actually tick down.
     const s = session.reconnectSecondsLeft();
-    show(session.role === 1 ? `PLAYER 1 LOST - RECONNECTING... ${s}s` : `PLAYER 2 LOST - WAITING... ${s}s`);
+    show(session.role === 1 ? `RECONNECTING TO HOST - ${s}s` : `PLAYER 2 LOST - WAITING TO RECONNECT - ${s}s`, true);
     return;
   }
   if (session.phase === 'desync') {
@@ -60,7 +75,11 @@ function sync(session: NetSession | null): void {
     return;
   }
   if (session.phase === 'ended') {
-    show(session.mode === 'DeathMatch' ? 'GAME OVER' : 'RUN OVER');
+    if (session.endReason === 'timeout' || session.endReason === 'peer-timeout') {
+      show('CONNECTION LOST - GAME OVER');
+    } else {
+      show(session.mode === 'DeathMatch' ? 'GAME OVER' : 'RUN OVER');
+    }
     hideSoon(2500);
     return;
   }

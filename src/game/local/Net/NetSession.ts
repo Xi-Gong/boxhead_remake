@@ -2,7 +2,8 @@
 // (electron main process / tests) is behind the NetLink interface; inbound messages arrive through onNetMessage /
 // onPeerEvent.
 //
-// LOCKSTEP (input delay LAN_INPUT_DELAY = 1 tick):
+// LOCKSTEP (input delay: LAN_INPUT_DELAY = 1 tick by default; the host raises it for high-RTT virtual-LAN links
+// via start.inputDelay, v0.1.4):
 //   - every executed tick T, right before it runs, BOTH players' NetSlots are set from the bitmaps sampled for T
 //     (our own frame was sampled LAN_INPUT_DELAY ticks earlier and sent; the peer's frame arrived over the wire);
 //   - right after tick T ran we sample the CURRENT local input state and send it as the frame for T + 1 + D, so it
@@ -70,6 +71,8 @@ export interface NetStart {
   roomLink: string;
   cfg: GameConfig;
   seed: number;
+  /** Lockstep input delay in ticks for this game (host picks it from the measured RTT; default LAN_INPUT_DELAY). */
+  inputDelay?: number;
   /** Resume from the net checkpoint at this tick (reconnect / continuation); undefined = fresh. */
   resumeTick?: number;
 }
@@ -81,6 +84,13 @@ export class NetSession {
   mode: LanMode = 'Coop';
   /** The start parameters of the current/last game (the bridge reuses the seed for a 续局 continuation). */
   startOpts: NetStart | undefined;
+  /**
+   * Why the last game ended. Forfeit routing (v0.1.4): 'timeout'/'peer-timeout' (the 30 s reconnect window ran
+   * out) end at the MAIN MENU on both peers; a 'concede' (pause-screen QUIT) keeps the regular Debrief/Winner.
+   */
+  endReason: 'timeout' | 'concede' | 'peer-timeout' | 'peer-concede' | undefined;
+  /** Lockstep input delay in ticks for this game (host-set from the measured link RTT; see afterTick). */
+  inputDelay: number = LAN_INPUT_DELAY;
   private world: any = undefined;
   netPaused = false;
   stallReason: 'peer' | 'local' | 'waiting' | undefined;
@@ -136,8 +146,8 @@ export class NetSession {
     }
     if (msg.t === 'leave') {
       if (msg.reason === 'forfeit') {
-        // The opponent conceded: we win (Death Match) / the run ends (Coop) on our side too.
-        this.peerForfeit();
+        // The opponent conceded (or their reconnect window timed out): we win (Death Match) / the run ends (Coop).
+        this.peerForfeit(msg.via ?? 'concede');
       } else if (this.phase === 'playing') {
         this.phase = 'ended';
       }
@@ -195,6 +205,8 @@ export class NetSession {
     if (!main) return;
     this.startOpts = start;
     this.mode = start.mode;
+    this.endReason = undefined;
+    this.inputDelay = start.inputDelay ?? LAN_INPUT_DELAY;
     this.applyConfig(start.cfg);
     World.CWorld.mGameMode = start.mode;
     // A reconnect resume replaces a live (frozen) world: dispose it outright (DeleteWorld's body, without its
@@ -233,7 +245,8 @@ export class NetSession {
       this.savedCfg = {
         mDifficulty: sd.mDifficulty, mGameSpeed: sd.mGameSpeed, mDevilsActive: sd.mDevilsActive,
         mCollisionsActive: sd.mCollisionsActive, mDamageActive: sd.mDamageActive, mGameAmount: sd.mGameAmount,
-        mDetail: sd.mDetail, mPlayer2_CharacterIndex: sd.mPlayer2_CharacterIndex,
+        mDetail: sd.mDetail, mPlayer1_CharacterIndex: sd.mPlayer1_CharacterIndex,
+        mPlayer2_CharacterIndex: sd.mPlayer2_CharacterIndex,
       };
       // Deterministic nav budget for the session (deviation NAV_BUDGET_TEST_HOOK, production use in net games).
       this.prevNavBudget = C.mNavBudgetMode;
@@ -246,6 +259,7 @@ export class NetSession {
     sd.mDamageActive = cfg.damage;
     sd.mGameAmount = cfg.gameAmount;
     sd.mDetail = cfg.detail;
+    sd.mPlayer1_CharacterIndex = cfg.charP1; // v0.1.4: BOTH characters come from the host's setup screen
     sd.mPlayer2_CharacterIndex = cfg.charP2;
     Thing.Creature.CThing_Creature.mDamageActive = this.mode !== 'DeathMatch' ? cfg.damage : true;
   }
@@ -262,7 +276,7 @@ export class NetSession {
     this.localFrames.clear();
     // Prime the input-delay window so the very first tick can run. (remoteFrames is NOT cleared here: the peer's
     // primes for this game may have arrived during our build.)
-    for (let s = 0; s <= LAN_INPUT_DELAY; s++) {
+    for (let s = 0; s <= this.inputDelay; s++) {
       const bits = this.sampleLocalBits();
       this.localFrames.set(s, bits);
       this.link.send({ t: 'in', tick: s, bits });
@@ -299,7 +313,7 @@ export class NetSession {
   afterTick(world: any): void {
     const t = world.mTick - this.startTick;
     this.virtualTimeMs += 1000 / CMain.mFPS;
-    const s = t + LAN_INPUT_DELAY;
+    const s = t + this.inputDelay;
     const bits = this.sampleLocalBits();
     this.localFrames.set(s, bits);
     let sum: LanChecksum | undefined;
@@ -310,9 +324,10 @@ export class NetSession {
     }
     this.link.send({ t: 'in', tick: s, bits, sum });
     if (this.mode === 'DeathMatch' && t > 0 && t % DM_CHECKPOINT_EVERY === 0) this.captureCheckpoint(world);
-    // Keep a small window of frames buffered.
-    for (const k of this.localFrames.keys()) if (k < t - 4) this.localFrames.delete(k);
-    for (const k of this.remoteFrames.keys()) if (k < t - 4) this.remoteFrames.delete(k);
+    // Keep a small window of frames buffered (scales with the input delay).
+    const prune = t - (this.inputDelay + 3);
+    for (const k of this.localFrames.keys()) if (k < prune) this.localFrames.delete(k);
+    for (const k of this.remoteFrames.keys()) if (k < prune) this.remoteFrames.delete(k);
   }
 
   /** The __set__mLevel hook calls this on every wave advance (the field is empty then - a clean checkpoint). */
@@ -325,14 +340,16 @@ export class NetSession {
     this.netCheckpoint = { tick: world.mTick, snap, digest: fnv(JSON.stringify(snap)) };
   }
 
-  /** Forfeit after the 30 s window (or a conceded quit): force the same end state on both peers. */
-  forfeit(): void {
+  /** Forfeit after the 30 s window (timeout) or a conceded quit: force the same end state on both peers. */
+  forfeit(via: 'timeout' | 'concede' = 'concede'): void {
+    this.endReason = via;
     this.endWorld(this.role === 0 ? 'player2 wins' : 'player1 wins');
-    this.link.send({ t: 'leave', reason: 'forfeit' });
+    this.link.send({ t: 'leave', reason: 'forfeit', via });
   }
 
   /** The peer forfeited / left for good while we survived: we win (Death Match) / the run ends (Coop). */
-  peerForfeit(): void {
+  peerForfeit(via: 'timeout' | 'concede' = 'concede'): void {
+    this.endReason = via === 'timeout' ? 'peer-timeout' : 'peer-concede';
     this.endWorld(this.role === 0 ? 'player1 wins' : 'player2 wins');
   }
 

@@ -256,7 +256,23 @@ export function applyScope(): void {
       this.SetState('State_SaveQuitMenu');
       return;
     }
+    // LAN v0.1.4: a forfeit after the 30 s reconnect TIMEOUT ends at the MAIN MENU on both peers (the leave
+    // message carries via:'timeout' so both route here deterministically). A concede (pause-QUIT) keeps the
+    // regular Debrief/Winner screens.
+    const net = netSession();
+    if (this.mcWorld?.mCompleteState && (net?.endReason === 'timeout' || net?.endReason === 'peer-timeout')) {
+      CMain.mFPS = 25;
+      this.mcWorld.mPause = true;
+      this.SetState('State_NetEnd');
+      return;
+    }
     runWorldState.call(this, flagDraw);
+  };
+  mainProtoResume.State_NetEnd = function (this: any): void {
+    // Same shape as State_SaveQuitMenu: the main-menu screen, the world deleted after the transition.
+    this.Process_Screen('Screen_Main');
+    this.DeleteWorld();
+    if (!this.mcWorld) this.SetState('State_Main');
   };
   mainProtoResume.State_SaveQuitMenu = function (this: any): void {
     this.Process_Screen('Screen_Main');
