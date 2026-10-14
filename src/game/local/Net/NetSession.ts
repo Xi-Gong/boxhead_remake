@@ -79,6 +79,8 @@ export class NetSession {
   private readonly link: NetLink;
   phase: NetPhase = 'idle';
   mode: LanMode = 'Coop';
+  /** The start parameters of the current/last game (the bridge reuses the seed for a 续局 continuation). */
+  startOpts: NetStart | undefined;
   private world: any = undefined;
   netPaused = false;
   stallReason: 'peer' | 'local' | 'waiting' | undefined;
@@ -86,7 +88,6 @@ export class NetSession {
   desyncTick: number | undefined;
   /** Latest in-session net checkpoint (identical on both peers; memory only). */
   netCheckpoint: NetCheckpoint | undefined;
-  private startOpts: NetStart | undefined;
   private startTick = 0;
   private virtualTimeMs = 0;
   private readonly localFrames = new Map<number, number>();
@@ -125,6 +126,10 @@ export class NetSession {
       return;
     }
     if (msg.t === 'start' && this.role === 1) {
+      // A restarted client adopts the host's checkpoint snapshot (its own in-memory copy died with the process).
+      if (msg.resumeTick !== undefined && msg.snap && !this.netCheckpoint) {
+        this.netCheckpoint = { tick: msg.resumeTick, snap: msg.snap as RunSnapshot, digest: '' };
+      }
       // Host-driven game start / resume (the client applies everything through the same path as the host).
       this.startLocalGame({
         mode: msg.mode, roomLink: msg.roomLink, cfg: msg.cfg, seed: msg.seed, resumeTick: msg.resumeTick,
@@ -136,8 +141,12 @@ export class NetSession {
       return;
     }
     if (msg.t === 'leave') {
-      // 'forfeit': the leaver concedes after its own 30 s timeout - we already ended the same way.
-      if (msg.reason === 'quit' && this.phase === 'playing') this.phase = 'ended';
+      if (msg.reason === 'forfeit') {
+        // The opponent conceded: we win (Death Match) / the run ends (Coop) on our side too.
+        this.peerForfeit();
+      } else if (this.phase === 'playing') {
+        this.phase = 'ended';
+      }
       this.onStateChange?.();
       return;
     }
@@ -168,11 +177,11 @@ export class NetSession {
    */
   onHello(hello: { sid?: string; capTick?: number }): void {
     if (this.role !== 0) return;
-    if (this.phase === 'reconnecting') {
-      const start: NetStart = this.netCheckpoint
-        ? { ...this.startOpts!, resumeTick: this.netCheckpoint.tick }
-        : { ...this.startOpts!, resumeTick: undefined };
-      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, resumeTick: start.resumeTick });
+    if (this.phase === 'reconnecting' && this.netCheckpoint) {
+      const start: NetStart = { ...this.startOpts!, resumeTick: this.netCheckpoint.tick };
+      // A client that restarted (no checkpoint of its own, capTick absent) receives the snapshot itself.
+      const snap = hello.capTick == null || hello.capTick < this.netCheckpoint.tick ? this.netCheckpoint.snap : undefined;
+      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, resumeTick: start.resumeTick, snap });
       this.startLocalGame(start, CMain._this); // the host rebuilds through the same path
     }
   }
@@ -202,12 +211,19 @@ export class NetSession {
       delete main.mcWorld;
       this.world = undefined;
     }
+    // Drop every frame of the previous game NOW: the peer's priming frames for THIS game already arrive while our
+    // world builds (whichever peer is ready first), so onWorldReady must never clear them again.
+    this.localFrames.clear();
+    this.remoteFrames.clear();
+    this.ourSums.clear();
+    this.remoteSums.clear();
     main.mWorldLibLink = start.roomLink;
     main.mReturn_SelectWorld = 'State_LanLobby'; // registered by the lobby (L2); net ends never route there before it exists
     this.phase = 'starting';
     this.netPaused = false;
-    if (start.resumeTick !== undefined && this.netCheckpoint && this.netCheckpoint.tick === start.resumeTick) {
-      // Resume: rebuild deterministically from the same seed, then re-apply the checkpoint (which re-pins the RNG).
+    if (start.resumeTick !== undefined && this.netCheckpoint) {
+      // Resume: rebuild deterministically from the same seed, then re-apply OUR checkpoint (both peers hold a
+      // state-identical copy even though their absolute mTick values may differ by the build-time warm-up ticks).
       armSnapshot(this.netCheckpoint.snap);
     }
     setRandomState(start.seed);
@@ -244,14 +260,15 @@ export class NetSession {
   onWorldReady(world: any): void {
     this.world = world;
     this.phase = 'playing';
+    // Lockstep frames are indexed RELATIVE to this world's ready tick: the number of warm-up Process calls during
+    // the build differs per machine (1-3 in the real app), so absolute CWorld.mTick would never line up between the
+    // peers. mTick itself is unread by game logic - only the relative index matters.
     this.startTick = world.mTick;
     this.virtualTimeMs = 0;
     this.localFrames.clear();
-    this.remoteFrames.clear();
-    this.ourSums.clear();
-    this.remoteSums.clear();
-    // Prime the input-delay window so the very first tick can run.
-    for (let s = this.startTick; s < this.startTick + LAN_INPUT_DELAY + 1; s++) {
+    // Prime the input-delay window so the very first tick can run. (remoteFrames is NOT cleared here: the peer's
+    // primes for this game may have arrived during our build.)
+    for (let s = 0; s <= LAN_INPUT_DELAY; s++) {
       const bits = this.sampleLocalBits();
       this.localFrames.set(s, bits);
       this.link.send({ t: 'in', tick: s, bits });
@@ -271,7 +288,7 @@ export class NetSession {
       this.stallReason = this.phase === 'desync' ? 'waiting' : 'peer';
       return false;
     }
-    const t = world.mTick;
+    const t = world.mTick - this.startTick;
     const mine = this.localFrames.get(t);
     const theirs = this.remoteFrames.get(t);
     if (mine === undefined || theirs === undefined) {
@@ -286,19 +303,19 @@ export class NetSession {
 
   /** After the tick ran (world.mTick already advanced): advance the virtual clock, sample + send, checkpoint. */
   afterTick(world: any): void {
-    const t = world.mTick;
+    const t = world.mTick - this.startTick;
     this.virtualTimeMs += 1000 / CMain.mFPS;
     const s = t + LAN_INPUT_DELAY;
     const bits = this.sampleLocalBits();
     this.localFrames.set(s, bits);
     let sum: LanChecksum | undefined;
-    if (t % LAN_CHECKSUM_EVERY === 0) {
+    if (t > 0 && t % LAN_CHECKSUM_EVERY === 0) {
       sum = this.checksum(world, t);
       this.ourSums.set(t, JSON.stringify(sum));
       this.compareSum(t);
     }
     this.link.send({ t: 'in', tick: s, bits, sum });
-    if (this.mode === 'DeathMatch' && t % DM_CHECKPOINT_EVERY === 0) this.captureCheckpoint(world);
+    if (this.mode === 'DeathMatch' && t > 0 && t % DM_CHECKPOINT_EVERY === 0) this.captureCheckpoint(world);
     // Keep a small window of frames buffered.
     for (const k of this.localFrames.keys()) if (k < t - 4) this.localFrames.delete(k);
     for (const k of this.remoteFrames.keys()) if (k < t - 4) this.remoteFrames.delete(k);

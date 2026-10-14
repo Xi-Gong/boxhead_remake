@@ -150,12 +150,13 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     const B = bootNetPeer('Coop', 'ROOM_Single_0001');
     expect(B.session.phase).toBe('playing');
     setRandomState(0xC0FFEE);
+    const firstEntry = B.game.world().mTick; // lockstep frames are indexed from the ready tick
     for (let i = 0; i < TICKS; i++) {
-      const entry = B.game.world().mTick;
+      const entry = B.game.world().mTick - firstEntry;
       // Stall gate: with no remote frame for the next tick the simulation must freeze completely.
       if (i === 100) {
         expect(B.game.tick(1)).toBe(0);
-        expect(B.game.world().mTick).toBe(entry);
+        expect(B.game.world().mTick).toBe(entry + firstEntry);
       }
       B.session.onNetMessage({ t: 'in', tick: entry, bits: bitsOf(script(i).p1, KEYS.P1) });
       // frame(entry+2) is sampled inside THIS tick's afterTick, so the local keys lead the script by 2 ticks.
@@ -196,14 +197,15 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
   it('death match: periodic net checkpoint, disconnect -> two independent rebuilds continue identically', { timeout: 240000 }, () => {
     const B = bootNetPeer('DeathMatch', 'ROOM_Single_0001');
     expect(B.game.players()).toHaveLength(2);
+    const dmFirst = B.game.world().mTick;
     for (let i = 0; i <= 1505; i++) {
-      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick, bits: bitsOf(script(i).p1, KEYS.P1) });
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - dmFirst, bits: bitsOf(script(i).p1, KEYS.P1) });
       B.game.setKeys(script(i + 2).p2);
       B.game.tick(1);
     }
     const cp = B.session.netCheckpoint;
     expect(cp).toBeDefined();
-    expect(cp!.tick).toBe(1500);
+    expect(cp!.tick - dmFirst).toBe(1500); // relative lockstep index 1500
 
     // Two independent peers rebuild from the identical checkpoint and continue with the same script.
     const run = (): string => {
@@ -212,8 +214,9 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
       P.session.startLocalGame({ mode: 'DeathMatch', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, resumeTick: cp!.tick }, P.game.main());
       if (!P.game.waitRunning(3000)) throw new Error(`rebuild did not start (${P.game.state()})`);
       expect(P.game.world().mTick).toBe(cp!.tick); // the snapshot restored the tick
+      const reFirst = P.game.world().mTick;
       for (let i = 0; i < 60; i++) {
-        P.session.onNetMessage({ t: 'in', tick: P.game.world().mTick, bits: bitsOf(script(i).p1, KEYS.P1) });
+        P.session.onNetMessage({ t: 'in', tick: P.game.world().mTick - reFirst, bits: bitsOf(script(i).p1, KEYS.P1) });
         P.game.setKeys(script(i + 2).p2);
         P.game.tick(1);
       }

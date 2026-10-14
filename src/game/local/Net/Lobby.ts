@@ -84,7 +84,10 @@ export class CScreen_LanLobby extends CScreen {
   }
 
   Button(x: number, y: number, w: number, h: number, label: string, size: number, onPress: () => void): any {
+    // The name must be unique AND advance mDepth: createEmptyMovieClip REPLACES a same-named sibling (AS2 rule) -
+    // sharing names silently deleted earlier buttons (five host rows all called 'b109' ate the HOST button).
     const b = buildMenuButton(this, 'b' + this.mDepth, x, y, w, h, label, size);
+    this.mDepth++;
     b.onRelease = function (this: any): void {
       onPress();
       this.pScreen.dirty = true;

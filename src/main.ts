@@ -19,6 +19,7 @@ import { registerButtonActions } from './game/frames/ButtonActions.ts';
 import { applyScope } from './game/scope.ts';
 import { installLocalSymbols } from './game/local/localSymbols.ts';
 import { installGamepad } from './game/local/Gamepad.ts';
+import { lanBridge } from './game/local/Net/bridge.ts';
 import * as GamePackages from './game/packages.ts';
 import { CMain } from './game/packages.ts';
 
@@ -37,6 +38,8 @@ interface GameDebug {
   /** Automation / debugging: the AS2 package namespaces and BitmapData. */
   pkg?: unknown;
   BitmapData?: unknown;
+  /** Automation / debugging: the LAN bridge + session state (playtests). */
+  lan?: () => unknown;
 }
 
 declare global {
@@ -47,6 +50,20 @@ const dbg: GameDebug = {
   ready: false, stage: 'boot', progress: 0, errors: [], missingClasses: [],
   pkg: GamePackages,
   BitmapData,
+  lan: () => {
+    const b = lanBridge();
+    const s: any = b.session;
+    const frames = s ? {
+      localKeys: [...(s as any).localFrames.keys()].join(','),
+      remoteKeys: [...(s as any).remoteFrames.keys()].join(','),
+    } : null;
+    return {
+      bridge: b.phase, msg: b.message, peers: b.hosts.length, peerName: b.peerName,
+      session: s?.phase, stall: s?.stallReason, rtt: s?.rttMs, mode: s?.mode, startTick: s?.startTick,
+      worldTick: s?.world?.mTick, state: (window as any).__game?.state?.(),
+      checkpoint: s?.netCheckpoint?.tick ?? null, frames,
+    };
+  },
   main: () => CMain?._this,
   state: () => {
     const m = CMain?._this;

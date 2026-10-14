@@ -190,9 +190,13 @@ class LanBridge {
       return;
     }
     if (msg.t === 'start' && !this.session) {
-      // Client: the host starts the game. cfg carries everything the simulation must share.
+      // Client: the host starts the game. cfg carries everything the simulation must share. A resume whose
+      // snapshot came along (restarted client) is adopted before the session launches.
       this.cfg.mode = msg.mode;
       this.charP2 = msg.cfg?.charP2 ?? 0;
+      const session = new NetSession(1, { send: (m) => this.send(m) });
+      if (msg.resumeTick !== undefined && msg.snap) session.netCheckpoint = { tick: msg.resumeTick, snap: msg.snap, digest: '' };
+      this.session = session;
       this.launch(msg.mode, msg.roomLink, msg.cfg, msg.seed, msg.resumeTick, 1);
       return;
     }

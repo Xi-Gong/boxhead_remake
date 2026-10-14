@@ -73,10 +73,11 @@ export type LanMessage =
   // host -> client: current lobby configuration (also right after a successful connect).
   | { t: 'lobby'; cfg: LobbyConfig }
   // host -> client: build the world and enter lockstep. `resumeTick` set = rebuild from that net checkpoint
-  // (reconnect inside the 30 s window, or a later 续局 continuation) instead of a fresh start.
-  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; resumeTick?: number }
-  // both -> both: this peer's player input bitmap for `tick` (bit 0 UP, 1 DOWN, 2 LEFT, 3 RIGHT, 4 FIRE,
-  // 5 NEXT_WEAPON, 6 PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
+  // (reconnect inside the 30 s window, or a later 续局 continuation) instead of a fresh start. `snap` carries the
+  // checkpoint itself when the client reported none (a crashed and restarted client has lost its in-memory copy).
+  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; resumeTick?: number; snap?: unknown }
+  // both -> both: this peer's player input bitmap for `tick` (bit order = NetSlot.SLOT_ORDER: UP, DOWN, LEFT,
+  // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
   | { t: 'in'; tick: number; bits: number; sum?: LanChecksum }
   // both -> both, echoed back once (`echo` marks the reply; RTT probe + liveness).
   | { t: 'hb'; ts: number; echo?: true }
