@@ -45,6 +45,12 @@ export class CScreen_LanSetup extends CScreen {
     this.Build();
     this.unregisterUi = lanBridge().onUi(() => { this.dirty = true; });
     this.Refresh();
+    // The screen system removes replaced screens with removeMovieClip (CScreen.Dispose is never called) -
+    // unsubscribe from the bridge when the clip goes, or the dead screen keeps refreshing forever.
+    this.onUnload = (): void => {
+      this.unregisterUi?.();
+      this.unregisterUi = undefined;
+    };
   }
 
   override toString(): string {

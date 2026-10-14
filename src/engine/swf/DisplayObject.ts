@@ -1385,7 +1385,17 @@ export function insertChild(p: MovieClip, c: DisplayObject, depth: number): void
 function markRemoved(o: DisplayObject): void {
   o.$removed = true;
   if (engine.focus === o) engine.focus = null;
-  if (o instanceof MovieClip) { for (const c of o.$list) markRemoved(c); engine.execDirty = true; }
+  if (o instanceof MovieClip) {
+    for (const c of o.$list) markRemoved(c);
+    engine.execDirty = true;
+    // Flash: onUnload fires on every clip removed from the display list that carries a handler (the screen
+    // system removes replaced screens with removeMovieClip - CScreen.Dispose is NEVER called by it, so DOM
+    // side objects of a screen must be cleaned up from here).
+    const u = (o as any).onUnload;
+    if (typeof u === 'function') {
+      try { u.call(o); } catch (err) { console.error('[swf] onUnload', err); }
+    }
+  }
   else if (o instanceof Button) for (const c of o.$stateKids.values()) markRemoved(c);
 }
 

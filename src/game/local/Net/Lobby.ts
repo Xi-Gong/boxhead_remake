@@ -77,6 +77,10 @@ export class CScreen_LanLobby extends CScreen {
     if (typeof document !== 'undefined') this.buildIpInput();
     this.startTimers();
     this.Refresh();
+    // The screen system removes replaced screens with removeMovieClip (CScreen.Dispose is never called) - the
+    // DOM input / timers / bridge subscription must go with the clip, or the black IP box lingers over the
+    // next screen (user-reported) and the discovery tick leaks.
+    this.onUnload = (): void => this.teardown();
   }
 
   override toString(): string {
@@ -91,11 +95,20 @@ export class CScreen_LanLobby extends CScreen {
     }
   }
 
-  override Dispose(): void {
+  /** Removes every side object outside the canvas (also wired to onUnload - see ctor). */
+  private teardown(): void {
     this.unregisterUi?.();
+    this.unregisterUi = undefined;
     this.unresize?.();
+    this.unresize = undefined;
     if (this.tickTimer !== undefined && typeof window !== 'undefined') window.clearInterval(this.tickTimer);
+    this.tickTimer = undefined;
     this.ipInput?.remove();
+    this.ipInput = undefined;
+  }
+
+  override Dispose(): void {
+    this.teardown();
     super.Dispose();
   }
 

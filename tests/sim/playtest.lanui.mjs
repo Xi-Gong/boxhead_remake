@@ -121,6 +121,31 @@ try {
   step(`room address line: ${JSON.stringify(addr)}`);
   if (!/^YOUR ADDRESS: \d+\.\d+\.\d+\.\d+/.test(addr ?? '')) throw new Error(`no YOUR ADDRESS line (${addr})`);
 
+  // ---- regression (user report 2026-10-14): the typed-in IP box must NOT linger over the next screen ----
+  await click(420, 330); // CLOSE ROOM -> entry view
+  await page.waitForTimeout(600);
+  await page.evaluate(() => { const i = document.querySelector('input[type=text]'); i?.focus(); });
+  await page.keyboard.type('192.168.0.1', { delay: 30 });
+  await page.waitForTimeout(200);
+  const typed = await page.evaluate(() => document.querySelector('input[type=text]')?.value ?? null);
+  if (typed !== '192.168.0.1') throw new Error(`typing failed after returning to the entry view (${typed})`);
+  await click(320, 445); // BACK TO MENU
+  await page.waitForTimeout(1200); // let the cross-fade finish and remove the old screen
+  const linger = await page.evaluate(() => document.querySelectorAll('input[type=text]').length);
+  if (linger !== 0) throw new Error(`the IP input lingered on the main menu (${linger} left)`);
+  step('BACK TO MENU: the IP input is gone from the DOM ✓');
+  // Re-entering must not accumulate inputs either.
+  await click(...LAN_BTN);
+  if (!(await waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error('no lobby (re-entry)');
+  await page.waitForTimeout(400);
+  const count2 = await page.evaluate(() => document.querySelectorAll('input[type=text]').length);
+  if (count2 !== 1) throw new Error(`expected exactly 1 IP input after re-entry, found ${count2}`);
+  await click(320, 445); // BACK TO MENU again
+  await page.waitForTimeout(1200);
+  const linger2 = await page.evaluate(() => document.querySelectorAll('input[type=text]').length);
+  if (linger2 !== 0) throw new Error(`inputs accumulated (${linger2} left)`);
+  step('re-entry + leave: exactly one input while inside, none after ✓');
+
   report.ok = report.errors.length === 0;
 } catch (e) {
   report.errors.push(String(e?.message ?? e));

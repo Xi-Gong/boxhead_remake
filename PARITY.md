@@ -197,3 +197,11 @@ DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢�
 `tests/sim/playtest.typing.mjs` 用**真实键盘事件**（`page.keyboard.type`，此前 E2E 的 `page.fill` 绕过了真实
 键盘路径，正是漏测原因）驱动打包 exe 验证两处输入；另加 `tests/sim/playtest.lanui.mjs`（IP 输入框在 4 种
 窗口纵横比下贴合逻辑矩形 + 房间视图显隐 + YOUR ADDRESS 行）。输入框补 `box-sizing:border-box`。
+
+**v0.1.6 热修复（黑框残留）**：用户实测发现输入过 IP 后返回主菜单，**黑色 IP 输入框残留在主菜单上**
+（压住 INSTRUCTIONS 菜单项）。根因：屏系统换屏时走 `removeMovieClip()`（CScreen_Transition），**从不调用
+`CScreen.Dispose()`**——挂在 Dispose 里的 DOM 清理是死代码（v0.1.3 起如此），还连带泄漏 onUi 订阅与
+1s 轮询定时器（发现监听永不停止）。修复：引擎 `markRemoved` 按 Flash 语义在移除子树时触发 `onUnload`
+（DisplayObject.ts，try/catch 包裹）；`CScreen_LanLobby`/`CScreen_LanSetup` 把 DOM 输入框/定时器/订阅清理
+挂到 `onUnload`（Dispose 保留兜底）。回归：`playtest.lanui.mjs` 新增"输入 IP → BACK TO MENU → 输入框必须
+从 DOM 移除 + 重进大厅恰好一个输入框、离开后为零"断言。
