@@ -471,7 +471,13 @@ export function installAudioUnlock(target: EventTarget = window): () => void {
 /**
  * Browser-only helper: if audio cannot start without a gesture, cover `container` with a "Click to start" overlay
  * and resolve after the click (Electron runs with autoplayPolicy 'no-user-gesture-required' -> resolves at once).
+ * A gamepad button also dismisses the overlay: installGamepad (src/game/local/Gamepad.ts) calls dismissAudioOverlay()
+ * on the first pad button edge, because gamepads fire no DOM event the overlay could listen to.
  */
+let dismissAudioOverlayFn: (() => void) | undefined;
+
+export function dismissAudioOverlay(): void { dismissAudioOverlayFn?.(); }
+
 export async function unlockAudioOverlay(container: HTMLElement, text = 'Click to start'): Promise<void> {
   const c = getAudioContext();
   if (!c || (await resumeAudio())) return;
@@ -486,8 +492,10 @@ export async function unlockAudioOverlay(container: HTMLElement, text = 'Click t
       void c.resume();
       el.remove();
       window.removeEventListener('keydown', go, true);
+      dismissAudioOverlayFn = undefined;
       resolve();
     };
+    dismissAudioOverlayFn = () => go(new Event('gamepad'));
     el.addEventListener('pointerdown', go, { once: true });
     window.addEventListener('keydown', go, true);
     container.appendChild(el);

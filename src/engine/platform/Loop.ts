@@ -81,6 +81,12 @@ export interface LoopOptions {
   render?: () => void;
   /** Called after each EF (debug overlays, profilers). */
   afterEnterFrame?: (scheduledMs: number) => void;
+  /**
+   * Called once per rAF BEFORE the (possibly skipped) EF batch, with the paused/blocked state — even while paused,
+   * so an input device that has no DOM events (gamepads, deviation GAMEPAD_INPUT) can be polled every frame and
+   * reconcile its keys with the same lifecycle as the keyboard (blocked = release everything, like Key._clear()).
+   */
+  beforeTick?: (blocked: boolean) => void;
   /** Error handler for exceptions thrown by enterFrame/render (default: console.error, loop keeps running). */
   onError?: (e: unknown) => void;
 }
@@ -117,10 +123,14 @@ export class Loop {
 
   get isPaused(): boolean { return this.paused; }
 
+  /** Replace the per-rAF pre-tick hook (gamepad polling installs itself here after startPlatform). */
+  setBeforeTick(fn: ((blocked: boolean) => void) | undefined): void { this.opts.beforeTick = fn; }
+
   private readonly tick = (ts: number): void => {
     if (!this.running) return;
     this.raf = requestAnimationFrame(this.tick);
     pumpSoundEvents();
+    this.opts.beforeTick?.(this.paused);
     if (this.paused) return;
     const now = ts - clock.origin;
     const due = this.scheduler.plan(now);

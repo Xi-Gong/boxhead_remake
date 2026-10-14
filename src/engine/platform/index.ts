@@ -33,6 +33,8 @@ export { attachMouse } from './Pointer.ts';
 export { computeFit, Presenter, STAGE_H, STAGE_W } from './Presenter.ts';
 export { SaveStore } from './SaveStore.ts';
 export type { RenderScale, Settings } from './SaveStore.ts';
+export { GamepadWatcher, navigatorPadProvider, STICK_DEADZONE } from './Gamepad.ts';
+export type { PadDirs, PadProvider, PadPoll, RawPad } from './Gamepad.ts';
 
 /** What the platform needs from the display-list Player (lane E's Player satisfies it; checked below). */
 export interface PlatformPlayer extends LoopPlayer, RenderablePlayer, PointerPlayer, KeyInputSink {}
@@ -56,6 +58,8 @@ export interface PlatformHandle {
   loop: Loop;
   mouse: MouseHandle;
   menu: ContextMenuOverlay;
+  /** Replace the loop's per-rAF pre-tick hook (gamepad polling; deviation GAMEPAD_INPUT). */
+  setBeforeTick(fn: ((blocked: boolean) => void) | undefined): void;
   dispose(): void;
 }
 
@@ -81,6 +85,7 @@ export function startPlatform(opts: StartPlatformOptions): PlatformHandle {
   if (opts.autoStart !== false) loop.start();
   return {
     presenter, loop, mouse, menu,
+    setBeforeTick: (fn) => loop.setBeforeTick(fn),
     dispose(): void {
       loop.stop();
       menu.dispose();
