@@ -216,7 +216,7 @@ export class CScreen_LanLobby extends CScreen {
     input.maxLength = 21;
     // display:none until the first Refresh has placed it (otherwise the dark input flashes for a frame at the
     // stage's top-left corner before logicalToClient positions it).
-    input.style.cssText = 'position:absolute;display:none;background:#181818;border:2px solid #9c9c9c;'
+    input.style.cssText = 'position:absolute;display:none;box-sizing:border-box;background:#181818;border:2px solid #9c9c9c;'
       + 'color:#fff;font-family:Consolas,monospace;text-align:center;padding:0 2px;z-index:7;outline:none';
     input.addEventListener('keydown', (e) => {
       e.stopPropagation();

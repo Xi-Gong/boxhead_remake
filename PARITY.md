@@ -188,3 +188,12 @@ v0.1.3 的大厅把建房/加入/设置混在一屏（加入列表与主机控�
 （charP1 施加/还原、inputDelay 预充/发送/修剪、forfeit via 链）、`tests/unit/game/netProtocol.test.ts`
 （beacon players、裸 lobby 帧、ready/setup/inputDelay 帧）、`tests/unit/game/gamepad.test.ts`
 （在线/名称/指派互换/活动戳）。打包双实例 E2E `tests/sim/playtest.net.mjs` 按新流程重做（L7）。
+
+**v0.1.5 热修复（真实键盘输入）**：v0.1.4 用户实测发现 App 内无法键入任何字符（LAN IP 输入框与结算名字框
+两处）。根因在引擎平台层：`Pointer.ts` 的 pointerdown 对每次点击 `preventDefault()` 并把焦点强拉回画布
+（DOM 输入框永远拿不到焦点），且 `Keyboard.ts` 对所有字符键 `preventDefault()`。修复：点击/键盘事件的目标是
+DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢焦点、不 preventDefault、不喂给游戏键
+（画布上的 SWF 输入文本域路径不受影响，本就经 `engine.focus + keyInput` 工作）。回归测试
+`tests/sim/playtest.typing.mjs` 用**真实键盘事件**（`page.keyboard.type`，此前 E2E 的 `page.fill` 绕过了真实
+键盘路径，正是漏测原因）驱动打包 exe 验证两处输入；另加 `tests/sim/playtest.lanui.mjs`（IP 输入框在 4 种
+窗口纵横比下贴合逻辑矩形 + 房间视图显隐 + YOUR ADDRESS 行）。输入框补 `box-sizing:border-box`。

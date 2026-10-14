@@ -97,6 +97,9 @@ export function attachKeyboard(opts: KeyboardOptions = {}): () => void {
 
   const onKey = (e: KeyboardEvent): void => {
     if (opts.isBlocked?.()) return;
+    // A focused DOM text widget (the LAN IP input) owns the keys: no preventDefault (it would swallow the
+    // characters), no Key events (typing must not drive the game).
+    if (e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
     if (e.isComposing) return;
     const down = e.type === 'keydown';
     syncLocks(e);
