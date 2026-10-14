@@ -21,17 +21,6 @@ export interface PresenterLike {
   onResize(fn: () => void): () => void;
 }
 
-/**
- * Local lobby-panel state of the OLD v0.1.3 host controls (mode/difficulty/frags/room). Kept until the v0.1.4
- * lobby rewrite removes those controls (the `lobby` wire message is bare since v0.1.4 - nothing is pushed anymore).
- */
-interface LobbyPanel {
-  mode: 'Coop' | 'DeathMatch';
-  roomIdx: number;
-  difficulty: number;
-  killsIdx: number;
-}
-
 export type LanUiPhase =
   | 'idle' // in the lobby, nothing hosted / connected
   | 'hosting' // hosting, waiting for player 2
@@ -57,10 +46,6 @@ class LanBridge {
   rttMs: number | undefined;
   /** Set by main.ts: lets DOM overlays (the IP input) track the letterboxed canvas. */
   presenter: PresenterLike | undefined;
-  /** Host: the old v0.1.3 panel selection (local only until the lobby rewrite removes it). */
-  cfg: LobbyPanel = { mode: 'Coop', roomIdx: 0, difficulty: 0, killsIdx: 0 };
-  /** Client: own character choice (sent in the hello); Host: the joined client's name + character. */
-  charP2 = 0;
   peerName = '';
   session: NetSession | null = null;
   sid: string | undefined;
@@ -111,13 +96,6 @@ class LanBridge {
     });
   }
 
-  /** Host side: the (old v0.1.3) lobby selection changed. The wire message is bare since v0.1.4. */
-  pushCfg(cfg: LobbyPanel): void {
-    this.cfg = cfg;
-    if (this.phase === 'lobby') this.send({ t: 'lobby' });
-    this.notify();
-  }
-
   join(ip: string, port?: number): void {
     if (!this.available) return;
     this.isHost = false;
@@ -125,7 +103,7 @@ class LanBridge {
     this.phase = 'joining';
     this.message = `connecting to ${ip}...`;
     this.notify();
-    void desktop!.lan.connect(ip, port, { name: 'player', sid: this.sid, char: this.charP2 }).then((r) => {
+    void desktop!.lan.connect(ip, port, { name: 'player', sid: this.sid, char: 0 }).then((r) => {
       if (r.ok) {
         this.phase = 'lobby';
         this.message = '';
@@ -288,7 +266,6 @@ class LanBridge {
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.
       this.sid = this.sid ?? msg.sid;
       this.peerName = String(msg.name ?? 'player 2');
-      this.charP2 = Number(msg.char ?? 0) || 0;
       const backFromEnd = this.session != null && this.session.phase === 'ended';
       if (this.phase === 'hosting' || this.phase === 'lobby' || backFromEnd) {
         this.phase = 'lobby';

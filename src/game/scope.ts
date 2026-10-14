@@ -10,12 +10,13 @@ import { getFrameScript, registerFrameScript, setInstanceHook } from '../engine/
 import { CMain, CSaveData, CSound, External, Screen, World } from './packages.ts';
 import { hasTable, roomIndexOfLibLink, showHighscoreTable, submitLocalScore } from './local/Highscores.ts';
 import { registerInstructionsPage } from './local/InstructionsPage.ts';
-import { SCREEN_INSTRUCTIONS_LINKAGE, SCREEN_LAN_LOBBY_LINKAGE, buildMenuButton } from './local/localSymbols.ts';
+import { SCREEN_INSTRUCTIONS_LINKAGE, SCREEN_LAN_LOBBY_LINKAGE, SCREEN_LAN_SETUP_LINKAGE, buildMenuButton } from './local/localSymbols.ts';
 import { armFromCheckpoint, armFromStored, capture, clearAll, clearStored, consumePending, hasStored, isArmed, isSuppressing, recordCheckpoint, writeStored } from './local/Resume.ts';
 import { netActive, netSession } from './local/Net/NetSession.ts';
 import { installNetScope } from './local/Net/NetScope.ts';
 import { lanBridge } from './local/Net/bridge.ts';
 import { registerLobbyPage } from './local/Net/Lobby.ts';
+import { registerSetupPage } from './local/Net/Setup.ts';
 import { installNetOverlay } from './local/Net/overlay.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 
@@ -318,15 +319,20 @@ export function applyScope(): void {
     stateDebriefWinner.call(this);
   };
 
-  // ---- LAN multiplayer wrappers (deviation LAN_MULTIPLAYER, v0.1.3) ---------------------------
+  // ---- LAN multiplayer wrappers (deviation LAN_MULTIPLAYER, v0.1.3; setup screen v0.1.4) ------
   // Net games start through NetSession.startLocalGame (never the SelectWorld screens), so the wave-checkpoint /
   // save-quit / debrief wrappers above stay quiet via netActive() and the net State_RunWorld gate owns the tick.
   registerLobbyPage();
+  registerSetupPage();
   installNetOverlay();
   const mainProtoLan = CMain.prototype as any;
   mainProtoLan.State_LanLobby = function (this: any): void {
     lanBridge().markBackInLobby();
     this.Process_Screen(SCREEN_LAN_LOBBY_LINKAGE);
+  };
+  // The net setup screen (host picks mode / both characters / level / options; the client mirrors it read-only).
+  mainProtoLan.State_LanSetup = function (this: any): void {
+    this.Process_Screen(SCREEN_LAN_SETUP_LINKAGE);
   };
   installNetScope();
 }
