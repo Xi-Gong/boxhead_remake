@@ -58,6 +58,8 @@ export const INSTRUCTIONS = {
   // v0.1.2 additions (GAMEPAD_INPUT / SAVE_QUIT_RESUME / WAVE_CHECKPOINT_RETRY).
   gamepad: 'GAMEPAD: stick or d-pad moves - RT or A fires - RB / LB change weapon - START pauses - in menus the stick moves the cursor and A clicks',
   saving: 'SAVE & QUIT (pause screen) parks the run - CONTINUE (main menu) resumes the current wave - after death RETRY restarts the current wave',
+  // v0.1.3 addition (LAN_MULTIPLAYER).
+  lan: 'LAN GAME (main menu, exe only): two machines, one player each - either key set or pad drives the local player - checkpoints allow reconnect and resume',
 } as const;
 
 /** Short label of a Flash key code for the page (CInput.mValidKeys names without the quotes). */
@@ -160,9 +162,10 @@ export class CScreen_Instructions extends CScreen {
       this.Text(x + 88, y + 1, 30, 22, 'Calibri', 13, INK, false, 'left', at).filters = glow();
     }
 
-    // v0.1.2 additions: two compact lines in the free bottom strip.
-    this.Text(40, 438, 560, 18, 'Calibri', 11, INK, false, 'center', C.gamepad, true).filters = glow();
-    this.Text(40, 456, 560, 18, 'Calibri', 11, INK, false, 'center', C.saving, true).filters = glow();
+    // v0.1.2 / v0.1.3 additions: three compact lines in the free bottom strip.
+    this.Text(40, 432, 560, 18, 'Calibri', 11, INK, false, 'center', C.gamepad, true).filters = glow();
+    this.Text(40, 448, 560, 18, 'Calibri', 11, INK, false, 'center', C.saving, true).filters = glow();
+    this.Text(40, 464, 560, 18, 'Calibri', 11, INK, false, 'center', C.lan, true).filters = glow();
   }
 }
 proto(CScreen_Instructions, { _CLASSID_: 'CScreen_Instructions' });
