@@ -18,6 +18,7 @@ import { registerSpriteScripts, setXsiSource } from './game/frames/SpriteScripts
 import { registerButtonActions } from './game/frames/ButtonActions.ts';
 import { applyScope } from './game/scope.ts';
 import { installLocalSymbols } from './game/local/localSymbols.ts';
+import { installGamepad } from './game/local/Gamepad.ts';
 import * as GamePackages from './game/packages.ts';
 import { CMain } from './game/packages.ts';
 
@@ -137,6 +138,14 @@ async function boot(): Promise<void> {
   dbg.player = player;
   dbg.platform = startPlatform({ container: stage, player, getMenu: () => _root?.menu });
   dbg.platform.presenter.canvas.focus();
+  // Local gamepad support (deviation GAMEPAD_INPUT): poll the pads every rAF before the enterFrame batch.
+  const gamepad = installGamepad({
+    player,
+    mouse: dbg.platform.mouse,
+    presenter: dbg.platform.presenter,
+    container: stage,
+  });
+  dbg.platform.setBeforeTick(gamepad.poll);
   dbg.ready = true;
 }
 

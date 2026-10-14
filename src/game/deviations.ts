@@ -177,4 +177,20 @@ export const DEVIATIONS: Deviation[] = [
       'decals, screen shake/brightness, camera smoothing, and the fuse progress of detonating claymores/charge packs. ' +
       'One slot: a new run, a death or a Death Match decision clears it.',
   },
+  {
+    id: 'GAMEPAD_INPUT',
+    file: 'engine/platform/Gamepad.ts, engine/platform/Loop.ts (beforeTick hook), engine/platform/AudioEngine.ts (dismissAudioOverlay), game/local/Gamepad.ts, src/main.ts',
+    description:
+      'The original has no gamepad support. The platform polls navigator.getGamepads() once per rAF (Loop beforeTick, ' +
+      'also while the context menu freezes the loop) and the game translator feeds the EXISTING input paths: pad 0 ' +
+      'drives player 1, pad 1 player 2 (player 1 in Single player), translating buttons to each CInput slot\'s CURRENT ' +
+      'keycode (re-read every poll, so user rebinding is respected). Left stick (0.35 deadzone, four boolean flags) or ' +
+      'the d-pad = movement (the same 8-direction keyboard semantics); RT/LT or A held = fire; RB/LB = next/previous ' +
+      'weapon; Start = pause. A pushedByPad set reconciles with the physical keyboard (the pad only releases keys it ' +
+      'pushed; Key._clear() self-heals on the next poll). Menus and the pause screen: pad 0\'s stick/d-pad moves a ' +
+      'virtual cursor (player.mouseMove in logical coordinates - renderScale-independent), A = press/release click ' +
+      'through the engine\'s own button picking, the physical mouse always wins, and a DOM arrow shows while a pad is ' +
+      'active. The first pad button also dismisses the browser "Click to start" overlay (in the browser the pad cannot ' +
+      'grant the audio gesture itself - Electron needs no gesture). Fixed mapping, no configuration UI.',
+  },
 ];
