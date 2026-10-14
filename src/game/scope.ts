@@ -12,6 +12,8 @@ import { hasTable, roomIndexOfLibLink, showHighscoreTable, submitLocalScore } fr
 import { registerInstructionsPage } from './local/InstructionsPage.ts';
 import { SCREEN_INSTRUCTIONS_LINKAGE, buildMenuButton } from './local/localSymbols.ts';
 import { armFromCheckpoint, armFromStored, capture, clearAll, clearStored, consumePending, hasStored, isArmed, isSuppressing, recordCheckpoint, writeStored } from './local/Resume.ts';
+import { netActive, netSession } from './local/Net/NetSession.ts';
+import { installNetScope } from './local/Net/NetScope.ts';
 
 /**
  * CrazyMonkeyGames sponsor / cross-promotion links, hidden on every screen they appear on (Screen_Main,
@@ -173,14 +175,23 @@ export function applyScope(): void {
   const setMLevel = upgradesProto.__set__mLevel;
   upgradesProto.__set__mLevel = function (this: any, a: any): any {
     const r = setMLevel.call(this, a);
-    if (this.mWorld?.mLoaded === true && !isSuppressing()) recordCheckpoint(this.mWorld);
+    if (this.mWorld?.mLoaded === true && !isSuppressing()) {
+      recordCheckpoint(this.mWorld);
+      netSession()?.onWaveAdvanced(this.mWorld); // LAN coop checkpoint at the same clean wave-start moment
+    }
     return r;
   };
-  // Debrief RETRY arms the checkpoint; without one the original fresh restart runs.
+  // Debrief RETRY arms the checkpoint; without one the original fresh restart runs. Hidden in net games
+  // (an unsynchronized single-side restart is a desync by definition; the net lobby owns rematches).
   debriefProto.ctor = (function (previous: any) {
     return function (this: any): void {
       previous.call(this);
       if (this._Retry) {
+        if (netActive()) {
+          this._Retry._visible = false;
+          this._Retry.enabled = false;
+          return;
+        }
         this._Retry.onPress = function (this: any): void {
           armFromCheckpoint();
           this.pClass.nState = 'State_LoadWorld';
@@ -196,11 +207,12 @@ export function applyScope(): void {
     initFinished.call(this);
     consumePending(this);
   };
-  // A new run that was not armed by CONTINUE / checkpoint-RETRY drops every stored resume (one slot).
+  // A new run that was not armed by CONTINUE / checkpoint-RETRY drops every stored resume (one slot). A NET game
+  // never touches the stored single-player run (its own checkpoint lives in the NetSession).
   const mainProtoResume = CMain.prototype as any;
   const stateLoadWorld = mainProtoResume.State_LoadWorld;
   mainProtoResume.State_LoadWorld = function (this: any): void {
-    if (!isArmed()) clearAll();
+    if (!isArmed() && !netActive()) clearAll();
     stateLoadWorld.call(this);
   };
 
@@ -211,7 +223,7 @@ export function applyScope(): void {
   const hudPause = hudProto.Pause;
   hudProto.Pause = function (this: any, tState: any): void {
     hudPause.call(this, tState);
-    if (tState !== true || !this.mcScreenPause) return;
+    if (tState !== true || !this.mcScreenPause || netActive()) return;
     const btn = buildMenuButton(this.mcScreenPause, '_SaveQuit', 320, 452, 220, 26, 'SAVE & QUIT', 15);
     btn.pWorld = this.mWorld;
     btn.onRelease = function (this: any): void {
@@ -260,14 +272,20 @@ export function applyScope(): void {
     this.SetState('State_LoadWorld');
   };
   // Run over (death / DM winner): drop the stored run. The in-memory checkpoint stays for the debrief RETRY.
+  // NET runs never touch the stored single-player run.
   const stateDebrief = mainProtoResume.State_Debrief;
   mainProtoResume.State_Debrief = function (this: any): void {
-    clearStored();
+    if (!netActive()) clearStored();
     stateDebrief.call(this);
   };
   const stateDebriefWinner = mainProtoResume.State_Debrief_Winner;
   mainProtoResume.State_Debrief_Winner = function (this: any): void {
-    clearStored();
+    if (!netActive()) clearStored();
     stateDebriefWinner.call(this);
   };
+
+  // ---- LAN multiplayer wrappers (deviation LAN_MULTIPLAYER, v0.1.3) ---------------------------
+  // Net games start through NetSession.startLocalGame (never the SelectWorld screens), so the wave-checkpoint /
+  // save-quit / debrief wrappers above stay quiet via netActive() and the net State_RunWorld gate owns the tick.
+  installNetScope();
 }

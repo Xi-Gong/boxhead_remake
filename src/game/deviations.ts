@@ -26,10 +26,12 @@ export const DEVIATIONS: Deviation[] = [
     id: 'NAV_BUDGET_TEST_HOOK',
     file: 'World/Map/CMap_Cell.ts (static mNavBudgetMode / mNavBudgetCells / _NavOutOfTime)',
     description:
-      'TEST-ONLY switch, not in the AS2 original and never set by game code: when CMap_Cell.mNavBudgetMode is a number N, ' +
-      'the "resume"/"continue" time-budget check of Nav_Update reports "out of time" after N cells were popped in the ' +
-      'current call instead of using getTimer() - nSTimer > nTimeOut (3 ms). Default (undefined) = original behaviour. ' +
-      'Reason: deterministic headless tests of the flow field independent of machine speed.',
+      'Not in the AS2 original: when CMap_Cell.mNavBudgetMode is a number N, the "resume"/"continue" time-budget check ' +
+      'of Nav_Update reports "out of time" after N cells were popped in the current call instead of using ' +
+      'getTimer() - nSTimer > nTimeOut (3 ms). Default (undefined) = original behaviour. Set by headless tests ' +
+      '(deterministic flow fields independent of machine speed) and, since v0.1.3, by LAN sessions (see ' +
+      'LAN_MULTIPLAYER): both lockstep peers must pop the same cells per tick, so a net session sets a large budget ' +
+      '(full field each tick) for its duration and restores the previous value afterwards.',
   },
   {
     id: 'XSI_PAINT_ORDER_PINNED',
@@ -192,5 +194,26 @@ export const DEVIATIONS: Deviation[] = [
       'through the engine\'s own button picking, the physical mouse always wins, and a DOM arrow shows while a pad is ' +
       'active. The first pad button also dismisses the browser "Click to start" overlay (in the browser the pad cannot ' +
       'grant the audio gesture itself - Electron needs no gesture). Fixed mapping, no configuration UI.',
+  },
+  // ---------------------------------------------------------------------------------------------- v0.1.3 additions
+  {
+    id: 'LAN_MULTIPLAYER',
+    file: 'local/Net/* (NetSlot, NetSession, NetScope, Lobby, overlay), electron/lan.ts + lanIpc.ts, scope.ts (net guards), Thing/Weapon/CThing_Weapon_Grenade.ts (Fire wrapper), World/Map/CMap_Cell.ts (nav budget in net sessions)',
+    description:
+      'The original has no network play (2P is same-keyboard only). v0.1.3 adds LAN Coop / Death Match between two ' +
+      'machines over deterministic LOCKSTEP (input delay 1 tick): both peers run the identical seeded simulation and ' +
+      'exchange only their own player\'s 7-bit input bitmap per tick. Net games are started by a NetSession through ' +
+      'the normal State_LoadWorld path with the host\'s config (difficulty / speed / devil / collision / damage / DM ' +
+      'kills / quality / player-2 character) applied and restored afterwards. In a net session: both players\' input ' +
+      'slots are bitmap-driven NetSlots (the remote player is immune to the local keyboard; the local player also ' +
+      'runs through its bitmap so both peers compute identical latches), the grenade throw power derives from a ' +
+      'virtual per-tick input clock instead of getTimer() (a Grenade.Fire wrapper shifts the timestamp), the nav BFS ' +
+      'uses a deterministic cell budget (NAV_BUDGET_TEST_HOOK), pause is owned by the net wrapper (the peer freezes ' +
+      'when the frame stream stops), the v0.1.2 save-quit button / debrief RETRY are hidden and the stored ' +
+      'single-player run is never touched, and checkpoints (Coop: every wave start; Death Match: every 1500 ticks) ' +
+      'enable reconnect/续局: a lost link freezes both sides for a 30 s auto-reconnect window, then the disconnecting ' +
+      'player forfeits (Death Match: opponent wins; Coop: run ends) while the checkpoint survives in the lobby for a ' +
+      'mutual continuation. Transport: UDP beacons for discovery + manual IP (directed per-interface broadcasts), ' +
+      'TCP with a 1 s heartbeat / 3.5 s dead-link watchdog in the Electron main process.',
   },
 ];

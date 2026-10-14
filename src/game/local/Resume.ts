@@ -123,6 +123,11 @@ export function armFromCheckpoint(): boolean {
   return true;
 }
 
+/** LAN sessions arm their own net checkpoint through the same pending/consumePending path (v0.1.3). */
+export function armSnapshot(snap: RunSnapshot): void {
+  pending = snap;
+}
+
 /**
  * Arm the CONTINUE path from the stored save (State_Continue). Returns the snapshot (and sets the static game mode
  * from it) or null when nothing readable is stored. The current run's in-memory checkpoint is dropped: it belongs
