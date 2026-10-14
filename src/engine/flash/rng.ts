@@ -27,6 +27,15 @@ export function seedRandom(seed: number): void {
 export function isSeeded(): boolean { return seeded; }
 
 /**
+ * Raw generator state access for the resume feature (local/Resume.ts): capture before quitting a run, restore when
+ * rebuilding it so the wave replays with the same randomness. Pure u32 in/out, independent of seedRandom. (The
+ * optional mathRandomSource override is never installed by the game itself, only by dev visual scenes, so the game's
+ * randomness all flows through `state`.)
+ */
+export function getRandomState(): number { return state; }
+export function setRandomState(s: number): void { state = s >>> 0; }
+
+/**
  * Optional replacement source for `Math.random()` ONLY (dev visual scenes, lane X2: src/dev/fxScenes.ts installs the
  * same Park-Miller LCG the injected AS1 driver installs as Math.random in the original). `random(n)` keeps using the
  * internal generator, exactly like Flash, where the AVM1 random opcode does not go through Math.random.
