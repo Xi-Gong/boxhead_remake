@@ -87,7 +87,8 @@ class LanBridge {
     this.uiCbs.add(cb);
     return () => this.uiCbs.delete(cb);
   }
-  private notify(): void { for (const cb of this.uiCbs) cb(); }
+  /** Wake every onUi listener (the screens re-render on the next frame; tests drive it after poking fields). */
+  notify(): void { for (const cb of this.uiCbs) cb(); }
 
   // ---------------------------------------------------------------------------------------------- discovery / hosting
 
@@ -176,7 +177,7 @@ class LanBridge {
 
   /** Host: both ready -> enter the setup screen (the client mirrors it via the 'setup' message). */
   enterSetup(): void {
-    if (this.phase !== 'lobby' || !this.isHost) return;
+    if (this.phase !== 'lobby' || !this.isHost || !this.peerName || !this.ready) return;
     const sd: any = CMain.mSaveData;
     // Seed the selection from the host's saved preferences, like the local SelectWorld screen.
     this.sel = {
