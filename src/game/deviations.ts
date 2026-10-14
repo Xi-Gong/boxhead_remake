@@ -150,4 +150,16 @@ export const DEVIATIONS: Deviation[] = [
       'paths, and emulating it per shape (coverage threshold through getImageData) would make LOW slower than BEST, so ' +
       'the remake keeps anti-aliased shapes at LOW.',
   },
+  // ---------------------------------------------------------------------------------------------- v0.1.2 additions
+  {
+    id: 'WAVE_CHECKPOINT_RETRY',
+    file: 'scope.ts (CUpgrades.__set__mLevel wrapper, CScreen_Debrief ctor wrapper _Retry, CMain.State_LoadWorld wrapper, CWorld.InitFinished wrapper), local/Resume.ts',
+    description:
+      'The original Debrief RETRY always restarts the room from scratch (score 0, pistol, difficulty base wave). The ' +
+      'remake captures an in-memory checkpoint every time a wave starts (right after __set__mLevel advanced it - the ' +
+      'advance condition guarantees no zombie/devil is alive then) and RETRY restores that wave-start state instead: ' +
+      'wave number, score, multiplier/combo, player positions/lives/weapons+ammo and marker/placed room objects are ' +
+      're-applied to the rebuilt world and the wave restarts fresh (mid-wave creatures/decals are not carried). Without ' +
+      'a checkpoint (e.g. Death Match, or death before the first wave advanced) the original behaviour is untouched.',
+  },
 ];

@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { createHeadlessGame, debriefWinner, KEYS, type GameMode } from './harness.ts';
 import { Bot, runBots } from './bots.ts';
+import { hasCheckpoint } from '../../src/game/local/Resume.ts';
 import { World } from '../../src/game/packages.ts';
 
 describe('boot through the real menus', () => {
@@ -36,6 +37,9 @@ describe('Single: death -> debrief -> retry / exit', () => {
     // the world is gone once the debrief screen is up
     g.step(5);
     expect(g.main().mcWorld).toBeUndefined();
+    // PIN: the passive bot killed nothing -> no wave advanced -> no checkpoint (WAVE_CHECKPOINT_RETRY), so RETRY
+    // below must be the original fresh restart.
+    expect(hasCheckpoint()).toBe(false);
     g.retry();
     expect(g.waitRunning()).toBe(true);
     expect(g.world()).not.toBe(world1);
@@ -137,7 +141,9 @@ describe('Death Match winner', () => {
     expect(g.waitScreen('State_Debrief_Winner', 'Screen_Debrief_Winner')).toBe(true);
     expect(debriefWinner()).toBe(winner);
     expect(g.main().mcScreen.tbWinner.text).toBe(`PLAYER ${winner + 1} WINS`);
-    // RETRY: the same Death Match room again, x200 with fresh frag counts
+    // RETRY: the same Death Match room again, x200 with fresh frag counts (DM never advances waves -> no checkpoint,
+    // so this is the original fresh restart).
+    expect(hasCheckpoint()).toBe(false);
     g.retry();
     expect(g.waitRunning()).toBe(true);
     expect(g.snapshot().multiplier).toBe(200);

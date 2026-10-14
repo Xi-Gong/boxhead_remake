@@ -3,7 +3,7 @@
 // scope.ts wiring (checkpoint hook, SAVE & QUIT button, CONTINUE) lands in M2/M3 and gets its own tests.
 import { describe, expect, it } from 'vitest';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
-import { applyToWorld, capture, type RunSnapshot } from '../../src/game/local/Resume.ts';
+import { applyToWorld, capture, clearAll, hasCheckpoint, type RunSnapshot } from '../../src/game/local/Resume.ts';
 import { Thing } from '../../src/game/packages.ts';
 import { createHeadlessGame, type HeadlessGame } from './harness.ts';
 import { Bot, runBots } from './bots.ts';
@@ -66,7 +66,9 @@ describe('resume: capture -> RETRY (fresh world) -> apply', () => {
     expect(mineState?.damage).toBe(150);
     expect(mineState?.owner).toBe(0);
 
-    // Rebuild the room through the real flow: pause -> QUIT -> Debrief -> RETRY (a fresh world at wave 1).
+    // Rebuild the room through the real flow: pause -> QUIT -> Debrief -> RETRY. M2 wires RETRY to the checkpoint;
+    // drop it so this test exercises the MANUAL apply on a fresh world (as SAVE & QUIT / CONTINUE will).
+    clearAll();
     g.quit();
     expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
     g.retry();
@@ -171,6 +173,48 @@ describe('resume: capture -> RETRY (fresh world) -> apply', () => {
   });
 });
 
+describe('resume: death -> RETRY uses the wave checkpoint (scope wiring)', () => {
+  it('restores the wave-start state and the checkpoint survives the restore', () => {
+    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 51, difficulty: 0 });
+    // Earn a checkpoint: the bot clears wave 1 -> the __set__mLevel wrapper captures the wave-start state.
+    const bot = new Bot(0);
+    for (let i = 0; i < 8000 && !hasCheckpoint(); i++) runBots(g, [bot], 1);
+    expect(hasCheckpoint()).toBe(true);
+    const cpWave = g.world().mUpgrades.mLevelIndex;
+    const cpScore = g.world().mHud.nTotalScore;
+    // Die: stand still and let the zombies eat.
+    let gone = false;
+    for (let i = 0; i < 8000 && !gone; i++) {
+      runBots(g, [new Bot(0, { passive: true })], 1);
+      gone = g.world() == undefined || !!(g.players()[0] && (g.players()[0].mFlags & Thing.CThing.mFlag_DEAD));
+      if (gone && g.world() != undefined) gone = false; // dying takes a while longer (State_Dying/Dead -> debrief)
+    }
+    expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+    // RETRY is now wired to the checkpoint (WAVE_CHECKPOINT_RETRY).
+    g.retry();
+    expect(g.waitRunning()).toBe(true);
+    const w = g.world();
+    expect(w.mUpgrades.mLevelIndex).toBe(cpWave);
+    expect(w.mHud.nTotalScore).toBe(cpScore);
+    expect(w.mUpgrades.Level.mZombieCount).toBe(0); // the wave restarted fresh
+    // The restore's own fast-forward must not have overwritten the checkpoint (suppression guard).
+    expect(hasCheckpoint()).toBe(true);
+    // And a second death -> RETRY restores the same wave-start state again.
+    let gone2 = false;
+    for (let i = 0; i < 8000 && !gone2; i++) {
+      runBots(g, [new Bot(0, { passive: true })], 1);
+      gone2 = g.world() == undefined || !!(g.players()[0] && (g.players()[0].mFlags & Thing.CThing.mFlag_DEAD));
+      if (gone2 && g.world() != undefined) gone2 = false;
+    }
+    expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+    g.retry();
+    expect(g.waitRunning()).toBe(true);
+    expect(g.world().mUpgrades.mLevelIndex).toBe(cpWave);
+    expect(g.world().mHud.nTotalScore).toBe(cpScore);
+    expect(g.errors).toEqual([]);
+  });
+});
+
 describe('resume: rng continuity', () => {
   const OBJECTS = new Set([
     'CThing_Object_Barrel', 'CThing_Object_Wall', 'CThing_Object_Pickup', 'CThing_Object_Mine', 'CThing_Object_ChargePack',
@@ -205,12 +249,14 @@ describe('resume: rng continuity', () => {
     const { g: g1, snap } = runToQuietBoundary(31);
     const a = traj(g1);
     const g2 = runToQuietBoundary(31).g; // identical world by determinism (RNG back at the capture state)
-    // g2: quit -> RETRY -> fresh world at wave 1 -> apply the boundary snapshot (reseeds the RNG).
+    // g2: quit -> RETRY. The M2 wiring arms the wave checkpoint and the InitFinished wrapper applies it (reseeds the
+    // RNG) — the restore under test is the real wired path.
     g2.quit();
     expect(g2.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
     g2.retry();
     expect(g2.waitRunning()).toBe(true);
-    expect(applyToWorld(g2.world(), snap)).toBe(true);
+    expect(g2.world().mUpgrades.mLevelIndex).toBe(2); // restored by the wiring
+    expect(g2.world().mHud.nTotalScore).toBe(snap.score);
     const b = traj(g2);
     expect(b.length).toBe(a.length);
     expect(b).toEqual(a);

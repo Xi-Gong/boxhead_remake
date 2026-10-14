@@ -11,6 +11,7 @@ import { CMain, CSaveData, CSound, External, Screen, World } from './packages.ts
 import { hasTable, roomIndexOfLibLink, showHighscoreTable, submitLocalScore } from './local/Highscores.ts';
 import { registerInstructionsPage } from './local/InstructionsPage.ts';
 import { SCREEN_INSTRUCTIONS_LINKAGE } from './local/localSymbols.ts';
+import { armFromCheckpoint, clearAll, consumePending, isArmed, isSuppressing, recordCheckpoint } from './local/Resume.ts';
 
 /**
  * CrazyMonkeyGames sponsor / cross-promotion links, hidden on every screen they appear on (Screen_Main,
@@ -162,5 +163,44 @@ export function applyScope(): void {
     const r = loadHighScore.call(this, tLevelIndex);
     if (hasTable(this.mMode)) showHighscoreTable(this, this.mMode, Number(tLevelIndex));
     return r;
+  };
+
+  // Wave checkpoint + death RETRY (deviation WAVE_CHECKPOINT_RETRY). The wave-advance condition of
+  // CUpgrades.Process guarantees no zombie/devil is alive when __set__mLevel runs, so capturing right after it is a
+  // clean wave-start state. Guards: mLoaded excludes the InitLists / SetDifficulty build-time calls; the resume
+  // module's own fast-forward suppresses re-capture.
+  const upgradesProto = World.CUpgrades.prototype as any;
+  const setMLevel = upgradesProto.__set__mLevel;
+  upgradesProto.__set__mLevel = function (this: any, a: any): any {
+    const r = setMLevel.call(this, a);
+    if (this.mWorld?.mLoaded === true && !isSuppressing()) recordCheckpoint(this.mWorld);
+    return r;
+  };
+  // Debrief RETRY arms the checkpoint; without one the original fresh restart runs.
+  debriefProto.ctor = (function (previous: any) {
+    return function (this: any): void {
+      previous.call(this);
+      if (this._Retry) {
+        this._Retry.onPress = function (this: any): void {
+          armFromCheckpoint();
+          this.pClass.nState = 'State_LoadWorld';
+          CSound.mSamples.Click.PlaySound();
+        };
+      }
+    };
+  })(debriefProto.ctor);
+  // Consume an armed snapshot once the freshly built world finished its init (no-op without one).
+  const worldProto = World.CWorld.prototype as any;
+  const initFinished = worldProto.InitFinished;
+  worldProto.InitFinished = function (this: any): void {
+    initFinished.call(this);
+    consumePending(this);
+  };
+  // A new run that was not armed by CONTINUE / checkpoint-RETRY drops every stored resume (one slot).
+  const mainProtoResume = CMain.prototype as any;
+  const stateLoadWorld = mainProtoResume.State_LoadWorld;
+  mainProtoResume.State_LoadWorld = function (this: any): void {
+    if (!isArmed()) clearAll();
+    stateLoadWorld.call(this);
   };
 }

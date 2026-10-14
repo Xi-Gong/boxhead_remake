@@ -109,6 +109,14 @@ export function isSuppressing(): boolean { return suppress; }
 export function hasCheckpoint(): boolean { return checkpoint != null; }
 export function isArmed(): boolean { return pending != null; }
 
+/**
+ * Called by the __set__mLevel scope wrapper right after a wave advanced (the advance condition guarantees the field
+ * is then empty of zombies/devils, so this is a clean wave-start state). The caller guards mLoaded + suppression.
+ */
+export function recordCheckpoint(world: any): void {
+  checkpoint = capture(world);
+}
+
 export function armFromCheckpoint(): boolean {
   if (!checkpoint) return false;
   pending = checkpoint;
