@@ -29,6 +29,21 @@ export const LAN_CHECKSUM_EVERY = 50;
 /** Lockstep input delay in ticks (LAN RTT is far below one 40 ms tick). */
 export const LAN_INPUT_DELAY = 1;
 
+/**
+ * Lockstep input delay in ticks for a measured link (v0.1.7). The input frame for tick T is sampled right after
+ * tick T-D ran and must arrive within D ticks (D * tickMs); the wire distance is ONE way (~ RTT/2 + the renderer
+ * IPC hops), so half the WORST recently sampled heartbeat RTT plus a fixed margin covers jitter and path
+ * asymmetry. Smaller than v0.1.4's full-RTT formula (which also paid a built-in extra tick of index slack): a
+ * 60-100 ms virtual-LAN link lands at D=2-3 instead of 3-4. gameSpeed follows GameConfig (0 slow / 1 normal /
+ * 2 fast -> 80 / 40 / 20 ms ticks), so fast games scale the tick count up.
+ */
+export function computeInputDelay(rttSamples: readonly number[] | undefined, gameSpeed: number): number {
+  if (!rttSamples || rttSamples.length === 0) return LAN_INPUT_DELAY;
+  const tickMs = 1000 / (25 * (gameSpeed === 0 ? 0.5 : gameSpeed));
+  const worst = Math.max(...rttSamples);
+  return Math.max(1, Math.min(8, Math.ceil((worst / 2 + 35) / tickMs)));
+}
+
 export type LanMode = 'Coop' | 'DeathMatch';
 export type LanRole = 0 | 1; // 0 = host (player 1), 1 = client (player 2)
 
@@ -90,8 +105,8 @@ export type LanMessage =
   // host -> client: build the world and enter lockstep. `resumeTick` set = rebuild from that net checkpoint
   // (reconnect inside the 30 s window, or a later 续局 continuation) instead of a fresh start. `snap` carries the
   // checkpoint itself when the client reported none (a crashed and restarted client has lost its in-memory copy).
-  // `inputDelay` = lockstep input delay in ticks (host picks it from the measured RTT for virtual-LATENCY links;
-  // default LAN_INPUT_DELAY when absent).
+  // `inputDelay` = lockstep input delay in ticks (the host picks it from the worst recent RTT samples via
+  // computeInputDelay; default LAN_INPUT_DELAY when absent).
   | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; snap?: unknown }
   // both -> both: this peer's player input bitmap for `tick` (bit order = NetSlot.SLOT_ORDER: UP, DOWN, LEFT,
   // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.

@@ -186,7 +186,10 @@ export const DEVIATIONS: Deviation[] = [
       'The original has no gamepad support. The platform polls navigator.getGamepads() once per rAF (Loop beforeTick, ' +
       'also while the context menu freezes the loop) and the game translator feeds the EXISTING input paths: pad 0 ' +
       'drives player 1, pad 1 player 2 (player 1 in Single player), translating buttons to each CInput slot\'s CURRENT ' +
-      'keycode (re-read every poll, so user rebinding is respected). Left stick (0.35 deadzone, four boolean flags) or ' +
+      'keycode (re-read every poll, so user rebinding is respected). Left stick (v0.1.7: radial 40 %/30 % ' +
+      'engage/release hysteresis, eight even 22.5-degree sectors regardless of deflection, 4-degree angular ' +
+      'stickiness - see engine STICK_ENGAGE; v0.1.4 thresholded each axis independently, so the wedges changed ' +
+      'shape with the deflection and releases flickered through diagonals) or ' +
       'the d-pad = movement (the same 8-direction keyboard semantics); RT/LT or A held = fire; RB/LB = next/previous ' +
       'weapon; Start = pause. A pushedByPad set reconciles with the physical keyboard (the pad only releases keys it ' +
       'pushed; Key._clear() self-heals on the next poll). Menus and the pause screen: pad 0\'s stick/d-pad moves a ' +
@@ -228,5 +231,17 @@ export const DEVIATIONS: Deviation[] = [
       'start.inputDelay = clamp(ceil((rtt+25)/40),1,4) - virtual-LAN links no longer stall; real LANs stay at 1 tick). ' +
       'Transport: UDP beacons for discovery + manual IP (directed per-interface broadcasts), ' +
       'TCP with a 1 s heartbeat / 3.5 s dead-link watchdog in the Electron main process.',
+  },
+  // ---------------------------------------------------------------------------------------------- v0.1.7 additions
+  {
+    id: 'GAME_CURSOR_HIDE',
+    file: 'scope.ts (CMain.SetState wrapper, CHud.Pause wrapper)',
+    description:
+      'The original always shows the OS mouse arrow, mid-game included (Flash games had no reason to hide it; the ' +
+      'game is keyboard-only). The remake hides it while the world runs (State_RunWorld, not paused - keyboard / ' +
+      'gamepad only, so the arrow just sat uselessly over the action) and shows it again on the pause menu and every ' +
+      'non-world screen (menus, loading, debrief). Implemented through the engine\'s own AS2 Mouse.hide()/show() ' +
+      'plumbing, which the platform loop applies as cursor:none over the stage container each rendered frame; the ' +
+      'right-click context menu element carries its own cursor:default, so it stays usable mid-game.',
   },
 ];

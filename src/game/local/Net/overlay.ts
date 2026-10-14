@@ -7,8 +7,18 @@ import { setNetOverlaySync } from './bridge.ts';
 let statusEl: HTMLDivElement | undefined;
 let pingEl: HTMLDivElement | undefined;
 let hideTimer: number | undefined;
+/** Pending delayed WAITING-strip show (the grace window, v0.1.7). */
+let stallTimer: number | undefined;
 /** True while the status strip uses the prominent (reconnect countdown) style. */
 let prominent = false;
+
+/** Grace before the WAITING strip appears: shorter micro-stalls never flash (v0.1.7). */
+export const STALL_GRACE_MS = 150;
+
+/** Pure: is a stall that started at `stallSince` due to show its strip at `now`? */
+export function stallStripDue(stallSince: number | undefined, now: number): boolean {
+  return stallSince !== undefined && now - stallSince >= STALL_GRACE_MS;
+}
 
 const STYLE_NORMAL = 'position:absolute;left:50%;top:8px;transform:translateX(-50%);padding:6px 18px;'
   + 'background:rgba(0,0,0,0.72);border:1px solid #9c9c9c;color:#fff;font:bold 15px Calibri,sans-serif;'
@@ -51,30 +61,36 @@ function hideSoon(ms: number): void {
   hideTimer = setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, ms) as unknown as number;
 }
 
-/** Called by the bridge on every session state change (and once at game start). */
+/** Called by the bridge on every session state change (and once per heartbeat while playing, v0.1.7). */
 function sync(session: NetSession | null): void {
   if (!ensure()) return;
   if (!session) {
+    cancelStallTimer();
     if (statusEl) statusEl.style.display = 'none';
     if (pingEl) pingEl.style.display = 'none';
     return;
   }
+  const inGame = session.phase === 'playing' || session.phase === 'reconnecting' || session.phase === 'desync';
   if (pingEl) {
-    const rtt = session.rttMs;
+    // v0.1.7: live per heartbeat; hidden once the game is over (the lobby room view shows its own PING line).
+    const rtt = inGame ? session.rttMs : undefined;
     pingEl.style.display = rtt !== undefined ? 'block' : 'none';
     if (rtt !== undefined) pingEl.textContent = `${rtt <= 0 ? '<1' : Math.round(rtt)} ms`;
   }
   if (session.phase === 'reconnecting') {
     // Prominent, and re-synced every 500 ms by the bridge's deadline timer so the seconds actually tick down.
+    cancelStallTimer();
     const s = session.reconnectSecondsLeft();
     show(session.role === 1 ? `RECONNECTING TO HOST - ${s}s` : `PLAYER 2 LOST - WAITING TO RECONNECT - ${s}s`, true);
     return;
   }
   if (session.phase === 'desync') {
+    cancelStallTimer();
     show('CONNECTION DESYNCED (tick ' + session.desyncTick + ')\nreturning to the LAN lobby');
     return;
   }
   if (session.phase === 'ended') {
+    cancelStallTimer();
     if (session.endReason === 'timeout' || session.endReason === 'peer-timeout') {
       show('CONNECTION LOST - GAME OVER');
     } else {
@@ -85,10 +101,25 @@ function sync(session: NetSession | null): void {
   }
   // playing: transient stalls only
   if (session.stallReason === 'peer') {
-    show('WAITING FOR PLAYER ' + (session.role === 0 ? '2' : '1') + '...');
+    const text = 'WAITING FOR PLAYER ' + (session.role === 0 ? '2' : '1') + '...';
+    if (stallStripDue(session.stallSince, Date.now())) {
+      cancelStallTimer();
+      show(text);
+    } else if (stallTimer === undefined) {
+      // Inside the grace window: show only if the stall actually persists (micro-stalls never flash, v0.1.7).
+      stallTimer = setTimeout(() => {
+        stallTimer = undefined;
+        if (session.stallReason === 'peer' && session.phase === 'playing') show(text);
+      }, STALL_GRACE_MS) as unknown as number;
+    }
     return;
   }
+  cancelStallTimer();
   hideSoon(600);
+}
+
+function cancelStallTimer(): void {
+  if (stallTimer !== undefined) { clearTimeout(stallTimer); stallTimer = undefined; }
 }
 
 export function installNetOverlay(): void {

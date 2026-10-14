@@ -8,7 +8,7 @@
 //     the CInput recreation per world (State_LoadWorld) is picked up automatically;
 //   - a pushedByPad set reconciles with the physical keyboard: the pad only releases keys it pushed itself, and
 //     after Key._clear() (window blur / context menu) the next poll re-pushes still-held buttons;
-//   - left stick (deadzone + four boolean flags) or the d-pad = movement;
+//   - left stick (radial 40/30 % engage-release + eight even 22.5-degree sectors, v0.1.7) or the d-pad = movement;
 //   - RT/LT or A held = FIRE, RB/LB = next/previous weapon, Start = pause (all through the slot latch semantics,
 //     exactly like the keyboard keys they impersonate);
 //   - menus / pause screen: pad 0's stick or d-pad moves a virtual cursor (player.mouseMove in stage-logical

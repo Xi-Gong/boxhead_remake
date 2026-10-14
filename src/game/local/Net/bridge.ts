@@ -12,7 +12,7 @@
 import { desktop } from '../../../engine/platform/desktop.ts';
 import { CMain } from '../../packages.ts';
 import { NetSession } from './NetSession.ts';
-import { LAN_INPUT_DELAY } from './protocol.ts';
+import { computeInputDelay } from './protocol.ts';
 import type { GameConfig, LanMessage, SetupSelection } from './protocol.ts';
 
 /** The Presenter surface the bridge needs (main.ts hands the real platform Presenter over). */
@@ -44,6 +44,8 @@ class LanBridge {
   sel: SetupSelection = { mode: 'Coop', charP1: 3, charP2: 0, levelIdx: 0, difficulty: 0, gameAmount: 0 };
   /** Peer link round-trip time (heartbeat echo; live already while in the room). */
   rttMs: number | undefined;
+  /** Recent heartbeat RTT samples (ms, newest last, capped) - the input-delay picker uses their worst (v0.1.7). */
+  rttSamples: number[] = [];
   /** Host: this machine's non-internal IPv4s (fetched on host(); the room view shows them). */
   hostAddrs: string[] = [];
   /** Set by main.ts: lets DOM overlays (the IP input) track the letterboxed canvas. */
@@ -133,6 +135,7 @@ class LanBridge {
     this.isHost = true;
     this.ready = false;
     this.rttMs = undefined;
+    this.rttSamples = [];
     this.peerName = '';
     this.message = '';
     this.notify();
@@ -228,11 +231,10 @@ class LanBridge {
       charP1: sel.charP1,
       charP2: sel.charP2,
     };
-    // Lockstep input delay adapts to the measured link RTT: on a real LAN (<5 ms) it stays 1; a virtual-LAN link
-    // at ~60 ms needs 2 ticks so the peer's frames arrive before the tick that consumes them (no stalls).
-    const inputDelay = this.rttMs === undefined
-      ? LAN_INPUT_DELAY
-      : Math.min(4, Math.max(1, Math.ceil((this.rttMs + 25) / 40)));
+    // Lockstep input delay from the WORST recent heartbeat RTT (v0.1.7, see computeInputDelay): a 60-100 ms
+    // virtual-LAN link lands at 2-3 ticks instead of v0.1.4's 3-4, and the max-based headroom keeps jitter
+    // spikes from freezing the sim.
+    const inputDelay = computeInputDelay(this.rttSamples, cfg.gameSpeed);
     const roomLink = 'ROOM_Single_' + PAD4(sel.levelIdx + 1);
     const seed = (Math.random() * 2 ** 32) >>> 0;
     // Persist the choices on the host like the local SelectWorld screen does.
@@ -325,8 +327,11 @@ class LanBridge {
       return;
     }
     if (msg.t === 'hb') {
-      // Our own heartbeat probe echoed back: the link round-trip time (live already in the room).
+      // Our own heartbeat probe echoed back: the link round-trip time (live already in the room). The recent
+      // samples feed the input-delay picker at START (v0.1.7).
       this.rttMs = Math.max(0, Date.now() - msg.ts);
+      this.rttSamples.push(this.rttMs);
+      if (this.rttSamples.length > 20) this.rttSamples.shift();
     }
     this.session?.onNetMessage(msg);
   }

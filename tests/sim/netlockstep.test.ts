@@ -12,6 +12,8 @@ import { createHeadlessGame, KEYS, type HeadlessGame } from './harness.ts';
 import { NetSlot, packBits, SLOT_ORDER, unpackBit } from '../../src/game/local/Net/NetSlot.ts';
 import { NetSession, _peekLocalFrame } from '../../src/game/local/Net/NetSession.ts';
 import { CMain } from '../../src/game/packages.ts';
+import { computeInputDelay } from '../../src/game/local/Net/protocol.ts';
+import { stallStripDue } from '../../src/game/local/Net/overlay.ts';
 import type { GameConfig, LanMode } from '../../src/game/local/Net/protocol.ts';
 
 // --------------------------------------------------------------------------------------------- helpers
@@ -80,11 +82,11 @@ const SEED = 4242;
 
 /** Boot a game to the main menu and start it through a client NetSession (remote player-1 frames fed per tick). */
 interface Peer { game: HeadlessGame; session: NetSession; sent: any[] }
-function bootNetPeer(mode: LanMode, roomLink: string): Peer {
+function bootNetPeer(mode: LanMode, roomLink: string, inputDelay?: number): Peer {
   const game = createHeadlessGame({ mode: 'Coop', room: 1, menuOnly: 'Main', navBudget: 300 });
   const sent: any[] = [];
   const session = new NetSession(1, { send: (m) => sent.push(m) });
-  session.startLocalGame({ mode, roomLink, cfg: CFG, seed: SEED }, game.main());
+  session.startLocalGame({ mode, roomLink, cfg: CFG, seed: SEED, inputDelay }, game.main());
   if (!game.waitRunning(3000)) throw new Error(`net peer: room did not start (${game.state()}, ${game.errors[0] ?? ''})`);
   return { game, session, sent };
 }
@@ -160,8 +162,9 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
         expect(B.game.world().mTick).toBe(entry + firstEntry);
       }
       B.session.onNetMessage({ t: 'in', tick: entry, bits: bitsOf(script(i).p1, KEYS.P1) });
-      // frame(entry+2) is sampled inside THIS tick's afterTick, so the local keys lead the script by 2 ticks.
-      B.game.setKeys(script(i + 2).p2);
+      // frame(entry+D)=entry+1 is sampled inside THIS tick's afterTick (v0.1.7 sends the frame for t-1+D, one tick
+      // earlier than v0.1.4's t+D), so the local keys lead the script by exactly 1 tick.
+      B.game.setKeys(script(i + 1).p2);
       if (i === 50) grantGrenade(B.game);
       expect(B.game.tick(1)).toBe(1);
       const got = worldHash(B.game);
@@ -201,7 +204,7 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     const dmFirst = B.game.world().mTick;
     for (let i = 0; i <= 1505; i++) {
       B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - dmFirst, bits: bitsOf(script(i).p1, KEYS.P1) });
-      B.game.setKeys(script(i + 2).p2);
+      B.game.setKeys(script(i + 1).p2);
       B.game.tick(1);
     }
     const cp = B.session.netCheckpoint;
@@ -218,7 +221,7 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
       const reFirst = P.game.world().mTick;
       for (let i = 0; i < 60; i++) {
         P.session.onNetMessage({ t: 'in', tick: P.game.world().mTick - reFirst, bits: bitsOf(script(i).p1, KEYS.P1) });
-        P.game.setKeys(script(i + 2).p2);
+        P.game.setKeys(script(i + 1).p2);
         P.game.tick(1);
       }
       return worldHash(P.game);
@@ -247,16 +250,17 @@ describe('LAN session config (v0.1.4)', () => {
     expect(sd.mPlayer2_CharacterIndex).toBe(p2);
   });
 
-  it('honours start.inputDelay: primes 0..D, sends t+D, prunes behind t-(D+3)', { timeout: 60000 }, () => {
+  it('honours start.inputDelay: primes 0..D-1, sends t-1+D (v0.1.7 one-tick-earlier), prunes behind t-(D+3)', { timeout: 60000 }, () => {
     const g = createHeadlessGame({ mode: 'Coop', room: 1, menuOnly: 'Main' });
     const sent: any[] = [];
     const session = new NetSession(1, { send: (m) => sent.push(m) });
     session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, inputDelay: 2 }, g.main());
     if (!g.waitRunning(3000)) throw new Error(`room did not start (${g.state()}, ${g.errors[0] ?? ''})`);
     expect(session.inputDelay).toBe(2);
-    // onWorldReady primed the D+1 frames 0..2 (with the default delay it would be 0..1).
-    const primed = sent.filter((m) => m.t === 'in' && m.tick <= 2).map((m) => m.tick).sort((a, b) => a - b);
-    expect(primed).toEqual([0, 1, 2]);
+    // onWorldReady primed the D frames 0..1 (v0.1.4 primed 0..D; the D frame now belongs to tick 0's afterTick, so
+    // priming it too would double-write the index and desync).
+    const ins = sent.filter((m) => m.t === 'in');
+    expect(ins.slice(0, 2).map((m) => m.tick)).toEqual([0, 1]);
 
     const first = g.world().mTick;
     for (let T = 0; T < 12; T++) {
@@ -264,9 +268,9 @@ describe('LAN session config (v0.1.4)', () => {
       session.onNetMessage({ t: 'in', tick: T + 1, bits: 0 }); // one ahead, so the tick never stalls
       g.tick(1);
     }
-    // afterTick sends frame index t+D: with 12 executed ticks the newest is around 12+2.
+    // afterTick sends frame index (executed tick)+D: with 12 executed ticks (0..11) the newest is 11+2.
     const newest = Math.max(...sent.filter((m) => m.t === 'in').map((m) => m.tick));
-    expect(newest).toBeGreaterThanOrEqual(12);
+    expect(newest).toBe(13);
     // The buffered window shrinks behind t-(D+3): frames older than 12-5 are gone, recent ones remain.
     expect(_peekLocalFrame(session, 0)).toBeUndefined();
     expect(_peekLocalFrame(session, 2)).toBeUndefined();
@@ -290,5 +294,90 @@ describe('LAN session config (v0.1.4)', () => {
     expect(other.endReason).toBe('peer-timeout');
     session.dispose();
     other.dispose();
+  });
+});
+
+// ------------------------------------------------------------- v0.1.7: live ping / stall notices / input delay
+
+describe('LAN v0.1.7: live ping, stall notices, jitter-aware input delay', () => {
+  it('computeInputDelay: one-way + margin bands, gameSpeed-aware, capped', () => {
+    // Normal speed (40 ms ticks): no samples or a real LAN stays 1; 60 ms -> 2; ~100 ms -> 3; extreme clamps at 8.
+    expect(computeInputDelay(undefined, 1)).toBe(1);
+    expect(computeInputDelay([], 1)).toBe(1);
+    expect(computeInputDelay([2], 1)).toBe(1);
+    expect(computeInputDelay([60], 1)).toBe(2);
+    expect(computeInputDelay([40, 55, 60], 1)).toBe(2); // the WORST recent sample decides (jitter headroom)
+    expect(computeInputDelay([100], 1)).toBe(3);
+    expect(computeInputDelay([175], 1)).toBe(4);
+    expect(computeInputDelay([2000], 1)).toBe(8);
+    // Fast game (20 ms ticks) needs proportionally more ticks for the same link; slow (80 ms) fewer.
+    expect(computeInputDelay([60], 2)).toBe(4);
+    expect(computeInputDelay([60], 0)).toBe(1);
+  });
+
+  it('heartbeat refreshes rttMs AND notifies the UI while playing (ended sessions stay silent)', { timeout: 60000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    let notified = 0;
+    B.session.onStateChange = () => notified++;
+    const before = notified;
+    B.session.onNetMessage({ t: 'hb', ts: Date.now() - 42 });
+    expect(B.session.rttMs).toBeGreaterThanOrEqual(40);
+    expect(B.session.rttMs).toBeLessThanOrEqual(60);
+    expect(notified).toBe(before + 1); // the in-game ping readout refreshes with every probe
+    // An ended session (back in the lobby after a game) must not re-trigger the overlay every second.
+    B.session.phase = 'ended';
+    const n2 = notified;
+    B.session.onNetMessage({ t: 'hb', ts: Date.now() });
+    expect(notified).toBe(n2);
+    B.session.dispose();
+  });
+
+  it('stall transitions notify the UI and stamp/clear stallSince', { timeout: 60000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    const events: (string | undefined)[] = [];
+    B.session.onStateChange = () => events.push(B.session.stallReason);
+    // No remote frame for the next tick -> the gate stalls and the UI hears about it (v0.1.4 never told it).
+    expect(B.game.tick(1)).toBe(0);
+    expect(B.session.stallReason).toBe('peer');
+    expect(B.session.stallSince).not.toBeUndefined();
+    expect(events).toContain('peer');
+    // The frame arrives -> the stall clears and the UI hears that too.
+    const entry = B.game.world().mTick - (B.session as any).startTick;
+    B.session.onNetMessage({ t: 'in', tick: entry, bits: 0 });
+    expect(B.game.tick(1)).toBe(1);
+    expect(B.session.stallReason).toBeUndefined();
+    expect(B.session.stallSince).toBeUndefined();
+    expect(events[events.length - 1]).toBeUndefined();
+    B.session.dispose();
+  });
+
+  it('stallStripDue: the WAITING strip waits out a grace window (micro-stalls never flash)', () => {
+    expect(stallStripDue(undefined, 1000)).toBe(false);
+    expect(stallStripDue(900, 1000)).toBe(false); // 100 ms stall: still inside the grace
+    expect(stallStripDue(850, 1000)).toBe(true); // 150 ms stall: due
+  });
+
+  it('a host start while the client session lives keeps the client inputDelay (reconnect / resume)', { timeout: 60000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001', 3);
+    expect(B.session.inputDelay).toBe(3);
+    // v0.1.4 bug: this path dropped msg.inputDelay and reset the client to D=1 while the host kept 3 -> the host
+    // micro-stalled on every tick after any resume.
+    B.session.onNetMessage({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, inputDelay: 3, resumeTick: 0 });
+    expect(B.session.inputDelay).toBe(3);
+    B.session.dispose();
+  });
+
+  it('onHello resends start WITH inputDelay (host side of the resume)', { timeout: 60000 }, () => {
+    const g = createHeadlessGame({ mode: 'Coop', room: 1, menuOnly: 'Main' });
+    const sent: any[] = [];
+    const session = new NetSession(0, { send: (m) => sent.push(m) });
+    session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, inputDelay: 3 }, g.main());
+    if (!g.waitRunning(3000)) throw new Error(`room did not start (${g.state()}, ${g.errors[0] ?? ''})`);
+    session.phase = 'reconnecting';
+    session.captureCheckpoint(g.world());
+    session.onHello({});
+    const start = sent.find((m) => m.t === 'start');
+    expect(start).toMatchObject({ inputDelay: 3 });
+    session.dispose();
   });
 });

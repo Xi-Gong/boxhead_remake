@@ -91,7 +91,16 @@ function helpers(page) {
     }
     return found;
   });
-  return { state, waitFor, waitScreen, click, worldInfo, overlayText };
+  /** The v0.1.7 live in-game ping readout (top-right overlay div), null when absent/hidden. */
+  const pingText = () => page.evaluate(() => {
+    for (const d of document.querySelectorAll('div')) {
+      if (d.style.right !== '10px' || d.style.top !== '8px') continue;
+      const t = (d.textContent ?? '').trim();
+      if (/(^<1|\d+)\s*ms$/.test(t)) return d.style.display === 'block' ? t : null;
+    }
+    return null;
+  });
+  return { state, waitFor, waitScreen, click, worldInfo, overlayText, pingText };
 }
 
 const LAN_BTN = [320, 392.4];
@@ -176,6 +185,14 @@ try {
   if (wi0 == null || wc0 == null || wi0.room !== wc0.room) throw new Error('rooms mismatch');
   if (wi0.room !== 'ROOM_Single_0001') throw new Error(`unexpected start room ${wi0.room} (setup selection ignored?)`);
   await shot('06_host_ingame', H.page);
+  // v0.1.7: both peers agree on the lockstep input delay, and the live ping readout is up during play.
+  const dH0 = await H.page.evaluate(() => window.__game.lan().inputDelay);
+  const dC0 = await C.page.evaluate(() => window.__game.lan().inputDelay);
+  if (dH0 !== dC0) throw new Error(`inputDelay mismatch at start: host ${dH0} vs client ${dC0}`);
+  step(`lockstep inputDelay ${dH0} on both peers`);
+  const ping0 = await h.pingText();
+  if (!ping0) throw new Error('in-game ping readout missing during play');
+  step(`in-game ping readout live: ${ping0}`);
 
   // ---- lockstep play: 12 s of keys on both machines --------------------------------------
   const t0 = Date.now();
@@ -258,6 +275,12 @@ try {
   step(`resumed: host=${JSON.stringify(wi3)} client=${JSON.stringify(wc3)}`);
   if (wi3.level !== wi2.level || wc3.level !== wi2.level) throw new Error(`resume lost the wave: ${wi3.level}/${wc3.level} vs ${wi2.level}`);
   if (wi3.score !== wc3.score) throw new Error(`resume score mismatch ${wi3.score} vs ${wc3.score}`);
+  // v0.1.7 bugfix pin: the resume `start` must carry the input delay (a dropped field reset the restarted client
+  // to D=1 while the host kept its measured D -> the host micro-stalled every tick after any resume).
+  const dH1 = await H.page.evaluate(() => window.__game.lan().inputDelay);
+  const dC1 = await C2.page.evaluate(() => window.__game.lan().inputDelay);
+  if (dH1 !== dC1 || dH1 !== dH0) throw new Error(`inputDelay lost on resume: host ${dH1} vs client ${dC1} (start ${dH0})`);
+  step(`resume kept inputDelay ${dH1} on both peers`);
   await shot('08_resumed', H.page);
 
   // ---- lockstep runs again after the resume ----------------------------------------------
@@ -286,6 +309,10 @@ try {
   step(`concede: host debrief, client ended=${clientEnd} (${await c2.state()})`);
   await shot('09_host_debrief', H.page);
   if (!clientEnd) throw new Error('client did not end after the concede');
+  // v0.1.7: the ping readout is in-game only (the lobby room view has its own PING line).
+  const pingAfter = await h.pingText();
+  if (pingAfter) throw new Error(`ping readout still visible after the game ended (${pingAfter})`);
+  step('ping readout hidden after the end');
 
   // ---- resume from the room, then let the countdown RUN OUT: host ends at the main menu ----
   step('back to the room for the timeout section');
@@ -320,5 +347,5 @@ try {
   try { await C?.app.close(); } catch {}
   try { await C2?.app.close(); } catch {}
 }
-console.log(report.ok ? 'PACKAGED v0.1.4 LAN PLAYTEST PASSED' : `PACKAGED v0.1.4 LAN PLAYTEST FAILED: ${report.errors.join(' | ')}`);
+console.log(report.ok ? 'PACKAGED LAN PLAYTEST PASSED' : `PACKAGED LAN PLAYTEST FAILED: ${report.errors.join(' | ')}`);
 process.exit(report.ok ? 0 : 1);

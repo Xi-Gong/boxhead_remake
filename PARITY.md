@@ -69,7 +69,7 @@
 | 键位默认：P1 方向键+`/`，P2 WASD+Space，单人附加 1-0 直选与 Space 开火 | ✅ | `CSaveData` 默认值两边一致 |
 | 50Hz 仿真节拍 | ✅ | 任意刷新率下 tick 一致（偏差 `CMAIN_FRAMETIME` 用调度时刻代替墙钟，消除抖动） |
 
-## 5. 有意偏差登记（`src/game/deviations.ts`，共 18 条：下面 14 条 + v0.1.2 新增 3 条见 §8 + v0.1.3 新增 1 条见 §9）
+## 5. 有意偏差登记（`src/game/deviations.ts`，共 19 条：下面 14 条 + v0.1.2 新增 3 条见 §8 + v0.1.3 新增 1 条见 §9 + v0.1.7 新增 1 条 GAME_CURSOR_HIDE 见文末 v0.1.7 段）
 
 **用户可见（在线/赞助功能本地化，6 条）**：
 `NO_NETWORK`（getURL/LoadVars 全空转，不联网）、`SCOPE_HIDDEN_PROMOS`（隐藏赞助/交叉推广链接）、
@@ -179,7 +179,7 @@ v0.1.3 的大厅把建房/加入/设置混在一屏（加入列表与主机控�
 | 大厅 | 两个互不重叠的视图：入口（CREATE ROOM / 自动发现列表 `名字·人数/2·状态`（满员与游戏中置灰）+ 校验后的 IPv4(:端口) 手动输入，DOM 输入框经 `Presenter.logicalToClient + onResize` 贴合画布）与房间（双方 READY 徽标、心跳实测 PING、本机输入摘要、客机 READY/LEAVE、主机 START/CLOSE；结束局有检查点时显示 RESUME GAME）。进入大厅即自动发现（2s 重试自愈 UDP 端口冲突），去掉手动 REFRESH |
 | 准备/开局 | 新消息 `{t:'ready'}`（客机→主机）与 `{t:'setup', sel}`（主机→客机）：主机 START 需客机已连接**且** READY；双方进入**网络选人屏**（新合成符号 9004 + 原版 `SubScreen_Coop/DeathMatch` 素材原样嵌入，观感=传统选人界面）——**主机统一改**模式/双角色（`SetupSelection.charP1/charP2`，纯外观）/18 关/难度/击杀数，每次变更镜像到客机（只读 + WAITING FOR HOST 横幅）；主机 START GAME 用该选择开局（`GameConfig` 新增必填 `charP1`，客机 `applyConfig` 写入并在 dispose 还原——v0.1.3 缺 P1 角色同步）。主机 BACK 发裸 `{t:'lobby'}` 双方回房间 |
 | 断线 | 30s 重连倒计时**每秒读秒**（500ms 定时器每拍重渲 overlay/大厅状态，v0.1.3 只渲染一次冻结在 30）；重连样式改为醒目红条；客机重连改为**每秒重试**（v0.1.3 为 2s；不做立即重试——优雅退出同样触发掉线事件，立即重连会在退出途中 hello 主机引发无意义的检查点重建）。`leave` 增加 `via:'timeout'|'concede'`：**超时判负双端回主菜单**（`State_RunWorld` 包装改道 `State_NetEnd`，savequit 同款；联机无持久存档，内存检查点保留供续局），主动认输（暂停 QUIT）仍走 Debrief/Winner |
-| 虚拟局域网 | 实测每方向 ~2-4KB/s（JSON 帧 + 心跳），带宽不是瓶颈；`start.inputDelay = clamp(ceil((RTT+25)/40),1,4)` 由主机按大厅期心跳 RTT 决定随开局下发（真局域网 <5ms 仍为 1 tick 不变），高延迟虚拟局域网消除"等待对方"卡帧；帧修剪窗随延迟 `t-(D+3)` |
+| 虚拟局域网 | 实测每方向 ~2-4KB/s（JSON 帧 + 心跳），带宽不是瓶颈；v0.1.7 `start.inputDelay = computeInputDelay(最近≤20个心跳RTT样本, gameSpeed)` = `clamp(ceil((最差RTT/2+35)/tickMs),1,8)`（单程+裕量、按最差样本留抖动余量、随游戏速度缩放 tick 数），60-100ms 虚拟局域网落在 2-3 档（v0.1.4 全 RTT 公式落在 3-4 档）；输入帧采样提前一个 tick（见文末 v0.1.7 段）；帧修剪窗随延迟 `t-(D+3)` |
 | 信标/发现 | beacon 增加 `players:1|2`（`decodeBeacon` 对旧信标默认 1）；主机有 peer 时自动广播 2/2，列表据此置灰 |
 | 输入识别（GAMEPAD_INPUT 增量） | 引擎层透传 `Gamepad.id`；手柄→玩家指派表默认按系统顺序自动分配，`swapAssignment()` 互换（DOM 徽标点击手柄芯片触发）；`status()` 暴露在线/名称/最近活动/生效玩家。新 `local/InputBadge.ts`：左下角 DOM 徽标 KEYBOARD/PAD 1/PAD 2 芯片（在线亮起、最近使用的设备绿框高亮、`→P1/→P2` 归属角标、无手柄时"按任意键连接"提示、4s 无操作淡化、仅芯片可点击）——DOM-only 不碰画布基线；大厅房间视图显示"YOUR INPUTS: …" |
 
@@ -205,3 +205,27 @@ DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢�
 （DisplayObject.ts，try/catch 包裹）；`CScreen_LanLobby`/`CScreen_LanSetup` 把 DOM 输入框/定时器/订阅清理
 挂到 `onUnload`（Dispose 保留兜底）。回归：`playtest.lanui.mjs` 新增"输入 IP → BACK TO MENU → 输入框必须
 从 DOM 移除 + 重进大厅恰好一个输入框、离开后为零"断言。
+
+**v0.1.7 手感四连修（用户双机实测反馈）**：
+
+1. **游戏内隐藏光标**（偏差 `GAME_CURSOR_HIDE`，deviations 18→19 条）：原版任何时候都显示系统箭头；本版
+   `State_RunWorld` 运行中（未暂停）隐藏（`scope.ts` 包 `CMain.SetState` + `CHud.Pause`，走引擎自带
+   `Mouse.hide/show` → 平台层每帧写 `cursor:none`），暂停菜单与所有非世界屏恢复；右键菜单元素自带
+   `cursor:default` 不受影响。测试 `tests/sim/cursor.test.ts`。
+2. **局内 PING 实时刷新**：心跳其实每秒都在更新 `session.rttMs`，但 v0.1.4 的 overlay 只在"状态变化"时
+   同步——稳定对局中数字冻结在开局值。修复：`NetSession` 在 playing 相位收到 `hb` 即触发
+   `onStateChange`（bridge 已挂 overlay 同步）；游戏结束后不再触发（否则大厅里每秒重闪 RUN OVER 条）。
+   局内 ping 角标同时改为仅对局中显示（大厅房间视图有自己的 PING 行）。
+3. **卡顿（60-100ms 虚拟局域网）三管齐下**：(a) 输入帧索引提前一个 tick——`afterTick` 里采样帧定为
+   `t-1+D`（原 `t+D`，即"下一 tick+D"），对端只需在 D tick 内收到（单程线缆时间），两端对称位移、
+   模拟不变，净省 40ms；(b) 定档改抖动感知（见上表虚拟局域网行）；(c) **修复 resume/重连丢 inputDelay
+   的真 bug**——客机已有 session 时收到的 `start` 不透传 `msg.inputDelay`（重置为 1 而主机保持 3-4 → 主机
+   真 bug**——客机已有 session 时收到的 `start` 不透传 `msg.inputDelay`（重置为 1 而主机保持 3-4 → 主机
+   每 tick 微卡），`onHello` 重发的 `start` 也缺该字段；两处补齐。另：**stall（等待对方）此前从不通知
+   UI**（`stallReason` 变化不触发任何重渲），现在经 `stall()` 在变化时触发 `onStateChange`，overlay 有
+   150ms 宽限期（`STALL_GRACE_MS`，`stallStripDue` 纯函数）——微失步不再闪"WAITING"横幅。
+4. **手柄摇杆方向**：引擎层量化从"每轴独立 |axis|>0.35"改为径向 40%/30% 起动/保持滞回 + 均匀 8 扇区
+   （±22.5°，与推杆幅度无关）+ 4° 角度粘滞（`STICK_ENGAGE/STICK_RELEASE/STICK_STICKY_DEG`，
+   `engine/platform/Gamepad.ts quantizeStick`）。旧行为的病灶：方向扇区随幅度变形（半推时斜向几乎不可
+   触发、 cardinal 却有 ±44°）、松杆回中两轴先后过阈闪斜向。`PadDirs` 接口不变，键盘路径与 d-pad、
+   菜单模拟光标（仍用 `STICK_DEADZONE` 每轴）零改动。测试 `tests/unit/platform/gamepad.test.ts`。

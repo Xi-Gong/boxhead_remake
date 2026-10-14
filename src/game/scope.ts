@@ -5,6 +5,7 @@
 // How the characters were identified: generated/reports/f3/tree.cjs (frame-1 display trees of library.json),
 // generated/disasm/button_<id>_1.txt + clip_sprite<id>_f1_d<depth>_1.txt (their getURL targets) and the gallery
 // renders generated/reports/gallery/Screen_Main.png, Screen_SelectWorld.png, Screen_Debrief.png, LevelIcons_Single_f7.png.
+import { Mouse } from '../engine/flash/input.ts';
 import { Button, MovieClip, _global } from '../engine/runtime.ts';
 import { getFrameScript, registerFrameScript, setInstanceHook } from '../engine/swf/Player.ts';
 import { CMain, CSaveData, CSound, External, Screen, World } from './packages.ts';
@@ -221,6 +222,18 @@ export function applyScope(): void {
     stateLoadWorld.call(this);
   };
 
+  // ---- gameplay cursor (deviation GAME_CURSOR_HIDE, v0.1.7) ------------------------------------
+  // The original always shows the OS arrow, mid-game included; here it disappears while the world runs (keyboard /
+  // pad only) and returns for the pause menu and every non-world screen. Mouse.hide()/show() only flip the engine
+  // flag; the platform loop applies it as cursor:none over the stage on the next rendered frame.
+  const cursorHidden = (hidden: boolean): void => { if (hidden) Mouse.hide(); else Mouse.show(); };
+  const mainProtoCursor = CMain.prototype as any;
+  const setStatePrev = mainProtoCursor.SetState;
+  mainProtoCursor.SetState = function (this: any, nState: any): void {
+    if (this[nState] != undefined) cursorHidden(nState === 'State_RunWorld');
+    setStatePrev.call(this, nState);
+  };
+
   // ---- SAVE & QUIT / CONTINUE (deviation SAVE_QUIT_RESUME) -----------------------------------
   // Pause screen: a second button below QUIT stores the run snapshot and returns to the main menu (NOT through the
   // Debrief: the run is not over, and its score must not become submittable twice through a later CONTINUE).
@@ -228,6 +241,7 @@ export function applyScope(): void {
   const hudPause = hudProto.Pause;
   hudProto.Pause = function (this: any, tState: any): void {
     hudPause.call(this, tState);
+    cursorHidden(tState !== true); // the pause menu needs the arrow; resuming hides it again
     if (tState !== true || !this.mcScreenPause) return;
     if (netActive()) {
       // Net pause: QUIT concedes the run (Leave + forfeit end states on both peers); no SAVE & QUIT in a net game.

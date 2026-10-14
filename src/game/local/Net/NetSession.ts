@@ -5,9 +5,10 @@
 // LOCKSTEP (input delay: LAN_INPUT_DELAY = 1 tick by default; the host raises it for high-RTT virtual-LAN links
 // via start.inputDelay, v0.1.4):
 //   - every executed tick T, right before it runs, BOTH players' NetSlots are set from the bitmaps sampled for T
-//     (our own frame was sampled LAN_INPUT_DELAY ticks earlier and sent; the peer's frame arrived over the wire);
-//   - right after tick T ran we sample the CURRENT local input state and send it as the frame for T + 1 + D, so it
-//     arrives long before that tick needs it (LAN RTT << one 40 ms tick);
+//     (our own frame was sampled D ticks earlier and sent; the peer's frame arrived over the wire);
+//   - right after tick T ran we sample the CURRENT local input state and send it as the frame for T + D (v0.1.7:
+//     one tick earlier than v0.1.4's T + 1 + D - the peer only needs it D ticks / D*40 ms after the send, which
+//     covers the one-way wire time; both peers shift identically, so the simulation itself is unchanged);
 //   - a tick only runs when both frames are present - otherwise the wrapper skips the simulation entirely (canvas
 //     keeps the last frame) and shows the waiting overlay. PAUSE falls out for free: the pausing peer stops
 //     sampling/sending, the peer's frame stream dries up and it freezes with "peer paused".
@@ -94,6 +95,8 @@ export class NetSession {
   private world: any = undefined;
   netPaused = false;
   stallReason: 'peer' | 'local' | 'waiting' | undefined;
+  /** Date.now() when the current stall began (the overlay's WAITING strip waits out a grace window; v0.1.7). */
+  stallSince: number | undefined;
   rttMs: number | undefined;
   desyncTick: number | undefined;
   /** Latest in-session net checkpoint (identical on both peers; memory only). */
@@ -131,6 +134,9 @@ export class NetSession {
     }
     if (msg.t === 'hb') {
       this.rttMs = Date.now() - msg.ts;
+      // Live ping (v0.1.7): the in-game overlay refreshes with every probe. Only while playing - an ended session
+      // (back in the lobby after a game) must not re-trigger the overlay strip every second.
+      if (this.phase === 'playing') this.onStateChange?.();
       return;
     }
     if (msg.t === 'start' && this.role === 1) {
@@ -138,9 +144,11 @@ export class NetSession {
       if (msg.resumeTick !== undefined && msg.snap && !this.netCheckpoint) {
         this.netCheckpoint = { tick: msg.resumeTick, snap: msg.snap as RunSnapshot, digest: '' };
       }
-      // Host-driven game start / resume (the client applies everything through the same path as the host).
+      // Host-driven game start / resume (the client applies everything through the same path as the host). The
+      // host's inputDelay MUST carry over (v0.1.7 bugfix: dropping it reset a resumed client to D=1 while the
+      // host kept its measured D -> the host micro-stalled every tick after any resume).
       this.startLocalGame({
-        mode: msg.mode, roomLink: msg.roomLink, cfg: msg.cfg, seed: msg.seed, resumeTick: msg.resumeTick,
+        mode: msg.mode, roomLink: msg.roomLink, cfg: msg.cfg, seed: msg.seed, inputDelay: msg.inputDelay, resumeTick: msg.resumeTick,
       }, CMain._this);
       return;
     }
@@ -185,7 +193,7 @@ export class NetSession {
       const start: NetStart = { ...this.startOpts!, resumeTick: this.netCheckpoint.tick };
       // A client that restarted (no checkpoint of its own, capTick absent) receives the snapshot itself.
       const snap = hello.capTick == null || hello.capTick < this.netCheckpoint.tick ? this.netCheckpoint.snap : undefined;
-      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, resumeTick: start.resumeTick, snap });
+      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, inputDelay: start.inputDelay, resumeTick: start.resumeTick, snap });
       this.startLocalGame(start, CMain._this); // the host rebuilds through the same path
     }
   }
@@ -274,9 +282,11 @@ export class NetSession {
     this.startTick = world.mTick;
     this.virtualTimeMs = 0;
     this.localFrames.clear();
-    // Prime the input-delay window so the very first tick can run. (remoteFrames is NOT cleared here: the peer's
+    // Prime the input-delay window so the very first tick can run: frames 0..D-1 (v0.1.7; v0.1.4 primed 0..D).
+    // Frame D belongs to tick 0's afterTick - priming it too would double-write the index (we would consume our
+    // own sample while the peer consumes the prime -> desync). (remoteFrames is NOT cleared here: the peer's
     // primes for this game may have arrived during our build.)
-    for (let s = 0; s <= this.inputDelay; s++) {
+    for (let s = 0; s < this.inputDelay; s++) {
       const bits = this.sampleLocalBits();
       this.localFrames.set(s, bits);
       this.link.send({ t: 'in', tick: s, bits });
@@ -293,27 +303,37 @@ export class NetSession {
   /** True = run the tick (frames for it are present and applied to the NetSlots); false = stall (skip Process). */
   tryBeginTick(world: any): boolean {
     if (this.phase === 'reconnecting' || this.phase === 'desync') {
-      this.stallReason = this.phase === 'desync' ? 'waiting' : 'peer';
+      this.stall(this.phase === 'desync' ? 'waiting' : 'peer');
       return false;
     }
     const t = world.mTick - this.startTick;
     const mine = this.localFrames.get(t);
     const theirs = this.remoteFrames.get(t);
     if (mine === undefined || theirs === undefined) {
-      this.stallReason = theirs === undefined ? 'peer' : 'local';
+      this.stall(theirs === undefined ? 'peer' : 'local');
       return false;
     }
     this.applyPlayer(this.role, mine, t);
     this.applyPlayer((1 - this.role) as LanRole, theirs, t);
-    this.stallReason = undefined;
+    this.stall(undefined);
     return true;
+  }
+
+  /** Set the stall reason; the UI (WAITING strip) is told when it CHANGES (v0.1.7 - it never was before). */
+  private stall(reason: 'peer' | 'local' | 'waiting' | undefined): void {
+    if (this.stallReason === reason) return;
+    this.stallReason = reason;
+    this.stallSince = reason === undefined ? undefined : Date.now();
+    this.onStateChange?.();
   }
 
   /** After the tick ran (world.mTick already advanced): advance the virtual clock, sample + send, checkpoint. */
   afterTick(world: any): void {
     const t = world.mTick - this.startTick;
     this.virtualTimeMs += 1000 / CMain.mFPS;
-    const s = t + this.inputDelay;
+    // v0.1.7: the sample taken right after the executed tick (t-1) is the frame for t-1+D - one tick less input
+    // latency than v0.1.4's t+D, still D ticks of wire budget for the peer (both peers shift identically).
+    const s = t - 1 + this.inputDelay;
     const bits = this.sampleLocalBits();
     this.localFrames.set(s, bits);
     let sum: LanChecksum | undefined;
