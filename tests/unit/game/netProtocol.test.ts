@@ -15,7 +15,9 @@ describe('LAN TCP framing', () => {
     const msgs = [
       { t: 'hello', proto: 1, app: 'a', name: 'n', char: 2 },
       { t: 'in', tick: 1234, bits: 0b1010101 },
-      { t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0009', cfg: { charP2: 1 }, seed: 7 },
+      { t: 'ready', ready: true },
+      { t: 'setup', sel: { mode: 'Coop', charP1: 3, charP2: 1, levelIdx: 8, difficulty: 2, gameAmount: 1 } },
+      { t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0009', cfg: { charP1: 3, charP2: 1 }, seed: 7, inputDelay: 2 },
     ];
     const blob = msgs.map((m) => encodeFrame(m));
     const whole = new FrameDecoder();
@@ -46,11 +48,15 @@ describe('LAN TCP framing', () => {
 });
 
 describe('LAN UDP beacon', () => {
-  it('round-trips', () => {
-    const text = encodeBeacon({ app: 'x', name: 'HOST-PC', status: 'lobby', port: 47631 });
+  it('round-trips (incl. the player count)', () => {
+    const text = encodeBeacon({ app: 'x', name: 'HOST-PC', status: 'lobby', players: 2, port: 47631 });
     const b = decodeBeacon(text)!;
     expect(b).not.toBeNull();
-    expect({ name: b.name, status: b.status, port: b.port }).toEqual({ name: 'HOST-PC', status: 'lobby', port: 47631 });
+    expect({ name: b.name, status: b.status, players: b.players, port: b.port })
+      .toEqual({ name: 'HOST-PC', status: 'lobby', players: 2, port: 47631 });
+    // A beacon without the players field (v0.1.3 sender) reads as one player.
+    const legacy = decodeBeacon(JSON.stringify({ magic: LAN_MAGIC, proto: LAN_PROTOCOL_VERSION, app: 'x', name: 'OLD', status: 'lobby', port: 47631 }))!;
+    expect(legacy.players).toBe(1);
   });
 
   it('ignores foreign datagrams', () => {
@@ -111,8 +117,8 @@ describe('LanTransport over localhost', () => {
     expect(hello?.char).toBe(3);
     expect(typeof hello?.sid).toBe('string');
 
-    client.send({ t: 'lobby', cfg: { mode: 'Coop', roomIdx: 8, difficulty: 2, killsIdx: 1 } });
-    host.send({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0009', cfg: { charP2: 3 } as any, seed: 42 });
+    client.send({ t: 'lobby' });
+    host.send({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0009', cfg: { charP1: 3, charP2: 3 } as any, seed: 42 });
     await waitUntil(() => hostSeen.some((m) => m.t === 'lobby') && clientSeen.some((m) => m.t === 'start'));
     expect(clientSeen.find((m) => m.t === 'start')?.seed).toBe(42);
 

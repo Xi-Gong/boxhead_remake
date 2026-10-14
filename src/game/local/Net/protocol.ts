@@ -32,15 +32,23 @@ export const LAN_INPUT_DELAY = 1;
 export type LanMode = 'Coop' | 'DeathMatch';
 export type LanRole = 0 | 1; // 0 = host (player 1), 1 = client (player 2)
 
-/** Host configuration shown in the lobby; pushed to the client whenever it changes. */
-export interface LobbyConfig {
+/**
+ * The host's setup-screen selection (v0.1.4): mode, BOTH characters, the level and the options that shape the run.
+ * Authored on the host's net setup screen, mirrored to the client on every change (`setup`), and finalized in the
+ * `start` message (level -> roomLink, options -> GameConfig).
+ */
+export interface SetupSelection {
   mode: LanMode;
-  /** 0-based room index (0..17). */
-  roomIdx: number;
+  /** Player 1 (host) character 0..3 (SWAT, BOND, GI JOE, BAMBO; cosmetic only). */
+  charP1: number;
+  /** Player 2 (client) character 0..3. */
+  charP2: number;
+  /** 0-based level index (0..17) - every mode uses the 18 ROOM_Single_00XX rooms. */
+  levelIdx: number;
   /** 0..3 difficulty. */
   difficulty: number;
   /** 0..3 index into the Death Match kill limits [5,10,20,50]. */
-  killsIdx: number;
+  gameAmount: number;
 }
 
 /** The CSaveData fields the host's StartGame imposes on the client (they shape the simulation; see PARITY §9). */
@@ -52,7 +60,8 @@ export interface GameConfig {
   damage: boolean;
   gameAmount: number; // 0..3 index into [5,10,20,50]
   detail: boolean; // LOW quality changes the zombie cap and bullet-spark RNG gate
-  charP2: number; // client's character (0..3), chosen in the lobby
+  charP1: number; // host's character (0..3), picked on the net setup screen (cosmetic only)
+  charP2: number; // client's character (0..3), picked on the net setup screen (cosmetic only)
 }
 
 /** Cheap divergence checksum (quantised); exchanged every LAN_CHECKSUM_EVERY ticks. */
@@ -70,19 +79,29 @@ export type LanMessage =
   | { t: 'hello'; proto: number; app: string; name: string; sid?: string; char: number; capTick?: number }
   // host -> client handshake reply. `ok:false` + reason closes the connection (version mismatch, busy).
   | { t: 'welcome'; ok: boolean; reason?: string; proto: number; app: string; name: string; sid: string }
-  // host -> client: current lobby configuration (also right after a successful connect).
-  | { t: 'lobby'; cfg: LobbyConfig }
+  // host -> client: (back) in the room view (also right after a successful connect; sent after backing out of
+  // the setup screen so the client mirrors the return).
+  | { t: 'lobby' }
+  // client -> host: the client player's ready flag in the room (the host's START is gated on it).
+  | { t: 'ready'; ready: boolean }
+  // host -> client: enter / mirror the net setup screen with the host's current selection (sent on entry and on
+  // every host-side change; the client renders it read-only).
+  | { t: 'setup'; sel: SetupSelection }
   // host -> client: build the world and enter lockstep. `resumeTick` set = rebuild from that net checkpoint
   // (reconnect inside the 30 s window, or a later 续局 continuation) instead of a fresh start. `snap` carries the
   // checkpoint itself when the client reported none (a crashed and restarted client has lost its in-memory copy).
-  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; resumeTick?: number; snap?: unknown }
+  // `inputDelay` = lockstep input delay in ticks (host picks it from the measured RTT for virtual-LATENCY links;
+  // default LAN_INPUT_DELAY when absent).
+  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; snap?: unknown }
   // both -> both: this peer's player input bitmap for `tick` (bit order = NetSlot.SLOT_ORDER: UP, DOWN, LEFT,
   // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
   | { t: 'in'; tick: number; bits: number; sum?: LanChecksum }
   // both -> both, echoed back once (`echo` marks the reply; RTT probe + liveness).
   | { t: 'hb'; ts: number; echo?: true }
-  // both -> both: orderly exit. 'quit' = left the lobby; 'forfeit' = conceded after a link-loss timeout.
-  | { t: 'leave'; reason: 'quit' | 'forfeit' }
+  // both -> both: orderly exit. 'quit' = left the lobby; 'forfeit' = conceded. `via` says why a forfeit happened
+  // ('timeout' = the 30 s reconnect window ran out; 'concede' = the pause-screen QUIT) so both peers route to the
+  // same end screen (timeout -> main menu, concede -> the regular Debrief/Winner screens).
+  | { t: 'leave'; reason: 'quit' | 'forfeit'; via?: 'timeout' | 'concede' }
   // informational divergence report (each side already acts on its own checksum mismatch).
   | { t: 'desync'; tick: number; mine: string; theirs: string };
 
@@ -93,6 +112,8 @@ export interface BeaconMsg {
   app: string;
   name: string;
   status: 'lobby' | 'playing';
+  /** 1 = waiting for player 2, 2 = room full (v0.1.4; older beacons without it read as 1). */
+  players: 1 | 2;
   port: number;
 }
 
@@ -102,6 +123,7 @@ export interface HostInfo {
   name: string;
   app: string;
   status: 'lobby' | 'playing';
+  players: 1 | 2;
   port: number;
   lastSeen: number;
 }
@@ -160,7 +182,10 @@ export function decodeBeacon(text: string): BeaconMsg | null {
   try { b = JSON.parse(text); } catch { return null; }
   if (!b || b.magic !== LAN_MAGIC || b.proto !== LAN_PROTOCOL_VERSION || typeof b.port !== 'number') return null;
   if (b.status !== 'lobby' && b.status !== 'playing') return null;
-  return { magic: b.magic, proto: b.proto, app: String(b.app ?? ''), name: String(b.name ?? '?'), status: b.status, port: b.port };
+  return {
+    magic: b.magic, proto: b.proto, app: String(b.app ?? ''), name: String(b.name ?? '?'),
+    status: b.status, players: b.players === 2 ? 2 : 1, port: b.port,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------- liveness

@@ -98,8 +98,6 @@ export class NetSession {
   private deadline = 0;
   private prevNavBudget: number | undefined;
   private savedCfg: Record<string, any> | undefined;
-  /** Lobby/UI hook (L2): lobby config updates from the host. */
-  onLobby: ((cfg: unknown) => void) | undefined;
   /** UI hook: phase / stall / countdown changes. */
   onStateChange: (() => void) | undefined;
 
@@ -134,10 +132,6 @@ export class NetSession {
       this.startLocalGame({
         mode: msg.mode, roomLink: msg.roomLink, cfg: msg.cfg, seed: msg.seed, resumeTick: msg.resumeTick,
       }, CMain._this);
-      return;
-    }
-    if (msg.t === 'lobby') {
-      this.onLobby?.(msg.cfg);
       return;
     }
     if (msg.t === 'leave') {

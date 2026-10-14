@@ -74,7 +74,7 @@ function worldHash(g: HeadlessGame): string {
   return (h >>> 0).toString(16);
 }
 
-const CFG: GameConfig = { difficulty: 0, gameSpeed: 1, devils: true, collisions: true, damage: true, gameAmount: 0, detail: true, charP2: 0 };
+const CFG: GameConfig = { difficulty: 0, gameSpeed: 1, devils: true, collisions: true, damage: true, gameAmount: 0, detail: true, charP1: 0, charP2: 0 };
 const SEED = 4242;
 
 /** Boot a game to the main menu and start it through a client NetSession (remote player-1 frames fed per tick). */

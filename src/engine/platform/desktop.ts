@@ -24,6 +24,8 @@ export interface LanHostEntry {
   name: string;
   app: string;
   status: 'lobby' | 'playing';
+  /** 1 = waiting for player 2, 2 = room full. */
+  players: 1 | 2;
   port: number;
 }
 

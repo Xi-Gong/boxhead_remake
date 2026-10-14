@@ -98,7 +98,7 @@ export class LanTransport {
           const b = decodeBeacon(data.toString('utf8'));
           if (!b || rinfo.family !== 'IPv4') return;
           this.hosts.set(`${rinfo.address}:${b.port}`, {
-            ip: rinfo.address, name: b.name, app: b.app, status: b.status, port: b.port, lastSeen: Date.now(),
+            ip: rinfo.address, name: b.name, app: b.app, status: b.status, players: b.players, port: b.port, lastSeen: Date.now(),
           });
           this.emitHosts();
         });
@@ -156,7 +156,7 @@ export class LanTransport {
   }
 
   private beaconBody(): Omit<BeaconMsg, 'magic' | 'proto'> {
-    return { app: this.identity, name: this.hostName, status: this.beaconStatus, port: this.serverPort };
+    return { app: this.identity, name: this.hostName, status: this.beaconStatus, players: this.hasPeer ? 2 : 1, port: this.serverPort };
   }
 
   private sendBeacon(): void {
