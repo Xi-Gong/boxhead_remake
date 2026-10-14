@@ -13,6 +13,8 @@ export const SCREEN_INSTRUCTIONS_ID = 9001;
 export const SCREEN_INSTRUCTIONS_LINKAGE = 'Screen_Instructions';
 export const LOCAL_HIGHSCORES_ID = 9002;
 export const LOCAL_HIGHSCORES_LINKAGE = 'Local_Highscores';
+export const SCREEN_LAN_LOBBY_ID = 9003;
+export const SCREEN_LAN_LOBBY_LINKAGE = 'Screen_LanLobby';
 
 const I = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
 
@@ -42,7 +44,13 @@ export function buildLocalSymbols(json: LibraryJson): SpriteDef[] {
     copyPlace(json, 358, 3),                    // #317 white window panel (drop shadow)
     copyPlace(json, 358, 136, { m: { a: 0.6999969482421875, b: 0, c: 0, d: 0.6999969482421875, tx: 0, ty: 144.5 } }), // #305 _Button_Close
   ]);
-  return [instructions, highscores];
+  // v0.1.3 LAN lobby: the instructions frame without the back tab (the lobby draws its own BACK TO MENU button).
+  const lanLobby = sprite(SCREEN_LAN_LOBBY_ID, [
+    copyPlace(json, 376, 1),                    // #198 menu background
+    copyPlace(json, 376, 4),                    // #56 _Size
+    { op: 'place', depth: 6, move: false, id: 10, m: { ...I, a: 0.42, d: 0.42, tx: 466, ty: 6 } }, // #10 logo, small
+  ]);
+  return [instructions, highscores, lanLobby];
 }
 
 /** Add the synthetic sprites and their linkages to library.json (idempotent). Call before `new Library(json)`. */
@@ -50,6 +58,7 @@ export function installLocalSymbols(json: LibraryJson): void {
   for (const s of buildLocalSymbols(json)) json.chars[String(s.id)] = s as CharDef;
   json.exports[SCREEN_INSTRUCTIONS_LINKAGE] = SCREEN_INSTRUCTIONS_ID;
   json.exports[LOCAL_HIGHSCORES_LINKAGE] = LOCAL_HIGHSCORES_ID;
+  json.exports[SCREEN_LAN_LOBBY_LINKAGE] = SCREEN_LAN_LOBBY_ID;
 }
 
 /**

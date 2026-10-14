@@ -10,10 +10,14 @@ import { getFrameScript, registerFrameScript, setInstanceHook } from '../engine/
 import { CMain, CSaveData, CSound, External, Screen, World } from './packages.ts';
 import { hasTable, roomIndexOfLibLink, showHighscoreTable, submitLocalScore } from './local/Highscores.ts';
 import { registerInstructionsPage } from './local/InstructionsPage.ts';
-import { SCREEN_INSTRUCTIONS_LINKAGE, buildMenuButton } from './local/localSymbols.ts';
+import { SCREEN_INSTRUCTIONS_LINKAGE, SCREEN_LAN_LOBBY_LINKAGE, buildMenuButton } from './local/localSymbols.ts';
 import { armFromCheckpoint, armFromStored, capture, clearAll, clearStored, consumePending, hasStored, isArmed, isSuppressing, recordCheckpoint, writeStored } from './local/Resume.ts';
 import { netActive, netSession } from './local/Net/NetSession.ts';
 import { installNetScope } from './local/Net/NetScope.ts';
+import { lanBridge } from './local/Net/bridge.ts';
+import { registerLobbyPage } from './local/Net/Lobby.ts';
+import { installNetOverlay } from './local/Net/overlay.ts';
+import { desktop } from '../engine/platform/desktop.ts';
 
 /**
  * CrazyMonkeyGames sponsor / cross-promotion links, hidden on every screen they appear on (Screen_Main,
@@ -223,7 +227,17 @@ export function applyScope(): void {
   const hudPause = hudProto.Pause;
   hudProto.Pause = function (this: any, tState: any): void {
     hudPause.call(this, tState);
-    if (tState !== true || !this.mcScreenPause || netActive()) return;
+    if (tState !== true || !this.mcScreenPause) return;
+    if (netActive()) {
+      // Net pause: QUIT concedes the run (Leave + forfeit end states on both peers); no SAVE & QUIT in a net game.
+      const q = this.mcScreenPause._Quit;
+      if (q) {
+        q.onRelease = function (this: any): void {
+          lanBridge().session?.forfeit();
+        };
+      }
+      return;
+    }
     const btn = buildMenuButton(this.mcScreenPause, '_SaveQuit', 320, 452, 220, 26, 'SAVE & QUIT', 15);
     btn.pWorld = this.mWorld;
     btn.onRelease = function (this: any): void {
@@ -260,6 +274,10 @@ export function applyScope(): void {
       const mc = buildMenuButton(this, 'mcContinue', 320, 359.1, 260, 30, 'CONTINUE', 17);
       this.Register_Button(mc, 'State_Continue');
     }
+    if (desktop?.lan) {
+      const mc = buildMenuButton(this, 'mcLanGame', 320, 392.4, 260, 30, 'LAN GAME', 17);
+      this.Register_Button(mc, 'State_LanLobby');
+    }
   };
   mainProtoResume.State_Continue = function (this: any): void {
     const snap = armFromStored();
@@ -287,5 +305,12 @@ export function applyScope(): void {
   // ---- LAN multiplayer wrappers (deviation LAN_MULTIPLAYER, v0.1.3) ---------------------------
   // Net games start through NetSession.startLocalGame (never the SelectWorld screens), so the wave-checkpoint /
   // save-quit / debrief wrappers above stay quiet via netActive() and the net State_RunWorld gate owns the tick.
+  registerLobbyPage();
+  installNetOverlay();
+  const mainProtoLan = CMain.prototype as any;
+  mainProtoLan.State_LanLobby = function (this: any): void {
+    lanBridge().markBackInLobby();
+    this.Process_Screen(SCREEN_LAN_LOBBY_LINKAGE);
+  };
   installNetScope();
 }
