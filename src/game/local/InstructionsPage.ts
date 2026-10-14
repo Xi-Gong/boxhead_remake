@@ -55,6 +55,9 @@ export const INSTRUCTIONS = {
     ['9', 'Charge Pack', 'x55'],
     ['0', 'Railgun', 'x70'],
   ],
+  // v0.1.2 additions (GAMEPAD_INPUT / SAVE_QUIT_RESUME / WAVE_CHECKPOINT_RETRY).
+  gamepad: 'GAMEPAD: stick or d-pad moves - RT or A fires - RB / LB change weapon - START pauses - in menus the stick moves the cursor and A clicks',
+  saving: 'SAVE & QUIT (pause screen) parks the run - CONTINUE (main menu) resumes the current wave - after death RETRY restarts the current wave',
 } as const;
 
 /** Short label of a Flash key code for the page (CInput.mValidKeys names without the quotes). */
@@ -156,6 +159,10 @@ export class CScreen_Instructions extends CScreen {
       this.Text(x + 15, y + 1, 76, 22, 'Calibri', 13, 0x000000, true, 'left', name).filters = glow();
       this.Text(x + 88, y + 1, 30, 22, 'Calibri', 13, INK, false, 'left', at).filters = glow();
     }
+
+    // v0.1.2 additions: two compact lines in the free bottom strip.
+    this.Text(40, 438, 560, 18, 'Calibri', 11, INK, false, 'center', C.gamepad, true).filters = glow();
+    this.Text(40, 456, 560, 18, 'Calibri', 11, INK, false, 'center', C.saving, true).filters = glow();
   }
 }
 proto(CScreen_Instructions, { _CLASSID_: 'CScreen_Instructions' });
