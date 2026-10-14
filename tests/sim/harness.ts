@@ -31,6 +31,7 @@ import { registerSpriteScripts, setXsiSource } from '../../src/game/frames/Sprit
 import { registerButtonActions } from '../../src/game/frames/ButtonActions.ts';
 import { applyScope } from '../../src/game/scope.ts';
 import { installLocalSymbols } from '../../src/game/local/localSymbols.ts';
+import { _resetForTests as resetResumeForTests } from '../../src/game/local/Resume.ts';
 import { CMain, Screen, Thing, World } from '../../src/game/packages.ts';
 
 export type GameMode = 'Single' | 'Coop' | 'DeathMatch';
@@ -186,6 +187,7 @@ function resetProcessState(): void {
   (World.CHud as any).mcScore = undefined;
   (World.CHud as any).mcScoreTotal = undefined;
   (Thing.Creature.CThing_Creature as any).mDamageActive = true;
+  resetResumeForTests();
 }
 
 // ----------------------------------------------------------------------------------------------------- game object
