@@ -181,7 +181,7 @@ export const DEVIATIONS: Deviation[] = [
   },
   {
     id: 'GAMEPAD_INPUT',
-    file: 'engine/platform/Gamepad.ts, engine/platform/Loop.ts (beforeTick hook), engine/platform/AudioEngine.ts (dismissAudioOverlay), game/local/Gamepad.ts, src/main.ts',
+    file: 'engine/platform/Gamepad.ts, engine/platform/Loop.ts (beforeTick hook), engine/platform/AudioEngine.ts (dismissAudioOverlay), game/local/Gamepad.ts, game/local/InputBadge.ts, src/main.ts',
     description:
       'The original has no gamepad support. The platform polls navigator.getGamepads() once per rAF (Loop beforeTick, ' +
       'also while the context menu freezes the loop) and the game translator feeds the EXISTING input paths: pad 0 ' +
@@ -193,7 +193,11 @@ export const DEVIATIONS: Deviation[] = [
       'virtual cursor (player.mouseMove in logical coordinates - renderScale-independent), A = press/release click ' +
       'through the engine\'s own button picking, the physical mouse always wins, and a DOM arrow shows while a pad is ' +
       'active. The first pad button also dismisses the browser "Click to start" overlay (in the browser the pad cannot ' +
-      'grant the audio gesture itself - Electron needs no gesture). Fixed mapping, no configuration UI.',
+      'grant the audio gesture itself - Electron needs no gesture). Fixed mapping, no configuration UI. v0.1.4: the ' +
+      'pad->player assignment is a swappable table (default automatic by navigator index; swapAssignment releases held ' +
+      'pad keys first) and a DOM input badge (local/InputBadge.ts, bottom-left KEYBOARD/PAD 1/PAD 2 chips - presence, ' +
+      'most-recent-device highlight, ->P1/->P2 assignment tags, click-a-chip-to-swap, "press any button" hint, idle ' +
+      'fade; pointer-transparent except the pad chips) shows WHAT the game sees; Gamepad.id is passed through for names.',
   },
   // ---------------------------------------------------------------------------------------------- v0.1.3 additions
   {
@@ -211,9 +215,18 @@ export const DEVIATIONS: Deviation[] = [
       'uses a deterministic cell budget (NAV_BUDGET_TEST_HOOK), pause is owned by the net wrapper (the peer freezes ' +
       'when the frame stream stops), the v0.1.2 save-quit button / debrief RETRY are hidden and the stored ' +
       'single-player run is never touched, and checkpoints (Coop: every wave start; Death Match: every 1500 ticks) ' +
-      'enable reconnect/续局: a lost link freezes both sides for a 30 s auto-reconnect window, then the disconnecting ' +
-      'player forfeits (Death Match: opponent wins; Coop: run ends) while the checkpoint survives in the lobby for a ' +
-      'mutual continuation. Transport: UDP beacons for discovery + manual IP (directed per-interface broadcasts), ' +
+      'enable reconnect/续局: a lost link freezes both sides for a 30 s auto-reconnect window (v0.1.4: the countdown ' +
+      're-renders every tick so the seconds visibly count down), then the disconnecting player forfeits via ' +
+      "'timeout' (both peers route to the MAIN MENU, State_NetEnd - no persistent save exists for net games, the " +
+      'in-memory checkpoint survives for a mutual continuation) while a concede (pause-QUIT) keeps the Debrief/Winner ' +
+      'screens. v0.1.4 rework: the lobby is a two-view room flow (create/join with auto-discovery and a validated ' +
+      'manual IP that tracks the letterboxed canvas, then a room where the client readies up and the host\'s START is ' +
+      'gated on it); both sides then enter a NET SETUP screen built from the ORIGINAL SubScreen_Coop/DeathMatch art ' +
+      'where the HOST alone picks mode, BOTH characters (GameConfig.charP1/charP2 - cosmetic only), the level, ' +
+      'difficulty and the DM frag limit, mirrored read-only to the client ({t:\'setup\'}); new messages {t:\'ready\'} / ' +
+      '{t:\'setup\'}, beacons carry players:1|2, and the lockstep input delay adapts to the measured RTT (' +
+      'start.inputDelay = clamp(ceil((rtt+25)/40),1,4) - virtual-LAN links no longer stall; real LANs stay at 1 tick). ' +
+      'Transport: UDP beacons for discovery + manual IP (directed per-interface broadcasts), ' +
       'TCP with a 1 s heartbeat / 3.5 s dead-link watchdog in the Electron main process.',
   },
 ];

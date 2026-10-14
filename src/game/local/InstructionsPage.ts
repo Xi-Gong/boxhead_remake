@@ -58,8 +58,8 @@ export const INSTRUCTIONS = {
   // v0.1.2 additions (GAMEPAD_INPUT / SAVE_QUIT_RESUME / WAVE_CHECKPOINT_RETRY).
   gamepad: 'GAMEPAD: stick or d-pad moves - RT or A fires - RB / LB change weapon - START pauses - in menus the stick moves the cursor and A clicks',
   saving: 'SAVE & QUIT (pause screen) parks the run - CONTINUE (main menu) resumes the current wave - after death RETRY restarts the current wave',
-  // v0.1.3 addition (LAN_MULTIPLAYER).
-  lan: 'LAN GAME (main menu, exe only): two machines, one player each - either key set or pad drives the local player - checkpoints allow reconnect and resume',
+  // v0.1.3 addition (LAN_MULTIPLAYER); v0.1.4: room + ready + host-driven setup flow.
+  lan: 'LAN GAME (main menu, exe only): CREATE ROOM or join by list / IP - player 2 readies up, the host picks mode, both characters and the level - either key set or pad drives the local player - a ticking 30 s countdown guards reconnects',
 } as const;
 
 /** Short label of a Flash key code for the page (CInput.mValidKeys names without the quotes). */
