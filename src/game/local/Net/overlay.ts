@@ -125,3 +125,12 @@ function cancelStallTimer(): void {
 export function installNetOverlay(): void {
   setNetOverlaySync(sync);
 }
+
+/** Tests: drop the lazily created DOM elements and pending timers (the module keeps them across games). */
+export function _resetForTests(): void {
+  cancelStallTimer();
+  if (hideTimer !== undefined) { clearTimeout(hideTimer); hideTimer = undefined; }
+  statusEl = undefined;
+  pingEl = undefined;
+  prominent = false;
+}
