@@ -26,6 +26,7 @@ const api: DesktopApi = {
     send: (msg) => ipcRenderer.send('boxhead:lan-send', msg),
     closePeer: () => void ipcRenderer.invoke('boxhead:lan-close-peer'),
     shutdown: () => void ipcRenderer.invoke('boxhead:lan-shutdown'),
+    addresses: () => ipcRenderer.invoke('boxhead:lan-addresses') as Promise<string[]>,
     onMessage: (cb) => { ipcRenderer.on('boxhead:lan-message', (_e, msg) => cb(msg)); },
     onPeer: (cb) => { ipcRenderer.on('boxhead:lan-peer', (_e, s) => cb(s)); },
     onHosts: (cb) => { ipcRenderer.on('boxhead:lan-hosts', (_e, hosts) => cb(hosts)); },

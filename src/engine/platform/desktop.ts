@@ -47,6 +47,8 @@ export interface LanApi {
   closePeer(): void;
   /** Everything off (leave the LAN lobby). */
   shutdown(): void;
+  /** v0.1.4: this machine's non-internal IPv4s (the room shows them for join-by-IP). */
+  addresses?(): Promise<string[]>;
   onMessage(cb: (msg: any) => void): void;
   onPeer(cb: (s: { connected: boolean; reason?: string }) => void): void;
   onHosts(cb: (hosts: LanHostEntry[]) => void): void;

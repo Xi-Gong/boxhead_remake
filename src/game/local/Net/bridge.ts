@@ -44,6 +44,8 @@ class LanBridge {
   sel: SetupSelection = { mode: 'Coop', charP1: 3, charP2: 0, levelIdx: 0, difficulty: 0, gameAmount: 0 };
   /** Peer link round-trip time (heartbeat echo; live already while in the room). */
   rttMs: number | undefined;
+  /** Host: this machine's non-internal IPv4s (fetched on host(); the room view shows them). */
+  hostAddrs: string[] = [];
   /** Set by main.ts: lets DOM overlays (the IP input) track the letterboxed canvas. */
   presenter: PresenterLike | undefined;
   peerName = '';
@@ -90,8 +92,9 @@ class LanBridge {
     this.phase = 'hosting';
     this.message = 'HOSTING - waiting for player 2...';
     this.notify();
-    void desktop!.lan.hostStart().then((r) => {
+    void desktop!.lan.hostStart().then(async (r) => {
       if (!r.ok) { this.phase = 'error'; this.message = `cannot host: ${r.reason}`; }
+      else if (desktop!.lan.addresses) this.hostAddrs = await desktop!.lan.addresses().catch(() => []);
       this.notify();
     });
   }
@@ -359,8 +362,10 @@ class LanBridge {
         void desktop?.lan?.connect(this.hostIp, undefined, { name: 'player', sid: this.sid, char: 0, capTick: this.session.netCheckpoint?.tick })
           .catch(() => undefined);
       };
-      tryConnect(); // at once: virtual-LAN blips rejoin fast, then every 2 s
-      this.reconnectTimer = window.setInterval(tryConnect, 2000) as unknown as number;
+      // Retry every 1 s (v0.1.3 used 2 s; never AT ONCE): a GRACEFUL app quit also fires peer-lost, and an instant
+      // retry would hello the host mid-shutdown and trigger a pointless checkpoint resume (the app dies 200-400 ms
+      // in). 1 s still beats the host's 3.5 s dead-link watchdog, so genuine virtual-LAN blips lose nothing.
+      this.reconnectTimer = window.setInterval(tryConnect, 1000) as unknown as number;
     }
     this.deadlineTimer = window.setInterval(() => {
       const s = this.session;

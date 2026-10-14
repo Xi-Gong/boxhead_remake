@@ -155,6 +155,15 @@ export class LanTransport {
     this.sendBeacon();
   }
 
+  /** This machine's non-internal IPv4 addresses (the room view shows them so player 2 can join by IP). */
+  hostAddresses(): string[] {
+    const out = new Set<string>();
+    for (const list of Object.values(os.networkInterfaces())) {
+      for (const i of list ?? []) if (i.family === 'IPv4' && !i.internal) out.add(i.address);
+    }
+    return [...out];
+  }
+
   private beaconBody(): Omit<BeaconMsg, 'magic' | 'proto'> {
     return { app: this.identity, name: this.hostName, status: this.beaconStatus, players: this.hasPeer ? 2 : 1, port: this.serverPort };
   }

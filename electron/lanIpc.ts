@@ -40,6 +40,8 @@ export function registerLanIpc(getWin: () => BrowserWindow | undefined): void {
   ipcMain.on('boxhead:lan-send', (_e, msg) => transport.send(msg));
   ipcMain.handle('boxhead:lan-close-peer', () => tryRun(() => transport.closePeer()));
   ipcMain.handle('boxhead:lan-shutdown', () => tryRun(() => transport.shutdown()));
+  // v0.1.4: the host's own IPv4 addresses, shown in the room view ("give this to player 2").
+  ipcMain.handle('boxhead:lan-addresses', () => transport.hostAddresses());
 
   app.on('before-quit', () => transport.shutdown());
 }

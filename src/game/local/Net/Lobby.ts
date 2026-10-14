@@ -53,6 +53,7 @@ export class CScreen_LanLobby extends CScreen {
   private pingText: any;
   private p2Row: any;
   private p2Badge: any;
+  private addrText: any;
   private inputsText: any;
   private resumeText: any;
   private resumeBtn: any;
@@ -136,6 +137,9 @@ export class CScreen_LanLobby extends CScreen {
     });
 
     // ---- ENTRY view (nothing hosted / connected yet)
+    // NOTE: the element passed to entry()/room() must be the display object itself - never
+    // `this.Text(...).filters = x` (that expression evaluates to the FILTER ARRAY, and _visible on an array is a
+    // silent no-op, so the text would stay visible in BOTH views).
     const entry = (el: any): void => { this.entryEls.push(el); };
     const divider = this.createEmptyMovieClip('divider', this.mDepth++);
     divider.lineStyle(2, 0x9c9c9c);
@@ -143,13 +147,16 @@ export class CScreen_LanLobby extends CScreen {
     divider.lineTo(320, 420);
     entry(divider);
 
-    entry(this.Text(30, 80, 270, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'CREATE A ROOM').filters = menuShadow());
+    const createHeading = this.Text(30, 80, 270, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'CREATE A ROOM');
+    createHeading.filters = menuShadow();
+    entry(createHeading);
     entry(this.Text(30, 112, 260, 32, 'Calibri', 11, INK, false, 'left', 'Set up a room on this machine - player 2 joins from theirs.', true));
     entry(this.Button(170, 220, 220, 30, 'CREATE ROOM', 16, () => lanBridge().host()));
 
-    entry(this.Text(330, 80, 280, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'JOIN A ROOM').filters = menuShadow());
-    this.searchingText = this.Text(330, 112, 260, 60, 'Calibri', 12, GREY, false, 'left',
-      'Searching for games on your network...\n(or join by IP address below)', true);
+    const joinHeading = this.Text(330, 80, 280, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'JOIN A ROOM');
+    joinHeading.filters = menuShadow();
+    entry(joinHeading);
+    this.searchingText = this.Text(330, 112, 260, 18, 'Calibri', 12, GREY, false, 'left', 'searching for games on your network...');
     entry(this.searchingText);
     for (let i = 0; i < 5; i++) {
       const idx = i;
@@ -166,9 +173,13 @@ export class CScreen_LanLobby extends CScreen {
 
     // ---- ROOM view (hosting / connected / during a reconnect window)
     const room = (el: any): void => { this.roomEls.push(el); };
-    room(this.Text(30, 80, 300, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'GAME ROOM').filters = menuShadow());
+    const roomHeading = this.Text(30, 80, 300, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'GAME ROOM');
+    roomHeading.filters = menuShadow();
+    room(roomHeading);
     this.pingText = this.Text(430, 86, 180, 16, 'Calibri', 12, GREEN, true, 'right', '');
     room(this.pingText);
+    this.addrText = this.Text(30, 108, 580, 16, 'Calibri', 12, INK, true, 'left', '');
+    room(this.addrText);
     room(this.Text(60, 140, 240, 18, 'Calibri', 14, INK, true, 'left', 'PLAYER 1 (HOST)'));
     room(this.Text(290, 140, 90, 18, 'Calibri', 13, GREEN, true, 'right', 'READY'));
     this.p2Row = this.Text(60, 180, 240, 18, 'Calibri', 14, INK, true, 'left', 'PLAYER 2');
@@ -203,7 +214,9 @@ export class CScreen_LanLobby extends CScreen {
     input.type = 'text';
     input.placeholder = '192.168.x.x';
     input.maxLength = 21;
-    input.style.cssText = 'position:absolute;background:#181818;border:2px solid #9c9c9c;'
+    // display:none until the first Refresh has placed it (otherwise the dark input flashes for a frame at the
+    // stage's top-left corner before logicalToClient positions it).
+    input.style.cssText = 'position:absolute;display:none;background:#181818;border:2px solid #9c9c9c;'
       + 'color:#fff;font-family:Consolas,monospace;text-align:center;padding:0 2px;z-index:7;outline:none';
     input.addEventListener('keydown', (e) => {
       e.stopPropagation();
@@ -282,18 +295,28 @@ export class CScreen_LanLobby extends CScreen {
     this.placeInput();
 
     const setLabel = (btn: any, text: string): void => { if (btn?._Contents?._Label) btn._Contents._Label.text = text; };
-    // Entry: the discovery list (joinable rooms bright, full / in-game dim).
+    // Entry: the discovery list (empty rows are HIDDEN, not blank plates - the searching hint then takes the
+    // space; joinable rooms bright, full / in-game dim).
     this.searchingText._visible = entry && b.hosts.length === 0;
     for (let i = 0; i < this.hostRows.length; i++) {
       const h = b.hosts[i] as any;
       const row = this.hostRows[i];
-      if (!h) { setLabel(row, ''); continue; }
+      row._visible = entry && !!h; // no host on this slot -> no plate at all
+      if (!h) continue;
       const name = String(h.name ?? '?').slice(0, 16);
       setLabel(row, `${name} · ${h.players}/2 · ${h.status === 'lobby' ? 'WAITING' : 'IN GAME'}`);
       row._alpha = h.status === 'lobby' && h.players === 1 ? 100 : 45;
     }
 
-    // Room: players, ready states, ping.
+    // Room: players, ready states, ping, the host's own address (join-by-IP for player 2).
+    if (this.addrText) {
+      const show = room && b.isHost && (b.phase === 'hosting' || b.phase === 'lobby');
+      this.addrText._visible = show;
+      const a = b.hostAddrs[0];
+      this.addrText.text = a
+        ? `YOUR ADDRESS: ${a} - give it to player 2 to join by IP`
+        : 'YOUR ADDRESS: unknown - player 2 can still find this room in the list';
+    }
     if (this.pingText) {
       const rtt = b.rttMs;
       this.pingText._visible = room && rtt !== undefined && !!b.peerName;

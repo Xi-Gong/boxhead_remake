@@ -31,6 +31,7 @@ export class CScreen_LanSetup extends CScreen {
   private bMode: any;
   private bDiff: any;
   private bFrags: any;
+  private fragsLabel: any;
   private bStart: any;
   private bBack: any;
   private bLeave: any;
@@ -85,22 +86,27 @@ export class CScreen_LanSetup extends CScreen {
   }
 
   private Build(): void {
-    // Option plates across the top (labels live on the plates; only the host's clicks do anything).
-    this.Text(30, 46, 60, 18, 'Calibri', 13, INK, true, 'left', 'MODE').filters = glow();
-    this.bMode = this.Button(160, 55, 170, 24, '', 12, () => this.cycleMode());
-    this.Text(245, 46, 90, 18, 'Calibri', 13, INK, true, 'left', 'DIFFICULTY').filters = glow();
-    this.bDiff = this.Button(375, 55, 180, 24, '', 12, () => {
+    // MODE sits alone in the free top-left band (the SubScreen's own baked headings own the y55..135 centre);
+    // DIFFICULTY / FRAGS live in the band between the level-name plate (~y372) and the bottom buttons (y440).
+    // Labels sit LEFT of their value plates with a clear gap - never overlapping them.
+    const modeLabel = this.Text(30, 12, 55, 16, 'Calibri', 12, INK, true, 'left', 'MODE');
+    modeLabel.filters = glow();
+    this.bMode = this.Button(165, 24, 140, 22, '', 12, () => this.cycleMode());
+    const diffLabel = this.Text(195, 380, 92, 16, 'Calibri', 12, INK, true, 'left', 'DIFFICULTY');
+    diffLabel.filters = glow();
+    this.bDiff = this.Button(372, 394, 160, 24, '', 12, () => {
       const b = lanBridge();
       b.setSel({ ...b.sel, difficulty: (b.sel.difficulty + 1) % 4 });
     });
-    this.Text(480, 46, 50, 18, 'Calibri', 13, INK, true, 'left', 'FRAGS').filters = glow();
-    this.bFrags = this.Button(565, 55, 110, 24, '', 12, () => {
+    this.fragsLabel = this.Text(462, 380, 44, 16, 'Calibri', 12, INK, true, 'left', 'FRAGS');
+    this.fragsLabel.filters = glow();
+    this.bFrags = this.Button(556, 394, 88, 24, '', 12, () => {
       const b = lanBridge();
       b.setSel({ ...b.sel, gameAmount: (b.sel.gameAmount + 1) % 4 });
     });
 
     // The client only waits (or leaves); the host starts or goes back to the room.
-    this.waitText = this.Text(120, 84, 400, 20, 'Calibri', 14, GREEN, true, 'center', 'WAITING FOR HOST...');
+    this.waitText = this.Text(170, 446, 300, 18, 'Calibri', 14, GREEN, true, 'center', 'WAITING FOR HOST...');
     this.waitText.filters = glow();
     this.bStart = this.Button(320, 452, 180, 28, 'START GAME', 15, () => lanBridge().startGame(false));
     this.bBack = this.Button(90, 452, 140, 24, 'BACK', 13, () => lanBridge().backToRoom());
@@ -174,8 +180,10 @@ export class CScreen_LanSetup extends CScreen {
     setLabel(this.bMode, sel.mode === 'Coop' ? 'CO-OP' : 'DEATHMATCH');
     setLabel(this.bDiff, DIFFICULTY[sel.difficulty]!);
     setLabel(this.bFrags, String(FRAGS[sel.gameAmount]!));
-    this.bFrags._visible = sel.mode === 'DeathMatch';
-    this.bFrags.enabled = sel.mode === 'DeathMatch';
+    const showFrags = sel.mode === 'DeathMatch';
+    this.bFrags._visible = showFrags;
+    this.bFrags.enabled = showFrags;
+    this.fragsLabel._visible = showFrags;
 
     // Mirror the selection into the original art (preview frames are 1-based).
     if (this.mcSubScreen) {

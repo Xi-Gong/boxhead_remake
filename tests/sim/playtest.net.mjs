@@ -1,9 +1,12 @@
-// v0.1.3 packaged LAN playtest: TWO real exes on one machine over a real localhost TCP connection (the full
+// v0.1.4 packaged LAN playtest: TWO real exes on one machine over a real localhost TCP connection (the full
 // Electron main-process transport). Both windows are created off-screen so the run never disturbs foreground work.
-// Flow: host lobby -> HOST, client joins by manual IP -> START GAME -> coop runs in lockstep (ticks/scores equal on
-// both machines) -> forced wave checkpoint -> client process killed -> host freezes with the reconnect overlay ->
-// client relaunched, rejoins -> BOTH resume from the checkpoint (the restarted client adopts the host's snapshot)
-// -> lockstep continues -> host pause QUIT forfeits -> both reach the debrief.
+// Flow: host CREATE ROOM -> client joins by manual IP -> client READY -> host START -> BOTH on the net setup screen
+// (the client mirrors the host's selection read-only) -> host changes a character, START GAME -> coop runs in lockstep
+// (ticks/scores equal on both machines) -> forced wave checkpoint -> client process killed -> host freezes with a
+// TICKING reconnect countdown (two samples must decrease) -> client relaunched, rejoins -> BOTH resume from the
+// checkpoint (the restarted client adopts the host's snapshot) -> lockstep continues -> host pause QUIT concedes ->
+// both reach the debrief (a concede keeps the regular end screens) -> back to the room, host RESUME -> client killed
+// again -> the countdown runs out -> the HOST ends at the MAIN MENU (timeout forfeits route there since v0.1.4).
 //   node tests/sim/playtest.net.mjs
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -78,29 +81,30 @@ function helpers(page) {
       c2x: players[1]?.mPosition.mX, c2y: players[1]?.mPosition.mY,
     };
   });
-  const lobbyLabel = () => page.evaluate(() => window.__game.main()?.mcScreen?.bAction?._Contents?._Label?.text ?? null);
-  return { state, waitFor, waitScreen, click, worldInfo, lobbyLabel };
+  /** The reconnect countdown overlay text (the DOM now also carries the ping + input badge - match by content,
+   *  and take the LAST matching div so ancestors like #stage that merely CONTAIN the strip are skipped). */
+  const overlayText = () => page.evaluate(() => {
+    let found = null;
+    for (const d of document.querySelectorAll('div')) {
+      const t = d.textContent ?? '';
+      if (/RECONNECT|GAME OVER|RUN OVER|CONNECTION LOST/.test(t)) found = t;
+    }
+    return found;
+  });
+  return { state, waitFor, waitScreen, click, worldInfo, overlayText };
 }
 
 const LAN_BTN = [320, 392.4];
-const ACTION_BTN = [175, 252]; // HOST / START GAME / RESUME GAME
-const JOIN_BTN = [585, 285];
+// v0.1.4 lobby (entry + room views) and setup screen button centres (logical 640x480 coordinates).
+const CREATE_ROOM_BTN = [170, 220];
+const JOIN_BTN = [565, 328];
+const READY_BTN = [220, 330]; // client, room view
+const START_ROOM_BTN = [220, 330]; // host, room view (gated on player 2 being ready)
+const RESUME_BTN = [320, 290]; // host, room view (after a finished game with a checkpoint)
+const P2_CHAR_RIGHT = [160, 276]; // the P2 character card's > arrow on the setup screen
+const START_GAME_BTN = [320, 452]; // setup screen
 
 const lanState = async (name, page) => step(`[lan ${name}] ${JSON.stringify(await page.evaluate(() => window.__game?.lan?.()))}`);
-
-const dumpLobby = async (name, page) => {
-  const info = await page.evaluate(() => {
-    const s = window.__game.main()?.mcScreen;
-    return {
-      state: window.__game.state(),
-      action: s?.bAction?._Contents?._Label?.text,
-      status: s?.statusText?.text,
-      ip: document.querySelector('input[type=text]')?.value ?? null,
-      ipVisible: document.querySelector('input[type=text]')?.style.display ?? null,
-    };
-  });
-  step(`[dump ${name}] ${JSON.stringify(info)}`);
-};
 
 let H, C, C2;
 try {
@@ -114,9 +118,10 @@ try {
   await shot('01_host_main', H.page);
   await h.click(...LAN_BTN);
   if (!(await h.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error(`host: no lobby (${await h.state()})`);
-  await h.click(...ACTION_BTN); // HOST
-  await H.page.waitForTimeout(500);
-  step('host is hosting');
+  await shot('02_host_entry', H.page);
+  await h.click(...CREATE_ROOM_BTN);
+  if (!(await h.waitFor(() => window.__game?.lan?.()?.bridge === 'hosting', null, 20000))) throw new Error(`host: CREATE ROOM did not host (${await h.state()})`);
+  step('host is hosting (room view)');
 
   // ---- client instance -----------------------------------------------------------------
   step('launching client instance');
@@ -130,21 +135,47 @@ try {
   await c.click(...JOIN_BTN);
   step('client joining by manual IP');
 
-  // ---- both connected -> start -----------------------------------------------------------
-  if (!(await h.waitFor(() => window.__game.main()?.mcScreen?.bAction?._Contents?._Label?.text === 'START GAME', null, 20000))) {
-    await dumpLobby('host', H.page);
-    await dumpLobby('client', C.page);
-    throw new Error(`host never saw the client join (${await h.lobbyLabel()})`);
+  // ---- both in the room: READY gating -----------------------------------------------------
+  if (!(await h.waitFor(() => !!window.__game?.lan?.()?.peerName, null, 20000))) {
+    await lanState('host', H.page);
+    await lanState('client', C.page);
+    throw new Error('host never saw the client join');
   }
-  await shot('02_host_lobby', H.page);
-  await h.click(...ACTION_BTN); // START GAME
+  if (!(await c.waitFor(() => window.__game?.lan?.()?.bridge === 'lobby', null, 20000))) throw new Error(`client never reached the room (${await c.state()})`);
+  await shot('03_host_room', H.page);
+  // The host's START is dimmed/inert until the client readies up (bridge.enterSetup guards on it).
+  await h.click(...START_ROOM_BTN); // not ready yet -> nothing must happen
+  await H.page.waitForTimeout(600);
+  if (await H.page.evaluate(() => window.__game.state()) !== 'State_LanLobby') throw new Error('host START worked before player 2 was ready');
+  await c.click(...READY_BTN);
+  if (!(await h.waitFor(() => window.__game?.lan?.()?.ready === true, null, 20000))) throw new Error('host never saw the READY flag');
+  step('client READY, host START unlocked');
+
+  // ---- the setup screen: host-driven, client mirrored ------------------------------------
+  await h.click(...START_ROOM_BTN);
+  if (!(await h.waitScreen('State_LanSetup', 'Screen_LanSetup', 20000))) throw new Error(`host: no setup screen (${await h.state()})`);
+  if (!(await c.waitScreen('State_LanSetup', 'Screen_LanSetup', 20000))) throw new Error(`client: no setup screen (${await c.state()})`);
+  await shot('04_host_setup', H.page);
+  await shot('05_client_setup_mirror', C.page);
+  // The client mirrors the host's selection (default: coop, BAMBO vs SWAT, level 1).
+  const selH = await H.page.evaluate(() => window.__game.lan().sel);
+  const selC = await C.page.evaluate(() => window.__game.lan().sel);
+  step(`setup sel host=${JSON.stringify(selH)} client=${JSON.stringify(selC)}`);
+  if (JSON.stringify(selH) !== JSON.stringify(selC)) throw new Error('setup selection not mirrored');
+  // A host change mirrors live: the P2 card's > arrow bumps charP2 on BOTH machines.
+  await h.click(...P2_CHAR_RIGHT);
+  if (!(await c.waitFor(() => window.__game?.lan?.()?.sel?.charP2 === 1, null, 20000))) throw new Error('client did not mirror the character change');
+  step('character change mirrored to the client');
+
+  await h.click(...START_GAME_BTN);
   if (!(await h.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error(`host: room did not start (${await h.state()})`);
   if (!(await c.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error(`client: room did not start (${await c.state()})`);
   const wi0 = await h.worldInfo();
   const wc0 = await c.worldInfo();
   step(`game running: host=${JSON.stringify(wi0)} client=${JSON.stringify(wc0)}`);
   if (wi0 == null || wc0 == null || wi0.room !== wc0.room) throw new Error('rooms mismatch');
-  await shot('03_host_ingame', H.page);
+  if (wi0.room !== 'ROOM_Single_0001') throw new Error(`unexpected start room ${wi0.room} (setup selection ignored?)`);
+  await shot('06_host_ingame', H.page);
 
   // ---- lockstep play: 12 s of keys on both machines --------------------------------------
   const t0 = Date.now();
@@ -184,20 +215,31 @@ try {
   if (wi2.level !== 2) throw new Error(`forced advance did not take (${wi2.level})`);
   step(`forced checkpoint at wave ${wi2.level}, host tick ${wi2.tick} (client keeps wave 1 until the resume)`);
 
-  // ---- kill the client: the host must freeze and wait ------------------------------------
+  // ---- kill the client: the host must freeze with a TICKING countdown ----------------------
   step('killing the client process');
   await C.app.close();
+  // Boot the replacement client IN THE BACKGROUND right away: the reconnect window is 30 s and the packaged exe
+  // takes 10-15 s to reach the menu, so overlapping the boot with the freeze checks keeps the rejoin comfortable.
+  const relaunch = launchApp('net-client');
   const frozenTick = (await h.worldInfo()).tick;
-  await H.page.waitForTimeout(3000);
+  await H.page.waitForTimeout(2000);
   const stillTick = (await h.worldInfo()).tick;
+  await lanState('host-after-kill', H.page);
+  const secs = (t) => Number(/(\d+)s/.exec(t ?? '')?.[1] ?? NaN);
+  const killOverlay = await h.overlayText();
+  step(`host ${frozenTick} -> ${stillTick} (pre-kill ${wi2.tick}), state=${await h.state()}, overlay=${JSON.stringify(killOverlay)}`);
   if (stillTick !== frozenTick) throw new Error(`host kept simulating without the client (${frozenTick} -> ${stillTick})`);
-  const overlay = await H.page.evaluate(() => document.querySelector('div[style*="z-index:8"]')?.textContent ?? null);
-  step(`host frozen at tick ${stillTick}, overlay: ${JSON.stringify(overlay)}`);
-  await shot('04_host_reconnecting', H.page);
+  const tick1 = killOverlay;
+  await H.page.waitForTimeout(1300);
+  const tick2 = await h.overlayText();
+  step(`host frozen at tick ${stillTick}, countdown: ${JSON.stringify(tick1)} -> ${JSON.stringify(tick2)}`);
+  await shot('07_host_reconnecting', H.page);
+  if (!/WAITING TO RECONNECT/.test(tick1 ?? '')) throw new Error(`no reconnect countdown overlay (${JSON.stringify(tick1)})`);
+  if (!(secs(tick1) > secs(tick2))) throw new Error(`countdown is not ticking (${tick1} -> ${tick2})`);
 
   // ---- relaunch the client and rejoin: both resume from the checkpoint --------------------
   step('relaunching the client (fresh process, no local checkpoint)');
-  const C2 = await launchApp('net-client');
+  const C2 = await relaunch;
   const c2 = helpers(C2.page);
   if (!(await c2.waitFor(() => window.__game?.ready, null, 120000))) throw new Error('client relaunch failed');
   if (!(await c2.waitScreen('State_Main', 'Screen_Main', 60000))) throw new Error('client relaunch: no main menu');
@@ -205,14 +247,18 @@ try {
   if (!(await c2.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error('client relaunch: no lobby');
   await C2.page.fill('input[type=text]', '127.0.0.1');
   await c2.click(...JOIN_BTN);
-  if (!(await h.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error('host did not resume');
+  if (!(await h.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 25000))) {
+    await lanState('host-resume-fail', H.page);
+    await lanState('client-resume-fail', C2.page);
+    throw new Error(`host did not resume (host ${await h.state()}, client ${await c2.state()})`);
+  }
   if (!(await c2.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error('client did not resume');
   const wi3 = await h.worldInfo();
   const wc3 = await c2.worldInfo();
   step(`resumed: host=${JSON.stringify(wi3)} client=${JSON.stringify(wc3)}`);
   if (wi3.level !== wi2.level || wc3.level !== wi2.level) throw new Error(`resume lost the wave: ${wi3.level}/${wc3.level} vs ${wi2.level}`);
   if (wi3.score !== wc3.score) throw new Error(`resume score mismatch ${wi3.score} vs ${wc3.score}`);
-  await shot('05_resumed', H.page);
+  await shot('08_resumed', H.page);
 
   // ---- lockstep runs again after the resume ----------------------------------------------
   await H.page.keyboard.down('ArrowUp');
@@ -231,15 +277,38 @@ try {
   if (wi4.score !== wc4.score) throw new Error(`post-resume score mismatch ${wi4.score} vs ${wc4.score}`);
   step(`post-resume lockstep ok: host tick ${wi4.tick} = client tick ${wc4.tick}, score ${wi4.score}`);
 
-  // ---- forfeit: host pause + QUIT ends the run on both peers ------------------------------
+  // ---- concede: host pause + QUIT ends the run on both peers (regular end screens) --------
   await H.page.keyboard.press('KeyP');
   await H.page.waitForTimeout(500);
-  await h.click(320, 52); // the pause screen's QUIT (rewired to session.forfeit in net games)
-  if (!(await h.waitFor(() => window.__game.state() === 'State_Debrief', null, 30000))) throw new Error(`host: no debrief after forfeit (${await h.state()})`);
+  await h.click(320, 52); // the pause screen's QUIT (rewired to session.forfeit('concede') in net games)
+  if (!(await h.waitFor(() => window.__game.state() === 'State_Debrief', null, 30000))) throw new Error(`host: no debrief after the concede (${await h.state()})`);
   const clientEnd = await c2.waitFor(() => window.__game.state() === 'State_Debrief' || window.__game.state() === 'State_Debrief_Winner', null, 30000);
-  step(`forfeit: host debrief, client ended=${clientEnd} (${await c2.state()})`);
-  await shot('06_host_debrief', H.page);
-  if (!clientEnd) throw new Error('client did not end after the forfeit');
+  step(`concede: host debrief, client ended=${clientEnd} (${await c2.state()})`);
+  await shot('09_host_debrief', H.page);
+  if (!clientEnd) throw new Error('client did not end after the concede');
+
+  // ---- resume from the room, then let the countdown RUN OUT: host ends at the main menu ----
+  step('back to the room for the timeout section');
+  await H.page.evaluate(() => window.__game.main().SetState('State_LanLobby')); // out-of-band, like the forced checkpoint
+  await C2.page.evaluate(() => window.__game.main().SetState('State_LanLobby'));
+  if (!(await h.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error(`host: no room after the debrief (${await h.state()})`);
+  await shot('10_host_room_resume', H.page);
+  await h.click(...RESUME_BTN);
+  if (!(await h.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error('host did not resume for the timeout run');
+  if (!(await c2.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error('client did not resume for the timeout run');
+  step('resumed again; killing the client for good');
+  await C2.app.close();
+  const secsA = secs(await h.overlayText());
+  await H.page.waitForTimeout(1500);
+  const secsB = secs(await h.overlayText());
+  if (!(secsA > secsB)) throw new Error(`second countdown is not ticking (${secsA} -> ${secsB})`);
+  step(`countdown running: ${secsA}s -> ${secsB}s; waiting for the 30 s window to run out`);
+  // The window is 30 s from the link loss; poll until the host lands on the MAIN MENU (timeout forfeit routing).
+  if (!(await h.waitFor(() => window.__game.state() === 'State_Main', null, 40000))) {
+    throw new Error(`host did not reach the main menu after the timeout (${await h.state()})`);
+  }
+  await shot('11_host_mainmenu_after_timeout', H.page);
+  step(`timeout forfeit: host at the main menu after the countdown ran out (endReason=${await H.page.evaluate(() => window.__game?.lan?.()?.endReason)})`);
 
   report.ok = report.errors.length === 0;
 } catch (e) {
@@ -251,5 +320,5 @@ try {
   try { await C?.app.close(); } catch {}
   try { await C2?.app.close(); } catch {}
 }
-console.log(report.ok ? 'PACKAGED v0.1.3 LAN PLAYTEST PASSED' : `PACKAGED v0.1.3 LAN PLAYTEST FAILED: ${report.errors.join(' | ')}`);
+console.log(report.ok ? 'PACKAGED v0.1.4 LAN PLAYTEST PASSED' : `PACKAGED v0.1.4 LAN PLAYTEST FAILED: ${report.errors.join(' | ')}`);
 process.exit(report.ok ? 0 : 1);
