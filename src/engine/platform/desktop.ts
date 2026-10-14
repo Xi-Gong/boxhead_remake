@@ -10,10 +10,44 @@ export interface DesktopApi {
   /** Quit the app (closes the window). */
   quit(): void;
   readonly versions: { electron: string; chrome: string; node: string };
+  /** LAN multiplayer transport (v0.1.3); undefined would hide every LAN entry point. */
+  readonly lan: LanApi;
 }
 
 declare global {
   interface Window { boxheadDesktop?: DesktopApi }
+}
+
+/** A host found by LAN discovery (structural mirror of protocol.ts HostInfo). */
+export interface LanHostEntry {
+  ip: string;
+  name: string;
+  app: string;
+  status: 'lobby' | 'playing';
+  port: number;
+}
+
+/** LAN multiplayer transport surface (v0.1.3, deviation LAN_MULTIPLAYER); implemented by the Electron preload. */
+export interface LanApi {
+  /** Start listening for host beacons; hosts arrive through onHosts. */
+  discoverStart(): Promise<{ ok: boolean; reason?: string }>;
+  discoverStop(): void;
+  /** Host: start the TCP server + beacons. Resolves with the chosen port on ok. */
+  hostStart(): Promise<{ ok: boolean; reason?: string; port?: number }>;
+  /** Host: what the beacon advertises ('lobby' = joinable, 'playing' = in game). */
+  hostSetStatus(status: 'lobby' | 'playing'): void;
+  hostStop(): void;
+  /** Join: connect to a host (port undefined = scan the default range, for manual-IP entry). */
+  connect(ip: string, port: number | undefined, hello: { name: string; sid?: string; char: number; capTick?: number }): Promise<{ ok: boolean; reason?: string }>;
+  /** Send one protocol message to the peer (fire and forget). */
+  send(msg: unknown): void;
+  /** Drop the peer link but keep hosting. */
+  closePeer(): void;
+  /** Everything off (leave the LAN lobby). */
+  shutdown(): void;
+  onMessage(cb: (msg: any) => void): void;
+  onPeer(cb: (s: { connected: boolean; reason?: string }) => void): void;
+  onHosts(cb: (hosts: LanHostEntry[]) => void): void;
 }
 
 export const DESKTOP_GLOBAL = 'boxheadDesktop';

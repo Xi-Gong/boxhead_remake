@@ -14,6 +14,7 @@ import { app, BrowserWindow, ipcMain, Menu, protocol, screen, shell } from 'elec
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { aspectLockedBounds, fullscreenShortcut, initialContentSize } from './aspect.ts';
+import { registerLanIpc } from './lanIpc.ts';
 
 const APP_SCHEME = 'app';
 const APP_HOST = 'game';
@@ -28,7 +29,11 @@ protocol.registerSchemesAsPrivileged([
   { scheme: APP_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true, codeCache: true } },
 ]);
 
-const gotLock = app.requestSingleInstanceLock();
+// --boxhead-multi (v0.1.3 LAN testing): skip the single-instance lock so two builds can run on one machine
+// (the packaged dual-instance playtest additionally isolates saves via different PORTABLE_EXECUTABLE_DIR values,
+// which already gives each instance its own lock; this flag covers the unpackaged / shared-userData case).
+const multiInstance = process.argv.includes('--boxhead-multi');
+const gotLock = multiInstance || app.requestSingleInstanceLock();
 
 // ---------------------------------------------------------------------------------------------- static server
 
@@ -184,15 +189,19 @@ function createWindow(): void {
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
-    if (!win) return;
-    if (win.isMinimized()) win.restore();
-    win.focus();
-  });
+  if (!multiInstance) {
+    app.on('second-instance', () => {
+      if (!win) return;
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    });
+  }
 
   ipcMain.on('boxhead:toggle-fullscreen', () => toggleFullscreen());
   ipcMain.handle('boxhead:is-fullscreen', () => win?.isFullScreen() ?? false);
   ipcMain.on('boxhead:quit', () => app.quit());
+  // LAN multiplayer transport (v0.1.3): UDP discovery + TCP in the main process, exposed to the renderer sandbox.
+  registerLanIpc(() => win);
 
   app.on('window-all-closed', () => app.quit());
 
