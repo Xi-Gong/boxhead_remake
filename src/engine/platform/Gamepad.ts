@@ -15,6 +15,8 @@
 export interface RawPad {
   index: number;
   connected: boolean;
+  /** Human-readable pad name (navigator Gamepad.id); shown by the input badge. */
+  id?: string;
   axes: readonly number[];
   buttons: readonly { pressed: boolean }[];
 }
@@ -44,6 +46,8 @@ export interface PadDirs { left: boolean; right: boolean; up: boolean; down: boo
 export interface PadPoll {
   /** A connected pad was seen this poll. */
   present: boolean;
+  /** The pad's name (RawPad.id) when present. */
+  id?: string;
   /** Raw axes copy (may be shorter than 4 on exotic pads; missing axes read as 0). */
   axes: number[];
   /** Buttons newly pressed since the previous poll (standard indices). */
@@ -85,6 +89,7 @@ export class GamepadWatcher {
     }
     this.prevButtons = now;
     const axes = [...(pad.axes ?? [])];
+    const id = pad.id;
     const ax = axes[0] ?? 0;
     const ay = axes[1] ?? 0;
     const stick: PadDirs = {
@@ -99,6 +104,6 @@ export class GamepadWatcher {
       up: !!buttons[12]?.pressed,
       down: !!buttons[13]?.pressed,
     };
-    return { present: true, axes, down, up, stick, dpad };
+    return { present: true, id, axes, down, up, stick, dpad };
   }
 }

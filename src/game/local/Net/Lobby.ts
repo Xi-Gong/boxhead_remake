@@ -10,6 +10,7 @@ import { TextFormat, flash, proto, registerClass } from '../../../engine/runtime
 import { CScreen } from '../../Screen/CScreen.ts';
 import { lanBridge } from './bridge.ts';
 import { buildMenuButton, SCREEN_LAN_LOBBY_LINKAGE } from '../localSymbols.ts';
+import { inputSummary } from '../InputBadge.ts';
 
 const INK = 0x333333;
 const ACCENT = 0xcc0000;
@@ -52,6 +53,7 @@ export class CScreen_LanLobby extends CScreen {
   private pingText: any;
   private p2Row: any;
   private p2Badge: any;
+  private inputsText: any;
   private resumeText: any;
   private resumeBtn: any;
   private readyBtn: any;
@@ -173,6 +175,8 @@ export class CScreen_LanLobby extends CScreen {
     room(this.p2Row);
     this.p2Badge = this.Text(230, 180, 150, 18, 'Calibri', 13, GREY, true, 'right', 'WAITING');
     room(this.p2Badge);
+    this.inputsText = this.Text(60, 205, 380, 16, 'Calibri', 11, GREY, false, 'left', 'YOUR INPUTS: KEYBOARD');
+    room(this.inputsText);
 
     this.resumeText = this.Text(220, 258, 200, 16, 'Calibri', 12, INK, true, 'center', 'LAST GAME AVAILABLE');
     room(this.resumeText);
@@ -296,6 +300,7 @@ export class CScreen_LanLobby extends CScreen {
       if (rtt !== undefined) this.pingText.text = `PING ${rtt <= 0 ? '<1' : Math.round(rtt)} MS`;
     }
     if (this.p2Row) this.p2Row.text = b.peerName ? `PLAYER 2 - ${String(b.peerName).slice(0, 14)}` : 'PLAYER 2';
+    if (this.inputsText) this.inputsText.text = `YOUR INPUTS: ${inputSummary()}`;
     if (this.p2Badge) {
       if (!b.peerName) { this.p2Badge.text = 'WAITING'; this.p2Badge.textColor = GREY; }
       else if (!b.ready) { this.p2Badge.text = 'NOT READY'; this.p2Badge.textColor = ACCENT; }

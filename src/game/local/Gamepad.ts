@@ -3,6 +3,7 @@
 // inputs, so everything downstream (movement, 8-direction aiming, fire, weapon cycling, pause) is the unmodified
 // keyboard code path:
 //   - pad 0 drives player 1's CInput slots, pad 1 player 2's (in Single player pad 1 also drives player 1);
+//     v0.1.4: the assignment is swappable (swapAssignment, driven by the input badge's pad chips);
 //   - buttons are translated to each slot's CURRENT keycode, re-read every poll, so user rebinding is respected and
 //     the CInput recreation per world (State_LoadWorld) is picked up automatically;
 //   - a pushedByPad set reconciles with the physical keyboard: the pad only releases keys it pushed itself, and
@@ -45,9 +46,35 @@ export interface GamepadOptions {
   provider?: PadProvider;
 }
 
+/** One pad as the input badge sees it. */
+export interface PadStatus {
+  /** Navigator pad slot (0 / 1). */
+  index: 0 | 1;
+  /** The pad's name (Gamepad.id), when known. */
+  id?: string;
+  present: boolean;
+  /** Date.now() of the last activity on this pad (0 = never). */
+  lastActive: number;
+  /** The player this pad currently drives (mode-aware: in Single player every pad drives player 1). */
+  player: 0 | 1;
+}
+
+/** Input-badge state (v0.1.4): pad presence / names / activity + the pad->player assignment. */
+export interface GamepadStatus {
+  pads: [PadStatus, PadStatus];
+  /** Pad slot -> player (default [0, 1] = automatic by navigator index; swap with swapAssignment). */
+  assign: [0 | 1, 0 | 1];
+  /** Date.now() of the last keyboard activity (0 = never). */
+  keyboardActive: number;
+}
+
 export interface GamepadHandle {
   /** Call once per rAF (Loop's beforeTick) with the blocked state of the loop. */
   poll(blocked: boolean): void;
+  /** The input badge reads this every redraw. */
+  status(): GamepadStatus;
+  /** Swap which player each pad drives (the badge's manual re-connect; releases held pad keys first). */
+  swapAssignment(): void;
   dispose(): void;
 }
 
@@ -67,6 +94,14 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   let lastPadActivity = 0;
   let overlayDismissed = false;
   let cursorEl: HTMLElement | undefined;
+  /** Pad slot -> player (v0.1.4; default automatic by navigator index). */
+  const assign: [0 | 1, 0 | 1] = [0, 1];
+  const padPresent: [boolean, boolean] = [false, false];
+  const padIds: [string | undefined, string | undefined] = [undefined, undefined];
+  const padActive: [number, number] = [0, 0];
+  let keyboardActive = 0;
+  const onKeydown = (e: Event): void => { keyboardActive = Date.now(); };
+  if (typeof window !== 'undefined') window.addEventListener('keydown', onKeydown, true);
 
   const releaseAll = (): void => {
     for (const vk of [...pushedByPad]) {
@@ -104,10 +139,11 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
       held[slot].clear();
       return;
     }
-    const input = (CMain as any).mInput as Record<string, { mKeycode: number } | undefined> | undefined;
+    const input = (CMain as any)?.mInput as Record<string, { mKeycode: number } | undefined> | undefined;
     if (!input) return;
-    // Pad 1 drives player 2 outside Single player (player 2 does not exist there).
-    const postfix = slot === 0 || World.CWorld.mGameMode === 'Single' ? '' : '2';
+    // Pad 1 drives player 2 outside Single player (player 2 does not exist there); the v0.1.4 assignment
+    // override decides which pad that is (swapAssignment).
+    const postfix = assign[slot] === 0 || World.CWorld.mGameMode === 'Single' ? '' : '2';
     const h = held[slot]!;
     const dirs = {
       left: p.stick.left || p.dpad.left,
@@ -188,6 +224,14 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     }
   };
 
+  /** v0.1.4 input badge: presence / names / last activity per pad slot (called once per poll). */
+  const stamp = (slot: 0 | 1, p: PadPoll): void => {
+    padPresent[slot] = p.present;
+    if (p.id) padIds[slot] = p.id;
+    if (p.present && (p.down.size || p.up.size || p.stick.left || p.stick.right || p.stick.up || p.stick.down
+      || p.dpad.left || p.dpad.right || p.dpad.up || p.dpad.down)) padActive[slot] = Date.now();
+  };
+
   return {
     poll(blocked: boolean): void {
       if (blocked) {
@@ -196,6 +240,8 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
       }
       const p0 = watchers[0].poll();
       const p1 = watchers[1].poll();
+      stamp(0, p0);
+      stamp(1, p1);
       // The first pad button anywhere dismisses the audio-unlock overlay (gamepads fire no DOM events).
       if (!overlayDismissed && (p0.down.size || p1.down.size)) {
         overlayDismissed = true;
@@ -205,8 +251,26 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
       mapPad(1, p1);
       moveCursor(p0);
     },
+    status(): GamepadStatus {
+      const mode = (World as any).CWorld?.mGameMode;
+      const one = (slot: 0 | 1): PadStatus => ({
+        index: slot,
+        id: padIds[slot],
+        present: padPresent[slot],
+        lastActive: padActive[slot],
+        player: assign[slot] === 0 || mode === 'Single' ? 0 : 1,
+      });
+      return { pads: [one(0), one(1)], assign: [assign[0], assign[1]], keyboardActive };
+    },
+    swapAssignment(): void {
+      releaseAll(); // the held keys belong to the old player now
+      const t = assign[0];
+      assign[0] = assign[1];
+      assign[1] = t;
+    },
     dispose(): void {
       releaseAll();
+      if (typeof window !== 'undefined') window.removeEventListener('keydown', onKeydown, true);
       if (cursorEl) {
         cursorEl.remove();
         cursorEl = undefined;

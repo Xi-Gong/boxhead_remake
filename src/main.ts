@@ -19,6 +19,7 @@ import { registerButtonActions } from './game/frames/ButtonActions.ts';
 import { applyScope } from './game/scope.ts';
 import { installLocalSymbols } from './game/local/localSymbols.ts';
 import { installGamepad } from './game/local/Gamepad.ts';
+import { installInputBadge } from './game/local/InputBadge.ts';
 import { lanBridge } from './game/local/Net/bridge.ts';
 import * as GamePackages from './game/packages.ts';
 import { CMain } from './game/packages.ts';
@@ -166,6 +167,8 @@ async function boot(): Promise<void> {
     container: stage,
   });
   dbg.platform.setBeforeTick(gamepad.poll);
+  // Input recognition badge (v0.1.4): bottom-left KEYBOARD / PAD chips with activity + assignment.
+  installInputBadge(gamepad);
   dbg.ready = true;
 }
 
