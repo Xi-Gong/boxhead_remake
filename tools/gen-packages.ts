@@ -9,9 +9,18 @@
  * `registerGameClass('<dotted.path>', Class)`. Cross-class references keep the exact AS2 dotted spelling and are typed
  * through `typeof import(...)` (type-only, erased at runtime → no ES module cycles).
  */
-import { readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { AS2_DIR, ROOT } from './paths.ts';
+
+// v0.2.0: assets/projects was deleted from the repo (regenerable from the SWF via ffdec - see assets/README.md).
+// The generated outputs (src/game/packages.ts, src/game/allClasses.ts) are committed, so this tool is only needed
+// when a NEW class is ported.
+if (!existsSync(AS2_DIR)) {
+  console.error(`gen-packages: ${AS2_DIR} not found. The decompiled AS2 sources were removed from the repo in ` +
+    `v0.2.0; regenerate them with ffdec (see assets/README.md, "Regenerating the deleted reference material").`);
+  process.exit(1);
+}
 
 function listAs(dir: string): string[] {
   const out: string[] = [];

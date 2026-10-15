@@ -2,7 +2,6 @@ node_modules/
 dist/
 dist-electron/
 release/
-public/assets/
 generated/
 tests/visual/reference/
 tests/visual/out/

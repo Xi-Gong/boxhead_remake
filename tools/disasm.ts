@@ -14,7 +14,7 @@
  *
  * Offsets are ABSOLUTE in the decompressed SWF buffer; use them for `// [BC] <file> @<offset>` tags.
  */
-import { mkdirSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { SwfFile } from './swf/SwfFile.ts';
 import { SWF_PATH, SWF_SHA256, GENERATED, AS2_DIR, isMain } from './paths.ts';
@@ -200,13 +200,15 @@ function main(): void {
     rep.push('');
   }
   writeFileSync(join(reportsDir, 'gettimer.md'), rep.join('\n'));
-  // hotspots
+  // hotspots (v0.2.0: assets/projects was deleted from the repo - skip with a note when the decompiles are absent)
   let hsNote = '';
-  if (!only) {
+  if (!only && existsSync(AS2_DIR)) {
     const hs = buildHotspots(AS2_DIR, entries.filter(e => e.source.kind === 'initaction').map(e => ({ file: e.file, unit: e.unit })));
     writeFileSync(join(reportsDir, 'hotspots.md'), hs.markdown);
     const found = hs.stats.reduce((a, s) => a + s.found, 0), res = hs.stats.reduce((a, s) => a + s.resolved, 0);
     hsNote = `, hotspots ${res}/${found} resolved`;
+  } else if (!only) {
+    console.warn('disasm: hotspots skipped (assets/projects absent - regenerate via ffdec, see assets/README.md)');
   }
   console.log(`disasm: ${nFiles} files -> ${outDir} (${entries.length} units, ${entries.reduce((a, e) => a + e.unit.functions.length, 0)} functions, ` +
     `${sites.length} getTimer sites${hsNote}, self-check missing ${totalMissing}) in ${Date.now() - t0} ms`);

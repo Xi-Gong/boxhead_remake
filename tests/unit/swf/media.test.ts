@@ -1,25 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { inflateSync } from 'node:zlib';
 import { PNG } from 'pngjs';
 import type { BitmapDef, SoundDef } from '../../../src/shared/assetSchema.ts';
-import { AUDIO_REF_DIR } from '../../../tools/paths.ts';
+import { ASSETS_OUT, AUDIO_REF_DIR, FLA_PATH, ROOT, SWF_PATH } from '../../../tools/paths.ts';
 import { TAG } from '../../../tools/swf/SwfFile.ts';
 import { encodePng } from '../../../tools/swf/png.ts';
 import { normalizeJpeg } from '../../../tools/swf/bitmaps.ts';
 import { getBuild, getFla, getSwf, xmlElements } from './helpers.ts';
 
+// v0.2.0: assets/projects (the ffdec FLA export) and assets/ClassicResources were deleted from the repo - the
+// cross-check tests below degrade to skips; the SWF stays and everything else keeps running. Regeneration:
+// assets/README.md ("Regenerating the deleted reference material").
+const haveFla = existsSync(FLA_PATH);
+const haveAudioRef = existsSync(AUDIO_REF_DIR);
+
 const { lib, files } = getBuild();
 const fileBytes = (path: string) => files.find((f) => f.path === path)!.bytes;
-const doc = getFla().text('DOMDocument.xml');
+const doc = haveFla ? getFla().text('DOMDocument.xml') : '';
 const bytesEqual = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 describe('DefineSound -> mp3', () => {
   const sounds = Object.values(lib.chars).filter((c): c is SoundDef => c.t === 'sound');
   const flaSounds = xmlElements(doc, 'DOMSoundItem');
 
-  it('31 sounds; sampleCount / rate / channels equal the FLA DOMSoundItems', () => {
+  it.skipIf(!haveFla)('31 sounds; sampleCount / rate / channels equal the FLA DOMSoundItems', () => {
     expect(sounds).toHaveLength(31);
     expect(flaSounds).toHaveLength(31);
     for (const item of flaSounds) {
@@ -35,7 +43,7 @@ describe('DefineSound -> mp3', () => {
     }
   });
 
-  it('MP3 payloads are byte-identical to the FLA library and ClassicResources/Audios/boxhead4', () => {
+  it.skipIf(!haveFla || !haveAudioRef)('MP3 payloads are byte-identical to the FLA library and ClassicResources/Audios/boxhead4', () => {
     const ref = existsSync(AUDIO_REF_DIR) ? readdirSync(AUDIO_REF_DIR) : [];
     expect(ref.length).toBe(31);
     for (const s of sounds) {
@@ -47,13 +55,51 @@ describe('DefineSound -> mp3', () => {
       expect([mine[0], mine[1] & 0xe0]).toEqual([0xff, 0xe0]); // starts with an MPEG frame sync (no SeekSamples)
     }
   });
+
+  it('committed MP3s start with an MPEG frame sync (no SeekSamples) - always on', () => {
+    // The FLA/ClassicResources references above are gone from the repo; this check guards the committed assets
+    // themselves (v0.2.0: public/assets ships in git).
+    expect(sounds).toHaveLength(31);
+    for (const s of sounds) {
+      const mine = readFileSync(join(ASSETS_OUT, s.file));
+      expect([mine[0], mine[1]! & 0xe0], s.file).toEqual([0xff, 0xe0]);
+    }
+  });
+});
+
+describe('committed extracted assets = fresh extraction (v0.2.0: public/assets ships in the repo)', () => {
+  it.skipIf(!existsSync(SWF_PATH))('every committed file is byte-identical to a fresh extraction (incl. manifest)', () => {
+    const out = mkdtempSync(join(tmpdir(), 'boxhead-assets-'));
+    const reports = join(out, 'reports');
+    try {
+      execFileSync(process.execPath, [join(ROOT, 'tools/extract.ts'), '--out', out, '--reports', reports], { cwd: ROOT, stdio: 'pipe', timeout: 120_000 });
+      const walk = (dir: string): string[] => readdirSync(dir).flatMap((f) => {
+        const p = join(dir, f);
+        return statSync(p).isDirectory() ? walk(p) : [p];
+      });
+      const fresh = walk(out).filter((p) => !p.startsWith(reports)); // reports are diagnostics, not assets
+      expect(fresh.length).toBeGreaterThan(50); // library.json, xsi.json, 29 bitmaps, 31 sounds, manifest
+      for (const p of fresh) {
+        const rel = p.slice(out.length + 1);
+        const committed = join(ASSETS_OUT, rel);
+        expect(existsSync(committed), rel).toBe(true);
+        expect(readFileSync(p).equals(readFileSync(committed)), rel).toBe(true);
+      }
+      // And nothing extra is committed beyond what the extractor produces.
+      for (const p of walk(ASSETS_OUT)) {
+        expect(fresh.some((q) => q.slice(out.length + 1) === p.slice(ASSETS_OUT.length + 1)), p).toBe(true);
+      }
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('bitmaps', () => {
   const bitmaps = Object.values(lib.chars).filter((c): c is BitmapDef => c.t === 'bitmap');
   const flaBitmaps = xmlElements(doc, 'DOMBitmapItem');
 
-  it('29 bitmaps with the FLA sizes (18 level previews 350x182, 4 at 400x400)', () => {
+  it.skipIf(!haveFla)('29 bitmaps with the FLA sizes (18 level previews 350x182, 4 at 400x400)', () => {
     expect(bitmaps).toHaveLength(29);
     expect(flaBitmaps).toHaveLength(29);
     for (const item of flaBitmaps) {
@@ -67,13 +113,13 @@ describe('bitmaps', () => {
     expect(bitmaps.filter((b) => b.w === 400 && b.h === 400).map((b) => b.id)).toEqual([506, 511, 514, 517]);
   });
 
-  it('JPEGs (DefineBits + JPEGTables) are byte-identical to the FLA export', () => {
+  it.skipIf(!haveFla)('JPEGs (DefineBits + JPEGTables) are byte-identical to the FLA export', () => {
     for (const b of bitmaps.filter((x) => x.format === 'jpg')) {
       expect(bytesEqual(fileBytes(b.file), getFla().read(`LIBRARY/bitmap${b.id}.jpg`)), `bitmap ${b.id}`).toBe(true);
     }
   });
 
-  it('lossless PNGs equal the FLA export (exact when opaque, ±1 after un-premultiplying Lossless2)', () => {
+  it.skipIf(!haveFla)('lossless PNGs equal the FLA export (exact when opaque, ±1 after un-premultiplying Lossless2)', () => {
     for (const b of bitmaps.filter((x) => x.format === 'png')) {
       const mine = PNG.sync.read(Buffer.from(fileBytes(b.file)));
       const ref = PNG.sync.read(Buffer.from(getFla().read(`LIBRARY/bitmap${b.id}.png`)));

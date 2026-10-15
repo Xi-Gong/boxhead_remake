@@ -1,6 +1,0 @@
-TYPE		
-id	value	
-		
-String	String	
-debug	FALSE	
-profiler	FALSE	

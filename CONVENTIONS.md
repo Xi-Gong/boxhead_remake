@@ -7,11 +7,12 @@ verified game facts.
 ## Sources of truth
 | What | Where |
 |---|---|
-| Original SWF (input of the extractor) | `../boxhead_2play_rooms.swf` (sha256 `34ff145d…`, see `tools/paths.ts`) |
-| Decompiled AS2 classes (logic source of truth, has ffdec artifacts) | `../../projects/boxhead4/**/*.as` |
-| FLA export (frame scripts, registerClass, symbol XML) — reference only | `../../projects/boxhead4/boxhead2play.fla` (zip/XFL) |
-| Reference audio | `../../ClassicResources/Audios/boxhead4/` |
-| Real Flash Player (oracle) | `../../flash_player/flashplayer_32_sa.exe`, `flashplayer_32_sa_debug.exe` |
+| Original SWF (input of the extractor; the ultimate oracle) | `../boxhead_2play_rooms.swf` (sha256 `34ff145d…`, see `tools/paths.ts`) |
+| Extracted assets (committed since v0.2.0 — builds never touch the SWF) | `../../public/assets/**` (manifest-gated; `npm run extract` regenerates from the SWF) |
+| Decompiled AS2 classes — **deleted v0.2.0** (regenerable via ffdec, see `assets/README.md`) | was `../../projects/boxhead4/**/*.as`; the TS port (`src/game/**`) is the living source of truth |
+| FLA export (frame scripts, symbol XML) — **deleted v0.2.0** (regenerable via ffdec) | was `../../projects/boxhead4/boxhead2play.fla`; cross-check tests skip while absent |
+| Reference audio — **deleted v0.2.0** (regenerable via ffdec) | was `../../ClassicResources/Audios/boxhead4/` |
+| Real Flash Player (oracle) | `../../flash_player/flashplayer_32_sa_debug.exe` (probes), `FlashPlayer28.exe` (visual goldens), `FlashPlayer8.exe` |
 
 ## Layout & lane ownership
 Each lane only writes inside its own paths. Shared contract files are owned by the coordinator; if you need a change

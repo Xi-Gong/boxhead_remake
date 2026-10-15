@@ -1,7 +1,9 @@
 # 僵尸危机3（Boxhead: 2Play Rooms）复刻一比一核对报告 — v0.1.1
 
-> 基准：`assets/僵尸危机/僵尸危机3.swf`（sha256 与 `assets/boxhead_series/boxhead4/boxhead2play.swf` 完全一致，
-> 即本项目复刻目标）。原版事实来源：`assets/projects/boxhead4/` 反编译 AS2 + `boxhead2play.fla`（XFL zip）内脚本流。
+> 基准：`assets/boxhead_2play_rooms.swf`（原版 SWF，sha256 `34ff145d…`，见 `tools/paths.ts`；早期版本曾以
+> `assets/僵尸危机/僵尸危机3.swf` 与 `assets/boxhead_series/boxhead4/boxhead2play.swf` 为镜像基准，两者字节
+> 一致，v0.2.0 起这些镜像目录已从仓库删除）。原版事实来源：反编译 AS2 + `boxhead2play.fla`（XFL zip）内脚本流
+> （v0.2.0 起已删除，可由 SWF 经 ffdec 随时还原，见 `assets/README.md`；核对期间的事实已沉淀于本报告与测试）。
 > 复刻事实来源：仓库根 `src/`。核对日期：2026-10-14，针对 tag `v0.1.1`（提交 `207e274`）。
 
 ## 总结论

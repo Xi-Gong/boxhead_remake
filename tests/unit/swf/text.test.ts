@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { existsSync } from 'node:fs';
 import type { EditTextDef, FontDef, StaticTextDef } from '../../../src/shared/assetSchema.ts';
 import { ByteReader } from '../../../tools/swf/ByteReader.ts';
 import { alignZoneFloat16, parseCsmTextSettings, parseDefineFontAlignZones } from '../../../tools/swf/text.ts';
 import { csmTextSettings } from '../../../tools/oracle/visual/csmProbe.ts';
+import { FLA_PATH } from '../../../tools/paths.ts';
 import { decodeXml, getBuild, getFla, xmlElements } from './helpers.ts';
+
+// v0.2.0: assets/projects (the ffdec FLA export) was deleted from the repo; the FLA cross-checks below degrade to
+// skips. Regeneration: assets/README.md ("Regenerating the deleted reference material").
+const haveFla = existsSync(FLA_PATH);
 
 const { lib, raw } = getBuild();
 const fonts = Object.values(lib.chars).filter((c): c is FontDef => c.t === 'font');
@@ -27,9 +33,9 @@ function decodeText(t: StaticTextDef): string {
 }
 
 describe('DefineFont3', () => {
-  const flaFonts = xmlElements(getFla().text('DOMDocument.xml'), 'DOMFontItem');
+  const flaFonts = haveFla ? xmlElements(getFla().text('DOMDocument.xml'), 'DOMFontItem') : [];
 
-  it('8 fonts; glyph code sets equal the FLA embedded characters (+ chars the FLA list omits but texts use)', () => {
+  it.skipIf(!haveFla)('8 fonts; glyph code sets equal the FLA embedded characters (+ chars the FLA list omits but texts use)', () => {
     expect(fonts).toHaveLength(8);
     expect(flaFonts).toHaveLength(8);
     const extras: Record<string, string> = {};
@@ -126,7 +132,7 @@ describe('DefineText / DefineEditText', () => {
     }
   });
 
-  it('decoded static texts all appear in the FLA (DOMStaticText runs)', () => {
+  it.skipIf(!haveFla)('decoded static texts all appear in the FLA (DOMStaticText runs)', () => {
     const fla = getFla();
     const flaStrings = new Set<string>();
     for (const name of fla.names()) {

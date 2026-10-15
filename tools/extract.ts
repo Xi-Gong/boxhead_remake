@@ -7,7 +7,9 @@
  *   <assetsDir>/library.json, bitmaps/<id>.png|jpg, sounds/<id>.mp3, manifest.json
  *   <reports>/inventory.json, actions.json, rooms/roomNN.json
  * --if-stale skips everything when <assetsDir>/manifest.json has the same swfSha256, EXTRACTOR_VERSION and extractor
- * source hash. --force accepts an SWF whose sha256 differs from tools/paths.ts SWF_SHA256.
+ * source hash — checked BEFORE the SWF is read, so a standard build never touches the SWF (the extracted assets ship
+ * in the repo; with the SWF absent the manifest's recorded sha is trusted). --force accepts an SWF whose sha256
+ * differs from tools/paths.ts SWF_SHA256.
  */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -44,6 +46,11 @@ export function extractorSourceHash(): string {
   for (const r of roots) visit(join(ROOT, r));
   for (const f of files) h.update(relative(ROOT, f).replace(/\\/g, '/')).update(readFileSync(f));
   return h.digest('hex').slice(0, 16);
+}
+
+/** Plain sha256 of a file's bytes — identical to SwfFile.sha256 (used by the --if-stale fast path). */
+function sha256File(path: string): string {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
 /** Lane B's registerClass extraction, if present. */
@@ -143,22 +150,33 @@ export async function runExtract(argv: string[]): Promise<number> {
   const force = argv.includes('--force');
   const t0 = Date.now();
 
-  const swf = SwfFile.fromPath(swfPath);
-  if (swf.sha256 !== SWF_SHA256) {
-    const msg = `SWF sha256 ${swf.sha256} != expected ${SWF_SHA256} (${swfPath})`;
-    if (!force) { console.error(`extract: ${msg}; use --force to continue anyway`); return 1; }
-    console.warn(`extract: WARNING ${msg}`);
-  }
+  // --if-stale fast path (v0.2.0): a valid manifest skips BEFORE the SWF is read or hashed, so a standard build
+  // never touches the SWF (the extracted assets ship in the repo). With the SWF present its sha is still verified
+  // (catches a corrupted/swapped file); an absent SWF trusts the manifest's recorded sha.
   const sourceHash = extractorSourceHash();
   const manifestPath = join(outDir, 'manifest.json');
   if (ifStale && existsSync(manifestPath) && existsSync(join(outDir, 'library.json'))) {
     try {
       const m = JSON.parse(readFileSync(manifestPath, 'utf8')) as Manifest;
-      if (m.swfSha256 === swf.sha256 && m.extractorVersion === EXTRACTOR_VERSION && m.sourceHash === sourceHash) {
-        console.log(`extract: up to date (${relative(ROOT, outDir) || outDir}), skipping`);
-        return 0;
+      if (m.extractorVersion === EXTRACTOR_VERSION && m.sourceHash === sourceHash) {
+        const sha = existsSync(swfPath) ? sha256File(swfPath) : m.swfSha256;
+        if (sha === m.swfSha256) {
+          console.log(`extract: up to date (${relative(ROOT, outDir) || outDir}), skipping${existsSync(swfPath) ? '' : ' (SWF absent - trusted committed manifest)'}`);
+          return 0;
+        }
       }
     } catch { /* rebuild */ }
+  }
+  if (!existsSync(swfPath)) {
+    console.error(`extract: ${swfPath} not found. The extracted assets ship in the repo (${relative(ROOT, outDir) || outDir}); ` +
+      `a rebuild needs the original SWF (assets/boxhead_2play_rooms.swf) - see assets/README.md.`);
+    return 1;
+  }
+  const swf = SwfFile.fromPath(swfPath);
+  if (swf.sha256 !== SWF_SHA256) {
+    const msg = `SWF sha256 ${swf.sha256} != expected ${SWF_SHA256} (${swfPath})`;
+    if (!force) { console.error(`extract: ${msg}; use --force to continue anyway`); return 1; }
+    console.warn(`extract: WARNING ${msg}`);
   }
 
   const { classes, note: classesNote } = await loadClasses(swf);

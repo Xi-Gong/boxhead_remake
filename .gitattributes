@@ -1,0 +1,9 @@
+# Byte-stable / binary assets: never line-ending-normalize (core.autocrlf=true on Windows would otherwise depend
+# on each contributor's git config). public/assets/** -text also keeps the extractor's JSON outputs byte-stable
+# across clones (the committed-asset integrity test depends on exact bytes).
+public/assets/** -text
+*.png binary
+*.jpg binary
+*.mp3 binary
+*.swf binary
+*.exe binary

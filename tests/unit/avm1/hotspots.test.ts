@@ -17,6 +17,9 @@ function listAs(dir: string): string[] {
 }
 
 describe.skipIf(!existsSync(SWF_PATH) || !existsSync(AS2_DIR))('hotspots.md', () => {
+  // v0.2.0: assets/projects was deleted (regenerable via ffdec, see assets/README.md). Vitest still runs a skipped
+  // suite's body during collection, so every AS2_DIR touch below must be guarded.
+  if (!existsSync(AS2_DIR)) return;
   const entries = disassembleAll(SwfFile.fromPath(SWF_PATH));
   const { markdown, stats } = buildHotspots(AS2_DIR, entries.filter(e => e.source.kind === 'initaction').map(e => ({ file: e.file, unit: e.unit })));
 
