@@ -229,3 +229,30 @@ DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢�
    `engine/platform/Gamepad.ts quantizeStick`）。旧行为的病灶：方向扇区随幅度变形（半推时斜向几乎不可
    触发、 cardinal 却有 ±44°）、松杆回中两轴先后过阈闪斜向。`PadDirs` 接口不变，键盘路径与 d-pad、
    菜单模拟光标（仍用 `STICK_DEADZONE` 每轴）零改动。测试 `tests/unit/platform/gamepad.test.ts`。
+
+**v0.1.8 三连修（用户手柄实测反馈：游戏中光标滑出 / 结算名字打不进 / SEND SCORE 疑似无效）**：
+
+1. **手柄"虚拟光标"滑入游戏画面**：那不是系统光标——是手柄菜单导航用的白色三角箭头（DOM div），
+   `poll()` 里**不分游戏状态**地显示，推杆即滑入对局、停手 3 秒消失（用户截图里红桶上的"白色播放
+   三角"就是它）。修复：按 `Mouse._visible` 门控（`game/local/Gamepad.ts`），与系统光标同语义——
+   菜单/暂停显示、`State_RunWorld` 隐藏。另加 `Presenter` 在窗口 focus/blur/resize 时**主动重写**
+   `cursor`（Windows 全屏切换/焦点丢失会原生重置光标，而 `setCursor` 去重 + 右键菜单暂停渲染期间
+   不会自愈）。测试 `tests/sim/gamepad.test.ts`（FakeEl DOM 垫片）+ `tests/unit/platform/presenter.test.ts`。
+2. **结算名字框完全打不进字（中文输入法）**：画布 SWF 输入域的引擎键盘路径**完全丢弃 IME 输入**
+   （`Player.keyInput` 只插 `e.key.length===1` 的裸键；zh-CN 输入法下字符经组字窗口送达，一个字都
+   进不去——v0.1.5 的修复只救了 DOM 控件，画布域在自动化里用 `page.keyboard.type`（裸 ASCII）
+   验证"通过"，真实输入法路径从未被覆盖）。修复（偏差 `DEBRIEF_NAME_IME_INPUT`，deviations 19→21
+   条）：字段上盖一层**全透明 DOM 输入框**作打字/焦点/IME 通道（LAN IP 框模式：`onResize` 贴合、
+   `onUnload` 清理），画布继续渲染文字与光标（`engine.focus/caretIndex` 随 DOM 选区同步），每次
+   `input` 事件同步 `el.value → mUsername.text`（组字期间也触发——实时预览）；先
+   `setNewTextFormat(getTextFormat())` 快照格式再赋值，字距/字号不变；`DisableSubmitScore` 同时
+   禁用 DOM 框；手柄 A 键对 DOM 文本控件原生聚焦（合成引擎点击打不了字）；SEND SCORE 点在占位符
+   上时聚焦名字框（仍不提交，原版语义）。配套引擎修复 `EMBEDDED_FONT_CJK_FALLBACK`：嵌入字体缺字
+   的码点 advance 由 0 改为设备字体测量、绘制走设备字体栈（高分表行同样受益）、FlashType 编辑域含
+   缺字时整域回落轮廓渲染（纯拉丁域保持逐像素 FlashType 不变）。**SEND SCORE 本就有功能**（本地
+   房间×模式前十，`scope.ts` → `Highscores.ts`），名字打不进时按原版语义静默无效，故"看着没反应"。
+   顺带修一个由此发现的真 bug：`Pointer.ts` 挂在舞台上的 `selectstart` preventDefault 会**取消
+   DOM 输入框内的 Ctrl+A / 双击选词**（LAN IP 框同病），目标为文本控件时放行。测试
+   `tests/sim/debriefName.test.ts`、e2e（CDP `Input.imeSetComposition` 组字实时同步 +
+   `insertText` 提交 `'王roy'`）；`playtest.typing.mjs` 补 IME 提交探针并改为**离屏**运行、
+   失败置非零退出码——**此后 typing 是发版必跑门禁**（v0.1.7 漏跑正是本次翻车原因）。

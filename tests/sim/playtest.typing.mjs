@@ -8,12 +8,14 @@ import { _electron as electron } from 'playwright-core';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
+// Off-screen like playtest.net.mjs: the window must never take the user's foreground.
+const OFFSCREEN = ['-32000', '0'];
 
 const app = await electron.launch({
   executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
   cwd: ROOT,
   timeout: 60000,
-  args: [...NO_THROTTLE, '--boxhead-multi'],
+  args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
   env: { ...process.env, PORTABLE_EXECUTABLE_DIR: join(ROOT, 'generated/reports/qa/net-typing') },
 });
 const page = await app.firstWindow();

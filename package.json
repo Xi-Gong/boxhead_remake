@@ -1,7 +1,7 @@
 {
   "name": "boxhead-2play-rooms-remake",
   "productName": "Boxhead 2Play Rooms",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "description": "1:1 remake of Boxhead: 2Play Rooms (Sean Cooper, 2007) in TypeScript + Canvas2D + Electron",
   "type": "module",
