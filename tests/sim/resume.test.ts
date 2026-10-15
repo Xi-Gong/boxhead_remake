@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
 import { SharedObject, type KeyValueStorage } from '../../src/engine/flash/SharedObject.ts';
-import { applyToWorld, capture, clearAll, hasCheckpoint, type RunSnapshot } from '../../src/game/local/Resume.ts';
+import { RESUME_VERSION, applyToWorld, capture, clearAll, hasCheckpoint, type RunSnapshot } from '../../src/game/local/Resume.ts';
 import { Thing } from '../../src/game/packages.ts';
 import { createHeadlessGame, type HeadlessGame } from './harness.ts';
 import { Bot, runBots } from './bots.ts';
@@ -51,7 +51,7 @@ describe('resume: capture -> RETRY (fresh world) -> apply', () => {
     wall.mLife = 400; // damaged but standing
 
     const snap = capture(w1);
-    expect(snap.version).toBe(1);
+    expect(snap.version).toBe(RESUME_VERSION); // v2: the coop death weapon crate joined ObjectState
     expect(snap.roomLibLink).toBe('ROOM_Single_0002');
     expect(snap.score).toBe(w1.mHud.nTotalScore);
     expect(snap.score).toBeGreaterThan(0);

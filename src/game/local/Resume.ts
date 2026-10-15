@@ -19,8 +19,11 @@
 import { forIn } from '../../engine/runtime.ts';
 import { getRandomState, setRandomState } from '../../engine/flash/rng.ts';
 import { CSaveData, Thing, World } from '../packages.ts';
+import { CThing_Object_WeaponCrate, type CrateWeapon } from './WeaponCrate.ts';
 
-export const RESUME_VERSION = 1;
+// v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
+// (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
+export const RESUME_VERSION = 2;
 export const SAVE_MEMBER = 'mResumeData';
 
 export interface WeaponState {
@@ -48,7 +51,7 @@ export interface PlayerState {
  * (mDeleteOnPickup) are excluded.
  */
 export interface ObjectState {
-  classID: 'CThing_Object_Barrel' | 'CThing_Object_Wall' | 'CThing_Object_Mine' | 'CThing_Object_ChargePack' | 'CThing_Object_Pickup';
+  classID: 'CThing_Object_Barrel' | 'CThing_Object_Wall' | 'CThing_Object_Mine' | 'CThing_Object_ChargePack' | 'CThing_Object_Pickup' | 'CThing_Object_WeaponCrate';
   x: number; y: number; angle: number;
   origin: 'marker' | 'placed';
   /** Placed: playerIndex of the owner (kill credit when they explode later). */
@@ -60,6 +63,8 @@ export interface ObjectState {
   /** Marker pickups only: taken and counting down to reappear. */
   hidden?: boolean;
   reappearCount?: number;
+  /** Weapon crate only: the dead player's restorable inventory. */
+  crate?: { weapons: CrateWeapon[]; currentWeapon?: string };
 }
 
 export interface RunSnapshot {
@@ -93,6 +98,7 @@ export interface RunSnapshot {
 
 const OBJECT_CLASSES = new Set([
   'CThing_Object_Barrel', 'CThing_Object_Wall', 'CThing_Object_Pickup', 'CThing_Object_Mine', 'CThing_Object_ChargePack',
+  'CThing_Object_WeaponCrate',
 ]);
 const EPS = 1e-6;
 
@@ -167,14 +173,16 @@ function capturePlayer(p: any): PlayerState {
 }
 
 function captureObject(t: any): ObjectState {
-  const placed = t.mParent != undefined;
+  // The weapon crate is run-created (never in a room's init list) but ownerless - force 'placed' anyway, or the
+  // apply pass would match it against the fresh build's markers, find nothing, and silently drop the inventory.
+  const placed = t.mParent != undefined || t._CLASSID_ === 'CThing_Object_WeaponCrate';
   const o: ObjectState = {
     classID: t._CLASSID_,
     x: t.mPosition.mX, y: t.mPosition.mY,
     angle: t.mAngle.mAngle,
     origin: placed ? 'placed' : 'marker',
   };
-  if (placed) {
+  if (placed && t.mParent != undefined) {
     if (t.mParent?.mPlayerIndex != undefined) o.owner = t.mParent.mPlayerIndex;
     if (t.mDamage != undefined) o.damage = t.mDamage;
   }
@@ -182,6 +190,9 @@ function captureObject(t: any): ObjectState {
   if (t._CLASSID_ === 'CThing_Object_Pickup' && t.Process === t.Process_Count) {
     o.hidden = true;
     o.reappearCount = t.mReappearCount;
+  }
+  if (t._CLASSID_ === 'CThing_Object_WeaponCrate') {
+    o.crate = { weapons: t.mPayload.weapons, currentWeapon: t.mPayload.currentWeapon };
   }
   return o;
 }
@@ -288,6 +299,8 @@ function recreatePlaced(world: any, s: ObjectState): void {
       t = new Thing.Object.CThing_Object_Mine(pos, angle, owner, s.damage); break;
     case 'CThing_Object_ChargePack':
       t = new Thing.Object.CThing_Object_ChargePack(pos, angle, owner, s.damage); break;
+    case 'CThing_Object_WeaponCrate':
+      t = new CThing_Object_WeaponCrate(pos, { weapons: s.crate?.weapons ?? [], currentWeapon: s.crate?.currentWeapon }); break;
     default:
       return;
   }

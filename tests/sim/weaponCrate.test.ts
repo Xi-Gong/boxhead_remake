@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { Thing, World } from '../../src/game/packages.ts';
 import { CThing_Object_WeaponCrate, applyCratePayload, captureCratePayload } from '../../src/game/local/WeaponCrate.ts';
+import { RESUME_VERSION, applyToWorld, capture, clearAll } from '../../src/game/local/Resume.ts';
 import { createHeadlessGame, thingList, type HeadlessGame } from './harness.ts';
 
 const grant = (p: any, name: string, ammo: number): void => {
@@ -189,5 +190,65 @@ describe('coop death weapon crate (deviation COOP_DEATH_WEAPON_CRATE)', () => {
     expect(cratesOf(w).length).toBe(1);
     expect(crate.mAlpha).toBe(100);
     expect(crate.Process).toBe(crate.Process_Normal);
+  });
+});
+
+describe('crate persistence (Resume roundtrip)', () => {
+  it('is captured with its payload, recreated on applyToWorld, and still pickable afterwards', () => {
+    const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 31 });
+    const w1 = g.world()!;
+    const [p1, p2] = g.players();
+    grant(p1, 'uzi', 37);
+    grant(p1, 'shotgun', 3);
+    p1.SelectWeapon('uzi');
+    const deathPos = p1.mPosition.Clone();
+    const p2Spawn = p2.mPosition.Clone();
+    const far = farFreeCell(g, [p1, p2], 4);
+    moveTo(p2, far.x, far.y);
+    w1.LogKill(p1);
+    moveTo(p1, p2Spawn.mX, p2Spawn.mY);
+    g.tick(1);
+    const crate = cratesOf(w1)[0]!;
+
+    const snap = capture(w1);
+    expect(snap.version).toBe(RESUME_VERSION);
+    const obj: any = snap.objects.find((o) => o.classID === 'CThing_Object_WeaponCrate');
+    expect(obj).toBeDefined();
+    expect(obj.origin).toBe('placed'); // a 'marker' origin would never be recreated (not in the room init list)
+    expect(obj.crate.weapons).toEqual(crate.mPayload.weapons);
+    expect(obj.crate.currentWeapon).toBe('uzi');
+    expect(obj.x).toBeCloseTo(crate.mPosition.mX, 6);
+    expect(obj.y).toBeCloseTo(crate.mPosition.mY, 6);
+
+    // Rebuild the room through the real flow, then re-apply the snapshot.
+    clearAll();
+    g.quit();
+    expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+    g.retry();
+    expect(g.waitRunning()).toBe(true);
+    const w2 = g.world()!;
+    expect(w2).not.toBe(w1);
+    expect(cratesOf(w2).length).toBe(0); // the fresh build knows nothing of the crate
+    expect(applyToWorld(w2, snap)).toBe(true);
+    const crate2 = cratesOf(w2)[0]!;
+    expect(crate2.mPayload.weapons).toEqual(crate.mPayload.weapons);
+    expect(crate2.mPayload.currentWeapon).toBe('uzi');
+    g.tick(1); // Process_Init
+    expect(crate2.mCurrentCell).toBe(w2.mMap.GetCell(deathPos.mX, deathPos.mY));
+    const np1 = g.players()[0]!; // the REBUILT world's player (the old reference is disposed with w1)
+    np1.ResetWeapons(); // simulate the respawn: weapons emptied, back to the pistol
+    expect(np1.mWeapon_Current.mNameID).toBe('pistol');
+    moveTo(np1, crate2.mPosition.mX, crate2.mPosition.mY);
+    crate2.PickedUp();
+    expect(np1.mWeapons.uzi.mThing.mAmmo).toBe(37);
+    expect(np1.mWeapon_Current.mNameID).toBe('uzi');
+  });
+
+  it('rejects snapshots from an older format version', () => {
+    const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 32 });
+    const w = g.world()!;
+    const snap: any = capture(w);
+    snap.version = RESUME_VERSION - 1;
+    expect(applyToWorld(w, snap)).toBe(false);
   });
 });

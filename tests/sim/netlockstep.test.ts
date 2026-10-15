@@ -7,11 +7,12 @@
 // Hashes here are ID-free (things keyed by class + position + life + flags): the process-wide thing allocator
 // gives the second game different absolute ids, which changes nothing about behaviour (only relative order matters).
 import { describe, expect, it } from 'vitest';
+import { _global } from '../../src/engine/flash/as2.ts';
 import { setRandomState } from '../../src/engine/flash/rng.ts';
 import { createHeadlessGame, KEYS, type HeadlessGame } from './harness.ts';
 import { NetSlot, packBits, SLOT_ORDER, unpackBit } from '../../src/game/local/Net/NetSlot.ts';
 import { NetSession, _peekLocalFrame } from '../../src/game/local/Net/NetSession.ts';
-import { CMain } from '../../src/game/packages.ts';
+import { CMain, Thing, World } from '../../src/game/packages.ts';
 import { computeInputDelay } from '../../src/game/local/Net/protocol.ts';
 import { stallStripDue } from '../../src/game/local/Net/overlay.ts';
 import type { GameConfig, LanMode } from '../../src/game/local/Net/protocol.ts';
@@ -179,6 +180,74 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     expect(p1B.mWeapon_Current.mAmmo).toBeLessThan(20); // one grenade thrown on the 56..65 hold release
     expect(B.sent.filter((m) => m.t === 'in').length).toBeGreaterThanOrEqual(TICKS);
     expect(hashes.get(TICKS)).not.toBe(hashes.get(2)); // the run clearly evolved
+  });
+
+  it('coop: a player death drops the weapon crate identically on both lockstep peers', { timeout: 120000 }, () => {
+    // Deviation COOP_DEATH_WEAPON_CRATE spawns from INSIDE the simulation (the CWorld.LogKill scope wrapper), so a
+    // real death (State_Dying -> LogKill) on the host must materialise the identical crate - same cell, same payload -
+    // on the replaying client, or the per-tick hashes diverge the moment the corpse hits the floor.
+    const grantAndArm = (g: HeadlessGame): void => {
+      const p1 = g.players()[0];
+      p1.NewWeapon('uzi'); // backpack only - player 1 stands still on the pistol, so the uzi keeps its exact ammo
+      p1.mWeapons.uzi.mThing.mAmmo = 12;
+    };
+    // Die FAR from both spawns: idle players get physically pushed around by the zombie crowd, and a crate under a
+    // drifting player vanishes on pickup (correctly!) long before the window ends.
+    const dieFar = (g: HeadlessGame): void => {
+      const w = g.world()!;
+      const cells = w.mMap.mCells;
+      const SOLID = World.Map.CMap_Cell.mCollide_StaticImpassable;
+      const [p1, p2] = g.players();
+      let spot: { x: number; y: number } | undefined;
+      outer: for (let cy = 0; cy < cells.length; cy++) {
+        for (let cx = 0; cx < cells[cy].length; cx++) {
+          if (cells[cy][cx].mCollide & SOLID) continue;
+          if (Math.hypot(p1.mPosition.mX - (cx + 0.5), p1.mPosition.mY - (cy + 0.5)) >= 6
+            && Math.hypot(p2.mPosition.mX - (cx + 0.5), p2.mPosition.mY - (cy + 0.5)) >= 6) { spot = { x: cx + 0.5, y: cy + 0.5 }; break outer; }
+        }
+      }
+      if (spot) p1.Move(new Thing.Math.CThing_Position(spot.x, spot.y, 0));
+      // The real damage path sets DEAD in State_BulletHit BEFORE entering State_Dying; without it the dying player
+      // (still standing on their own crate) would instantly pick it up next tick.
+      p1.mFlags |= Thing.CThing.mFlag_DEAD;
+      p1.SetState('State_Dying'); // the real death path (runs LogKill)
+    };
+
+    const A = createHeadlessGame({ mode: 'Coop', room: 1, seed: SEED, difficulty: 0, options: { gameSpeed: 1, devils: 1, collisions: 1, damage: 1, detail: true, p2Character: 0, infiniteLife: true } });
+    setRandomState(0xC0FFEE);
+    const hashes = new Map<number, string>();
+    const TICKS = 70; // death at 60 -> 10 post-death ticks of hash comparison across the spawn moment
+    for (let T = 0; T < TICKS; T++) {
+      if (T === 30) grantAndArm(A);
+      if (T === 60) dieFar(A);
+      A.setKeys([]); // both players idle: nobody fires (the uzi ammo is untouched)
+      A.tick(1);
+      hashes.set(A.world().mTick, worldHash(A));
+    }
+    A.releaseAll();
+    const cratesA = A.things().filter((t) => t._CLASSID_ === 'CThing_Object_WeaponCrate');
+    expect(cratesA.length).toBe(1); // the scripted run leaves the crate untouched on the floor
+
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    _global.mInfinateLife = true; // same cheat as peer A: nothing dies before the scripted death (reset wiped _global)
+    setRandomState(0xC0FFEE);
+    const firstEntry = B.game.world().mTick;
+    for (let i = 0; i < TICKS; i++) {
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+      B.game.setKeys([]);
+      if (i === 30) grantAndArm(B.game);
+      if (i === 60) dieFar(B.game);
+      expect(B.game.tick(1)).toBe(1);
+      const want = hashes.get(B.game.world().mTick);
+      if (want !== undefined && worldHash(B.game) !== want) {
+        throw new Error(`lockstep divergence at tick ${B.game.world().mTick} (death crate desync)`);
+      }
+    }
+    const cratesB = B.game.things().filter((t) => t._CLASSID_ === 'CThing_Object_WeaponCrate');
+    expect(cratesB.length).toBe(1);
+    expect(cratesB[0].mPayload.weapons).toEqual(cratesA[0].mPayload.weapons);
+    expect(cratesB[0].mPayload.weapons[0]).toMatchObject({ nameID: 'uzi', ammo: 12 });
+    B.session.dispose();
   });
 
   it('coop: player 2 switches weapons with the keyboard (E next / Q previous) - pinned, original defaults', { timeout: 120000 }, () => {
