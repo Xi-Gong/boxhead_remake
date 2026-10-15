@@ -104,6 +104,14 @@ let contextFailed = false;
 const exportsTable = new Map<string, number>();
 const defs = new Map<number, SoundDef>();
 const buffers = new Map<number, AudioBuffer>();
+/** Pristine fetched bytes of every decoded sound, kept so a recreated AudioContext can re-decode without refetching. */
+const rawBuffers = new Map<number, ArrayBuffer>();
+/** Session dead-list: sounds whose load failed and which currently play silently (healed by healSound). */
+const failedIds = new Set<number>();
+const healInflight = new Map<number, Promise<void>>();
+const healLastAttempt = new Map<number, number>();
+/** Library base URL stored by preloadSounds; healSound refetches against it. */
+let libraryBase: URL | undefined;
 let mutedFlag = false;
 let muteNode: GainNode | undefined;
 
@@ -148,6 +156,9 @@ class Bus {
     this.g.lToR.gain.setValueAtTime(k.lToR, now);
     this.g.rToR.gain.setValueAtTime(k.rToR, now);
   }
+
+  /** Drops the lazily built node graph (context recreated / tests). The transform state is kept. */
+  resetGraph(): void { this.input = undefined; this.g = undefined; }
 }
 
 function masterOut(c: AudioContext): AudioNode {
@@ -160,7 +171,7 @@ function masterOut(c: AudioContext): AudioNode {
 }
 
 const masterBus = new Bus(null);
-const targetBuses = new WeakMap<object, Bus>();
+let targetBuses = new WeakMap<object, Bus>();
 
 // ------------------------------------------------------------------------------------------------ voices
 
@@ -249,22 +260,29 @@ export function startVoice(s: VoiceStart): Voice {
   voices.add(v);
   const c = ctx;
   const buf = buffers.get(s.charId);
+  if (!buf) void healSound(s.charId); // missing buffer: heal in the background; the NEXT play of it is audible
   if (c && buf && loopLenSec > 0) {
-    const src = c.createBufferSource();
-    src.buffer = buf;
-    let dest: AudioNode = (s.owner ? busFor(s.owner) : masterBus).node(c);
-    if (s.envelope && s.envelope.length) dest = buildEnvelope(c, v, s.envelope, dest, startTime);
-    src.connect(dest);
-    if (loops > 1) {
-      src.loop = true;
-      src.loopStart = win.offset;
-      src.loopEnd = win.end;
-      src.start(0, win.offset, v.totalSec);
-    } else {
-      src.start(0, win.offset, loopLenSec);
+    try {
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      let dest: AudioNode = (s.owner ? busFor(s.owner) : masterBus).node(c);
+      if (s.envelope && s.envelope.length) dest = buildEnvelope(c, v, s.envelope, dest, startTime);
+      src.connect(dest);
+      if (loops > 1) {
+        src.loop = true;
+        src.loopStart = win.offset;
+        src.loopEnd = win.end;
+        src.start(0, win.offset, v.totalSec);
+      } else {
+        src.start(0, win.offset, loopLenSec);
+      }
+      src.onended = () => finishVoice(v, true);
+      v.src = src;
+    } catch (e) {
+      // A node-graph failure must not abort the calling frame script (on one LAN peer that would be a desync):
+      // fall back to the silent timed voice; position/completion stay correct via pumpSoundEvents().
+      console.warn('[audio] voice start failed:', e);
     }
-    src.onended = () => finishVoice(v, true);
-    v.src = src;
   }
   return v;
 }
@@ -406,33 +424,83 @@ export function getAudioContext(): AudioContext | undefined {
 
 export interface PreloadResult { loaded: number; failed: number[]; total: number }
 
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+/** Fetch + decode one sound into `buffers`; on success the pristine bytes are retained and the id leaves failedIds. */
+async function loadSound(c: AudioContext, def: SoundDef): Promise<void> {
+  const res = await fetch(new URL(def.file, libraryBase));
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const raw = await res.arrayBuffer();
+  const decoded = await c.decodeAudioData(raw.slice(0)); // decodeAudioData detaches its input: decode a copy
+  rawBuffers.set(def.id, raw); // pristine bytes retained so a recreated AudioContext re-decodes without refetching
+  buffers.set(def.id, decoded);
+  failedIds.delete(def.id);
+}
+
+const HEAL_MIN_INTERVAL_MS = 5000;
+
+/**
+ * Background re-load of a sound whose buffer is missing (boot failure, or the watchdog sweep after a context
+ * recreation). Re-decodes the retained raw bytes when present, otherwise refetches from the library base stored by
+ * preloadSounds. Deduped per id and cadence-limited, so a permanently missing file costs one small fetch per
+ * HEAL_MIN_INTERVAL_MS. No-op without an AudioContext / library base (headless harnesses). Never rejects.
+ */
+export function healSound(charId: number): Promise<void> {
+  const inflight = healInflight.get(charId);
+  if (inflight) return inflight;
+  const c = ctx;
+  const def = defs.get(charId);
+  if (!c || !def || !libraryBase || buffers.has(charId)) return Promise.resolve();
+  const now = nowMs();
+  const last = healLastAttempt.get(charId);
+  if (last !== undefined && now - last < HEAL_MIN_INTERVAL_MS) return Promise.resolve();
+  healLastAttempt.set(charId, now);
+  const raw = rawBuffers.get(charId);
+  const p = (async () => {
+    try {
+      if (raw) {
+        buffers.set(charId, await c.decodeAudioData(raw.slice(0)));
+        failedIds.delete(charId);
+      } else {
+        await loadSound(c, def);
+      }
+    } catch (e) {
+      console.warn(`[audio] sound ${charId} (${def.file}) heal failed:`, e);
+    } finally {
+      healInflight.delete(charId);
+    }
+  })();
+  healInflight.set(charId, p);
+  return p;
+}
+
 /**
  * Registers the library and fetches + decodes every SoundDef (`<baseUrl>/<def.file>`, e.g. assets/sounds/539.mp3).
- * Never rejects: failures are reported (and those sounds play silently with correct timing).
+ * Never rejects: failures are retried twice (transient boot-window hiccups), then reported (and those sounds play
+ * silently with correct timing until healSound or the watchdog re-loads them).
  */
 export async function preloadSounds(
   lib: SoundLibrary, baseUrl: string | URL, onProgress?: (done: number, total: number) => void, concurrency = 8,
 ): Promise<PreloadResult> {
   registerSoundLibrary(lib);
+  libraryBase = typeof baseUrl === 'string' ? new URL(baseUrl, typeof document !== 'undefined' ? document.baseURI : undefined) : baseUrl;
   const list = [...defs.values()].filter((d) => !buffers.has(d.id));
   const total = list.length;
-  const failed: number[] = [];
   let done = 0;
   const c = getAudioContext();
   onProgress?.(0, total);
-  if (!c) return { loaded: 0, failed: list.map((d) => d.id), total };
-  const base = typeof baseUrl === 'string' ? new URL(baseUrl, typeof document !== 'undefined' ? document.baseURI : undefined) : baseUrl;
+  if (!c) {
+    for (const d of list) failedIds.add(d.id);
+    return { loaded: 0, failed: list.map((d) => d.id), total };
+  }
   let next = 0;
   const worker = async (): Promise<void> => {
     while (next < list.length) {
       const def = list[next++]!;
       try {
-        const res = await fetch(new URL(def.file, base));
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.arrayBuffer();
-        buffers.set(def.id, await c.decodeAudioData(data));
+        await loadSound(c, def);
       } catch (e) {
-        failed.push(def.id);
+        failedIds.add(def.id);
         console.warn(`[audio] sound ${def.id} (${def.file}) failed to load:`, e);
       }
       done++;
@@ -440,6 +508,21 @@ export async function preloadSounds(
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, total)) }, worker));
+  // Two retry rounds over just the failures before giving up; a sound that still fails stays in failedIds and is
+  // re-attempted in the background on its next play (healSound) / by the watchdog sweep.
+  for (let round = 1; round <= 2; round++) {
+    const retry = list.filter((d) => failedIds.has(d.id) && !buffers.has(d.id));
+    if (!retry.length) break;
+    await sleep(250 * round);
+    for (const def of retry) {
+      try {
+        await loadSound(c, def);
+      } catch (e) {
+        console.warn(`[audio] sound ${def.id} (${def.file}) retry ${round}/2 failed:`, e);
+      }
+    }
+  }
+  const failed = list.filter((d) => !buffers.has(d.id)).map((d) => d.id);
   return { loaded: total - failed.length, failed, total };
 }
 
@@ -461,7 +544,7 @@ export function installAudioUnlock(target: EventTarget = window): () => void {
     const c = getAudioContext();
     if (!c) return remove();
     if (c.state === 'running') return remove();
-    void c.resume().then(() => { if (c.state === 'running') remove(); });
+    void c.resume().then(() => { if (c.state === 'running') remove(); }, () => { /* rejected (autoplay race): the next gesture retries */ });
   };
   const remove = (): void => { for (const e of events) target.removeEventListener(e, handler, true); };
   for (const e of events) target.addEventListener(e, handler, true);
@@ -535,10 +618,22 @@ export function playTimelineSound(charId: number, info: SoundInfo = {}, owner?: 
   });
 }
 
-/** Tests: drop all state (library, buffers, voices, transforms of the master bus). */
+/** Tests: install (or clear) the AudioContext. Drops the node graph built against any previous context. */
+export function _setAudioContextForTests(c: AudioContext | undefined): void {
+  ctx = c;
+  muteNode = undefined;
+  masterBus.resetGraph();
+  targetBuses = new WeakMap();
+}
+
+/** Tests: drop all state (library, buffers, raw bytes, failures, voices, transforms of the master bus, context). */
 export function _resetAudioForTests(): void {
   for (const v of [...voices]) finishVoice(v, false);
   exportsTable.clear(); defs.clear(); buffers.clear();
+  rawBuffers.clear(); failedIds.clear(); healInflight.clear(); healLastAttempt.clear();
+  libraryBase = undefined;
   masterBus.t = defaultTransform();
   mutedFlag = false;
+  contextFailed = false;
+  _setAudioContextForTests(undefined);
 }
