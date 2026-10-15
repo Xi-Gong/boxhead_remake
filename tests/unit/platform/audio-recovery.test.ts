@@ -4,8 +4,9 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  _resetAudioForTests, _setAudioContextForTests, activeVoiceCount, healSound, preloadSounds, pumpSoundEvents,
-  registerBuffer, startVoice,
+  _resetAudioForTests, _setAudioContextFactoryForTests, _setAudioContextForTests, activeVoiceCount,
+  audioDiagnostics, getAudioContext, healSound, preloadSounds, pumpSoundEvents, registerBuffer, SoundEngine,
+  startVoice, tickAudioWatchdog,
 } from '../../../src/engine/platform/AudioEngine.ts';
 import { advanceVirtual, nowMs, useRealClock, useVirtualClock } from '../../../src/engine/flash/clock.ts';
 import type { SoundDef } from '../../../src/shared/assetSchema.ts';
@@ -32,6 +33,9 @@ class MockAudioContext {
   state: 'running' | 'suspended' | 'closed' = 'running';
   readonly destination = new MockNode();
   throwOnBufferSource = false;
+  /** 'fix': resume() flips to running; 'stuck': resume() resolves but the state never recovers. */
+  resumeBehavior: 'fix' | 'stuck' = 'fix';
+  decodeCalls = 0;
   get currentTime(): number { return nowMs() / 1000; }
   createGain(): MockGainNode { return new MockGainNode(); }
   createChannelSplitter(): MockNode { return new MockNode(); }
@@ -40,8 +44,11 @@ class MockAudioContext {
     if (this.throwOnBufferSource) throw new Error('node graph exploded');
     return new MockBufferSource();
   }
-  decodeAudioData(_data: ArrayBuffer): Promise<{ duration: number }> { return Promise.resolve({ duration: 1 }); }
-  resume(): Promise<void> { this.state = 'running'; return Promise.resolve(); }
+  decodeAudioData(_data: ArrayBuffer): Promise<AudioBuffer> {
+    this.decodeCalls++;
+    return Promise.resolve({ duration: 1 } as AudioBuffer);
+  }
+  resume(): Promise<void> { if (this.resumeBehavior === 'fix') this.state = 'running'; return Promise.resolve(); }
   close(): Promise<void> { this.state = 'closed'; return Promise.resolve(); }
   addEventListener(): void { /* noop */ }
   removeEventListener(): void { /* noop */ }
@@ -151,5 +158,109 @@ describe('audio failure recovery (v0.1.10)', () => {
     advanceVirtual(2000);
     pumpSoundEvents();
     expect(activeVoiceCount()).toBe(0);
+  });
+});
+
+describe('audio context watchdog (v0.1.10)', () => {
+  beforeEach(() => { _resetAudioForTests(); useVirtualClock(0); });
+  afterEach(() => { vi.unstubAllGlobals(); _resetAudioForTests(); useRealClock(); });
+
+  const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+
+  it('no sticky latch: a failed construction is retried on the next call', () => {
+    let calls = 0;
+    _setAudioContextFactoryForTests(() => {
+      calls++;
+      if (calls === 1) throw new Error('audio service busy');
+      return asCtx(new MockAudioContext());
+    });
+    expect(getAudioContext()).toBeUndefined();
+    expect(getAudioContext()).toBeDefined();
+    expect(calls).toBe(2);
+  });
+
+  it('watchdog resumes a suspended context (no recreation)', async () => {
+    const c = new MockAudioContext();
+    _setAudioContextForTests(asCtx(c));
+    c.state = 'suspended';
+    tickAudioWatchdog();
+    await flush();
+    expect(c.state).toBe('running');
+    tickAudioWatchdog();
+    expect(audioDiagnostics().recoveries).toBe(0);
+  });
+
+  it('watchdog recreates a wedged context: voices complete naturally, buffers re-decode on the new context', async () => {
+    const made: MockAudioContext[] = [];
+    _setAudioContextFactoryForTests(() => { const c = new MockAudioContext(); made.push(c); return asCtx(c); });
+    const fetchMock = controlledFetch(new Set());
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await preloadSounds({ exports: {}, chars: { 558: def(558) } }, 'https://game.test/assets/');
+    expect(res.failed).toEqual([]);
+    let done = 0;
+    startVoice({ charId: 558, owner: undefined, offsetSec: 0, loops: 1, onComplete: () => { done++; } });
+    expect(activeVoiceCount()).toBe(1);
+    // the context wedges: suspended, and resume() no longer helps
+    made[0]!.resumeBehavior = 'stuck';
+    made[0]!.state = 'suspended';
+    for (let i = 0; i < 5; i++) { tickAudioWatchdog(); await flush(); }
+    expect(made).toHaveLength(2);
+    expect(done).toBe(1); // natural completion -> CSound mPlaying latches clear (ambience channels unstick)
+    expect(activeVoiceCount()).toBe(0);
+    expect(audioDiagnostics().recoveries).toBe(1);
+    expect(audioDiagnostics().state).toBe('running');
+    await flush();
+    expect(made[1]!.decodeCalls).toBe(1); // re-decoded from the retained raw bytes...
+    expect(fetchMock.mock.calls).toHaveLength(1); // ...without a refetch
+    // and the new context plays
+    const v = startVoice({ charId: 558, owner: undefined, offsetSec: 0, loops: 1 });
+    expect((v as { src?: unknown }).src).toBeDefined();
+  });
+
+  it('watchdog recreates a closed context immediately', () => {
+    const made: MockAudioContext[] = [];
+    _setAudioContextFactoryForTests(() => { const c = new MockAudioContext(); made.push(c); return asCtx(c); });
+    getAudioContext();
+    expect(made).toHaveLength(1);
+    made[0]!.state = 'closed';
+    tickAudioWatchdog();
+    expect(made).toHaveLength(2);
+    expect(audioDiagnostics().recoveries).toBe(1);
+    expect(audioDiagnostics().state).toBe('running');
+  });
+
+  it('mute survives context recreation', () => {
+    const made: MockAudioContext[] = [];
+    _setAudioContextFactoryForTests(() => { const c = new MockAudioContext(); made.push(c); return asCtx(c); });
+    getAudioContext();
+    SoundEngine.muted = true;
+    made[0]!.state = 'closed';
+    tickAudioWatchdog();
+    expect(audioDiagnostics().muted).toBe(true);
+    expect(audioDiagnostics().state).toBe('running');
+    SoundEngine.muted = false;
+  });
+
+  it('watchdog sweep heals failed loads, cadence-limited', async () => {
+    const c = new MockAudioContext();
+    _setAudioContextForTests(asCtx(c));
+    const failing = new Set<number>([558]);
+    const fetchMock = controlledFetch(failing);
+    vi.stubGlobal('fetch', fetchMock);
+    await preloadSounds({ exports: {}, chars: { 558: def(558) } }, 'https://game.test/assets/');
+    expect(audioDiagnostics().failed).toEqual([558]);
+    const bootCalls = fetchMock.mock.calls.length;
+    tickAudioWatchdog(); // a heal attempt fires
+    await flush();
+    expect(fetchMock.mock.calls.length).toBe(bootCalls + 1);
+    tickAudioWatchdog(); // cadence-limited: same virtual second -> no fetch
+    await flush();
+    expect(fetchMock.mock.calls.length).toBe(bootCalls + 1);
+    advanceVirtual(5000);
+    failing.delete(558); // the file reappears
+    tickAudioWatchdog();
+    await flush();
+    expect(fetchMock.mock.calls.length).toBe(bootCalls + 2);
+    expect(audioDiagnostics().failed).toEqual([]);
   });
 });

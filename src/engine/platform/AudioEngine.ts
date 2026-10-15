@@ -19,6 +19,12 @@
  *     (ChannelSplitter -> 4 gains -> ChannelMerger); mono sources are up-mixed to L = R first.
  *   - Not hierarchical: a target's transform is applied on top of the global one only (enough for this game).
  *   - MP3s are played as decoded (no encoder-delay trimming), like Flash plays the frames from the start.
+ *
+ * Failure self-healing (v0.1.10): a sound that failed to load plays silently with correct timing until healSound /
+ * the watchdog reloads it (preload retries twice first; startVoice fires a deduped background heal on a missing
+ * buffer); a suspended AudioContext is resumed, a wedged/closed one is recreated from scratch (voices finish
+ * naturally first, buffers re-decode from the retained raw bytes). Watchdog: 1 s interval in a browser/Electron,
+ * driven as tickAudioWatchdog() in tests.
  */
 import type { LibraryJson, SoundDef, SoundInfo } from '../../shared/assetSchema.ts';
 import { nowMs } from '../flash/clock.ts';
@@ -100,7 +106,6 @@ export function normalizeLoops(loops: unknown): number {
 const SAMPLES_44K = 44100;
 
 let ctx: AudioContext | undefined;
-let contextFailed = false;
 const exportsTable = new Map<string, number>();
 const defs = new Map<number, SoundDef>();
 const buffers = new Map<number, AudioBuffer>();
@@ -406,20 +411,133 @@ export function registerBuffer(charId: number, buffer: AudioBuffer, linkage?: st
 
 // ------------------------------------------------------------------------------------------------ context
 
-/** The shared AudioContext (created on first call in a browser; undefined in Node). */
-export function getAudioContext(): AudioContext | undefined {
-  if (ctx || contextFailed) return ctx;
+let wedgedTicks = 0;
+let resumeInFlight = false;
+let recoveryCount = 0;
+let watchdogTimer: ReturnType<typeof setInterval> | undefined;
+let lastConstructWarn = -Infinity;
+let contextFactory: (() => AudioContext) | undefined; // tests only
+let deviceChangeInstalled = false;
+
+/** Suspended/interrupted for this many watchdog beats (~1 s each) -> the context is wedged and gets recreated. */
+const WATCHDOG_WEDGED_LIMIT = 5;
+
+function constructAudioContext(): AudioContext | undefined {
+  if (contextFactory) {
+    try { return contextFactory(); } catch { return undefined; }
+  }
   const AC: typeof AudioContext | undefined = typeof window !== 'undefined'
     ? (window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
     : undefined;
-  if (!AC) { contextFailed = true; return undefined; }
+  if (!AC) return undefined;
   try {
-    ctx = new AC({ latencyHint: 'interactive' });
-  } catch (e) {
-    contextFailed = true;
-    console.warn('[audio] AudioContext unavailable:', e);
+    return new AC({ latencyHint: 'interactive' });
+  } catch {
+    try { return new AC(); } catch { return undefined; }
   }
+}
+
+/**
+ * The shared AudioContext (created on first call in a browser; undefined in Node). No sticky failure latch: a
+ * transient construction failure (audio service hiccup, wedged device) is retried on every call, and the watchdog
+ * recreates a context that wedges later (tickAudioWatchdog).
+ */
+export function getAudioContext(): AudioContext | undefined {
+  if (ctx) return ctx;
+  const c = constructAudioContext();
+  if (!c) {
+    if (nowMs() - lastConstructWarn > 5000) {
+      lastConstructWarn = nowMs();
+      console.warn('[audio] AudioContext unavailable; will keep retrying');
+    }
+    return undefined;
+  }
+  ctx = c;
+  c.addEventListener('statechange', onContextStateChange);
+  // Output device hot-swap: Chromium usually migrates the stream itself; nudge the watchdog in case it didn't.
+  if (!deviceChangeInstalled && typeof navigator !== 'undefined' && navigator.mediaDevices?.addEventListener) {
+    deviceChangeInstalled = true;
+    navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
+  }
+  startWatchdog();
   return ctx;
+}
+
+function onContextStateChange(): void {
+  if (!ctx) return;
+  if (ctx.state === 'running') wedgedTicks = 0;
+  else tickAudioWatchdog(); // nudge: the first resume attempt starts now, not at the next interval beat
+}
+
+const onDeviceChange = (): void => { tickAudioWatchdog(); };
+
+function startWatchdog(): void {
+  // Browser/Electron only: headless tests drive tickAudioWatchdog() directly (and never get a live timer).
+  if (watchdogTimer !== undefined || typeof window === 'undefined') return;
+  watchdogTimer = setInterval(tickAudioWatchdog, 1000);
+}
+
+/**
+ * One watchdog beat: retry construction when missing, resume a suspended context, recreate a wedged/closed one,
+ * and sweep failed sound loads (each heal is cadence-limited inside healSound). Runs once per second in a browser;
+ * tests call it directly.
+ */
+export function tickAudioWatchdog(): void {
+  const c = ctx;
+  if (!c) {
+    void getAudioContext(); // construction failed earlier: retry
+  } else if (c.state === 'running') {
+    wedgedTicks = 0;
+  } else if (c.state === 'closed') {
+    wedgedTicks = WATCHDOG_WEDGED_LIMIT; // closed is terminal
+  } else {
+    // suspended / interrupted
+    if (!resumeInFlight) {
+      resumeInFlight = true;
+      void Promise.race([c.resume(), sleep(500)])
+        .catch(() => { /* a rejected resume is counted by the wedged ticks below */ })
+        .finally(() => { resumeInFlight = false; });
+    }
+    // A synchronous resume (mock contexts, some engines) may have flipped the state already: re-read it un-narrowed.
+    const stateAfterResume = c.state as AudioContextState;
+    if (stateAfterResume !== 'running') wedgedTicks++;
+  }
+  if (wedgedTicks >= WATCHDOG_WEDGED_LIMIT) void recreateAudioContext();
+  for (const id of failedIds) void healSound(id);
+}
+
+/** Last-resort recovery: finish voices naturally, close the wedged context, rebuild the graph and the buffers. */
+async function recreateAudioContext(): Promise<void> {
+  const old = ctx;
+  // Finish every voice NATURALLY: onComplete fires and every CSound mPlaying latch clears (otherwise ambience
+  // channels wedge forever). Natural completion also keeps position/completion bookkeeping consistent.
+  for (const v of [...voices]) {
+    if (v.src) { try { v.src.stop(); } catch { /* not started / already stopped */ } }
+    finishVoice(v, true);
+  }
+  ctx = undefined;
+  wedgedTicks = 0;
+  resumeInFlight = false;
+  muteNode = undefined;
+  masterBus.resetGraph();
+  targetBuses = new WeakMap(); // WeakMap can't be iterated: reassign; CSound re-applies volume/pan on every play
+  if (old) void old.close().catch(() => { /* already closed */ });
+  const c = getAudioContext();
+  if (!c) return; // construction failed: the watchdog retries on the next beat
+  recoveryCount++;
+  // Re-decode every retained sound into the new context (raw bytes are context-independent). Buffers decoded by the
+  // old context stay usable meanwhile; a failed re-decode lands back in failedIds for the watchdog sweep.
+  void (async () => {
+    for (const [id, raw] of [...rawBuffers.entries()]) {
+      try {
+        buffers.set(id, await c.decodeAudioData(raw.slice(0)));
+        failedIds.delete(id);
+      } catch (e) {
+        failedIds.add(id);
+        console.warn(`[audio] sound ${id} re-decode after context recreation failed:`, e);
+      }
+    }
+  })();
 }
 
 export interface PreloadResult { loaded: number; failed: number[]; total: number }
@@ -598,6 +716,30 @@ export const SoundEngine = {
   get decodedCount(): number { return buffers.size; },
 };
 
+export interface AudioDiagnostics {
+  /** AudioContext.state ('none' when no context exists, e.g. headless). */
+  state: string;
+  /** Decoded sounds. */ decoded: number;
+  /** Registered sound defs. */ total: number;
+  /** Sounds currently dead-listed (playing silently, heal pending/in progress). */ failed: number[];
+  /** Voices in flight (silent-timed ones included). */ voices: number;
+  /** Context recreations this session (watchdog recoveries). */ recoveries: number;
+  muted: boolean;
+}
+
+/** Snapshot of the audio health for `__game.audio()` and the packaged playtest gates. */
+export function audioDiagnostics(): AudioDiagnostics {
+  return {
+    state: ctx?.state ?? 'none',
+    decoded: buffers.size,
+    total: defs.size,
+    failed: [...failedIds].sort((a, b) => a - b),
+    voices: voices.size,
+    recoveries: recoveryCount,
+    muted: mutedFlag,
+  };
+}
+
 /**
  * StartSound tag handler (lane E calls this from timeline frame processing, in tag order).
  *   info.stop        -> stop every instance of the sound (SyncStop)
@@ -626,7 +768,12 @@ export function _setAudioContextForTests(c: AudioContext | undefined): void {
   targetBuses = new WeakMap();
 }
 
-/** Tests: drop all state (library, buffers, raw bytes, failures, voices, transforms of the master bus, context). */
+/** Tests: install a factory used instead of the window.AudioContext global (construction/recreation). */
+export function _setAudioContextFactoryForTests(factory: (() => AudioContext) | undefined): void {
+  contextFactory = factory;
+}
+
+/** Tests: drop all state (library, buffers, raw bytes, failures, voices, transforms, context, watchdog). */
 export function _resetAudioForTests(): void {
   for (const v of [...voices]) finishVoice(v, false);
   exportsTable.clear(); defs.clear(); buffers.clear();
@@ -634,6 +781,15 @@ export function _resetAudioForTests(): void {
   libraryBase = undefined;
   masterBus.t = defaultTransform();
   mutedFlag = false;
-  contextFailed = false;
+  wedgedTicks = 0;
+  resumeInFlight = false;
+  recoveryCount = 0;
+  lastConstructWarn = -Infinity;
+  contextFactory = undefined;
+  if (watchdogTimer !== undefined) { clearInterval(watchdogTimer); watchdogTimer = undefined; }
+  if (deviceChangeInstalled && typeof navigator !== 'undefined' && navigator.mediaDevices?.removeEventListener) {
+    navigator.mediaDevices.removeEventListener('devicechange', onDeviceChange);
+  }
+  deviceChangeInstalled = false;
   _setAudioContextForTests(undefined);
 }
