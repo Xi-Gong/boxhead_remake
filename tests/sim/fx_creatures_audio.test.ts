@@ -300,6 +300,30 @@ describe('audio (CSound)', () => {
     expect(g.errors).toEqual([]);
   });
 
+  it('ambience advances exactly once per sim tick; an extra unticked Draw is a silent no-op (v0.1.10 net-stall gate)', () => {
+    // Local Draw() is always paired 1:1 with a ticked Process() (CMain.ProcessFrames cap 1), so the mTick gate in
+    // CWorld.Draw changes nothing offline. This pins that invariant: manual Draws without a tick (what a net stall /
+    // net pause does) neither advance the ambience cadence nor inflate mZombie_DrawCount for the next bucket.
+    const g = openFloorGame();
+    clearBarrels(g);
+    placePlayer(g, 2.5, 14.5, 0);
+    const sounds = recordSounds(g);
+    const w = g.world();
+    for (let i = 0; i < 10; i++) addZombie(g, 5.5 + i, 4.5 + (i % 3) * 2);
+    g.tick(3);
+    for (const z of things(g, 'CThing_Creature_Zombie')) z.fState = z.State_Stand;
+    g.tick(10);
+    const before = sounds.length;
+    const ticker = w.mAmbienceTicker;
+    for (let i = 0; i < 5; i++) w.Draw(); // stalled renders: frozen world, no tick
+    expect(w.mAmbienceTicker).toBe(ticker); // cadence follows the sim tick, not the render
+    expect(sounds.length).toBe(before); // nothing fired over the frozen world
+    expect(w.mZombie_DrawCount).toBe(0); // accumulators consumed per Draw (not 5 x 10 zombies inflated)
+    g.tick(1);
+    expect(w.mAmbienceTicker).toBe(ticker + 1); // the ticked Draw advances exactly one step
+    expect(g.errors).toEqual([]);
+  });
+
   it('mute switch (CSaveData.mSoundActive = false): playing sfx stop, nothing starts any more; back on: sounds again', () => {
     const g = openFloorGame();
     const sounds = recordSounds(g);

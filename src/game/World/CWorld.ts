@@ -219,7 +219,19 @@ export class CWorld extends MovieClip {
     this.mScreenSizeHalf.x = this.mScreenSizeHalf.x / 2;
     this.mScreenSizeHalf.y = this.mScreenSizeHalf.y / 2;
     this.mScreenCentre = this.mScreenSizeHalf.clone();
-    this.ProcessAmbience();
+    // LAN_MULTIPLAYER (audio gate, v0.1.10): ambience follows the SIMULATION tick. Offline, Draw() is always paired
+    // 1:1 with a ticked Process() (CMain.ProcessFrames cap 1 + flagDraw on the batch's last tick), so the gate changes
+    // nothing locally; on a net stall / net pause NetScope Draws the frozen world on every flagDraw, and without the
+    // gate the ambience ticker kept advancing and firing over a world that did not move (and the zombie accumulator
+    // inflated the first post-stall bucket).
+    if (this.mAmbienceTick != this.mTick) {
+      this.mAmbienceTick = this.mTick;
+      this.ProcessAmbience();
+    } else {
+      // Consume the render accumulators without firing, exactly like ProcessAmbience's tail would.
+      this.mZombie_DrawCount = 0;
+      this.mZombie_AvgPosition = new flash.geom.Point(0, 0);
+    }
     this.mTrackPosition = undefined;
   }
 
@@ -619,6 +631,7 @@ proto(CWorld, {
   _CLASSID_: 'CWorld',
   _BASECLASSID_: 'CWorld',
   mAmbienceTicker: 0,
+  mAmbienceTick: -1,
   mZombieSampleIndex: 0,
   mZombie_DrawCount: 0,
   mZombie_NumberOfSounds: 4,

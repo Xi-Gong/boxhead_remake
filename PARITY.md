@@ -288,3 +288,18 @@ DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢�
 | 排行榜 | 不变（仍按房间×模式计分资格；难度起步本就是原版允许的"抢跑"） |
 
 测试：`tests/sim/weaponCrate.test.ts`（11 项）、`tests/unit/game/startWave.test.ts` + `tests/sim/startWave.test.ts`（锚点表 + 包装器 + UI）、`tests/sim/netlockstep.test.ts`（死亡掉箱锁步一致 + start.wave 双端）、`tests/sim/lansetup.test.ts`（WAVE 板）；浏览器视觉验收 `tests/sim/playtest.v019.mjs`（真实点击循环器 24 次→波次 25 开局 x36、死亡→箱子→队友拾取恢复 13/2 弹、DM 无循环器；截图经 zai 视觉 MCP 核验）。
+
+## 11. v0.1.10 音频稳定性与 LAN 同步（2026-10-15）
+
+用户真机反馈：单机（单人/双人）与 LAN 时**开局即无声**，一旦丢失无法恢复（需重启游戏、偶尔需重启电脑）。根因为三处"无恢复"设计叠加：单个 MP3 加载失败即整局永久静音（无重试）；AudioContext 构造失败是粘性闩锁；suspended/closed 无任何恢复路径（设备切换、音频服务抖动后无人 resume）。全部为平台层修复，**原版听感行为零改动**：
+
+| 项 | 行为 |
+|---|---|
+| 加载自愈 | `preloadSounds` 保留原始字节（解码用副本，`decodeAudioData` 会 detach 入参）并重试失败项 x2（轮间退避）；仍失败的样本进入 failedIds——播放时按需后台重取（每 id 去重、≥5s 节流），下次播放即有声 |
+| 上下文看门狗 | 1s 心跳（仅浏览器/Electron）：resume suspended/interrupted（单实例限流）；连续 5s 未恢复或已 closed → 整体重建（在播 voice 先**自然完成**使 CSound 闩锁正常清零；节点图重建；从保留字节重解码全部样本，零网络请求）。构造失败不再闩锁，每次调用重试 |
+| 防爆 | `startVoice` 节点操作包 try/catch，异常退化为静默计时 voice（不再中断调用方 tick 脚本——LAN 单端异常即失同步的隐患）；unlock resume 补 rejection handler |
+| 可观测 | `__game.audio()`（state/decoded/failed/voices/recoveries/muted）+ `audioCtl`（suspend/kill，验收用） |
+| LAN 环境音门控 | 僵尸环境音改为跟随**模拟 tick**（`CWorld.Draw` 按 `mAmbienceTick != mTick` 门控 + 消耗渲染累加器）：本地 Draw 与 tick 严格 1:1（零本地听感变化）；net stall/暂停期间不再对冻结世界发声，双端环境音节奏与锁步模拟一致 |
+| 保留原版行为 | 每样本单声道重触发切断、环境音样本 0 空档、暂停不静音、DM 分屏双绘计数——全部未动 |
+
+登记决策：恢复机制在不出问题时不可见，**不新增 deviation 编号**；环境音门控并入 `LAN_MULTIPLAYER` 描述。测试：`tests/unit/platform/audio-recovery.test.ts`（11 例：重试/闩锁移除/静默退化/按需自愈/看门狗 resume/重建/闭态即重建/mute 保留/清扫节流）、`tests/e2e/audio.browser.mjs`（真 Chrome 真解码 28 项：启动 31/31、两类网络故障注入治愈、suspend 3s 恢复、kill 重建重解码）、`tests/sim/netlockstep.test.ts`（双端 PlaySound 有序序列全等 + stall 冻结期零新声音）、`tests/sim/fx_creatures_audio.test.ts`（本地"额外 Draw 为 no-op"节奏不变性）。

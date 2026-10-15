@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { _global } from '../../src/engine/flash/as2.ts';
 import { setRandomState } from '../../src/engine/flash/rng.ts';
 import { createHeadlessGame, KEYS, type HeadlessGame } from './harness.ts';
+import { recordSounds } from './fxkit.ts';
 import { NetSlot, packBits, SLOT_ORDER, unpackBit } from '../../src/game/local/Net/NetSlot.ts';
 import { NetSession, _peekLocalFrame } from '../../src/game/local/Net/NetSession.ts';
 import { CMain, Thing, World } from '../../src/game/packages.ts';
@@ -247,6 +248,79 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     expect(cratesB.length).toBe(1);
     expect(cratesB[0].mPayload.weapons).toEqual(cratesA[0].mPayload.weapons);
     expect(cratesB[0].mPayload.weapons[0]).toMatchObject({ nameID: 'uzi', ammo: 12 });
+    B.session.dispose();
+  });
+
+  it('coop: both peers emit the identical play-sound sequence (sfx + ambience, ordered) - audio lockstep', { timeout: 120000 }, () => {
+    // Audio is a pure side effect of the deterministic sim: no audio travels on the wire, so peer identity is
+    // proven by recording every CSound.PlaySound on the reference run and on the session replay and comparing.
+    // Ambience is Draw-driven but gated on the sim tick (v0.1.10), so its cadence is a function of the tick too.
+    const TICKS = 320;
+    const A = createHeadlessGame({ mode: 'Coop', room: 1, seed: SEED, difficulty: 0, options: { gameSpeed: 1, devils: 1, collisions: 1, damage: 1, detail: true, p2Character: 0 } });
+    setRandomState(0xC0FFEE);
+    const soundsA = recordSounds(A);
+    for (let T = 0; T < TICKS; T++) {
+      const s = script(T);
+      if (T === 50) grantGrenade(A);
+      A.setKeys([...s.p1, ...s.p2]);
+      A.tick(1);
+    }
+    A.releaseAll();
+
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    setRandomState(0xC0FFEE);
+    const soundsB = recordSounds(B.game);
+    const firstEntry = B.game.world().mTick;
+    for (let i = 0; i < TICKS; i++) {
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: bitsOf(script(i).p1, KEYS.P1) });
+      B.game.setKeys(script(i + 1).p2);
+      if (i === 50) grantGrenade(B.game);
+      expect(B.game.tick(1)).toBe(1);
+    }
+    const strip = (recs: { tick?: number; name: string; volume: number; pan: number; played: boolean }[]) =>
+      recs.filter((r) => r.played).map((r) => [r.tick, r.name, r.volume, r.pan]);
+    const a = strip(soundsA);
+    const b = strip(soundsB);
+    expect(b.length).toBeGreaterThan(20); // the run is actually audible: weapons, hit walls, zombie ambience
+    expect(b).toEqual(a); // identical ORDERED sequence: tick, sample, volume, pan
+    B.session.dispose();
+  });
+
+  it('coop: a stall freezes audio with the world - no new sounds while starved, cadence resumes after', { timeout: 120000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    setRandomState(0xC0FFEE);
+    const sounds = recordSounds(B.game);
+    const firstEntry = B.game.world().mTick;
+    for (let i = 0; i < 120; i++) { // frames flowing: weapons + zombies audible
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: bitsOf(script(i).p1, KEYS.P1) });
+      B.game.setKeys(script(i + 1).p2);
+      expect(B.game.tick(1)).toBe(1);
+    }
+    const before = sounds.length;
+    const ticker = B.game.world().mAmbienceTicker;
+    // Starve the session: no remote frame for the next tick. The stall gate skips Process but still Draws the
+    // frozen world every scheduled flagDraw - before v0.1.10 that advanced the ambience ticker and fired zombie
+    // moans over a world that did not move (and inflated mZombie_DrawCount for the first post-stall bucket).
+    const w = B.game.world();
+    let draws = 0;
+    const origDraw = w.Draw;
+    (w as any).Draw = function (this: any, ...args: any[]) { draws++; return origDraw.apply(this, args); };
+    B.game.step(20);
+    (w as any).Draw = origDraw;
+    expect(draws).toBeGreaterThan(0); // the frozen world really kept Drawing (the gate is what silenced it)
+    expect(sounds.length).toBe(before); // zero new sounds while frozen
+    expect(w.mAmbienceTicker).toBe(ticker); // ambience cadence frozen with the sim tick
+    expect(w.mZombie_DrawCount).toBe(0); // render accumulators consumed, not inflated
+    // Frames flow again: ticks resume and ambience keeps advancing with them.
+    let resumed = 0;
+    for (let i = 120; i < 170; i++) {
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: bitsOf(script(i).p1, KEYS.P1) });
+      B.game.setKeys(script(i + 1).p2);
+      if (B.game.tick(1, 40) === 1) resumed++;
+    }
+    expect(resumed).toBeGreaterThan(30);
+    expect(w.mAmbienceTicker).toBeGreaterThan(ticker);
+    expect(sounds.length).toBeGreaterThan(before);
     B.session.dispose();
   });
 

@@ -230,7 +230,12 @@ export const DEVIATIONS: Deviation[] = [
       '{t:\'setup\'}, beacons carry players:1|2, and the lockstep input delay adapts to the measured RTT (' +
       'start.inputDelay = clamp(ceil((rtt+25)/40),1,4) - virtual-LAN links no longer stall; real LANs stay at 1 tick). ' +
       'Transport: UDP beacons for discovery + manual IP (directed per-interface broadcasts), ' +
-      'TCP with a 1 s heartbeat / 3.5 s dead-link watchdog in the Electron main process.',
+      'TCP with a 1 s heartbeat / 3.5 s dead-link watchdog in the Electron main process. v0.1.10: the zombie ' +
+      'ambience scheduler follows the sim tick (CWorld.Draw gates ProcessAmbience on mAmbienceTick != mTick) - ' +
+      'offline Draw is always paired 1:1 with a tick (zero audible change), but during a net stall / net pause the ' +
+      'frozen world kept Drawing every flagDraw and the ambience ticker fired zombie moans over a world that did ' +
+      'not move (and inflated the drawn-zombie accumulator for the first post-stall bucket); the gate keeps both ' +
+      'peers\' ambience in lockstep with the simulation.',
   },
   // ---------------------------------------------------------------------------------------------- v0.1.7 additions
   {
