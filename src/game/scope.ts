@@ -21,7 +21,7 @@ import { registerSetupPage } from './local/Net/Setup.ts';
 import { installNetOverlay } from './local/Net/overlay.ts';
 import { debriefNameInput, installDebriefNameInput } from './local/DebriefName.ts';
 import { CThing_Object_WeaponCrate, captureCratePayload } from './local/WeaponCrate.ts';
-import { armStartWave, consumeArmedWaveOn, getSelectedStartWave, resetSelectedStartWave } from './local/StartWave.ts';
+import { armStartWave, consumeArmedWaveOn, getRunStartWave, getSelectedStartWave, recordRunStartWave, resetSelectedStartWave } from './local/StartWave.ts';
 import { buildStartWaveCycler } from './local/StartWaveUi.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 
@@ -210,8 +210,10 @@ export function applyScope(): void {
     }
     return r;
   };
-  // Debrief RETRY arms the checkpoint; without one the original fresh restart runs. Hidden in net games
-  // (an unsynchronized single-side restart is a desync by definition; the net lobby owns rematches).
+  // Debrief RETRY arms the checkpoint; without one (START WAVE death before the first advance, CONTINUE death before
+  // the first advance) v0.2.0 falls back to the wave the run actually started at instead of the original difficulty
+  // base - same head-start mechanism as the START WAVE selector, so score/weapons still reset (fresh-run semantics).
+  // Hidden in net games (an unsynchronized single-side restart is a desync by definition; the net lobby owns rematches).
   debriefProto.ctor = (function (previous: any) {
     return function (this: any): void {
       previous.call(this);
@@ -222,19 +224,22 @@ export function applyScope(): void {
           return;
         }
         this._Retry.onPress = function (this: any): void {
-          armFromCheckpoint();
+          if (!armFromCheckpoint()) armStartWave(getRunStartWave());
           this.pClass.nState = 'State_LoadWorld';
           CSound.mSamples.Click.PlaySound();
         };
       }
     };
   })(debriefProto.ctor);
-  // Consume an armed snapshot once the freshly built world finished its init (no-op without one).
+  // Consume an armed snapshot once the freshly built world finished its init (no-op without one), then record the
+  // settled start wave (after the difficulty head start, the armed start wave and any pending snapshot) as the
+  // Debrief RETRY fallback. Re-recorded at every world build, so it never goes stale between games.
   const worldProto = World.CWorld.prototype as any;
   const initFinished = worldProto.InitFinished;
   worldProto.InitFinished = function (this: any): void {
     initFinished.call(this);
     consumePending(this);
+    recordRunStartWave(this.mUpgrades.mLevelIndex);
   };
   // A new run that was not armed by CONTINUE / checkpoint-RETRY drops every stored resume (one slot). A NET game
   // never touches the stored single-player run (its own checkpoint lives in the NetSession).

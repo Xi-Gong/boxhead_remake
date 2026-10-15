@@ -38,7 +38,8 @@ describe('Single: death -> debrief -> retry / exit', () => {
     g.step(5);
     expect(g.main().mcWorld).toBeUndefined();
     // PIN: the passive bot killed nothing -> no wave advanced -> no checkpoint (WAVE_CHECKPOINT_RETRY), so RETRY
-    // below must be the original fresh restart.
+    // below takes the v0.2.0 fallback to the run's start wave - here the difficulty base (20), numerically identical
+    // to the original fresh restart.
     expect(hasCheckpoint()).toBe(false);
     g.retry();
     expect(g.waitRunning()).toBe(true);

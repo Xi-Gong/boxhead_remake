@@ -6,8 +6,10 @@
 import { describe, expect, it } from 'vitest';
 import { seedRandom } from '../../src/engine/flash/rng.ts';
 import { CMain, CSaveData } from '../../src/game/packages.ts';
-import { _resetForTests as resetStartWaveForTests, armStartWave, consumeArmedWave, setSelectedStartWave } from '../../src/game/local/StartWave.ts';
+import { _resetForTests as resetStartWaveForTests, armStartWave, consumeArmedWave, getRunStartWave, setSelectedStartWave } from '../../src/game/local/StartWave.ts';
+import { hasCheckpoint } from '../../src/game/local/Resume.ts';
 import { createHeadlessGame, type HeadlessGame } from './harness.ts';
+import { Bot, runBots } from './bots.ts';
 
 /** The harness tail of createHeadlessGame after menuOnly:'Select' - start the room through the level icon button. */
 function startSelectedRoom(g: HeadlessGame, seed = 1): void {
@@ -86,6 +88,78 @@ describe('start wave (deviation START_WAVE_SELECTOR, core)', () => {
     startSelectedRoom(g2, 9);
     expect(g2.snapshot().level).toBe(1);
     expect(g2.snapshot().multiplier).toBe(1);
+  });
+});
+
+describe('start wave + death RETRY fallback (v0.2.0: no checkpoint -> restart at the run-start wave)', () => {
+  // The head-start happens at world build (mLoaded false), so a death BEFORE the first natural wave advance leaves
+  // no checkpoint: RETRY used to fall through to the original fresh restart (difficulty base = wave 1). v0.2.0 falls
+  // back to the wave the run actually started at instead, via the same START_WAVE head-start mechanism.
+  it('T1: start wave 20, die on 20 before any advance -> RETRY restarts at LEVEL 20 (not 1)', () => {
+    resetStartWaveForTests();
+    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 61, menuOnly: 'Select' });
+    setSelectedStartWave(20);
+    startSelectedRoom(g, 61);
+    expect(g.snapshot().level).toBe(20);
+    expect(getRunStartWave()).toBe(20); // recorded at InitFinished, after the head start settled
+    const ticks = runBots(g, [new Bot(0, { passive: true })], 3000);
+    expect(ticks).toBeLessThan(3000); // the passive bot died
+    expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+    expect(hasCheckpoint()).toBe(false); // PIN: no wave advanced -> no checkpoint -> fallback path
+    g.retry();
+    expect(g.waitRunning()).toBe(true);
+    const s = g.snapshot();
+    expect(s.level).toBe(20);
+    expect(s.multiplier).toBe(30);
+    expect(s.players[0]!.weapons).toEqual(['pistol', 'uzi', 'shotgun', 'barrel', 'grenade', 'fakewall']);
+    expect(s.zombieTotal).toBe(105); // wave 20's spawn table, not wave 1's
+    expect(g.world().mHud.nTotalScore).toBe(0); // fresh-run semantics: score resets
+    expect(getRunStartWave()).toBe(20); // the retried run re-records its own start
+    expect(g.errors).toEqual([]);
+  });
+
+  it('T2: difficulty 1 + start wave 5 -> RETRY steps the level DOWN to 5, multiplier never drops below the grant', () => {
+    resetStartWaveForTests();
+    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 62, menuOnly: 'Select' });
+    (CMain as any).mSaveData.mDifficulty = 1; // base would be wave 10 / multiplier 10
+    setSelectedStartWave(5);
+    startSelectedRoom(g, 62);
+    expect(g.snapshot().level).toBe(5);
+    expect(g.snapshot().multiplier).toBe(10); // max(anchor(5)=5, difficulty's 10)
+    const ticks = runBots(g, [new Bot(0, { passive: true })], 3000);
+    expect(ticks).toBeLessThan(3000);
+    expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+    expect(hasCheckpoint()).toBe(false);
+    g.retry();
+    expect(g.waitRunning()).toBe(true);
+    const s = g.snapshot();
+    expect(s.level).toBe(5); // down from the difficulty base 10, exactly like the initial head start
+    expect(s.multiplier).toBe(10); // tiers are never revoked
+    expect(g.errors).toEqual([]);
+  });
+
+  it('T3: after a fallback RETRY, a later untouched run is back to level 1 (no leakage through the real menus)', () => {
+    resetStartWaveForTests();
+    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 63, menuOnly: 'Select' });
+    setSelectedStartWave(20);
+    startSelectedRoom(g, 63);
+    runBots(g, [new Bot(0, { passive: true })], 3000);
+    expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+    g.retry(); // fallback-armed at 20
+    expect(g.waitRunning()).toBe(true);
+    expect(g.snapshot().level).toBe(20);
+    // EXIT through the real route; the cycler resets to 1 on screen entry, so the next run must be level 1.
+    g.step(20);
+    g.quit();
+    expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+    g.exit();
+    expect(g.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld')).toBe(true);
+    startSelectedRoom(g, 63);
+    const s = g.snapshot();
+    expect(s.level).toBe(1);
+    expect(s.multiplier).toBe(1);
+    expect(getRunStartWave()).toBe(1); // re-recorded by the new world
+    expect(g.errors).toEqual([]);
   });
 });
 

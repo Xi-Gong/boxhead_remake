@@ -278,6 +278,45 @@ describe('resume: SAVE & QUIT -> restart -> CONTINUE (scope wiring)', () => {
       SharedObject._setStorage(undefined);
     }
   });
+
+  it('T4 (v0.2.0): CONTINUE then death before the first advance -> RETRY restarts at the snapshot wave', () => {
+    // armFromStored nulls the in-memory checkpoint and the restore fast-forward is suppressed, so dying before the
+    // next natural advance left NO checkpoint: RETRY used to restart at the difficulty base (wave 1). v0.2.0 falls
+    // back to the run-start wave (the snapshot's wave), as a fresh run (score reset, head-start mechanism).
+    const store = new MapStorage();
+    SharedObject._setStorage(store);
+    try {
+      // Session 1: clear wave 1, then SAVE & QUIT (stored wave 2).
+      const g1 = createHeadlessGame({ mode: 'Single', room: 2, seed: 64, difficulty: 0 });
+      const bot = new Bot(0);
+      for (let i = 0; i < 8000 && g1.world().mUpgrades.mLevelIndex < 2; i++) runBots(g1, [bot], 1);
+      expect(g1.world().mUpgrades.mLevelIndex).toBe(2);
+      g1.saveQuit();
+      expect(g1.waitScreen('State_Main', 'Screen_Main')).toBe(true);
+
+      // Session 2: CONTINUE -> restored at wave 2 -> die passively before any advance.
+      const g2 = createHeadlessGame({ mode: 'Single', room: 2, seed: 64, menuOnly: 'Main' });
+      g2.main().mcScreen.mcContinue.onRelease.call(g2.main().mcScreen.mcContinue);
+      expect(g2.waitRunning()).toBe(true);
+      expect(g2.world().mUpgrades.mLevelIndex).toBe(2);
+      const ticks = runBots(g2, [new Bot(0, { passive: true })], 3000);
+      expect(ticks).toBeLessThan(3000);
+      expect(g2.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
+      expect(hasCheckpoint()).toBe(false); // PIN: the restore suppressed re-capture -> fallback path
+      expect(g2.hasStoredResume()).toBe(false); // death cleared the stored run (existing behaviour)
+
+      // RETRY: no checkpoint, no stored run -> the v0.2.0 fallback (run-start wave = snapshot wave 2).
+      g2.retry();
+      expect(g2.waitRunning()).toBe(true);
+      expect(g2.world().mUpgrades.mLevelIndex).toBe(2);
+      expect(g2.world().mHud.nTotalScore).toBe(0); // fresh-run semantics: score resets
+      expect(g2.world().mUpgrades.Level.mZombieCount).toBe(0); // the wave restarted fresh
+      expect(g1.errors).toEqual([]);
+      expect(g2.errors).toEqual([]);
+    } finally {
+      SharedObject._setStorage(undefined);
+    }
+  });
 });
 
 describe('resume: rng continuity', () => {

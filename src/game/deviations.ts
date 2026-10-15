@@ -161,8 +161,12 @@ export const DEVIATIONS: Deviation[] = [
       'remake captures an in-memory checkpoint every time a wave starts (right after __set__mLevel advanced it - the ' +
       'advance condition guarantees no zombie/devil is alive then) and RETRY restores that wave-start state instead: ' +
       'wave number, score, multiplier/combo, player positions/lives/weapons+ammo and marker/placed room objects are ' +
-      're-applied to the rebuilt world and the wave restarts fresh (mid-wave creatures/decals are not carried). Without ' +
-      'a checkpoint (e.g. Death Match, or death before the first wave advanced) the original behaviour is untouched.',
+      're-applied to the rebuilt world and the wave restarts fresh (mid-wave creatures/decals are not carried). v0.2.0: ' +
+      'without a checkpoint (death before the first wave advanced - e.g. a START WAVE head start, or right after a ' +
+      'CONTINUE) RETRY now falls back to the wave the current run actually started at (the chosen START WAVE, the ' +
+      "snapshot's wave, or the difficulty base - the last is numerically identical to the original restart), reusing " +
+      'the START_WAVE_SELECTOR head-start mechanism (score/weapons still reset, clamped to wave 100). Death Match ' +
+      '(winner screen) and net games keep the original behaviour.',
   },
   {
     id: 'SAVE_QUIT_RESUME',

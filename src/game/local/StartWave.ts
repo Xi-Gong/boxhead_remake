@@ -26,6 +26,13 @@ export function anchorInterp(wave: number): number {
 
 let selected = 1;
 let armed = 1;
+// v0.2.0 (WAVE_CHECKPOINT_RETRY fallback): the wave the CURRENT run actually started at - recorded at every world
+// build (CWorld.InitFinished wrapper) after SetDifficulty's head start, the armed start wave and any pending resume
+// snapshot have all settled. Read only by the Debrief RETRY fallback when no checkpoint exists (START WAVE death
+// before the first advance, CONTINUE death before the first advance). Re-recorded at every build before anything
+// can read it, so it cannot leak between games; deliberately NOT part of Resume.clearAll() (the world being built
+// re-records it anyway).
+let runStart = 1;
 
 /** The selection screens' cycler value (1..100, wrapping). Reset to 1 on every screen entry. */
 export function getSelectedStartWave(): number { return selected; }
@@ -68,7 +75,12 @@ export function consumeArmedWaveOn(upgrades: any): void {
   }
 }
 
+/** The wave the current run actually started at (see `runStart` above); recorded once per world build. */
+export function recordRunStartWave(n: number): void { runStart = Math.min(Math.max(Math.floor(n), 1), 100); }
+export function getRunStartWave(): number { return runStart; }
+
 export function _resetForTests(): void {
   selected = 1;
   armed = 1;
+  runStart = 1;
 }
