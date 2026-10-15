@@ -20,6 +20,7 @@ import { registerLobbyPage } from './local/Net/Lobby.ts';
 import { registerSetupPage } from './local/Net/Setup.ts';
 import { installNetOverlay } from './local/Net/overlay.ts';
 import { debriefNameInput, installDebriefNameInput } from './local/DebriefName.ts';
+import { CThing_Object_WeaponCrate, captureCratePayload } from './local/WeaponCrate.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 
 /**
@@ -240,6 +241,22 @@ export function applyScope(): void {
   mainProtoResume.State_LoadWorld = function (this: any): void {
     if (!isArmed() && !netActive()) clearAll();
     stateLoadWorld.call(this);
+  };
+
+  // ---- Coop death weapon crate (deviation COOP_DEATH_WEAPON_CRATE, v0.1.9) --------------------
+  // Runs after the original LogKill bookkeeping, still INSIDE the simulation tick, so both lockstep peers spawn
+  // the identical crate (no RNG, no wall clock anywhere in the thing). The StaticImpassable guard mirrors
+  // CWorld._CreatePickup; the payload is captured here because State_Respawn's ResetWeapons empties the ammo.
+  const logKillPrev = worldProto.LogKill;
+  worldProto.LogKill = function (this: any, tThing: any): void {
+    logKillPrev.call(this, tThing);
+    if (World.CWorld.mGameMode !== 'Coop') return;
+    if (tThing?._CLASSID_ !== 'CThing_Creature_Player') return;
+    const payload = captureCratePayload(tThing);
+    if (!payload) return;
+    const p = tThing.mPosition;
+    if (this.mMap.mCells[p.mY & 16777215][p.mX & 16777215].mCollide & World.Map.CMap_Cell.mCollide_StaticImpassable) return;
+    this.mThing_Collection.AddThing(new CThing_Object_WeaponCrate(p.Clone(), payload));
   };
 
   // ---- gameplay cursor (deviation GAME_CURSOR_HIDE, v0.1.7) ------------------------------------

@@ -274,4 +274,22 @@ export const DEVIATIONS: Deviation[] = [
       'type into DOM inputs); SEND SCORE with the placeholder now focuses the name field (still no submit - the ' +
       'original behaviour - just no longer a fully silent dead end).',
   },
+  // ---------------------------------------------------------------------------------------------- v0.1.9 additions
+  {
+    id: 'COOP_DEATH_WEAPON_CRATE',
+    file: 'game/local/WeaponCrate.ts, game/scope.ts (CWorld.LogKill wrapper), game/local/Resume.ts (crate ObjectState)',
+    description:
+      'In the original, a respawned Coop player returns with the pistol and every previously unlocked weapon at 0 ' +
+      'ammo (ResetWeapons), refilled only by random supply crates. The remake drops a crate AT THE DEATH SPOT ' +
+      'holding every active non-pistol weapon with its LIVE remaining ammo (an all-empty backpack drops nothing). ' +
+      'Any living player picks it up by walking over it - the respawned owner restores the pre-death inventory ' +
+      'verbatim (including auto-switching off the pistol to the weapon the player died holding), a teammate takes ' +
+      'the best of both (missing weapons granted with a full magazine, kept weapons max their ammo and capacity, so ' +
+      'a pickup never weakens anyone). Look, walk-over, sound and removal are the original Object.Pickup ones ' +
+      '(same red crate art - deliberately indistinguishable in the chaos); the crate never expires and survives ' +
+      'save/resume and LAN checkpoints/reconnects (serialized like a placed object; RESUME_VERSION bump). Coop only: ' +
+      'Single death ends the run (WAVE_CHECKPOINT_RETRY already restores inventory) and Death Match keeps its ' +
+      'original random-pickup drop. Spawned inside the lockstep simulation on both peers - deterministic by ' +
+      'construction.',
+  },
 ];
