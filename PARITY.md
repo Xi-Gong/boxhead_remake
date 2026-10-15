@@ -305,3 +305,16 @@ DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢�
 | 保留原版行为 | 每样本单声道重触发切断、环境音样本 0 空档、暂停不静音、DM 分屏双绘计数——全部未动 |
 
 登记决策：恢复机制在不出问题时不可见，**不新增 deviation 编号**；环境音门控并入 `LAN_MULTIPLAYER` 描述。测试：`tests/unit/platform/audio-recovery.test.ts`（11 例：重试/闩锁移除/静默退化/按需自愈/看门狗 resume/重建/闭态即重建/mute 保留/清扫节流）、`tests/e2e/audio.browser.mjs`（真 Chrome 真解码 28 项：启动 31/31、两类网络故障注入治愈、suspend 3s 恢复、kill 重建重解码）、`tests/sim/netlockstep.test.ts`（双端 PlaySound 有序序列全等 + stall 冻结期零新声音）、`tests/sim/fx_creatures_audio.test.ts`（本地"额外 Draw 为 no-op"节奏不变性）。
+
+## 12. v0.2.0 素材独立 + Retry 落败波次重开（2026-10-15）
+
+两项改动：**资产层独立**与 **WAVE_CHECKPOINT_RETRY 兜底补全**（后者是对既有 deviation #15 语义的补全，不新增编号）。
+
+| 项 | 行为 |
+|---|---|
+| 提取产物入库 | `public/assets/`（library.json、xsi.json、29 位图、31 音效、manifest.json，约 6.6MB）自 v0.2.0 起提交进仓库，新增 `.gitattributes`（`public/assets/** -text` + 二进制类型）保证任意克隆字节稳定；标准构建**完全不读 SWF**（manifest 有效即跳过，SWF 缺场时信任其记录的 sha） |
+| 重新提取 | 仅当提取器变化时发生，只需仓库内的 1.9MB 原版 SWF（registerClass 映射从 SWF 的 DoInitActions 字节码恢复，不依赖 FLA）；SWF 缺失时清晰报错 |
+| 资产清理 | 删除与复刻无关的 ~107MB（全系列 SWF 镜像、中文版合集、五代反编译、ClassicResources 音频、梦魇解密器、4 个未引用放映器）；FLA/AS2/音频参照交叉验证测试 `skipIf` 优雅降级，新增常开门禁：committed MP3 帧同步头 + 提交产物与全新提取逐字节全等（含 manifest） |
+| Retry 兜底 | 无检查点时（START WAVE 起始波推进前死亡、CONTINUE 后推进前死亡）RETRY 从**本局实际起始波**重开（InitFinished 落定后记录；复用 START_WAVE 起始头机制：静默 `__set__mLevel` + anchorInterp 阶梯倍率，clamp 100），不再落回原版难度基准波；分数/武器仍按重试语义重置。难度基准开局**逐位不变**（起始波=基准，装订为无操作）；DM 胜利屏与 net 对局（RETRY 本就隐藏）保持原版行为 |
+
+测试：`tests/sim/startWave.test.ts`（T1 波 20 开局→波 20 死→RETRY→波 20/倍率 30/梯队武器/分数归零、T2 难度 1+波 5 降级不回撤、T3 经真实菜单无泄漏）、`tests/sim/resume.test.ts` T4（CONTINUE→立即死→RETRY→存档波次）、`tests/unit/swf/media.test.ts`（提交资产完整性 + 全量重提取字节全等）、既有 flow/soak/weaponCrate 钉全部保持。
