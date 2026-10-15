@@ -48,7 +48,7 @@ export function buildStartWaveCycler(parent: any, x: number, y: number): any {
   const mc = parent.createEmptyMovieClip('mcStartWave', parent.getNextHighestDepth());
   mc._x = x;
   mc._y = y;
-  label(mc, 'mcCaption', -80, -26, 160, 18, 'START WAVE', 13, 0xbfbfbf);
+  label(mc, 'mcCaption', -80, -26, 160, 18, 'START WAVE', 13, 0x737373);
   const value = label(mc, 'mcValue', -25, -6, 50, 28, '1', 22, 0xffcc00);
   const refresh = (): void => { value.text = String(getSelectedStartWave()); };
   arrow(mc, 'bLeft', -58, -6, '<', -1, refresh);

@@ -256,3 +256,35 @@ DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢�
    `tests/sim/debriefName.test.ts`、e2e（CDP `Input.imeSetComposition` 组字实时同步 +
    `insertText` 提交 `'王roy'`）；`playtest.typing.mjs` 补 IME 提交探针并改为**离屏**运行、
    失败置非零退出码——**此后 typing 是发版必跑门禁**（v0.1.7 漏跑正是本次翻车原因）。
+
+## 10. v0.1.9 新增（超越原版，2026-10-15）
+
+两项用户需求（偏差登记 21 → 23 条，`src/game/deviations.ts`）：**协作死亡武器箱**与**起始波次选择**。
+
+### 10.1 协作死亡武器箱（`COOP_DEATH_WEAPON_CRATE`）
+
+| 项 | 行为 |
+|---|---|
+| 触发 | Coop 模式玩家死亡（`CWorld.LogKill` 的 scope 包装，模拟内部执行）在死亡格生成一个箱子 |
+| 内容 | 死亡者背包全部**已激活且还有弹药**的非手枪武器，弹药为死亡瞬间的实际剩余量（全空不掉箱） |
+| 外观/拾取 | 完全复用原版 `Object.Pickup` 红色补给箱：同美术、同走踏拾取、同音效、单次拾取即消失（用户决策：不新画） |
+| 死亡者本人 | 重生后拾取 = 精确恢复（含自动从手枪切回死亡时所持武器） |
+| 队友 | 取两者较优：缺失武器直接满弹匣获得；已有武器弹药/容量取 max（拾取永不变弱） |
+| 时效 | 永久存在直到被拾取；存档/读档（RESUME_VERSION 1→2，旧单存档槽作废）、波次检查点、LAN 断线重连/续局均保留（按 placed 对象序列化） |
+| 模式门控 | 仅 Coop：单人死亡即结算（检查点 RETRY 本就恢复背包），Death Match 保持原版随机补给掉落 |
+| 确定性 | 在双方锁步模拟内生成，无 RNG/计时器，netlockstep 逐 tick 哈希验证一致 |
+
+已知取舍：死亡箱与随机补给外观相同（用户明确接受——混乱战场中"见到红箱就走上去"本身即原版直觉）。
+
+### 10.2 起始波次选择（`START_WAVE_SELECTOR`）
+
+| 项 | 行为 |
+|---|---|
+| 入口 | 单人/协作选关界面左下角 `START WAVE < N >` 循环器（绘制于原版隐藏的推广按钮空带）；LAN 设置界面 Coop 显示 `WAVE` 板（与 DM 的 `FRAGS` 板共用槽位，房主操作、客机镜像） |
+| 取值 | 1..100 循环；**不持久化**——每次进入界面重置为 1（"不动就是从第一关开始"，用户决策） |
+| 能力赋予 | 复用原版难度起步机制（`SetDifficulty` scope 包装）：静默 `__set__mLevel(N)` 后倍率**逐级**步进到锚点插值（波次→倍率 1→1、10→10、20→30、35→50，其间线性、35 之后按末段斜率 20/15、封顶 125=升级表最大阈值）——即"打到该波次应有的武器/升级"，满弹匣 |
+| 覆盖关系 | 选定 N>1 时波次覆盖难度起步（可下调）；倍率只升不降（难度 3 + 波次 10 → LEVEL 10 但保持 x50）；Death Match 免疫；N=1 与原版逐位一致 |
+| LAN | `wave` 随 `start` 消息（新局/续局/重连重发）在双端 tick 0 前同样施加；续局快照在其上重放（恒有 snap.wave ≥ 起始波次） |
+| 排行榜 | 不变（仍按房间×模式计分资格；难度起步本就是原版允许的"抢跑"） |
+
+测试：`tests/sim/weaponCrate.test.ts`（11 项）、`tests/unit/game/startWave.test.ts` + `tests/sim/startWave.test.ts`（锚点表 + 包装器 + UI）、`tests/sim/netlockstep.test.ts`（死亡掉箱锁步一致 + start.wave 双端）、`tests/sim/lansetup.test.ts`（WAVE 板）；浏览器视觉验收 `tests/sim/playtest.v019.mjs`（真实点击循环器 24 次→波次 25 开局 x36、死亡→箱子→队友拾取恢复 13/2 弹、DM 无循环器；截图经 zai 视觉 MCP 核验）。
