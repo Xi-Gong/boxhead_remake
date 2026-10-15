@@ -21,6 +21,7 @@ import { registerSetupPage } from './local/Net/Setup.ts';
 import { installNetOverlay } from './local/Net/overlay.ts';
 import { debriefNameInput, installDebriefNameInput } from './local/DebriefName.ts';
 import { CThing_Object_WeaponCrate, captureCratePayload } from './local/WeaponCrate.ts';
+import { consumeArmedWaveOn } from './local/StartWave.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 
 /**
@@ -257,6 +258,16 @@ export function applyScope(): void {
     const p = tThing.mPosition;
     if (this.mMap.mCells[p.mY & 16777215][p.mX & 16777215].mCollide & World.Map.CMap_Cell.mCollide_StaticImpassable) return;
     this.mThing_Collection.AddThing(new CThing_Object_WeaponCrate(p.Clone(), payload));
+  };
+
+  // ---- start wave selection (deviation START_WAVE_SELECTOR, v0.1.9) ---------------------------
+  // The armed wave is applied right after the original difficulty head start, still inside CWorld.InitCleanUp
+  // (mLoaded false -> the __set__mLevel checkpoint hook above stays quiet, exactly like SetDifficulty's own calls).
+  // Consumed once; nothing armed (or wave 1) leaves today's behaviour bit-identical.
+  const setDifficultyPrev = upgradesProto.SetDifficulty;
+  upgradesProto.SetDifficulty = function (this: any, tDifficulty: any): void {
+    setDifficultyPrev.call(this, tDifficulty);
+    consumeArmedWaveOn(this);
   };
 
   // ---- gameplay cursor (deviation GAME_CURSOR_HIDE, v0.1.7) ------------------------------------

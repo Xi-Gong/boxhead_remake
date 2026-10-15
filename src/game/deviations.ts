@@ -292,4 +292,21 @@ export const DEVIATIONS: Deviation[] = [
       'original random-pickup drop. Spawned inside the lockstep simulation on both peers - deterministic by ' +
       'construction.',
   },
+  {
+    id: 'START_WAVE_SELECTOR',
+    file: 'game/local/StartWave.ts, game/scope.ts (CUpgrades.SetDifficulty wrapper, CScreen_SelectWorld ctor/LoadLevel wrappers), local/Net/{Setup,protocol,bridge,NetSession}.ts (wave on the start message)',
+    description:
+      'The original always starts a run at the difficulty base wave (1/10/20/35 by difficulty). The remake adds a ' +
+      'START WAVE cycler to the Single/Coop level selection (and the Coop LAN setup screen, host-authored and ' +
+      'mirrored to the client): waves 1..100, default 1, NOT persisted - the cycler resets to 1 on every screen ' +
+      'entry ("did not touch it = start from the beginning", user decision). A chosen wave N > 1 is applied at world ' +
+      'build through the ORIGINAL head-start mechanism, right after CUpgrades.SetDifficulty: one silent ' +
+      '__set__mLevel(N), then the multiplier stepped one index at a time up to the anchor-interpolated value of ' +
+      'the difficulty pairs (wave->multiplier 1/1, 10/10, 20/30, 35/50, linear between them, last-segment slope ' +
+      'beyond 35, clamped to the table maximum 125) - so the player begins with the weapons/upgrades a run that ' +
+      'reached wave N would hold, full magazines. The multiplier only ever rises (a wave below the difficulty jump ' +
+      'keeps the difficulty tiers); Death Match (no waves) is immune; wave 1 is bit-identical to the original. ' +
+      'Applied before tick 0 on both lockstep peers (start message carries the wave) - deterministic. Highscore ' +
+      'eligibility unchanged (still per room x mode; a head start was always possible via difficulty).',
+  },
 ];
