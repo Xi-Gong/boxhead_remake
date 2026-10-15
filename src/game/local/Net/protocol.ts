@@ -64,6 +64,8 @@ export interface SetupSelection {
   difficulty: number;
   /** 0..3 index into the Death Match kill limits [5,10,20,50]. */
   gameAmount: number;
+  /** START_WAVE_SELECTOR (v0.1.9): chosen starting wave 1..100 (Coop only on the setup screen; never persisted). */
+  wave: number;
 }
 
 /** The CSaveData fields the host's StartGame imposes on the client (they shape the simulation; see PARITY §9). */
@@ -107,7 +109,7 @@ export type LanMessage =
   // checkpoint itself when the client reported none (a crashed and restarted client has lost its in-memory copy).
   // `inputDelay` = lockstep input delay in ticks (the host picks it from the worst recent RTT samples via
   // computeInputDelay; default LAN_INPUT_DELAY when absent).
-  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; snap?: unknown }
+  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; wave?: number; snap?: unknown }
   // both -> both: this peer's player input bitmap for `tick` (bit order = NetSlot.SLOT_ORDER: UP, DOWN, LEFT,
   // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
   | { t: 'in'; tick: number; bits: number; sum?: LanChecksum }

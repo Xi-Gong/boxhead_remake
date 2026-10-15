@@ -31,6 +31,7 @@
 import { getRandomState, setRandomState } from '../../../engine/flash/rng.ts';
 import { CMain, Thing, World } from '../../packages.ts';
 import { armSnapshot, capture, type RunSnapshot } from '../Resume.ts';
+import { armStartWave } from '../StartWave.ts';
 import { NetSlot, packBits, unpackBit, SLOT_ORDER, type SlotBitName } from './NetSlot.ts';
 import {
   LAN_CHECKSUM_EVERY, LAN_INPUT_DELAY, type GameConfig, type LanChecksum, type LanMessage, type LanMode, type LanRole,
@@ -76,6 +77,8 @@ export interface NetStart {
   inputDelay?: number;
   /** Resume from the net checkpoint at this tick (reconnect / continuation); undefined = fresh. */
   resumeTick?: number;
+  /** START_WAVE_SELECTOR (v0.1.9): chosen starting wave (default 1 = original); applied before tick 0 on BOTH peers. */
+  wave?: number;
 }
 
 export class NetSession {
@@ -149,6 +152,7 @@ export class NetSession {
       // host kept its measured D -> the host micro-stalled every tick after any resume).
       this.startLocalGame({
         mode: msg.mode, roomLink: msg.roomLink, cfg: msg.cfg, seed: msg.seed, inputDelay: msg.inputDelay, resumeTick: msg.resumeTick,
+        wave: msg.wave,
       }, CMain._this);
       return;
     }
@@ -193,7 +197,7 @@ export class NetSession {
       const start: NetStart = { ...this.startOpts!, resumeTick: this.netCheckpoint.tick };
       // A client that restarted (no checkpoint of its own, capTick absent) receives the snapshot itself.
       const snap = hello.capTick == null || hello.capTick < this.netCheckpoint.tick ? this.netCheckpoint.snap : undefined;
-      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, inputDelay: start.inputDelay, resumeTick: start.resumeTick, snap });
+      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, inputDelay: start.inputDelay, resumeTick: start.resumeTick, wave: start.wave, snap });
       this.startLocalGame(start, CMain._this); // the host rebuilds through the same path
     }
   }
@@ -240,6 +244,9 @@ export class NetSession {
       // state-identical copy even though their absolute mTick values may differ by the build-time warm-up ticks).
       armSnapshot(this.netCheckpoint.snap);
     }
+    // The chosen start wave replays on the rebuilt world (a resume's snapshot then re-applies on top of it, and
+    // snap.wave >= start.wave always); applied identically on both peers before tick 0.
+    armStartWave(start.wave ?? 1);
     setRandomState(start.seed);
     main.SetState('State_LoadWorld');
     this.onStateChange?.();

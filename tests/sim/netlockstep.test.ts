@@ -250,6 +250,27 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     B.session.dispose();
   });
 
+  it('start.wave arms both peers identically: a session started with wave 12 builds LEVEL 12 / multiplier 14', { timeout: 60000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001', undefined);
+    // Rebuild through the same startLocalGame the wire start message drives, with a chosen wave.
+    B.session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, wave: 12 }, B.game.main());
+    if (!B.game.waitRunning(3000)) throw new Error(`room did not start (${B.game.state()})`);
+    const s = B.game.snapshot();
+    expect(s.level).toBe(12);
+    expect(s.multiplier).toBe(14); // anchorInterp(12) = 10 + 2*2 = 14
+    for (const p of s.players) {
+      expect(p.weapons).toEqual(['pistol', 'uzi', 'shotgun']); // tiers x5 / x10 unlocked
+    }
+    // The client-side consumption of a wire start message carries the wave too.
+    const C = bootNetPeer('Coop', 'ROOM_Single_0001', undefined);
+    C.session.onNetMessage({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, wave: 20 });
+    if (!C.game.waitRunning(3000)) throw new Error(`client room did not start (${C.game.state()})`);
+    expect(C.game.snapshot().level).toBe(20);
+    expect(C.game.snapshot().multiplier).toBe(30);
+    B.session.dispose();
+    C.session.dispose();
+  });
+
   it('coop: player 2 switches weapons with the keyboard (E next / Q previous) - pinned, original defaults', { timeout: 120000 }, () => {
     const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 7 });
     const p2 = g.players()[1];

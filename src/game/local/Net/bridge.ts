@@ -41,7 +41,7 @@ class LanBridge {
   /** The client player's READY flag (host: from the 'ready' message; client: local via setReady). */
   ready = false;
   /** The shared setup-screen selection (host authors it in enterSetup/setSel; client mirrors via 'setup'). */
-  sel: SetupSelection = { mode: 'Coop', charP1: 3, charP2: 0, levelIdx: 0, difficulty: 0, gameAmount: 0 };
+  sel: SetupSelection = { mode: 'Coop', charP1: 3, charP2: 0, levelIdx: 0, difficulty: 0, gameAmount: 0, wave: 1 };
   /** Peer link round-trip time (heartbeat echo; live already while in the room). */
   rttMs: number | undefined;
   /** Recent heartbeat RTT samples (ms, newest last, capped) - the input-delay picker uses their worst (v0.1.7). */
@@ -171,6 +171,7 @@ class LanBridge {
       levelIdx: sd?.mLevelIndex_Coop != null ? sd.mLevelIndex_Coop : 0,
       difficulty: sd?.mDifficulty != null ? sd.mDifficulty : 0,
       gameAmount: sd?.mGameAmount != null ? sd.mGameAmount : 0,
+      wave: 1, // START_WAVE_SELECTOR: not persisted - every setup entry starts at wave 1
     };
     this.send({ t: 'setup', sel: this.sel });
     this.phase = 'setup';
@@ -214,8 +215,8 @@ class LanBridge {
       if (this.phase !== 'lobby' || !this.session?.startOpts || !this.session.netCheckpoint) return;
       const opts = this.session.startOpts;
       const resumeTick = this.session.netCheckpoint.tick;
-      this.send({ t: 'start', mode: opts.mode, roomLink: opts.roomLink, cfg: opts.cfg, seed: opts.seed, inputDelay: opts.inputDelay, resumeTick });
-      this.launch(opts.mode, opts.roomLink, opts.cfg, opts.seed, opts.inputDelay, resumeTick, 0);
+      this.send({ t: 'start', mode: opts.mode, roomLink: opts.roomLink, cfg: opts.cfg, seed: opts.seed, inputDelay: opts.inputDelay, resumeTick, wave: opts.wave });
+      this.launch(opts.mode, opts.roomLink, opts.cfg, opts.seed, opts.inputDelay, resumeTick, 0, opts.wave);
       return;
     }
     if (this.phase !== 'setup') return;
@@ -243,12 +244,12 @@ class LanBridge {
     sd.mPlayer2_CharacterIndex = sel.charP2;
     sd.mDifficulty = sel.difficulty;
     sd.mGameAmount = sel.gameAmount;
-    this.send({ t: 'start', mode: sel.mode, roomLink, cfg, seed, inputDelay });
-    this.launch(sel.mode, roomLink, cfg, seed, inputDelay, undefined, 0);
+    this.send({ t: 'start', mode: sel.mode, roomLink, cfg, seed, inputDelay, wave: sel.wave ?? 1 });
+    this.launch(sel.mode, roomLink, cfg, seed, inputDelay, undefined, 0, sel.wave ?? 1);
   }
 
   /** Build the local session and drive the game start through the shared NetSession path. */
-  private launch(mode: 'Coop' | 'DeathMatch', roomLink: string, cfg: GameConfig, seed: number, inputDelay: number | undefined, resumeTick: number | undefined, role: 0 | 1): void {
+  private launch(mode: 'Coop' | 'DeathMatch', roomLink: string, cfg: GameConfig, seed: number, inputDelay: number | undefined, resumeTick: number | undefined, role: 0 | 1, wave: number | undefined): void {
     if (!this.session) this.session = new NetSession(role, { send: (m) => this.send(m) });
     this.session.onStateChange = () => {
       netOverlaySync(this.session);
@@ -258,7 +259,7 @@ class LanBridge {
     this.phase = 'playing';
     this.started = true;
     this.notify();
-    this.session.startLocalGame({ mode, roomLink, cfg, seed, inputDelay, resumeTick }, CMain._this);
+    this.session.startLocalGame({ mode, roomLink, cfg, seed, inputDelay, resumeTick, wave }, CMain._this);
     netOverlaySync(this.session);
   }
 
@@ -288,7 +289,7 @@ class LanBridge {
       const session = new NetSession(1, { send: (m) => this.send(m) });
       if (msg.resumeTick !== undefined && msg.snap) session.netCheckpoint = { tick: msg.resumeTick, snap: msg.snap, digest: '' };
       this.session = session;
-      this.launch(msg.mode, msg.roomLink, msg.cfg, msg.seed, msg.inputDelay, msg.resumeTick, 1);
+      this.launch(msg.mode, msg.roomLink, msg.cfg, msg.seed, msg.inputDelay, msg.resumeTick, 1, msg.wave);
       return;
     }
     if (msg.t === 'setup') {

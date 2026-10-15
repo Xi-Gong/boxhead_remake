@@ -32,6 +32,8 @@ export class CScreen_LanSetup extends CScreen {
   private bDiff: any;
   private bFrags: any;
   private fragsLabel: any;
+  private bWave: any;
+  private bWaveLabel: any;
   private bStart: any;
   private bBack: any;
   private bLeave: any;
@@ -110,6 +112,11 @@ export class CScreen_LanSetup extends CScreen {
       const b = lanBridge();
       b.setSel({ ...b.sel, gameAmount: (b.sel.gameAmount + 1) % 4 });
     });
+    // START_WAVE_SELECTOR (v0.1.9): the wave plate shares the frags slot - Coop shows the wave, Death Match the
+    // frag limit (the only mode-dependent control of that band, like the local screen's DM-hidden cycler).
+    this.bWaveLabel = this.Text(462, 380, 44, 16, 'Calibri', 12, INK, true, 'left', 'WAVE');
+    this.bWaveLabel.filters = glow();
+    this.bWave = this.Button(556, 394, 88, 24, '', 12, () => this.cycleWave(1));
 
     // The client only waits (or leaves); the host starts or goes back to the room.
     this.waitText = this.Text(170, 446, 300, 18, 'Calibri', 14, GREEN, true, 'center', 'WAITING FOR HOST...');
@@ -167,6 +174,13 @@ export class CScreen_LanSetup extends CScreen {
     b.setSel({ ...b.sel, levelIdx: (b.sel.levelIdx + d + 18) % 18 });
   }
 
+  private cycleWave(d: number): void {
+    CSound.mSamples.Click2.PlaySound();
+    const b = lanBridge();
+    const w = ((b.sel.wave - 1 + d) % 100 + 100) % 100 + 1;
+    b.setSel({ ...b.sel, wave: w });
+  }
+
   private cycleMode(): void {
     CSound.mSamples.Click2.PlaySound();
     const b = lanBridge();
@@ -186,10 +200,15 @@ export class CScreen_LanSetup extends CScreen {
     setLabel(this.bMode, sel.mode === 'Coop' ? 'CO-OP' : 'DEATHMATCH');
     setLabel(this.bDiff, DIFFICULTY[sel.difficulty]!);
     setLabel(this.bFrags, String(FRAGS[sel.gameAmount]!));
+    setLabel(this.bWave, 'WAVE ' + (sel.wave ?? 1));
     const showFrags = sel.mode === 'DeathMatch';
     this.bFrags._visible = showFrags;
     this.bFrags.enabled = showFrags;
     this.fragsLabel._visible = showFrags;
+    const showWave = sel.mode === 'Coop';
+    this.bWave._visible = showWave;
+    this.bWave.enabled = showWave;
+    this.bWaveLabel._visible = showWave;
 
     // Mirror the selection into the original art (preview frames are 1-based).
     if (this.mcSubScreen) {
@@ -206,6 +225,7 @@ export class CScreen_LanSetup extends CScreen {
     this.bMode._alpha = host ? 100 : 55;
     this.bDiff._alpha = host ? 100 : 55;
     this.bFrags._alpha = host ? 100 : 55;
+    this.bWave._alpha = host ? 100 : 55;
   }
 }
 proto(CScreen_LanSetup, { _CLASSID_: 'CScreen_LanSetup' });
