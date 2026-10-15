@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, afterAll, describe, expect, it } from 'vitest';
 import { hitConfig, MovieClip, TextField } from '../../../src/engine/swf/DisplayObject.ts';
 import {
   Player, clearFrameScripts, clearRegisteredClasses, setInstanceHook, setScriptErrorHandler,
@@ -7,6 +7,8 @@ import { pointInPolys } from '../../../src/engine/swf/paths.ts';
 import { TextFormat } from '../../../src/engine/flash/TextFormat.ts';
 import { Mouse } from '../../../src/engine/flash/input.ts';
 import { layoutText, parseHtml, toHtml, defaultFmt, restrictAllows } from '../../../src/engine/swf/text.ts';
+import { ftEditCodesCovered, renderObjectAt } from '../../../src/engine/swf/render/renderer.ts';
+import { engine } from '../../../src/engine/swf/state.ts';
 import { editText, makeLibrary, mat, place, rectShape, sprite, testFont } from './fixtures.ts';
 
 beforeEach(() => {
@@ -249,5 +251,73 @@ describe('hit testing & mouse', () => {
     p.mouseMove(105, 105);
     p.mouseDown(); p.mouseUp();
     expect(n).toBe(0);
+  });
+});
+
+// v0.1.8 (EMBEDDED_FONT_CJK_FALLBACK): the game's embedded fonts are Latin-only; before this, codepoints missing
+// from the font had advance 0 and were skipped in BOTH draw paths - Chinese names in the debrief field (and the
+// local highscore table) rendered blank. Missing codes now measure/draw with the CSS device-font stack instead.
+describe('CJK fallback for embedded fonts (v0.1.8)', () => {
+  // Node has no Path2D: without the stub Library.glyphPath returns null and every embedded glyph would be skipped.
+  const g0 = globalThis as unknown as { Path2D?: unknown };
+  let savedPath2D: unknown;
+  beforeAll(() => { savedPath2D = g0.Path2D; g0.Path2D = class { constructor(public d: string) {} }; });
+  afterAll(() => { g0.Path2D = savedPath2D; });
+
+  /** Recording context: only the surface drawEditText touches (Node has no canvas). */
+  function recordingCtx(): { ctx: any; ops: { m: string; args: any[]; font?: string }[] } {
+    const ops: { m: string; args: any[]; font?: string }[] = [];
+    const ctx: Record<string, any> = {
+      canvas: undefined, globalAlpha: 1, fillStyle: '', strokeStyle: '', lineWidth: 1, font: '', textBaseline: '',
+      getTransform: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+      setTransform: (...a: any[]) => { ops.push({ m: 'setTransform', args: a }); },
+      save() {}, restore() {}, beginPath() {}, rect() {}, clip() {},
+      fill: (...a: any[]) => { ops.push({ m: 'fill', args: a }); },
+      fillText: (...a: any[]) => { ops.push({ m: 'fillText', args: a, font: String(ctx.font) }); },
+      fillRect: (...a: any[]) => { ops.push({ m: 'fillRect', args: a }); },
+    };
+    return { ctx, ops };
+  }
+
+  it('missing codes advance by the device fallback instead of 0', () => {
+    const p = Player.fromJson(textLib({ initialText: 'A王A' }));
+    p.enterFrame();
+    const tf = p.root.attachMovie('T', 't', 1)!.tf as TextField;
+    const g = tf.$getLayout().lines[0]!.glyphs;
+    expect(g.map((x) => String.fromCharCode(x.code)).join('')).toBe('A王A');
+    expect(g[1]!.x - g[0]!.x).toBe(10); // embedded A: advance 512/1024*20
+    const cjk = g[2]!.x - g[1]!.x;
+    expect(cjk).toBeGreaterThan(5); // was 0 before: 王 neither drew nor advanced
+    expect(cjk).toBeCloseTo(20 * 0.55, 9); // node's measureDevice fallback; a real canvas measures the system font
+  });
+
+  it('the outline renderer draws missing codes with the device font stack, embedded ones as outlines', () => {
+    const p = Player.fromJson(textLib({ readOnly: false, noSelect: false, initialText: 'A王A' }));
+    p.enterFrame();
+    const tf = p.root.attachMovie('T', 't', 1)!.tf as TextField;
+    engine.focus = tf; // focused input fields draw uncached, straight through drawEditText
+    try {
+      const { ctx, ops } = recordingCtx();
+      renderObjectAt(tf, ctx, { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 }, 1, false);
+      expect(ops.filter((o) => o.m === 'fill').length).toBe(2); // the two As as embedded outlines
+      const texts = ops.filter((o) => o.m === 'fillText');
+      expect(texts.map((t) => t.args[0])).toEqual(['王']); // device-stack fillText for the missing code
+      expect(texts[0]!.font).toContain('20px');
+    } finally {
+      engine.focus = null;
+    }
+  });
+
+  it('a FlashType edit field with any missing code drops to the outline renderer', () => {
+    const p = Player.fromJson(textLib({ initialText: 'AB' }));
+    p.enterFrame();
+    const tf = p.root.attachMovie('T', 't', 1)!.tf as TextField;
+    expect(ftEditCodesCovered(tf)).toBe(true); // every code embedded
+    tf.text = 'A王B';
+    expect(ftEditCodesCovered(tf)).toBe(false); // 王 is not in the font -> no FlashType for the field
+    const p2 = Player.fromJson(textLib({ initialText: 'AB', useOutlines: false }));
+    p2.enterFrame();
+    const tf2 = p2.root.attachMovie('T', 't', 1)!.tf as TextField;
+    expect(ftEditCodesCovered(tf2)).toBe(false); // device-font fields never take the FT path
   });
 });

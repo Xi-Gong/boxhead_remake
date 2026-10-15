@@ -854,7 +854,10 @@ export class TextField extends DisplayObject {
         const r = this.$font(fmt);
         if (r.font && L) {
           const i = L.fontCodeMap(r.font).get(code);
-          return i === undefined ? 0 : (r.font.glyphs[i]!.adv * fmt.size) / 1024;
+          // v0.1.8 (EMBEDDED_FONT_CJK_FALLBACK): codes missing from the embedded font (CJK in the Latin-only game
+          // fonts) advance by the device-font fallback instead of 0, so mixed text lays out and the renderer draws
+          // those codes with the device font stack.
+          return i === undefined ? measureDevice(r.css, fmt.size, code) : (r.font.glyphs[i]!.adv * fmt.size) / 1024;
         }
         return measureDevice(r.css, fmt.size, code);
       },

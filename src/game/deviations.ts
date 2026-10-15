@@ -247,4 +247,16 @@ export const DEVIATIONS: Deviation[] = [
       'over the gameplay with every stick move), and the Presenter re-applies the last cursor on window ' +
       'focus/blur/resize (Windows resets the native cursor on fullscreen toggles / focus loss).',
   },
+  // ---------------------------------------------------------------------------------------------- v0.1.8 additions
+  {
+    id: 'EMBEDDED_FONT_CJK_FALLBACK',
+    file: 'engine/swf/DisplayObject.ts ($env advance), engine/swf/render/renderer.ts (drawEditText, ftEditCodesCovered)',
+    description:
+      'The game\'s embedded SWF fonts are Latin-only, and the engine used to give codepoints missing from the font ' +
+      'advance 0 and skip them in BOTH text draw paths - any non-Latin character rendered blank (and broke layout). ' +
+      'Missing codes now measure and draw with the CSS device-font stack (the same path as non-embedded text), and ' +
+      'a FlashType EDIT field containing any missing code drops entirely to the outline renderer (Latin-only fields ' +
+      'keep the pixel-exact FlashType path). Needed so Chinese names work in the debrief name field ' +
+      '(DEBRIEF_NAME_IME_INPUT) and the local highscore table.',
+  },
 ];

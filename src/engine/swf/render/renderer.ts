@@ -445,10 +445,31 @@ function drawFlashTypeStatic(o: StaticText, ctx: Ctx, m: M6, cx: ColorTransform 
   });
 }
 
+/**
+ * v0.1.8 (EMBEDDED_FONT_CJK_FALLBACK): a FlashType EDIT field can only render when EVERY code is covered by its
+ * embedded font (the FT cache draws embedded outlines only). A code missing from the font (CJK in the Latin-only
+ * game fonts) makes the whole field drop to the outline renderer, which draws missing codes device-side instead
+ * of skipping them. Latin-only fields keep the exact FlashType path.
+ */
+export function ftEditCodesCovered(tf: TextField): boolean {
+  const L = engine.library;
+  if (!L || !tf.$embed) return false;
+  for (const line of tf.$getLayout().lines) {
+    for (const g of line.glyphs) {
+      if (g.code === 32 || g.code === 13 || g.code === 10 || g.code === 160) continue;
+      const res = tf.$font(g.fmt);
+      if (!res.font) return false;
+      if (!L.fontCodeMap(res.font).has(g.code)) return false;
+    }
+  }
+  return true;
+}
+
 /** DefineEditText with CSMTextSettings (FlashType), embedded fonts only. False: use the outline renderer. */
 function drawFlashTypeEdit(tf: TextField, ctx: Ctx, m: M6, cx: ColorTransform | null): boolean {
   const L = engine.library;
   if (!L || !ftMatrixOk(m) || !tf.$embed || tf.$border) return false;
+  if (!ftEditCodesCovered(tf)) return false; // any missing code: whole field via the outline renderer
   const X0 = roundHalfEven(q4(m.tx)) + 1, Y0 = roundHalfEven(q4(m.ty)) - 1;
   const key = `${tf.$ver}|${m.a},${m.d}|${cx ? cxKey(cx) : ''}|${tf.$background ? tf.$backgroundColor : ''}`;
   return drawFtCached(tf, ctx, X0, Y0, key, tf.$def!.csm!.gridFit, () => {
@@ -998,9 +1019,8 @@ function drawEditText(tf: TextField, ctx: Ctx, m: M6, cx: ColorTransform | null,
         if (!lastCss) continue;
         const res = tf.$font(fmt);
         const gx = ox + g.x;
-        if (res.font && L) {
-          const idx = L.fontCodeMap(res.font).get(g.code);
-          if (idx === undefined) continue;
+        const idx = res.font && L ? L.fontCodeMap(res.font).get(g.code) : undefined;
+        if (res.font && L && idx !== undefined) {
           const p = L.glyphPath(res.font, idx);
           if (!p) continue;
           const s = fmt.size / 1024;
@@ -1008,6 +1028,8 @@ function drawEditText(tf: TextField, ctx: Ctx, m: M6, cx: ColorTransform | null,
           ctx.fillStyle = lastCss;
           ctx.fill(p, 'nonzero');
         } else {
+          // v0.1.8 (EMBEDDED_FONT_CJK_FALLBACK): codes missing from the embedded font draw with the device font
+          // stack (the same path as non-embedded text) instead of being skipped.
           setT(ctx, m);
           ctx.font = res.css.replace('SIZE', String(fmt.size));
           ctx.fillStyle = lastCss;
