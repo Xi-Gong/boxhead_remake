@@ -242,6 +242,9 @@ export const DEVIATIONS: Deviation[] = [
       'gamepad only, so the arrow just sat uselessly over the action) and shows it again on the pause menu and every ' +
       'non-world screen (menus, loading, debrief). Implemented through the engine\'s own AS2 Mouse.hide()/show() ' +
       'plumbing, which the platform loop applies as cursor:none over the stage container each rendered frame; the ' +
-      'right-click context menu element carries its own cursor:default, so it stays usable mid-game.',
+      'right-click context menu element carries its own cursor:default, so it stays usable mid-game. v0.1.8: the ' +
+      'GAMEPAD virtual cursor arrow now mirrors the same visibility (hidden while the world runs - before it slid ' +
+      'over the gameplay with every stick move), and the Presenter re-applies the last cursor on window ' +
+      'focus/blur/resize (Windows resets the native cursor on fullscreen toggles / focus loss).',
   },
 ];

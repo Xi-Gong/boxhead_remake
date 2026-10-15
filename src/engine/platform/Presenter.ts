@@ -79,6 +79,11 @@ export class Presenter {
       this.ro.observe(container);
     }
     window.addEventListener('resize', this.resize);
+    // Windows can reset the native cursor (fullscreen toggle, focus loss) without any style change we could
+    // observe; setCursor dedupes and the render loop is paused while the context menu is open, so re-apply
+    // the last wanted value actively (resize also fires on Electron's setFullScreen window-size change).
+    window.addEventListener('focus', this.reassertCursor);
+    window.addEventListener('blur', this.reassertCursor);
     this.watchDpr();
   }
 
@@ -100,6 +105,7 @@ export class Presenter {
     this.scaleY = f.deviceH / STAGE_H;
     this.applyContextState();
     for (const l of this.listeners) l();
+    this.reassertCursor();
   };
 
   /** Notified after every resize (e.g. to re-render while paused). */
@@ -159,11 +165,16 @@ export class Presenter {
     this.container.style.cursor = cursor;
   }
 
+  /** Force the last wanted cursor back onto the container (see constructor: native cursor resets). */
+  private readonly reassertCursor = (): void => { if (this.cursor) this.container.style.cursor = this.cursor; };
+
   toggleFullscreen(): void { toggleFullscreen(); }
 
   dispose(): void {
     this.ro?.disconnect();
     window.removeEventListener('resize', this.resize);
+    window.removeEventListener('focus', this.reassertCursor);
+    window.removeEventListener('blur', this.reassertCursor);
     this.dprQuery?.removeEventListener('change', this.onDpr);
     this.canvas.remove();
   }

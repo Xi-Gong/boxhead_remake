@@ -18,7 +18,7 @@
 import { dismissAudioOverlay } from '../../engine/platform/AudioEngine.ts';
 import { GamepadWatcher, navigatorPadProvider, STICK_DEADZONE, type PadDirs, type PadPoll, type PadProvider } from '../../engine/platform/Gamepad.ts';
 import { STAGE_H, STAGE_W } from '../../engine/platform/Presenter.ts';
-import { Key } from '../../engine/flash/input.ts';
+import { Key, Mouse } from '../../engine/flash/input.ts';
 import { CMain, World } from '../packages.ts';
 
 /** Standard-mapping button indices used by the mapping. */
@@ -199,7 +199,9 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
       mouseIsDown = false;
     }
     if (dx || dy || snapped || p.down.size || p.up.size) opts.player.mouseMove(cursorX, cursorY);
-    updateCursorDom(p.present && Date.now() - lastPadActivity < CURSOR_TIMEOUT);
+    // The pad arrow mirrors the OS cursor (GAME_CURSOR_HIDE, v0.1.8): while the world runs the OS arrow is
+    // hidden, so the pad arrow must be too - otherwise it slides over the gameplay with every stick move.
+    updateCursorDom(Mouse._visible && p.present && Date.now() - lastPadActivity < CURSOR_TIMEOUT);
   };
 
   const updateCursorDom = (visible: boolean): void => {

@@ -2,8 +2,8 @@
 // polling (edges, deadzone, dpad) is covered by tests/unit/platform/gamepad.test.ts; here the REAL game reacts:
 // movement = the keyboard key slots (rebinding respected), FIRE/NEXT/PREV/PAUSE through the slot latches,
 // Key._clear() self-healing, the menu virtual cursor + A click through the engine's own button picking.
-import { describe, expect, it } from 'vitest';
-import { Key } from '../../src/engine/flash/input.ts';
+import { describe, expect, it, afterEach, vi } from 'vitest';
+import { Key, Mouse } from '../../src/engine/flash/input.ts';
 import { engine } from '../../src/engine/swf/state.ts';
 import { installGamepad } from '../../src/game/local/Gamepad.ts';
 import { CMain } from '../../src/game/packages.ts';
@@ -147,6 +147,93 @@ describe('gamepad -> game (scope wiring)', () => {
     expect(g.stepUntil(() => g.state() === 'State_SelectWorld_Single', 40)).toBe(true);
     gp.dispose();
     gpMouse.dispose();
+    expect(g.errors).toEqual([]);
+  });
+});
+
+// v0.1.8: the pad arrow must mirror the OS cursor (GAME_CURSOR_HIDE) — hidden while the world runs, back for
+// menus and the pause menu. Before, it slid over the gameplay whenever the stick moved (user-reported).
+describe('gamepad virtual cursor vs GAME_CURSOR_HIDE (v0.1.8)', () => {
+  /** Minimal element: only what updateCursorDom touches (style props, cssText, appendChild, rect, remove). */
+  class ShimEl {
+    style: Record<string, string> = {};
+    children: ShimEl[] = [];
+    parentNode: ShimEl | null = null;
+    appendChild(c: ShimEl): ShimEl { c.parentNode = this; this.children.push(c); return c; }
+    getBoundingClientRect(): { left: number; top: number } { return { left: 0, top: 0 }; }
+    remove(): void {
+      if (!this.parentNode) return;
+      const i = this.parentNode.children.indexOf(this);
+      if (i >= 0) this.parentNode.children.splice(i, 1);
+      this.parentNode = null;
+    }
+  }
+
+  const makeDom = (): { container: ShimEl; created: ShimEl[] } => {
+    const container = new ShimEl();
+    const created: ShimEl[] = [];
+    vi.stubGlobal('document', { createElement: () => { const el = new ShimEl(); created.push(el); return el; } });
+    return { container, created };
+  };
+
+  const presenter = { logicalToClient: (x: number, y: number) => ({ x, y }) };
+
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it('gameplay: no pad arrow while the world runs, even with the stick moving', () => {
+    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 8 });
+    expect(g.state()).toBe('State_RunWorld');
+    expect(Mouse._visible).toBe(false); // precondition: gameplay hides the OS cursor
+    const dom = makeDom();
+    const pads = fakePads();
+    const gp = installGamepad({ player: g.player, provider: pads.provider, presenter, container: dom.container as unknown as HTMLElement });
+    pads.set(0, { axes: [0.9, 0.9] });
+    for (let i = 0; i < 5; i++) gp.poll(false);
+    expect(dom.container.children.length).toBe(0); // the arrow must NOT appear over gameplay
+    gp.dispose();
+    expect(g.errors).toEqual([]);
+  });
+
+  it('menus: the pad arrow still shows and follows the stick', () => {
+    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 8, menuOnly: 'Main' });
+    const dom = makeDom();
+    const pads = fakePads();
+    const gp = installGamepad({ player: g.player, provider: pads.provider, presenter, container: dom.container as unknown as HTMLElement });
+    pads.set(0, { axes: [-0.9, 0] });
+    gp.poll(false);
+    gp.poll(false);
+    expect(dom.container.children.length).toBe(1);
+    const el = dom.container.children[0]!;
+    expect(el.style.left).toBeTruthy();
+    expect(parseFloat(el.style.left)).toBeLessThan(320); // two polls of -0.9*8 px from the centre
+    gp.dispose();
+    expect(dom.container.children.length).toBe(0); // dispose detaches
+    expect(g.errors).toEqual([]);
+  });
+
+  it('pause: the arrow returns with the pause menu and hides again on resume', () => {
+    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 8 });
+    const dom = makeDom();
+    const pads = fakePads();
+    const gp = installGamepad({ player: g.player, provider: pads.provider, presenter, container: dom.container as unknown as HTMLElement });
+    pads.set(0, { axes: [0.9, 0] });
+    gp.poll(false);
+    expect(dom.container.children.length).toBe(0); // hidden during play
+    // Pause: the OS cursor comes back for the pause menu - the pad arrow must too.
+    g.keyDown(KEYS.PAUSE);
+    expect(g.stepUntil(() => g.world()?.mPaused === true, 20)).toBe(true);
+    g.keyUp(KEYS.PAUSE);
+    expect(Mouse._visible).toBe(true);
+    gp.poll(false);
+    expect(dom.container.children.length).toBe(1);
+    // Resume: hidden again for gameplay.
+    g.keyDown(KEYS.PAUSE);
+    expect(g.stepUntil(() => g.world()?.mPaused === false, 20)).toBe(true);
+    g.keyUp(KEYS.PAUSE);
+    expect(Mouse._visible).toBe(false);
+    gp.poll(false);
+    expect(dom.container.children.length).toBe(0);
+    gp.dispose();
     expect(g.errors).toEqual([]);
   });
 });
