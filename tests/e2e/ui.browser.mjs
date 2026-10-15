@@ -294,6 +294,14 @@ await runGroup('debrief', async () => {
   const u = await g.centreOf(`${S}.mUsername`);
   await g.click(u.x + u.w / 2 - 4, u.y);
   check('I-beam cursor and focus on the name field', (await g.eval(() => document.getElementById('stage').style.cursor)) === 'text');
+  // v0.1.8 (DEBRIEF_NAME_IME_INPUT): a transparent DOM input is the typing / IME conduit over the canvas field.
+  check('the DOM conduit holds native focus (transparent, placeholder verbatim)', await (async () => {
+    const a = await g.eval(() => {
+      const a = document.activeElement;
+      return a && a.tagName === 'INPUT' ? { color: a.style.color, caret: a.style.caretColor, value: a.value } : null;
+    });
+    return !!a && a.color === 'transparent' && a.caret === 'transparent' && a.value === '<Enter name>';
+  })());
   for (let i = 0; i < 14; i++) await g.page.keyboard.press('Backspace');
   check('Backspace erases the placeholder', (await g.expr(`${S}.mUsername.text`)) === '');
   await g.page.keyboard.type('Ann the Zombie Slayer', { delay: 20 });
@@ -324,6 +332,27 @@ await runGroup('debrief', async () => {
   await g.clickClip('m.mcWorld.mHud.mcScreenPause._Quit');
   await g.waitScreen('State_Debrief', 'Screen_Debrief', 15000);
   check('the debrief remembers the typed name (raw text, as the original stores it)', (await g.expr(`${S}.mUsername.text`)) === 'XAnn the ');
+  // v0.1.8 (DEBRIEF_NAME_IME_INPUT): the IME path. The composition-COMMIT shape first, on a clean field:
+  // keyboard.insertText arrives as an input event with NO keydown - exactly what a Chinese IME commit produces,
+  // and what the old canvas raw-keydown path dropped entirely. (The live-composition probe runs AFTER: a
+  // CDP-level composition cannot always be cancelled, and a wedged one would eat the commit test's keys.)
+  await g.click(u.x, u.y);
+  await g.page.keyboard.press('Control+a');
+  await g.page.keyboard.insertText('王roy');
+  const imeName = await g.expr(`${S}.mUsername.text`);
+  check('IME commit (insertText, no keydown) types CJK into the field', imeName === '王roy', imeName);
+  await shot(g, 'debrief_05_ime_cjk');
+  // Live composition: imeSetComposition drives the real IME pathway into the focused DOM conduit.
+  const cdp = await g.page.context().newCDPSession(g.page);
+  let live = '';
+  try {
+    await cdp.send('Input.imeSetComposition', { text: '啊', selectionStart: 1, selectionEnd: 1 });
+    live = await g.eval(() => JSON.stringify([document.activeElement?.value ?? '', window.__game.main().mcScreen.mUsername.text]));
+  } catch (e) { live = `err:${String(e).slice(0, 80)}`; }
+  let lv = '', lt = '';
+  try { [lv, lt] = JSON.parse(live); } catch { /* error string */ }
+  check('IME composition live-syncs into mUsername (when this Chromium applies compositions)', !lv || (lv.includes('啊') && lt === lv), live);
+  await cdp.detach();
   await g.clickClip(`${S}._Exit`);
   check('EXIT ("Select new level") -> Single selection', await g.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld', 15000));
   await g.clickClip(`${S}.mcSubScreen.mcLevel_Selection.mcLevelIcons._ViewHighScore`);

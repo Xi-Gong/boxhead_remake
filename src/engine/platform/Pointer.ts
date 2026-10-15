@@ -92,7 +92,13 @@ export function attachMouse(opts: MouseOptions): MouseHandle {
     const d = flashWheelDelta(e.deltaY);
     if (d !== 0) safe(() => Mouse._dispatchWheel(d));
   };
-  const noSelect = (e: Event): void => e.preventDefault();
+  const noSelect = (e: Event): void => {
+    // A DOM text widget (the LAN IP box, the debrief name conduit) owns its selection: cancelling selectstart
+    // there would kill Ctrl+A / double-click select inside it (v0.1.8 - found by the debrief IME e2e).
+    const t = e.target;
+    if (t instanceof HTMLElement && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    e.preventDefault();
+  };
 
   el.style.userSelect = 'none';
   el.addEventListener('pointermove', onMove);

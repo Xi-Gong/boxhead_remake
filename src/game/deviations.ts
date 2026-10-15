@@ -259,4 +259,19 @@ export const DEVIATIONS: Deviation[] = [
       'keep the pixel-exact FlashType path). Needed so Chinese names work in the debrief name field ' +
       '(DEBRIEF_NAME_IME_INPUT) and the local highscore table.',
   },
+  {
+    id: 'DEBRIEF_NAME_IME_INPUT',
+    file: 'game/local/DebriefName.ts (overlay), game/scope.ts (debrief ctor + DisableSubmitScore wraps), game/local/Gamepad.ts (A-press bridge), main.ts (initDebriefDom)',
+    description:
+      'The debrief name field is a canvas SWF input TextField whose engine path drops IME input entirely (the ' +
+      'raw-keydown insert needs e.key.length===1 - zh-CN users with a Chinese IME could not type ANYTHING into it; ' +
+      'typing also required click-to-focus, original-parity). A fully transparent DOM input now sits over the field ' +
+      'as the typing / focus / IME conduit (the LAN IP box pattern: glued to the field rect via presenter.onResize, ' +
+      'torn down on the screen\'s onUnload): the canvas keeps rendering text + blinking caret (engine.focus/caretIndex ' +
+      'synced from the DOM selection), every input event syncs el.value -> mUsername.text (fires during composition ' +
+      'too, so committed CJK appears live; renders through EMBEDDED_FONT_CJK_FALLBACK), and DisableSubmitScore ' +
+      'disables both. The gamepad\'s A press focuses DOM text widgets natively (synthesized engine clicks cannot ' +
+      'type into DOM inputs); SEND SCORE with the placeholder now focuses the name field (still no submit - the ' +
+      'original behaviour - just no longer a fully silent dead end).',
+  },
 ];

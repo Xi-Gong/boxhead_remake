@@ -19,6 +19,7 @@ import { lanBridge } from './local/Net/bridge.ts';
 import { registerLobbyPage } from './local/Net/Lobby.ts';
 import { registerSetupPage } from './local/Net/Setup.ts';
 import { installNetOverlay } from './local/Net/overlay.ts';
+import { debriefNameInput, installDebriefNameInput } from './local/DebriefName.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 
 /**
@@ -137,6 +138,9 @@ export function applyScope(): void {
     debriefCtor.call(this);
     const mode = World.CWorld.mGameMode;
     const room = roomIndexOfLibLink(this.mObject?.mWorldLibLink);
+    // v0.1.8 (DEBRIEF_NAME_IME_INPUT): transparent DOM input over mUsername as the typing / focus / IME conduit
+    // (the canvas field's raw-keydown path drops IME input - zh-CN users could not type their name at all).
+    installDebriefNameInput(this);
     if (this._SendScore) {
       this._SendScore.onRelease = function (this: any): void {
         CSound.mSamples.Click.PlaySound();
@@ -151,6 +155,10 @@ export function applyScope(): void {
             screen.DisableSubmitScore();
             if (hasTable(mode)) showHighscoreTable(screen, mode, room, rank);
           }
+        } else {
+          // Original-parity: no submit with the placeholder. Micro-deviation: focus the name field so the player
+          // sees WHERE the missing name goes (invisible in screenshots, saves a support question).
+          debriefNameInput(screen)?.focus();
         }
       };
     }
@@ -160,6 +168,18 @@ export function applyScope(): void {
         // getURL only); the level icon's View Highscores does play Click2 (CScreen_SelectWorld, kept as is).
         if (hasTable(mode) && room >= 0) showHighscoreTable(this.pClass, mode, room);
       };
+    }
+  };
+
+  // DisableSubmitScore (ineligible run / after a successful submit) greys the canvas field: the DOM conduit must
+  // grey with it, or typing would still edit the field underneath.
+  const disableSubmit = debriefProto.DisableSubmitScore;
+  debriefProto.DisableSubmitScore = function (this: any): void {
+    disableSubmit.call(this);
+    const input = debriefNameInput(this);
+    if (input) {
+      input.disabled = true;
+      input.blur();
     }
   };
 

@@ -21,6 +21,7 @@ import { installLocalSymbols } from './game/local/localSymbols.ts';
 import { installGamepad } from './game/local/Gamepad.ts';
 import { installInputBadge } from './game/local/InputBadge.ts';
 import { lanBridge } from './game/local/Net/bridge.ts';
+import { initDebriefDom } from './game/local/DebriefName.ts';
 import * as GamePackages from './game/packages.ts';
 import { CMain } from './game/packages.ts';
 
@@ -158,6 +159,7 @@ async function boot(): Promise<void> {
   dbg.player = player;
   dbg.platform = startPlatform({ container: stage, player, getMenu: () => _root?.menu });
   lanBridge().setPresenter(dbg.platform.presenter); // LAN DOM overlays track the letterboxed canvas (v0.1.4)
+  initDebriefDom(dbg.platform.presenter, stage); // debrief name-input conduit (v0.1.8 DEBRIEF_NAME_IME_INPUT)
   dbg.platform.presenter.canvas.focus();
   // Local gamepad support (deviation GAMEPAD_INPUT): poll the pads every rAF before the enterFrame batch.
   const gamepad = installGamepad({

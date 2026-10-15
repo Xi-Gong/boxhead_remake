@@ -13,7 +13,8 @@
 //     exactly like the keyboard keys they impersonate);
 //   - menus / pause screen: pad 0's stick or d-pad moves a virtual cursor (player.mouseMove in stage-logical
 //     coordinates, so renderScale does not matter), A presses / releases the mouse; the physical mouse always wins
-//     (the cursor snaps to its position as soon as it moves);
+//     (the cursor snaps to its position as soon as it moves); v0.1.8: A over a DOM text widget (debrief name field,
+//     LAN IP box) focuses it natively instead - synthesized engine clicks cannot type into DOM inputs;
 //   - the first pad button dismisses the browser "Click to start" audio overlay (gamepads fire no DOM events).
 import { dismissAudioOverlay } from '../../engine/platform/AudioEngine.ts';
 import { GamepadWatcher, navigatorPadProvider, STICK_DEADZONE, type PadDirs, type PadPoll, type PadProvider } from '../../engine/platform/Gamepad.ts';
@@ -91,6 +92,8 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   let lastMouseX = -1;
   let lastMouseY = -1;
   let mouseIsDown = false;
+  /** True while the current A press focused a DOM text widget instead of engine mouseDown (see moveCursor). */
+  let domClick = false;
   let lastPadActivity = 0;
   let overlayDismissed = false;
   let cursorEl: HTMLElement | undefined;
@@ -103,6 +106,31 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   const onKeydown = (e: Event): void => { keyboardActive = Date.now(); };
   if (typeof window !== 'undefined') window.addEventListener('keydown', onKeydown, true);
 
+  /** v0.1.8 (DEBRIEF_NAME_IME_INPUT): DOM text widgets under the pad cursor (debrief name field, LAN IP box) cannot
+   *  receive the pad's synthesized ENGINE clicks - A over one focuses it natively, so IME-capable typing works from
+   *  a pad; the same widget predicate Pointer.ts uses for real clicks (duck-typed: this also runs headless with a
+   *  stub DOM, where HTMLElement does not exist). */
+  const isDomText = (t: unknown): t is HTMLInputElement =>
+    !!t && ((t as HTMLElement).tagName === 'INPUT' || (t as HTMLElement).tagName === 'TEXTAREA'
+      || (t as HTMLElement).isContentEditable === true);
+  const domTextAt = (x: number, y: number): HTMLInputElement | null => {
+    if (typeof document === 'undefined' || !opts.presenter || typeof document.elementFromPoint !== 'function') return null;
+    const c = opts.presenter.logicalToClient(x, y);
+    const t = document.elementFromPoint(c.x, c.y);
+    return isDomText(t) ? (t as HTMLInputElement) : null;
+  };
+  const focusDomTextAt = (x: number, y: number): boolean => {
+    const t = domTextAt(x, y);
+    if (!t) return false;
+    t.focus();
+    return true;
+  };
+  const blurDomText = (): void => {
+    if (typeof document === 'undefined') return;
+    const a = document.activeElement;
+    if (isDomText(a)) (a as HTMLInputElement).blur();
+  };
+
   const releaseAll = (): void => {
     for (const vk of [...pushedByPad]) {
       if (Key.isDown(vk)) Key._up(vk);
@@ -112,6 +140,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
       opts.player.mouseUp();
       mouseIsDown = false;
     }
+    domClick = false;
   };
 
   /** Reconcile one wanted key state with Key, never fighting the physical keyboard. */
@@ -189,13 +218,21 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // A = click: press on the down edge, release on the up edge (the engine fires onRelease only when the
     // pointer is still over the pressed button, like a real mouse).
     if (p.down.has(BTN.A)) {
-      opts.player.mouseMove(cursorX, cursorY);
-      opts.player.mouseDown();
-      mouseIsDown = true;
+      if (focusDomTextAt(cursorX, cursorY)) {
+        domClick = true; // this press-release pair belongs to the DOM widget, not the engine
+      } else {
+        blurDomText(); // a pad click on the canvas takes the focus back from any DOM text widget (canvas.focus())
+        opts.player.mouseMove(cursorX, cursorY);
+        opts.player.mouseDown();
+        mouseIsDown = true;
+      }
     }
     if (p.up.has(BTN.A)) {
-      opts.player.mouseMove(cursorX, cursorY);
-      opts.player.mouseUp();
+      if (domClick) domClick = false;
+      else {
+        opts.player.mouseMove(cursorX, cursorY);
+        opts.player.mouseUp();
+      }
       mouseIsDown = false;
     }
     if (dx || dy || snapped || p.down.size || p.up.size) opts.player.mouseMove(cursorX, cursorY);

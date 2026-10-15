@@ -54,6 +54,7 @@ try {
   await page.waitForTimeout(300);
   const val = await page.evaluate(() => document.querySelector('input[type=text]').value);
   console.log(`IP input after typing: "${val}" ${val === '192.168.1.5' ? 'OK' : '<<< BROKEN'}`);
+  if (val !== '192.168.1.5') process.exitCode = 1;
 
   // ---- Part 2: the debrief NAME entry (SWF input TextField on the canvas) with real keys -------------
   await page.keyboard.press('Escape'); // blur the DOM input (no game key; safe)
@@ -80,6 +81,21 @@ try {
   await page.waitForTimeout(300);
   const name = await page.evaluate(() => String(window.__game.main().mcScreen.mUsername?.text ?? null));
   console.log(`debrief name after typing: "${name}" ${name === 'ROY' ? 'OK' : '<<< BROKEN'}`);
+  if (name !== 'ROY') process.exitCode = 1;
+  // v0.1.8 (DEBRIEF_NAME_IME_INPUT): the field is a transparent DOM conduit; IME commits arrive as input events
+  // with NO keydown - keyboard.insertText reproduces that event shape exactly (the old canvas path dropped them).
+  const conduit = await page.evaluate(() => {
+    const a = document.activeElement;
+    return a && a.tagName === 'INPUT' && a.style.color === 'transparent' ? a.value : null;
+  });
+  console.log(`debrief conduit focused (transparent DOM input, value "${conduit}"): ${conduit === 'ROY' ? 'OK' : '<<< BROKEN'}`);
+  if (conduit !== 'ROY') process.exitCode = 1;
+  await page.keyboard.press('Control+a');
+  await page.keyboard.insertText('王roy');
+  await page.waitForTimeout(300);
+  const imeName = await page.evaluate(() => String(window.__game.main().mcScreen.mUsername?.text ?? null));
+  console.log(`debrief name after IME commit (insertText): "${imeName}" ${imeName === '王roy' ? 'OK' : '<<< BROKEN'}`);
+  if (imeName !== '王roy') process.exitCode = 1;
 } finally {
   try { await app.close(); } catch {}
 }
