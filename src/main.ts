@@ -8,7 +8,8 @@ import type { LibraryJson, XsiJson } from './shared/assetSchema.ts';
 import { BitmapData } from './engine/flash/BitmapData.ts';
 import { Library, Player, _root, setScriptErrorHandler, setTimelineSoundHandler } from './engine/swf/Player.ts';
 import {
-  installAudioUnlock, isElectron, playTimelineSound, preloadSounds, SaveStore, startPlatform, unlockAudioOverlay,
+  audioDiagnostics, installAudioUnlock, isElectron, playTimelineSound, preloadSounds, resumeAudio, SaveStore,
+  SoundEngine, startPlatform, tickAudioWatchdog, unlockAudioOverlay,
 } from './engine/platform/index.ts';
 import type { PlatformHandle } from './engine/platform/index.ts';
 import './game/allClasses.ts';
@@ -42,6 +43,13 @@ interface GameDebug {
   BitmapData?: unknown;
   /** Automation / debugging: the LAN bridge + session state (playtests). */
   lan?: () => unknown;
+  /** Automation / debugging: audio health snapshot (v0.1.10 recovery observability). */
+  audio?: () => unknown;
+  /** Automation: suspend() the real AudioContext / kill() (close) it, to exercise the watchdog. */
+  audioCtl?: { suspend: () => unknown; kill: () => unknown };
+  /** Automation: force a context resume attempt / one watchdog beat (no 1 s wait). */
+  resumeAudio?: typeof resumeAudio;
+  tickAudioWatchdog?: typeof tickAudioWatchdog;
 }
 
 declare global {
@@ -69,6 +77,13 @@ const dbg: GameDebug = {
     };
   },
   main: () => CMain?._this,
+  audio: () => audioDiagnostics(),
+  audioCtl: {
+    suspend: () => SoundEngine.context?.suspend(),
+    kill: () => SoundEngine.context?.close(),
+  },
+  // Watchdog nudge for the packaged audio assertions; also the future Electron 'boxhead:audio-nudge' hook.
+  resumeAudio, tickAudioWatchdog,
   state: () => {
     const m = CMain?._this;
     if (!m) return undefined;
