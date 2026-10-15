@@ -10,7 +10,7 @@
  * - Dev: VITE_DEV_SERVER_URL=http://localhost:5173/ loads the Vite dev server instead.
  *   Unpackaged testing only: BOXHEAD_DIST_DIR overrides the served folder, BOXHEAD_START_PAGE the start page.
  */
-import { app, BrowserWindow, ipcMain, Menu, protocol, screen, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, powerMonitor, protocol, screen, shell } from 'electron';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { aspectLockedBounds, fullscreenShortcut, initialContentSize } from './aspect.ts';
@@ -97,6 +97,11 @@ async function serve(request: Request): Promise<Response> {
 
 let win: BrowserWindow | undefined;
 
+/** v0.1.10: wake the renderer's audio watchdog (focus/restore, OS resume, second instance). Cheap if healthy. */
+function nudgeAudio(): void {
+  if (win && !win.isDestroyed()) win.webContents.send('boxhead:audio-nudge');
+}
+
 function startUrl(): string {
   const dev = process.env.VITE_DEV_SERVER_URL;
   if (dev) return dev;
@@ -180,6 +185,12 @@ function createWindow(): void {
   });
   win.on('page-title-updated', (e) => e.preventDefault());
   win.once('ready-to-show', () => win?.show());
+  // v0.1.10: the audio watchdog self-heals within ~5 s on its own; a nudge shaves that latency after the events
+  // where Chromium may park the AudioContext (minimized/hidden window, OS suspend/resume, another instance
+  // refocusing this window whose audio had wedged - the "restart didn't help" scenario).
+  win.on('focus', nudgeAudio);
+  win.on('show', nudgeAudio);
+  win.on('restore', nudgeAudio);
   win.on('closed', () => { win = undefined; });
   void win.loadURL(startUrl());
 }
@@ -194,6 +205,7 @@ if (!gotLock) {
       if (!win) return;
       if (win.isMinimized()) win.restore();
       win.focus();
+      nudgeAudio();
     });
   }
 
@@ -204,6 +216,7 @@ if (!gotLock) {
   registerLanIpc(() => win);
 
   app.on('window-all-closed', () => app.quit());
+  powerMonitor.on('resume', nudgeAudio); // OS slept with the context wedged: nudge on wake
 
   void app.whenReady().then(() => {
     Menu.setApplicationMenu(null);

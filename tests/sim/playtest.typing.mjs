@@ -24,6 +24,12 @@ try {
     try { await page.waitForFunction(fn, arg, { timeout, polling: 100 }); return true; } catch { return false; }
   };
   if (!(await waitFor(() => window.__game?.ready, null, 120000))) throw new Error('boot failed');
+  // v0.1.10 release gate: the packaged exe must boot with a healthy audio engine (all 31 sounds decoded,
+  // context running, nothing failed) - the "no sound from game start" regression this release fixes.
+  const audio = await page.evaluate(() => window.__game.audio?.());
+  if (!audio || audio.state !== 'running' || audio.decoded !== 31 || audio.failed.length !== 0) {
+    throw new Error(`audio gate failed: ${JSON.stringify(audio)}`);
+  }
   const onScreen = (st, id) => waitFor(([st, id]) => {
     const m = window.__game?.main?.();
     return window.__game?.state?.() === st && m?.mcScreen?.idScreen === id && m.mcScreen.mNormal === true;

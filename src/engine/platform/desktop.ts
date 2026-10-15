@@ -10,6 +10,8 @@ export interface DesktopApi {
   /** Quit the app (closes the window). */
   quit(): void;
   readonly versions: { electron: string; chrome: string; node: string };
+  /** v0.1.10: the main process nudges the renderer to re-check audio (window focus/show/restore, OS resume-sleep, second instance refocusing this window). */
+  onAudioNudge?(cb: () => void): void;
   /** LAN multiplayer transport (v0.1.3); undefined would hide every LAN entry point. */
   readonly lan: LanApi;
 }

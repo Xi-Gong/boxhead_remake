@@ -193,6 +193,15 @@ try {
   const ping0 = await h.pingText();
   if (!ping0) throw new Error('in-game ping readout missing during play');
   step(`in-game ping readout live: ${ping0}`);
+  // v0.1.10 gate: BOTH packaged peers must run a healthy audio engine during LAN play (all 31 decoded, running,
+  // nothing failed) - the "no sound from game start" regression this release fixes, checked on both machines.
+  for (const [name, P] of [['host', H], ['client', C]] as const) {
+    const a = await P.page.evaluate(() => window.__game.audio?.());
+    if (!a || a.state !== 'running' || a.decoded !== 31 || a.failed.length !== 0) {
+      throw new Error(`${name} audio gate failed: ${JSON.stringify(a)}`);
+    }
+    step(`${name} audio healthy: ${JSON.stringify(a)}`);
+  }
 
   // ---- lockstep play: 12 s of keys on both machines --------------------------------------
   const t0 = Date.now();

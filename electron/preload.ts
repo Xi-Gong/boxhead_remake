@@ -11,6 +11,7 @@ const api: DesktopApi = {
   toggleFullscreen: () => ipcRenderer.send('boxhead:toggle-fullscreen'),
   isFullscreen: () => ipcRenderer.invoke('boxhead:is-fullscreen') as Promise<boolean>,
   quit: () => ipcRenderer.send('boxhead:quit'),
+  onAudioNudge: (cb) => { ipcRenderer.on('boxhead:audio-nudge', () => cb()); },
   versions: {
     electron: process.versions.electron ?? '',
     chrome: process.versions.chrome ?? '',

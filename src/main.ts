@@ -8,7 +8,7 @@ import type { LibraryJson, XsiJson } from './shared/assetSchema.ts';
 import { BitmapData } from './engine/flash/BitmapData.ts';
 import { Library, Player, _root, setScriptErrorHandler, setTimelineSoundHandler } from './engine/swf/Player.ts';
 import {
-  audioDiagnostics, installAudioUnlock, isElectron, playTimelineSound, preloadSounds, resumeAudio, SaveStore,
+  audioDiagnostics, desktop, installAudioUnlock, isElectron, playTimelineSound, preloadSounds, resumeAudio, SaveStore,
   SoundEngine, startPlatform, tickAudioWatchdog, unlockAudioOverlay,
 } from './engine/platform/index.ts';
 import type { PlatformHandle } from './engine/platform/index.ts';
@@ -165,6 +165,9 @@ async function boot(): Promise<void> {
   // 4) audio unlock (browser: needs a click; Electron: autoplay allowed -> resolves immediately)
   dbg.stage = 'audio';
   installAudioUnlock();
+  // v0.1.10: Electron nudges the audio watchdog on window focus/restore, OS resume and second-instance refocus
+  // (the watchdog would self-heal within ~5 s anyway - the nudge just removes that latency).
+  desktop?.onAudioNudge?.(() => { void resumeAudio(); tickAudioWatchdog(); });
   if (!isElectron() && !sceneId) await unlockAudioOverlay(stage);
   msg.remove();
 
