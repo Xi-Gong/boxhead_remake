@@ -21,7 +21,8 @@ import { registerSetupPage } from './local/Net/Setup.ts';
 import { installNetOverlay } from './local/Net/overlay.ts';
 import { debriefNameInput, installDebriefNameInput } from './local/DebriefName.ts';
 import { CThing_Object_WeaponCrate, captureCratePayload } from './local/WeaponCrate.ts';
-import { consumeArmedWaveOn } from './local/StartWave.ts';
+import { armStartWave, consumeArmedWaveOn, getSelectedStartWave, resetSelectedStartWave } from './local/StartWave.ts';
+import { buildStartWaveCycler } from './local/StartWaveUi.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 
 /**
@@ -268,6 +269,22 @@ export function applyScope(): void {
   upgradesProto.SetDifficulty = function (this: any, tDifficulty: any): void {
     setDifficultyPrev.call(this, tDifficulty);
     consumeArmedWaveOn(this);
+  };
+  // The level selection screens: reset the cycler to wave 1 on every entry (NOT persisted - "didn't touch it =
+  // start from the beginning"), draw it in the empty bottom-left promo band (Single / Coop only), and arm the
+  // chosen wave right before the room is loaded.
+  const selectCtorPrev = selectProto.ctor;
+  selectProto.ctor = function (this: any): void {
+    selectCtorPrev.call(this);
+    resetSelectedStartWave();
+    if (this.mMode !== 'DeathMatch') {
+      buildStartWaveCycler(this, 100, 364);
+    }
+  };
+  const loadLevelPrev = selectProto.LoadLevel;
+  selectProto.LoadLevel = function (this: any, tLevelIndex: any): void {
+    armStartWave(getSelectedStartWave());
+    loadLevelPrev.call(this, tLevelIndex);
   };
 
   // ---- gameplay cursor (deviation GAME_CURSOR_HIDE, v0.1.7) ------------------------------------
