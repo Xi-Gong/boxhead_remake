@@ -44,6 +44,23 @@ export function computeInputDelay(rttSamples: readonly number[] | undefined, gam
   return Math.max(1, Math.min(8, Math.ceil((worst / 2 + 35) / tickMs)));
 }
 
+/** v0.2.1 L1: the largest schedule debt (in ticks) a net stall may bank before slots are surrendered for good. */
+export const MAX_NET_CATCHUP_TICKS = 3;
+
+/**
+ * v0.2.1 L1 bounded stall catch-up. When the lockstep gate skips a tick (a peer frame is late), CMain.ProcessFrames
+ * has ALREADY consumed that tick's 40 ms time slice - before v0.2.1 the slot was simply lost (dropped ticks were
+ * never caught up: every late frame was a visible hole in the 25 fps cadence). This hands the just-consumed slice
+ * back so the schedule retries the SAME tick as soon as the frame lands, while clamping the debt (now - slice) at
+ * maxDebtTicks so a long starvation cannot bank an unbounded fast-forward burst. Pure: the net State_RunWorld
+ * wrapper applies it to mTimeSlice whenever a playing-phase tick stalls (reconnect/desync freezes are excluded -
+ * those phases must freeze truly).
+ */
+export function netStallRewind(sliceMs: number | undefined, nowMs: number, tickMs: number, maxDebtTicks: number): number | undefined {
+  if (sliceMs === undefined || sliceMs > nowMs) return sliceMs; // never started / schedule ahead of now: untouched
+  return Math.max(sliceMs - tickMs, nowMs - maxDebtTicks * tickMs);
+}
+
 export type LanMode = 'Coop' | 'DeathMatch';
 export type LanRole = 0 | 1; // 0 = host (player 1), 1 = client (player 2)
 

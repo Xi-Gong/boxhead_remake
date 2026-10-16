@@ -15,9 +15,11 @@
 //                     yields the virtual delta, identical on both peers, with zero reimplementation.
 //   InitFinished    - (stacked outside the v0.1.2 consumePending wrapper) hands the built world to the session.
 import { getTimer } from '../../../engine/runtime.ts';
+import { frameTime } from '../../../engine/flash/clock.ts';
 import { CMain, Thing, World } from '../../packages.ts';
 import { DESYNC_RETURN_MS, netSession } from './NetSession.ts';
 import { SLOT_ORDER } from './NetSlot.ts';
+import { MAX_NET_CATCHUP_TICKS, netStallRewind } from './protocol.ts';
 
 export function installNetScope(): void {
   // ---- State_RunWorld: lockstep gate + net-owned pause ----------------------------------------
@@ -50,6 +52,14 @@ export function installNetScope(): void {
       return;
     }
     if (!session.tryBeginTick(w)) {
+      // v0.2.1 L1: a late peer frame must not cost a cadence slot - hand the just-consumed time slice back so
+      // the schedule retries THIS tick as soon as the frame lands (debt clamped by netStallRewind). Only for
+      // playing-phase stalls: reconnect/desync freezes must freeze truly.
+      if (session.phase === 'playing') {
+        const m: any = this;
+        m.mTimeSlice = netStallRewind(m.mTimeSlice, frameTime(), 1000 / CMain.mFPS, MAX_NET_CATCHUP_TICKS);
+        m.mFrameCap = 2; // bounded catch-up burst while the schedule owes ticks
+      }
       if (flagDraw) w.Draw();
       return;
     }
@@ -59,6 +69,9 @@ export function installNetScope(): void {
     // (deterministic sim) and the original state machine just routed away from RunWorld - tell the session so the
     // bridge can leave 'playing' at the next room entry (v0.2.1 room-unstick; idempotent, forfeit paths unaffected).
     if (w.mCompleteState) session.markEnded();
+    // v0.2.1 L1 settle: back to the original single-tick cap once the schedule owes less than two ticks.
+    const m: any = this;
+    if (m.mFrameCap !== 1 && frameTime() - m.mTimeSlice < 2 * (1000 / CMain.mFPS)) m.mFrameCap = 1;
   };
 
   // ---- Player Process_Init: swap both players' controls for NetSlots --------------------------

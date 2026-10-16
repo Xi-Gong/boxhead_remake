@@ -14,7 +14,8 @@ import { recordSounds } from './fxkit.ts';
 import { NetSlot, packBits, SLOT_ORDER, unpackBit } from '../../src/game/local/Net/NetSlot.ts';
 import { NetSession, _peekLocalFrame } from '../../src/game/local/Net/NetSession.ts';
 import { CMain, Thing, World } from '../../src/game/packages.ts';
-import { computeInputDelay } from '../../src/game/local/Net/protocol.ts';
+import { computeInputDelay, MAX_NET_CATCHUP_TICKS, netStallRewind } from '../../src/game/local/Net/protocol.ts';
+import { frameTime } from '../../src/engine/flash/clock.ts';
 import { stallStripDue } from '../../src/game/local/Net/overlay.ts';
 import type { GameConfig, LanMode } from '../../src/game/local/Net/protocol.ts';
 
@@ -487,6 +488,47 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
   });
 });
 
+// --------------------------------------------------------------------------- v0.2.1 stall catch-up
+
+describe('LAN stall catch-up (v0.2.1 L1)', () => {
+  it('netStallRewind: hands the stalled slot back, clamps the debt, never touches an ahead schedule', () => {
+    const T = 40;
+    // Healthy schedule: the stalled tick's just-consumed slot is returned whole.
+    expect(netStallRewind(1000, 1000, T, 3)).toBe(960);
+    // A long starvation clamps the schedule debt at maxDebtTicks behind "now" (no unbounded fast-forward).
+    expect(netStallRewind(1000, 1000 + 10 * T, T, 3)).toBe(1000 + 10 * T - 3 * T);
+    // A schedule that is ahead of now (just reset) and an undefined schedule are left alone.
+    expect(netStallRewind(1000, 900, T, 3)).toBe(1000);
+    expect(netStallRewind(undefined, 1000, T, 3)).toBe(undefined);
+  });
+
+  it('a one-tick-late peer frame costs no cadence slot - the gate retries the same tick', { timeout: 120000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    setRandomState(0xC0FFEE);
+    const firstEntry = B.game.world().mTick;
+    for (let i = 0; i < 10; i++) { // warm-up: frames flowing, the schedule is healthy
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+      B.game.setKeys([]);
+      expect(B.game.tick(1)).toBe(1);
+    }
+    const w = B.game.world();
+    const main: any = B.game.main();
+    const before = w.mTick;
+    // The next tick comes due and stalls (remote frame missing): its slot must go back to the schedule.
+    B.game.step(2); // virtual EFs at +20 ms (nothing due) and +40 ms (tick due -> stall)
+    expect(w.mTick).toBe(before); // frozen, as ever
+    // The late frame lands: the OWED tick runs on the very next EF (before v0.2.1 the slot was already gone and
+    // the tick only ran a full slot later - the visible cadence hole).
+    B.session.onNetMessage({ t: 'in', tick: w.mTick - firstEntry, bits: 0 });
+    expect(B.game.tick(1, 1)).toBe(1);
+    expect(w.mTick).toBe(before + 1);
+    // A LONG starvation must not bank unlimited catch-up: the schedule stays inside the debt clamp.
+    for (let i = 0; i < 40; i++) B.game.step(1); // ~800 ms starved
+    expect(frameTime() - main.mTimeSlice).toBeLessThanOrEqual((MAX_NET_CATCHUP_TICKS + 1) * 40);
+    B.session.dispose();
+  });
+});
+
 // --------------------------------------------------------------------------- v0.1.4 session config / input delay
 
 describe('LAN session config (v0.1.4)', () => {
@@ -596,13 +638,22 @@ describe('LAN v0.1.7: live ping, stall notices, jitter-aware input delay', () =>
     expect(B.session.stallReason).toBe('peer');
     expect(B.session.stallSince).not.toBeUndefined();
     expect(events).toContain('peer');
-    // The frame arrives -> the stall clears and the UI hears that too.
+    // The frame arrives -> the stall clears and the UI hears that too. (v0.2.1 L1: the recovery EF may also pull
+    // the NEXT owed tick forward as a bounded catch-up burst; if that frame is not there yet a fresh transient
+    // stall for THAT tick starts - the 150 ms grace keeps it invisible. The clear itself is what the UI must see.)
     const entry = B.game.world().mTick - (B.session as any).startTick;
     B.session.onNetMessage({ t: 'in', tick: entry, bits: 0 });
-    expect(B.game.tick(1)).toBe(1);
+    expect(B.game.tick(1)).toBeGreaterThanOrEqual(1);
+    expect(events).toContain(undefined);
+    // With the next frames landed too, the session settles back to no stall at all. The bounded catch-up may owe
+    // a few slots after the starvation (<= MAX_NET_CATCHUP_TICKS); draining them needs one fed frame per owed tick
+    // (on the wire frames stream continuously, so this is test-harness bookkeeping, not game behavior).
+    for (let k = 0; k < 8 && B.session.stallReason !== undefined; k++) {
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - (B.session as any).startTick, bits: 0 });
+      B.game.tick(1);
+    }
     expect(B.session.stallReason).toBeUndefined();
     expect(B.session.stallSince).toBeUndefined();
-    expect(events[events.length - 1]).toBeUndefined();
     B.session.dispose();
   });
 

@@ -223,6 +223,7 @@ export class NetSession {
     this.mode = start.mode;
     this.endReason = undefined;
     this.inputDelay = start.inputDelay ?? LAN_INPUT_DELAY;
+    (main as any).mFrameCap = 1; // v0.2.1 L1: every game starts with the original single-tick cap
     this.applyConfig(start.cfg);
     World.CWorld.mGameMode = start.mode;
     // A reconnect resume replaces a live (frozen) world: dispose it outright (DeleteWorld's body, without its
