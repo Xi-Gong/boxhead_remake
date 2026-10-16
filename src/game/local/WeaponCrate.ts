@@ -62,6 +62,34 @@ export function applyCratePayload(p: any, payload: CratePayload): void {
   }
 }
 
+/**
+ * v0.2.3: a death on a StaticImpassable cell (explosion knock-back into a wall / the map border, or dying
+ * stuck inside geometry) used to suppress the crate silently - the "sometimes no red box drops" report.
+ * Instead, spiral out from the death cell (Chebyshev rings, row-major: deterministic, no RNG) and drop at
+ * the first non-impassable cell, at most 6 cells away. The constructor snaps to the found cell's centre.
+ * Returns undefined only if the entire 13x13 neighbourhood is impassable (no such spot exists in any of the
+ * 18 rooms) - then, as before, no crate.
+ */
+export function crateDropPosition(world: any, death: any): any | undefined {
+  const cells = world.mMap.mCells;
+  const SOLID = World.Map.CMap_Cell.mCollide_StaticImpassable;
+  const cx = death.mX & 16777215, cy = death.mY & 16777215;
+  if (!(cells[cy][cx].mCollide & SOLID)) return death.Clone();
+  const H = cells.length, W = cells[0].length;
+  for (let r = 1; r <= 6; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const x = cx + dx, y = cy + dy;
+        if (y < 0 || y >= H || x < 0 || x >= W) continue;
+        if (cells[y][x].mCollide & SOLID) continue;
+        return new Thing.Math.CThing_Position(x + 0.5, y + 0.5, 0);
+      }
+    }
+  }
+  return undefined;
+}
+
 export class CThing_Object_WeaponCrate extends CThing_Object {
   /** The dead player's inventory (see captureCratePayload). */
   declare mPayload: CratePayload;

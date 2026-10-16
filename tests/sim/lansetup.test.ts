@@ -69,6 +69,27 @@ describe('LAN net setup screen (v0.1.4)', () => {
     _resetBridgeForTests();
   });
 
+  it('every setup widget stays attached - the SubScreen must not evict the difficulty plate (v0.2.2 depth-10 regression)', { timeout: 60000 }, () => {
+    const { g, s } = openSetup(true);
+    // v0.2.2 gave the widgets getNextHighestDepth() allocation, so bDiff landed exactly on the SubScreen's
+    // fixed depth 10 and the later attachMovie evicted it (label survived, value plate vanished).
+    for (const w of [s.bMode, s.bDiff, s.bFrags, s.bWave, s.bStart, s.bBack, s.bLeave]) {
+      expect(w.$removed).toBe(false);
+      expect(s.$list).toContain(w);
+    }
+    // Widgets render ABOVE the attached original art (depth order), so the value plates are visible.
+    expect(s.bDiff.$depth).toBeGreaterThan(s.mcSubScreen.$depth);
+    expect(s.bDiff._Contents._Label.text).toBe('EXPERT');
+
+    // A mode switch re-attaches the SubScreen - the widgets must survive that too.
+    s.bMode.onRelease.call(s.bMode);
+    g.step(4);
+    expect(s.bDiff.$removed).toBe(false);
+    expect(s.$list).toContain(s.bDiff);
+    expect(g.errors).toEqual([]);
+    _resetBridgeForTests();
+  });
+
   it('client: read-only mirror with WAITING banner, no host handlers', { timeout: 60000 }, () => {
     const { g, s } = openSetup(false);
     expect(s.waitText._visible).toBe(true);

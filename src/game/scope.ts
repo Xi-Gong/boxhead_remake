@@ -20,7 +20,7 @@ import { registerLobbyPage } from './local/Net/Lobby.ts';
 import { registerSetupPage } from './local/Net/Setup.ts';
 import { installNetOverlay } from './local/Net/overlay.ts';
 import { debriefNameInput, installDebriefNameInput } from './local/DebriefName.ts';
-import { CThing_Object_WeaponCrate, captureCratePayload } from './local/WeaponCrate.ts';
+import { CThing_Object_WeaponCrate, captureCratePayload, crateDropPosition } from './local/WeaponCrate.ts';
 import { armStartWave, consumeArmedWaveOn, getRunStartWave, getSelectedStartWave, recordRunStartWave, resetSelectedStartWave } from './local/StartWave.ts';
 import { buildStartWaveCycler } from './local/StartWaveUi.ts';
 import { menuTextItem, text } from './local/UiStyle.ts';
@@ -270,10 +270,33 @@ export function applyScope(): void {
     stateLoadWorld.call(this);
   };
 
-  // ---- Coop death weapon crate (deviation COOP_DEATH_WEAPON_CRATE, v0.1.9) --------------------
+  // ---- spawn-solid filter (deviation SPAWN_SOLID_FILTER, v0.2.3) ------------------------------------------------
+  // Original data defect kept 1:1 until now: some Player2 spawn markers sit inside Solid geometry (room 11
+  // PATCHY's marker at cell 16,9 lies inside the Slab_Large collision area; tests/sim/soakSuite.ts
+  // KNOWN_SPAWN_SOLID), and the original player spawn scan (Spawn_ValidPosition_Close/_Far) never tests Solid
+  // - so the seed-dependent P2 pick can embed the player in a slab, where CMap_Collide.PlayerCollide returns
+  // the position unchanged (permanently stuck). Fix: Spawn_ValidateAll runs AFTER every init marker is placed
+  // (solidity fully marked) and BEFORE the first player spawn, so we drop Solid-cell entries from the player
+  // spawn list there. Respawn reuses the same pruned list. No RNG, deterministic, identical on both lockstep
+  // peers; rooms whose list has no bad marker keep it untouched (behaviour bit-identical to the original).
+  const spawnValidateAllPrev = worldProto.Spawn_ValidateAll;
+  worldProto.Spawn_ValidateAll = function (this: any): void {
+    const list: any[] | undefined = this.mSpawnPoint_Player;
+    if (list?.length) {
+      const cells = this.mMap.mCells;
+      for (let i = list.length - 1; i >= 0; i--) {
+        const p = list[i].mPosition;
+        if (cells[p.mY & 16777215][p.mX & 16777215].mCollide & World.Map.CMap_Cell.mCollide_Solid) list.splice(i, 1);
+      }
+    }
+    spawnValidateAllPrev.call(this);
+  };
+
+  // ---- Coop death weapon crate (deviation COOP_DEATH_WEAPON_CRATE, v0.1.9; v0.2.3 solid-cell relocate) ---------
   // Runs after the original LogKill bookkeeping, still INSIDE the simulation tick, so both lockstep peers spawn
-  // the identical crate (no RNG, no wall clock anywhere in the thing). The StaticImpassable guard mirrors
-  // CWorld._CreatePickup; the payload is captured here because State_Respawn's ResetWeapons empties the ammo.
+  // the identical crate (no RNG, no wall clock anywhere in the thing). v0.2.3: a death on a StaticImpassable
+  // cell no longer suppresses the crate - crateDropPosition spirals to the nearest valid cell (deterministic).
+  // The payload is captured here because State_Respawn's ResetWeapons empties the ammo.
   const logKillPrev = worldProto.LogKill;
   worldProto.LogKill = function (this: any, tThing: any): void {
     logKillPrev.call(this, tThing);
@@ -281,9 +304,9 @@ export function applyScope(): void {
     if (tThing?._CLASSID_ !== 'CThing_Creature_Player') return;
     const payload = captureCratePayload(tThing);
     if (!payload) return;
-    const p = tThing.mPosition;
-    if (this.mMap.mCells[p.mY & 16777215][p.mX & 16777215].mCollide & World.Map.CMap_Cell.mCollide_StaticImpassable) return;
-    this.mThing_Collection.AddThing(new CThing_Object_WeaponCrate(p.Clone(), payload));
+    const pos = crateDropPosition(this, tThing.mPosition);
+    if (!pos) return;
+    this.mThing_Collection.AddThing(new CThing_Object_WeaponCrate(pos, payload));
   };
 
   // ---- start wave selection (deviation START_WAVE_SELECTOR, v0.1.9) ---------------------------

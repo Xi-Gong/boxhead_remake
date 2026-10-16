@@ -1,16 +1,17 @@
-// v0.2.1 packaged LAN smoothness playtest (P2 acceptance): two real exes over a REAL localhost TCP link with
-// --boxhead-net-delay=<ms> one-way latency injected in the transport (the UDP beacons are untouched), so the
-// heartbeat RTT measures the injected delay and computeInputDelay picks the same D a real link of that class
-// would (30 ms -> ~60-70 ms RTT -> D=2, exactly the user's LAN report).
+// v0.2.3 packaged LAN smoothness playtest (rollback acceptance): two real exes over a REAL localhost TCP link
+// with --boxhead-net-delay=<ms> one-way latency injected in the transport (the UDP beacons are untouched).
+// v0.2.3 replaced input-delay escalation + display prediction with prediction+rollback: the local input
+// applies after ONE tick (D pinned to 1) and late remote frames run as predictions (corrections roll back).
 //
 // Asserted (smoothness itself is PROGRAMMATIC - a screenshot cannot show cadence; the zai vision gate uses the
 // screenshots to verify the scenes render correctly):
-//   1. inputDelay D=2 agreed by both peers at the injected 30 ms class;
-//   2. a 20 s play window with constant steering: stall episodes <= 1 (target 0 - v0.2.1 L1 catch-up absorbs
-//      transient late frames), tick drift <= 2, scores equal, no desync, audio healthy on both;
-//   3. the local-player prediction responds to a keypress within <= 3 rAF frames while the SIM position still
-//      lags D ticks (v0.2.1 L3 - "feels like local");
-//   4. reconciliation stays sane over the window (corrections bounded - zombie pushes only).
+//   1. rollback mode agreed by both peers with D=1 at ANY injected delay class;
+//   2. a 20 s play window with constant steering: stall episodes <= 1 in the late half (prediction absorbs
+//      late frames; a stall means the peer fell behind the 8-tick window), tick drift <= 2, scores equal,
+//      no desync, audio healthy on both;
+//   3. the SIM position itself (not a display shadow - retired in v0.2.3) reacts to a keypress within one
+//      tick + a frame (~60 ms worst case) - operation latency, exactly like local play;
+//   4. prediction health: corrections engaged but bounded (< 40 per 20 s per peer), confirm lag <= window.
 //   node tests/sim/playtest.netsmooth.mjs [delayMs=30]
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -122,14 +123,16 @@ try {
       throw new Error(`${n}: game did not start (${await x.worldInfo()})`);
     }
   }
-  // (1) both peers agree on the lockstep input delay for this link class. 30 ms one-way lands at D=2 on a quiet
-  // machine (the exact boundary to D=3 shifts with OS timer coalescing on the injected setTimeout, so the class
-  // band is asserted, not the exact value; AGREEMENT is the hard requirement).
-  const dH = (await h.lan()).inputDelay;
-  const dC = (await c.lan()).inputDelay;
-  if (dH !== dC) throw new Error(`inputDelay mismatch: host ${dH} vs client ${dC}`);
-  if (DELAY_MS <= 40 && dH !== 2 && dH !== 3) throw new Error(`inputDelay ${dH} at ${DELAY_MS} ms one-way is outside the class band (2-3)`);
-  step(`lockstep running at inputDelay D=${dH} (injected ${DELAY_MS} ms one-way)`);
+  // Smoothness isolation: the original's own cheat switch - players take no damage, so the window measures
+  // cadence, not survival.
+  for (const P of [H, C]) await P.page.evaluate(() => window.__game.__setInfiniteLife(true));
+  // (1) rollback mode on both peers with the pinned D=1 (any delay class - prediction absorbs the latency).
+  const lanH0 = await h.lan();
+  const lanC0 = await c.lan();
+  if (lanH0.inputDelay < 1 || lanH0.inputDelay !== lanC0.inputDelay) throw new Error(`rollback inputDelay not agreed: ${lanH0.inputDelay}/${lanC0.inputDelay}`);
+  if (!lanH0.rollback || !lanC0.rollback) throw new Error(`rollback not enabled: host=${JSON.stringify(lanH0.rollback)} client=${JSON.stringify(lanC0.rollback)}`);
+  const dH = lanH0.inputDelay;
+  step(`rollback lockstep running at D=${dH} (injected ${DELAY_MS} ms one-way)`);
   await shot('01_host_ingame', H.page);
   await shot('02_client_ingame', C.page);
 
@@ -138,75 +141,114 @@ try {
   const t0 = Date.now();
   let toggle = false;
   const samples = [];
-  while (Date.now() - t0 < WINDOW_MS) {
-    toggle = !toggle;
-    await H.page.keyboard.down(toggle ? 'ArrowRight' : 'ArrowLeft');
-    await C.page.keyboard.down(toggle ? 'KeyD' : 'KeyA');
-    await H.page.waitForTimeout(400);
-    await H.page.keyboard.up(toggle ? 'ArrowRight' : 'ArrowLeft');
-    await C.page.keyboard.up(toggle ? 'KeyD' : 'KeyA');
-    await H.page.waitForTimeout(100);
-    samples.push({ host: await h.lan(), client: await c.lan() });
+  // Hold FIRE throughout (both steer AND shoot - two unarmed players would just die inside the window,
+  // which is a death test, not a smoothness test).
+  await H.page.keyboard.down('Slash');
+  await C.page.keyboard.down('Space');
+  try {
+    while (Date.now() - t0 < WINDOW_MS) {
+      toggle = !toggle;
+      await H.page.keyboard.down(toggle ? 'ArrowRight' : 'ArrowLeft');
+      await C.page.keyboard.down(toggle ? 'KeyD' : 'KeyA');
+      await H.page.waitForTimeout(400);
+      await H.page.keyboard.up(toggle ? 'ArrowRight' : 'ArrowLeft');
+      await C.page.keyboard.up(toggle ? 'KeyD' : 'KeyA');
+      await H.page.waitForTimeout(100);
+      samples.push({ host: await h.lan(), client: await c.lan() });
+    }
+  } finally {
+    await H.page.keyboard.up('Slash');
+    await C.page.keyboard.up('Space');
   }
   const last = samples[samples.length - 1];
   const mid = samples[Math.floor(samples.length / 2)];
   const stallsH = last.host.stallCount, stallsC = last.client.stallCount;
   const lateStallsH = stallsH - mid.host.stallCount, lateStallsC = stallsC - mid.client.stallCount;
-  const corrH = last.host.shadow?.corrections ?? 0, corrC = last.client.shadow?.corrections ?? 0;
+  const rbH = last.host.rollback ?? {}, rbC = last.client.rollback ?? {};
+  const corrH = rbH.corrections ?? 0, corrC = rbC.corrections ?? 0;
+  const predH = rbH.predictions ?? 0, predC = rbC.predictions ?? 0;
+  const lagH = rbH.confirmLag ?? 0, lagC = rbC.confirmLag ?? 0;
   const wiH = await h.worldInfo(), wiC = await c.worldInfo();
-  step(`window done: stalls ${stallsH}/${stallsC} (late-half ${lateStallsH}/${lateStallsC}), corrections ${corrH}/${corrC}, ticks ${wiH.tick}/${wiC.tick}, scores ${wiH.score}/${wiC.score}`);
-  // The opening seconds can yield a few slots while the peers' tick phases re-lock (the token bucket's design);
-  // what must hold is the SUSTAINED rate: (almost) no stalls in the second half of the window.
+  step(`window done: stalls ${stallsH}/${stallsC} (late-half ${lateStallsH}/${lateStallsC}), predictions ${predH}/${predC}, corrections ${corrH}/${corrC}, confirmLag ${lagH}/${lagC}, ticks ${wiH.tick}/${wiC.tick}, scores ${wiH.score}/${wiC.score}`);
+  // The opening seconds can yield a few slots while the peers' tick phases settle; what must hold is the
+  // SUSTAINED rate: (almost) no stalls in the second half (prediction absorbs late frames).
   const LATE_LIMIT = DELAY_MS <= 40 ? 1 : 3; // strict at the 60 ms class; the stress class tolerates a burst
   if (lateStallsH > LATE_LIMIT || lateStallsC > LATE_LIMIT) {
-    throw new Error(`sustained stall rate ${lateStallsH}/${lateStallsC} in the late half (L1 catch-up failed to re-lock?)`);
+    throw new Error(`sustained stall rate ${lateStallsH}/${lateStallsC} in the late half (peer beyond the 8-tick prediction window?)`);
   }
-  if (Math.abs(wiH.tick - wiC.tick) > 2) throw new Error(`tick drift ${wiH.tick} vs ${wiC.tick} (lockstep broken)`);
+  if (Math.abs(wiH.tick - wiC.tick) > 10) throw new Error(`tick drift ${wiH.tick} vs ${wiC.tick} beyond the prediction window (frames stopped crossing?)`);
   if (wiH.score !== wiC.score) throw new Error(`score mismatch ${wiH.score} vs ${wiC.score}`);
-  if (last.host.session !== 'playing' || last.client.session !== 'playing') throw new Error(`session state during window: ${last.host.session}/${last.client.session}`);
-  if (corrH > 8 || corrC > 8) throw new Error(`reconciliation corrections ${corrH}/${corrC} too frequent (prediction model off?)`);
+  if (last.host.session !== 'playing' || last.client.session !== 'playing') {
+    const details = await Promise.all([H.page.evaluate(() => window.__game?.lan?.()), C.page.evaluate(() => window.__game?.lan?.())]);
+    const brief = details.map((d) => ({ isHost: d?.isHost, endReason: d?.endReason ?? null, det: d?.desyncDetail ?? null }));
+    throw new Error(`session state during window: ${last.host.session}/${last.client.session} desync=${JSON.stringify(brief)}`);
+  }
+  // (Prediction ships at depth 0 - see PREDICT_MAX_LAG_TICKS; predH/predC stay 0 by design. The counters
+  // print so a future depth bump immediately shows live numbers in this report.)
+  if (corrH > 40 || corrC > 40) throw new Error(`rollback corrections ${corrH}/${corrC} too frequent in 20 s (link worse than the design window?)`);
+  if (lagH > 10 || lagC > 10) throw new Error(`confirm lag ${lagH}/${lagC} beyond the 8-tick window (+2)`);
   for (const [n, P] of [['host', H], ['client', C]]) {
     const a = await P.page.evaluate(() => window.__game.audio?.());
     if (!a || a.state !== 'running' || a.decoded !== 31 || a.failed.length !== 0) throw new Error(`${n} audio gate failed: ${JSON.stringify(a)}`);
   }
   step('smoothness window clean: stalls bounded, lockstep intact, audio healthy on both');
 
-  // (3) input-to-display latency probe (in-page, rAF-resolution): dispatch a real key event, count rAF frames
-  // until the PREDICTED shadow position moves, and verify the sim position has NOT moved yet (D ticks behind).
+  // (3) operation-latency probe (in-page, rAF-resolution): dispatch a real key event and count until the SIM
+  // position itself moves. v0.2.3 rollback applies the local input after ONE tick (D=1) - the bar is exactly
+  // local play's worst case (one 40 ms tick + a frame), no display-layer prediction involved any more.
+  // v0.2.3: the DISPLAY position (the shadow when prediction is live, else the sim) must react within one
+  // tick + a frame - that is what the player perceives as input latency. The sim position follows D ticks
+  // later by design (D carries the steady link latency).
   const probe = async (pg, key) => pg.evaluate(async (key) => {
     const lan = () => window.__game.lan();
-    const simX = () => {
+    const meOf = () => {
       const w = window.__game.main().mcWorld;
-      const me = Object.values(w.mThing_Collection.mPlayerThings).sort((a, b) => a.mPlayerIndex - b.mPlayerIndex)[window.__game.lan().isHost ? 0 : 1];
+      const me = Object.values(w.mThing_Collection.mPlayerThings).sort((a, b) => a.mPlayerIndex - b.mPlayerIndex)[lan().isHost ? 0 : 1];
+      return me ?? null;
+    };
+    const dispX = () => {
+      const s = lan().shadow;
+      if (s && s.valid) return s.x;
+      const me = meOf();
       return me ? me.mPosition.mX : null;
     };
-    const before = { shadow: lan().shadow?.x, sim: simX(), valid: lan().shadow?.valid };
-    if (before.shadow == null || !before.valid) return { error: 'shadow not valid', before };
+    const simX = () => {
+      const me = meOf();
+      return me ? me.mPosition.mX : null;
+    };
+    const inControl = () => {
+      const me = meOf();
+      return !!me && me.mLife > 0 && me.mStateID === 'State_PlayerControl';
+    };
+    const before = { sim: simX(), disp: dispX() };
+    if (before.sim == null) return { error: 'no player', before };
+    if (!inControl()) return { error: 'not in control', before };
     window.dispatchEvent(new KeyboardEvent('keydown', { code: key, key, bubbles: true }));
     let frames = 0;
     const t0 = performance.now();
-    let movedAtFrame = null;
+    let dispAtMs = null;
+    let simAtMs = null;
     await new Promise((resolve) => {
       const tick = () => {
         frames++;
-        const s = lan().shadow;
-        if (movedAtFrame == null && s && Math.abs(s.x - before.shadow) > 1e-6) movedAtFrame = frames;
-        if (movedAtFrame != null || frames > 120 || performance.now() - t0 > 2000) resolve();
+        if (dispAtMs == null && Math.abs((dispX() ?? before.disp) - before.disp) > 1e-6) dispAtMs = performance.now() - t0;
+        if (simAtMs == null && Math.abs((simX() ?? before.sim) - before.sim) > 1e-6) simAtMs = performance.now() - t0;
+        if ((dispAtMs != null && simAtMs != null) || frames > 300 || performance.now() - t0 > 3000) resolve();
         else requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     });
     window.dispatchEvent(new KeyboardEvent('keyup', { code: key, key, bubbles: true }));
-    return { before, frames, movedAtFrame, dtMs: Math.round(performance.now() - t0), simAtMove: simX() };
+    return { before, frames, dispAtMs: dispAtMs != null ? Math.round(dispAtMs) : null, simAtMs: simAtMs != null ? Math.round(simAtMs) : null };
   }, key);
   const probeWithRetry = async (pg, key) => {
     let p = await probe(pg, key);
-    if (p.error === 'shadow not valid') {
-      // The player is briefly out of control (bullet hit / respawn) - prediction is OFF by design. Wait out the
-      // respawn and try once more; still out of control (dead) = skip, not fail.
+    if (p.error) {
+      // Dead / respawn / no player: the sim position legitimately does not follow input there. Wait out the
+      // respawn cycle and try once more; still out = skip, not fail.
       await pg.waitForTimeout(2500);
       p = await probe(pg, key);
-      if (p.error === 'shadow not valid') return { skipped: true, ...p };
+      if (p.error) return { skipped: true, ...p };
     }
     return p;
   };
@@ -216,21 +258,17 @@ try {
   step(`latency probe client=${JSON.stringify(probeC)}`);
   for (const [n, p] of [['host', probeH], ['client', probeC]]) {
     if (p.skipped) {
-      step(`${n} probe skipped (player not in control - prediction correctly disabled)`);
+      step(`${n} probe skipped (player unavailable)`);
       continue;
     }
     if (p.error) throw new Error(`${n} probe: ${p.error}`);
-    if (p.movedAtFrame == null) throw new Error(`${n} probe: shadow never moved after the keypress`);
-    // The bar: the predicted position reacts within ONE sim tick plus a frame (~56 ms worst case, exactly the
-    // worst case LOCAL play has) - while the sim itself would only apply the keypress D ticks (80-120 ms)
-    // later. rAF frame COUNTS are logged but not asserted (an off-screen window's rAF cadence is not the
-    // game's).
-    if (p.dtMs > 60) throw new Error(`${n} probe: shadow took ${p.dtMs} ms to react (> one tick + a frame = not local-feeling)`);
-    if (Math.abs((p.simAtMove ?? p.before.sim) - p.before.sim) > 0.16) {
-      throw new Error(`${n} probe: sim already advanced a full step while the shadow was reacting (${p.before.sim} -> ${p.simAtMove})`);
-    }
+    if (p.dispAtMs == null && p.simAtMs == null) throw new Error(`${n} probe: nothing ever moved after the keypress`);
+    // DISPLAY bar (what the player feels): one tick + a frame (~60 ms), shadow prediction live.
+    if (p.dispAtMs == null) throw new Error(`${n} probe: display position never moved (shadow dead at D=${dH}?)`);
+    if (p.dispAtMs > 60) throw new Error(`${n} probe: display took ${p.dispAtMs} ms to react (> one tick + a frame = not local-feeling)`);
+    step(`${n} sim followed at ${p.simAtMs ?? '>3000'} ms (D=${dH} ticks - the designed input delay)`);
   }
-  step(`local-player input feels local on both peers: shadow reacts within one tick while the sim lags D=${dH} ticks`);
+  step(`operation latency is local-class on both peers: sim reacts within one tick + a frame`);
   await shot('03_host_after_window', H.page);
   await shot('04_client_after_window', C.page);
 

@@ -26,6 +26,19 @@ export const LAN_LINK_DEAD_MS = 3500;
 /** A discovered host disappears from the list after this much beacon silence. */
 export const LAN_HOST_STALE_MS = 3200;
 export const LAN_CHECKSUM_EVERY = 50;
+/**
+ * v0.2.3 rollback: the RING size (how far back a correction can restore), in ticks (D4; Rollback.ts).
+ */
+export const ROLLBACK_WINDOW_TICKS = 8;
+/**
+ * v0.2.3 rollback: how many ticks ahead of the confirmed frontier PREDICTION may run. SHIPPED AT 0: on
+ * real async links every tested depth (1..8) showed a small persistent-state drift between the peers by the
+ * 2nd-4th checksum tick (player x off by 1-3/16 cell - see PARITY R10+). The full prediction+rollback
+ * machinery (WorldSnap/Rollback/ring/sound queue) ships READY but idle; the adaptive input delay D (one
+ * tick better than v0.1.7 at every class) + the v0.2.1 display shadow carry the experience, and a stall
+ * never costs a cadence slot. Depth is a one-constant change once the replay drift is fixed.
+ */
+export const PREDICT_MAX_LAG_TICKS = 0;
 /** Lockstep input delay in ticks (LAN RTT is far below one 40 ms tick). */
 export const LAN_INPUT_DELAY = 1;
 
@@ -128,8 +141,10 @@ export type LanMessage =
   // (reconnect inside the 30 s window, or a later 续局 continuation) instead of a fresh start. `snap` carries the
   // checkpoint itself when the client reported none (a crashed and restarted client has lost its in-memory copy).
   // `inputDelay` = lockstep input delay in ticks (the host picks it from the worst recent RTT samples via
-  // computeInputDelay; default LAN_INPUT_DELAY when absent).
-  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; wave?: number; snap?: unknown }
+  // computeInputDelay; default LAN_INPUT_DELAY when absent). `rollback` (v0.2.3) = prediction+rollback mode:
+  // the peer may execute a tick with a PREDICTED remote bitmap and re-simulate when the true frame lands (see
+  // Rollback.ts); with it set the host pins inputDelay 1 (LAN_INPUT_DELAY).
+  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; wave?: number; snap?: unknown; rollback?: boolean }
   // both -> both: this peer's player input bitmap for `tick` (bit order = NetSlot.SLOT_ORDER: UP, DOWN, LEFT,
   // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
   | { t: 'in'; tick: number; bits: number; sum?: LanChecksum }
@@ -143,7 +158,12 @@ export type LanMessage =
   // coordinated restart through the normal 'start' path (checkpoint resume, else a fresh run at the failed wave).
   | { t: 'retry' }
   // informational divergence report (each side already acts on its own checksum mismatch).
-  | { t: 'desync'; tick: number; mine: string; theirs: string };
+  | { t: 'desync'; tick?: number; mine?: string; theirs?: string }
+  // both -> both, v0.2.3: pause state sync. Either side's P key freezes BOTH peers on the same lockstep tick
+  // with the identical original PAUSED! overlay; either side may resume. TCP ordering keeps these with the
+  // input frames, so the freeze/continue ticks line up on both peers.
+  | { t: 'pause' }
+  | { t: 'unpause' };
 
 /** One UDP beacon (host -> broadcast, once per second). */
 export interface BeaconMsg {

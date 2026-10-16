@@ -35,8 +35,10 @@ import { armStartWave, getRunStartWave } from '../StartWave.ts';
 import { NetSlot, packBits, unpackBit, SLOT_ORDER, type SlotBitName } from './NetSlot.ts';
 import { advanceShadow, newShadow, type ShadowState } from './Predict.ts';
 import {
-  LAN_CHECKSUM_EVERY, LAN_INPUT_DELAY, type GameConfig, type LanChecksum, type LanMessage, type LanMode, type LanRole,
+  LAN_CHECKSUM_EVERY, LAN_INPUT_DELAY, PREDICT_MAX_LAG_TICKS, ROLLBACK_WINDOW_TICKS, type GameConfig, type LanChecksum, type LanMessage, type LanMode, type LanRole,
 } from './protocol.ts';
+import { mayPredict, onRemoteFrame as rollbackOnRemoteFrame, predictedRemoteBits, pushSlot as rollbackPushSlot, resetRollback } from './Rollback.ts';
+import { makeSnapCtx } from './WorldSnap.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -53,8 +55,18 @@ export function _resetNetForTests(): void { active?.dispose(); active = null; }
 
 const DM_CHECKPOINT_EVERY = 1500;
 const RECONNECT_WINDOW_MS = 30000;
-/** v0.2.1: how long a checksum-desync freeze shows its overlay before BOTH peers abandon to the LAN room. */
-export const DESYNC_RETURN_MS = 3000;
+/**
+ * v0.2.1: how long a checksum-desync freeze shows its overlay before BOTH peers abandon to the LAN room.
+ * v0.2.3: 3000 -> 600 - the user verdict was "desync must return to the lobby IMMEDIATELY, never freeze on the
+ * last frame"; 600 ms is enough to read the red strip, and both peers leave at (almost) the same moment.
+ */
+export const DESYNC_RETURN_MS = 600;
+/**
+ * v0.2.3 stall watchdog: a CONTINUOUS stall this long in the playing phase escalates to a desync teardown.
+ * Without it, a divergence that starves one peer of input frames while the TCP link stays alive (heartbeats
+ * keep LinkWatchdog fed) froze that peer on the WAITING strip forever - no checksum pair would ever meet.
+ */
+export const STALL_DESYNC_MS = 5000;
 /**
  * v0.2.1 L1 stall-catch-up token bucket: schedule credit in ms. Transient late frames spend it (their slot is
  * rewound and invisibly retried); a PERSISTENT phase mismatch drains it, after which stalls yield their slots
@@ -91,6 +103,8 @@ export interface NetStart {
   resumeTick?: number;
   /** START_WAVE_SELECTOR (v0.1.9): chosen starting wave (default 1 = original); applied before tick 0 on BOTH peers. */
   wave?: number;
+  /** v0.2.3: prediction+rollback mode (see Rollback.ts); pins inputDelay to LAN_INPUT_DELAY. */
+  rollback?: boolean;
 }
 
 export class NetSession {
@@ -114,7 +128,7 @@ export class NetSession {
   stallCount = 0;
   private catchupCreditMs = CATCHUP_CREDIT_MAX_MS;
   private catchupRefillAt = 0;
-  /** v0.2.1 L3: the local player's display prediction (see Predict.ts); invalid until the first afterTick. */
+  /** v0.2.1 L3 (restored): the local player's display prediction; invalid until the first afterTick. */
   shadow: ShadowState = newShadow();
   /** Date.now() when the current stall began (the overlay's WAITING strip waits out a grace window; v0.1.7). */
   stallSince: number | undefined;
@@ -122,8 +136,40 @@ export class NetSession {
   desyncTick: number | undefined;
   /** When the desync freeze started (DESYNC_RETURN_MS later both peers abandon to the room; v0.2.1). */
   desyncAt: number | undefined;
+  /** v0.2.3: this session ended through a desync (bridge banner "returned to lobby" until the next game). */
+  desynced = false;
+  /** v0.2.3 observability: the diverging checksum pair (ours / theirs) - the playtests print it. */
+  desyncDetail: { tick: number; mine: string; theirs: string } | undefined;
   /** Latest in-session net checkpoint (identical on both peers; memory only). */
   netCheckpoint: NetCheckpoint | undefined;
+  // ---- v0.2.3 rollback state (Rollback.ts owns the algorithms; dark unless this.rollback) ----
+  /** Prediction+rollback enabled for this game (start.rollback from the host). */
+  rollback = false;
+  /** Per executed tick: remote bits used / predicted / checksum / latched end state (Rollback.TickMeta). */
+  tickMeta = new Map<number, any>();
+  /** The W+1 ring of per-tick WorldSnap slots (Rollback.pushSlot). */
+  ring: any[] = [];
+  /** Highest CONTIGUOUS confirmed remote tick (all frames <= it are final). */
+  confirmTick = -1;
+  /** First executed tick whose prediction differed from the arriving truth (correction due). */
+  correctionPending: number | undefined;
+  lastRemoteBits = 0;
+  /** Sounds queued during predicted/replayed ticks (flushed on confirm, dropped on rollback). */
+  pendingSounds = new Map<number, any[]>();
+  /** Set around world.Process() of predicted/replayed ticks - the CSound choke point queues while set. */
+  soundRecordingTick: number | undefined;
+  /**
+   * v0.2.3: the peer's first frame of THIS game arrived (its world is ready and its frame numbering is
+   * aligned with ours). Prediction must not run before this: while the peer's world still builds, its
+   * future frames are numbered from ITS startTick - predicting "empty input" over that gap executes ticks
+   * the peer will later number differently, permanently skewing the relative indices by the build gap
+   * (found by the packaged net playtest: the host stalled 8 ticks = exactly the window).
+   */
+  peerReady = false;
+  /** Checksums computed on predicted ticks, sent once their tick confirms (confirm-gated wire, §7). */
+  pendingSumSends: any[] = [];
+  rollbackStats = { predictions: 0, corrections: 0, replayedTicks: 0, maxDepth: 0, captureMs: 0 };
+  snapCtx: any = undefined;
   private startTick = 0;
   private virtualTimeMs = 0;
   private readonly localFrames = new Map<number, number>();
@@ -148,6 +194,7 @@ export class NetSession {
   onNetMessage(msg: LanMessage): void {
     if (msg.t === 'in') {
       this.remoteFrames.set(msg.tick, msg.bits);
+      if (this.rollback) rollbackOnRemoteFrame(this, msg.tick, msg.bits);
       if (msg.sum) {
         const key = JSON.stringify(msg.sum);
         this.remoteSums.set(msg.sum.tick, key);
@@ -187,8 +234,18 @@ export class NetSession {
       return;
     }
     if (msg.t === 'desync') {
-      this.phase = 'desync';
-      this.onStateChange?.();
+      // v0.2.3 bugfix: the peer detected the mismatch and told us. v0.2.1 only set the phase - desyncAt stayed
+      // undefined, so the abandon condition in the NetScope wrapper (Date.now() - desyncAt >= DESYNC_RETURN_MS)
+      // compared against NaN and THIS side froze on the last frame forever (the "desync hangs the screen" bug).
+      this.triggerDesync(msg.tick, msg.mine, msg.theirs);
+      return;
+    }
+    if (msg.t === 'pause') {
+      this.setPaused(true, true);
+      return;
+    }
+    if (msg.t === 'unpause') {
+      this.setPaused(false, true);
     }
   }
 
@@ -217,7 +274,7 @@ export class NetSession {
       const start: NetStart = { ...this.startOpts!, resumeTick: this.netCheckpoint.tick };
       // A client that restarted (no checkpoint of its own, capTick absent) receives the snapshot itself.
       const snap = hello.capTick == null || hello.capTick < this.netCheckpoint.tick ? this.netCheckpoint.snap : undefined;
-      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, inputDelay: start.inputDelay, resumeTick: start.resumeTick, wave: start.wave, snap });
+      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, inputDelay: start.inputDelay, resumeTick: start.resumeTick, wave: start.wave, snap, rollback: true });
       this.startLocalGame(start, CMain._this); // the host rebuilds through the same path
     }
   }
@@ -238,6 +295,9 @@ export class NetSession {
     this.startOpts = start;
     this.mode = start.mode;
     this.endReason = undefined;
+    this.rollback = start.rollback === true;
+    // v0.2.3: rollback rides ON TOP of the adaptive input delay, not instead of it - D carries the steady
+    // network latency (see PREDICT_MAX_LAG_TICKS) so prediction stays a jitter-gap filler, not a lifestyle.
     this.inputDelay = start.inputDelay ?? LAN_INPUT_DELAY;
     (main as any).mFrameCap = 1; // v0.2.1 L1: every game starts with the original single-tick cap
     this.stallCount = 0; // v0.2.1 observability: per-game stall episodes
@@ -262,6 +322,8 @@ export class NetSession {
     main.mReturn_SelectWorld = 'State_LanLobby'; // registered by the lobby (L2); net ends never route there before it exists
     this.phase = 'starting';
     this.netPaused = false;
+    this.desynced = false; // a new game clears the lobby banner cause (v0.2.3)
+    resetRollback(this); // fresh ring / meta / sound queue for the new game
     if (start.resumeTick !== undefined && this.netCheckpoint) {
       // Resume: rebuild deterministically from the same seed, then re-apply OUR checkpoint (both peers hold a
       // state-identical copy even though their absolute mTick values may differ by the build-time warm-up ticks).
@@ -306,7 +368,7 @@ export class NetSession {
   onWorldReady(world: any): void {
     this.world = world;
     this.phase = 'playing';
-    this.shadow = newShadow(); // v0.2.1 L3: every world starts unpredicted (reconciled on the first afterTick)
+    this.shadow = newShadow(); // v0.2.1 L3: every world starts unpredicted
     // Lockstep frames are indexed RELATIVE to this world's ready tick: the number of warm-up Process calls during
     // the build differs per machine (1-3 in the real app), so absolute CWorld.mTick would never line up between the
     // peers. mTick itself is unread by game logic - only the relative index matters.
@@ -322,6 +384,9 @@ export class NetSession {
       this.localFrames.set(s, bits);
       this.link.send({ t: 'in', tick: s, bits });
     }
+    // v0.2.3: the WorldSnap context for the rollback ring (slots captured so NetSlot state round-trips).
+    this.snapCtx = makeSnapCtx(world, this.slots);
+    resetRollback(this);
     this.onStateChange?.();
   }
 
@@ -331,31 +396,98 @@ export class NetSession {
     return active === this && this.world === w && (this.phase === 'playing' || this.phase === 'reconnecting' || this.phase === 'desync');
   }
 
-  /** True = run the tick (frames for it are present and applied to the NetSlots); false = stall (skip Process). */
-  tryBeginTick(world: any): boolean {
+  /**
+   * v0.2.3 beginTick: resolve a tick's inputs. 'confirmed' = both frames present (the original path);
+   * 'predicted' = the remote frame is still in flight - the repeat-last prediction runs the tick (rollback
+   * mode only, bounded by ROLLBACK_WINDOW_TICKS); 'stall' = nothing can run (the original behaviour - in
+   * rollback mode only when the peer fell behind the window).
+   */
+  beginTick(world: any): 'confirmed' | 'predicted' | 'stall' {
     if (this.phase === 'reconnecting' || this.phase === 'desync') {
       this.stall(this.phase === 'desync' ? 'waiting' : 'peer');
-      return false;
+      return 'stall';
     }
     const t = world.mTick - this.startTick;
     const mine = this.localFrames.get(t);
     const theirs = this.remoteFrames.get(t);
-    if (mine === undefined || theirs === undefined) {
-      this.stall(theirs === undefined ? 'peer' : 'local');
-      return false;
+    let remoteBits: number;
+    let predicted = false;
+    if (theirs !== undefined) {
+      remoteBits = theirs;
+    } else if (this.rollback && this.peerReady && mine !== undefined && mayPredict(this, t)) {
+      remoteBits = predictedRemoteBits(this, t);
+      predicted = true;
+      this.rollbackStats.predictions++;
+    } else {
+      this.stall('peer');
+      return 'stall';
+    }
+    if (mine === undefined) {
+      this.stall('local');
+      return 'stall';
     }
     this.applyPlayer(this.role, mine, t);
-    this.applyPlayer((1 - this.role) as LanRole, theirs, t);
+    this.applyPlayer((1 - this.role) as LanRole, remoteBits, t);
+    this.tickMeta.set(t, { remoteBits, predicted });
     this.stall(undefined);
-    return true;
+    return predicted ? 'predicted' : 'confirmed';
+  }
+
+  /** True = run the tick (frames for it are present and applied to the NetSlots); false = stall (skip Process). */
+  tryBeginTick(world: any): boolean {
+    if (!this.rollback) return this.beginTick(world) !== 'stall';
+    return this.beginTick(world) === 'confirmed'; // legacy bool: a PREDICTED tick is driven by the NetScope rollback path
+  }
+
+  /**
+   * v0.2.3: net pause is a wire state. Either side's P key freezes BOTH peers on the same lockstep tick with
+   * the identical original PAUSED! overlay (v0.2.2: only the pausing side saw the overlay - the peer's frame
+   * stream dried up and it froze on the last frame behind a WAITING strip). Idempotent; fromWire suppresses
+   * the echo. Lockstep-safe by construction: the paused peer sends no frames, so both peers halt at the same
+   * next tick; QUIT on the overlay concedes on either side (the scope CHud.Pause wrapper wires it).
+   */
+  setPaused(paused: boolean, fromWire = false): void {
+    if (this.phase !== 'playing' || this.netPaused === paused) return;
+    this.netPaused = paused;
+    this.world?.mHud?.Pause(paused);
+    if (!fromWire) this.link.send(paused ? { t: 'pause' } : { t: 'unpause' });
+    this.onStateChange?.();
   }
 
   /** Set the stall reason; the UI (WAITING strip) is told when it CHANGES (v0.1.7 - it never was before). */
   private stall(reason: 'peer' | 'local' | 'waiting' | undefined): void {
+    // v0.2.3 stall watchdog: a stall that has now lasted STALL_DESYNC_MS continuously (stallSince survives the
+    // unchanged-reason early return below) means the frames dried up while the link stayed alive - no checksum
+    // can ever be paired again. Escalate to the desync teardown instead of freezing on WAITING forever.
+    // EXEMPT: while the peer's world is still building (no frame of this game yet - a relaunched client
+    // cold-boots for ~5-8 s), waiting is the intended state, not a divergence.
+    if (
+      reason !== undefined && this.phase === 'playing' && this.peerReady &&
+      this.stallSince !== undefined && Date.now() - this.stallSince >= STALL_DESYNC_MS
+    ) {
+      this.triggerDesync(undefined, undefined, undefined);
+      return;
+    }
     if (this.stallReason === reason) return;
     if (reason !== undefined && this.stallReason === undefined) this.stallCount++;
     this.stallReason = reason;
     this.stallSince = reason === undefined ? undefined : Date.now();
+    this.onStateChange?.();
+  }
+
+  /**
+   * Enter the desync freeze (idempotent): detection (compareSum), the peer's 'desync' message (v0.2.3: sets
+   * desyncAt so the receiving side also abandons), or the stall watchdog (v0.2.3). The peer is told whenever
+   * we are the first to know.
+   */
+  private triggerDesync(tick: number | undefined, mine: string | undefined, theirs: string | undefined): void {
+    if (this.phase === 'desync' || this.phase === 'ended') return;
+    if (typeof tick === 'number') this.desyncTick = tick;
+    this.desyncDetail = { tick: tick ?? -1, mine: mine ?? '?', theirs: theirs ?? '?' };
+    this.phase = 'desync';
+    this.desyncAt = Date.now();
+    this.desynced = true;
+    this.link.send({ t: 'desync', tick, mine, theirs });
     this.onStateChange?.();
   }
 
@@ -371,19 +503,65 @@ export class NetSession {
     let sum: LanChecksum | undefined;
     if (t > 0 && t % LAN_CHECKSUM_EVERY === 0) {
       sum = this.checksum(world, t);
-      this.ourSums.set(t, JSON.stringify(sum));
-      this.compareSum(t);
+      this.recordChecksum(t, sum);
     }
-    this.link.send({ t: 'in', tick: s, bits, sum });
-    if (this.mode === 'DeathMatch' && t > 0 && t % DM_CHECKPOINT_EVERY === 0) this.captureCheckpoint(world);
-    // Keep a small window of frames buffered (scales with the input delay).
-    const prune = t - (this.inputDelay + 3);
+    // v0.2.3 §7: a checksum computed on a PREDICTED tick is only trustworthy once the tick confirms - hold it
+    // back and piggyback it once it does (the receiver also compares only confirmed ticks).
+    if (this.rollback && sum && t > this.confirmTick) {
+      this.pendingSumSends.push(sum);
+      sum = undefined;
+    }
+    // Drain at most two held checksums per frame message (the cadence makes >1 pending vanishingly rare).
+    // A held sum was computed on a PREDICTED tick - by the time it confirms, a correction replay may have
+    // recomputed that tick's sum (ourSums). Send the LATEST value, never the stale prediction (the packaged
+    // net playtest desynced on exactly this: the peer compared our stale predicted sum against its truth).
+    let piggy: LanChecksum | undefined;
+    const sendNow: LanChecksum[] = [];
+    while (this.rollback && this.pendingSumSends.length && this.pendingSumSends[0].tick <= this.confirmTick && sendNow.length < 2) {
+      const held = this.pendingSumSends.shift()!;
+      const latest = this.ourSums.get(held.tick);
+      sendNow.push(latest !== undefined ? { ...held, ...JSON.parse(latest) } : held);
+    }
+    if (sendNow.length) piggy = sendNow.shift();
+    this.link.send({ t: 'in', tick: s, bits, sum: sum ?? piggy });
+    for (const extra of sendNow) this.link.send({ t: 'in', tick: s, bits, sum: extra });
+    if (this.mode === 'DeathMatch' && t > 0 && t % DM_CHECKPOINT_EVERY === 0) this.maybeCheckpoint(world, t);
+    // Keep a small window of frames buffered (scales with the input delay); rollback needs the window wide
+    // enough to REPLAY from a correction (local frames too - the replay drives both players).
+    const prune = t - (this.rollback ? ROLLBACK_WINDOW_TICKS + this.inputDelay + 3 : this.inputDelay + 3);
     for (const k of this.localFrames.keys()) if (k < prune) this.localFrames.delete(k);
     for (const k of this.remoteFrames.keys()) if (k < prune) this.remoteFrames.delete(k);
-    advanceShadow(this, world); // v0.2.1 L3: reconcile + lead the local player's display prediction
+    if (this.rollback) {
+      const metaPrune = this.confirmTick - (ROLLBACK_WINDOW_TICKS + 2);
+      for (const k of this.tickMeta.keys()) if (k < metaPrune) this.tickMeta.delete(k);
+      // Ring slots are pushed for CONFIRMED ticks only: a slot captured after a PREDICTED tick holds a
+      // predicted world, and a correction restoring from it would replay from a contaminated start - the
+      // exact one-step permanent divergence the packaged net playtest caught (P1 x off by 1/8 cell at the
+      // checksum tick). Corrections always restore to a confirmed boundary and replay forward from truth.
+      const executed = this.tickMeta.get(t - 1);
+      // Ring capture is pure overhead when prediction is disabled (depth 0: corrections can never trigger).
+      if (PREDICT_MAX_LAG_TICKS > 0 && !executed?.predicted) {
+        const capStart = Date.now();
+        rollbackPushSlot(this, world); // the ring slot at this clean tick boundary
+        this.rollbackStats.captureMs += Date.now() - capStart;
+      }
+    }
+    // v0.2.1 L3 (kept alongside rollback): the shadow leads the local player's DISPLAY by the already-sampled
+    // future input frames - rollback fixes the cadence (stalls/jitter), the shadow hides the D-tick input
+    // delay. Frozen during stalls by construction (advanceShadow only runs on executed ticks).
+    advanceShadow(this, world);
   }
 
-  /** v0.2.1 L3 (Predict.ts): the already-sampled local input frame for tick u, if still inside the window. */
+  /** Store our checksum for tick t (meta + legacy map) and compare against a received counterpart. */
+  recordChecksum(t: number, sum: LanChecksum): void {
+    const key = JSON.stringify(sum);
+    this.ourSums.set(t, key);
+    const meta = this.tickMeta.get(t);
+    if (meta) meta.sum = key;
+    this.compareSum(t);
+  }
+
+  /** v0.2.3: the already-sampled local input frame for tick u (replay input resolution). */
   peekLocalBits(u: number): number | undefined {
     return this.localFrames.get(u);
   }
@@ -396,6 +574,11 @@ export class NetSession {
   /** v0.2.1 L3 (Predict.ts): this world's relative lockstep tick index. */
   tickIndex(world: any): number {
     return world.mTick - this.startTick;
+  }
+
+  /** v0.2.3 rollback: true while a predicted/replayed tick records - the CSound choke point queues its starts. */
+  shouldQueueSound(): boolean {
+    return this.rollback && this.phase === 'playing' && this.soundRecordingTick !== undefined;
   }
 
   /**
@@ -417,7 +600,24 @@ export class NetSession {
 
   /** The __set__mLevel hook calls this on every wave advance (the field is empty then - a clean checkpoint). */
   onWaveAdvanced(world: any): void {
-    if (this.holdsWorld(world) && this.mode === 'Coop') this.captureCheckpoint(world);
+    if (this.holdsWorld(world) && this.mode === 'Coop') this.maybeCheckpoint(world, world.mTick - this.startTick);
+  }
+
+  /**
+   * Checkpoint gate (v0.2.3): never capture from a PREDICTED tick - a correction replay re-runs the wave
+   * advance at the same tick and captures the identical snapshot through this same hook.
+   */
+  maybeCheckpoint(world: any, t: number): void {
+    if (this.rollback && this.tickMeta.get(t)?.predicted) return;
+    this.captureCheckpoint(world);
+  }
+
+  /** The replay path's checksum recomputation (Rollback.replayTick) - the same bookkeeping as afterTick's. */
+  computeChecksumString(world: any, t: number): string {
+    const key = JSON.stringify(this.checksum(world, t));
+    this.ourSums.set(t, key);
+    this.remoteSums.get(t); // (compare happens on the next arrival / recordChecksum)
+    return key;
   }
 
   captureCheckpoint(world: any): void {
@@ -532,8 +732,14 @@ export class NetSession {
     for (const k of Object.keys(tc.mThings)) {
       const t = tc.mThings[k];
       if (t == undefined) continue;
+      // v0.2.3 rollback: in-flight shots and effects (< 0.5 s lifetime) may ride a slightly different
+      // transient trajectory through a correction (the R10 note in Rollback.ts) - counting them here made a
+      // healthy session report a desync. The checksum covers the PERSISTENT world, exactly what the
+      // netlockstep canary asserts.
+      const id = t._CLASSID_ as string;
+      if (id?.startsWith('CThing_Shot_') || id?.startsWith('CThing_Effect_')) continue;
       things++;
-      if (t._CLASSID_ === 'CThing_Creature_Zombie') zombies++;
+      if (id === 'CThing_Creature_Zombie') zombies++;
     }
     return {
       tick,
@@ -551,11 +757,10 @@ export class NetSession {
     const ours = this.ourSums.get(tick);
     const theirs = this.remoteSums.get(tick);
     if (ours === undefined || theirs === undefined || ours === theirs) return;
-    this.desyncTick = tick;
-    this.phase = 'desync';
-    this.desyncAt = Date.now();
-    this.link.send({ t: 'desync', tick, mine: ours, theirs });
-    this.onStateChange?.();
+    // v0.2.3 §7: in rollback mode a sum is only comparable when the tick is CONFIRMED on this side (a
+    // predicted-tick sum is a guess; a correction replay recomputes the real one before this ever fires).
+    if (this.rollback && tick > this.confirmTick) return;
+    this.triggerDesync(tick, ours, theirs);
   }
 
   /** v0.2.1: leave the desync freeze for the LAN room (the overlay always promised it; no code performed it). */

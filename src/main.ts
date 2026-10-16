@@ -25,6 +25,7 @@ import { lanBridge } from './game/local/Net/bridge.ts';
 import { initDebriefDom } from './game/local/DebriefName.ts';
 import { setViewportPresenter } from './game/local/Viewport.ts';
 import * as GamePackages from './game/packages.ts';
+import { _global } from './engine/flash/as2.ts';
 import { CMain } from './game/packages.ts';
 
 interface GameDebug {
@@ -51,6 +52,10 @@ interface GameDebug {
   /** Automation: force a context resume attempt / one watchdog beat (no 1 s wait). */
   resumeAudio?: typeof resumeAudio;
   tickAudioWatchdog?: typeof tickAudioWatchdog;
+  /** QA hook (the netsmooth playtest): the original's own cheat switch _global.mInfinateLife. */
+  __setInfiniteLife?: (on: boolean) => Promise<void>;
+  /** QA hook (the v0.2.3 playtest): deliver a wire desync notice to the live session (visual gate). */
+  __forceDesync?: () => boolean;
 }
 
 declare global {
@@ -75,10 +80,19 @@ const dbg: GameDebug = {
       inputDelay: s?.startOpts?.inputDelay ?? s?.inputDelay ?? null, endReason: s?.endReason ?? null,
       worldTick: s?.world?.mTick, state: (window as any).__game?.state?.(),
       checkpoint: s?.netCheckpoint?.tick ?? null, frames,
-      // v0.2.1 smoothness observability: stall episodes this game, prediction health (netlockstep pins the
-      // semantics; the netsmooth playtest asserts on these over a delayed-link window).
+      desyncDetail: s?.desyncDetail ?? null,
+      // v0.2.3 smoothness observability: stall episodes + rollback health (netlockstep pins the semantics;
+      // the netsmooth playtest asserts on these over a delayed-link window).
       stallCount: s?.stallCount ?? null,
       shadow: s?.shadow ? { valid: s.shadow.valid, x: s.shadow.x, y: s.shadow.y, corrections: s.shadow.corrections, divergencePx: s.shadow.lastDivergencePx } : null,
+      rollback: s?.rollback
+        ? {
+            ...s.rollbackStats,
+            confirmLag: (s.world ? s.tickIndex(s.world) : 0) - s.confirmTick,
+            ringSize: s.ring.filter(Boolean).length,
+            confirmTick: s.confirmTick,
+          }
+        : null,
     };
   },
   main: () => CMain?._this,
@@ -87,6 +101,8 @@ const dbg: GameDebug = {
     suspend: () => SoundEngine.context?.suspend(),
     kill: () => SoundEngine.context?.close(),
   },
+  __setInfiniteLife: async (on: boolean) => { _global.mInfinateLife = on; },
+  __forceDesync: () => { const s = (lanBridge() as any)?.session; if (!s) return false; s.onNetMessage({ t: 'desync', tick: 1 }); return true; },
   // Watchdog nudge for the packaged audio assertions; also the future Electron 'boxhead:audio-nudge' hook.
   resumeAudio, tickAudioWatchdog,
   state: () => {

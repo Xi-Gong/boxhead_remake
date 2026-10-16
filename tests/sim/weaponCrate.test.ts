@@ -76,6 +76,53 @@ describe('coop death weapon crate (deviation COOP_DEATH_WEAPON_CRATE)', () => {
     expect(crates[0].Process).toBe(crates[0].Process_Normal);
   });
 
+  it('death on a StaticImpassable cell still drops the crate at the nearest valid cell (v0.2.3)', () => {
+    const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 33 });
+    const w = g.world()!;
+    const [p1, p2] = g.players();
+    grant(p1, 'uzi', 37);
+    p1.SelectWeapon('uzi');
+    const far = farFreeCell(g, [p1, p2], 4);
+    moveTo(p2, far.x, far.y);
+    // A solid map cell (wall block) - knock-back deaths pin players against these and the v0.1.9 wrapper
+    // silently suppressed the crate there ("sometimes no red box drops").
+    const cells = w.mMap.mCells;
+    const SOLID = World.Map.CMap_Cell.mCollide_StaticImpassable;
+    let solidCell: { x: number; y: number } | undefined;
+    for (let cy = 0; cy < cells.length && !solidCell; cy++) {
+      for (let cx = 0; cx < cells[cy].length; cx++) {
+        if (cells[cy][cx].mCollide & SOLID) { solidCell = { x: cx + 0.5, y: cy + 0.5 }; break; }
+      }
+    }
+    expect(solidCell).toBeDefined();
+    moveTo(p1, solidCell!.x, solidCell!.y);
+    w.LogKill(p1);
+    moveTo(p1, far.x + 1, far.y + 1); // the (fake-dead) player must not stand on the crate
+    const crates = cratesOf(w);
+    expect(crates.length).toBe(1); // the v0.1.9 guard dropped NOTHING here
+    g.tick(1);
+    const crate = crates[0]!;
+    expect(crate.mPayload.weapons.map((x: any) => [x.nameID, x.ammo])).toEqual([['uzi', 37]]);
+    // The crate itself must sit on a non-impassable cell (pickable by walking over it).
+    const cc = w.mMap.GetCell(crate.mPosition.mX, crate.mPosition.mY);
+    expect(cc.mCollide & SOLID).toBe(0);
+    // Nearest valid cell: not farther than a few cells from the death position.
+    const d = Math.max(Math.abs(crate.mPosition.mX - solidCell!.x), Math.abs(crate.mPosition.mY - solidCell!.y));
+    expect(d).toBeLessThanOrEqual(6);
+    // Deterministic: same world state -> same crate cell.
+    const g2 = createHeadlessGame({ mode: 'Coop', room: 1, seed: 33 });
+    const [q1, q2] = g2.players();
+    grant(q1, 'uzi', 37);
+    q1.SelectWeapon('uzi');
+    const far2 = farFreeCell(g2, [q1, q2], 4);
+    moveTo(q2, far2.x, far2.y);
+    moveTo(q1, solidCell!.x, solidCell!.y);
+    g2.world()!.LogKill(q1);
+    const crate2 = cratesOf(g2.world()!)[0]!;
+    expect(crate2.mPosition.mX).toBe(crate.mPosition.mX);
+    expect(crate2.mPosition.mY).toBe(crate.mPosition.mY);
+  });
+
   it('no crate when there is nothing to restore (pistol only)', () => {
     const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 23 });
     const w = g.world()!;

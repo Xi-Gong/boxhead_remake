@@ -161,7 +161,10 @@ class LanBridge {
    */
   private backInLobby(): void {
     this.phase = 'lobby';
-    this.message = ''; // the room view shows its own RESUME/RETRY strip when a game survived
+    // v0.2.3: a desynced game leaves a banner in the room until the next status overwrite (the user must SEE
+    // why the game ended - "returned to lobby immediately" needs its visible reason). Other ends keep the
+    // room view's own RESUME/RETRY strip (set by the Lobby, not by this message).
+    this.message = this.session?.desynced ? 'CONNECTION DESYNCED - RETURNED TO LOBBY' : '';
     void desktop?.lan?.hostSetStatus('lobby');
     this.notify();
   }
@@ -224,7 +227,7 @@ class LanBridge {
       if (this.phase !== 'lobby' || !this.session?.startOpts || !this.session.netCheckpoint) return;
       const opts = this.session.startOpts;
       const resumeTick = this.session.netCheckpoint.tick;
-      this.send({ t: 'start', mode: opts.mode, roomLink: opts.roomLink, cfg: opts.cfg, seed: opts.seed, inputDelay: opts.inputDelay, resumeTick, wave: opts.wave });
+      this.send({ t: 'start', mode: opts.mode, roomLink: opts.roomLink, cfg: opts.cfg, seed: opts.seed, inputDelay: opts.inputDelay, resumeTick, wave: opts.wave, rollback: true });
       this.launch(opts.mode, opts.roomLink, opts.cfg, opts.seed, opts.inputDelay, resumeTick, 0, opts.wave);
       return;
     }
@@ -241,10 +244,10 @@ class LanBridge {
       charP1: sel.charP1,
       charP2: sel.charP2,
     };
-    // Lockstep input delay from the WORST recent heartbeat RTT (v0.1.7, see computeInputDelay): a 60-100 ms
-    // virtual-LAN link lands at 2-3 ticks instead of v0.1.4's 3-4, and the max-based headroom keeps jitter
-    // spikes from freezing the sim.
-    const inputDelay = computeInputDelay(this.rttSamples, cfg.gameSpeed);
+    // v0.2.3: the adaptive p90 delay carries the steady latency (one tick better than v0.1.7 at every
+    // class), prediction (depth 1) absorbs jitter spikes, and a stall never costs a cadence slot. Depth-2
+    // prediction measured unstable on real links (PARITY R10+) - D carries what it can.
+    const inputDelay = Math.max(2, computeInputDelay(this.rttSamples, cfg.gameSpeed));
     const roomLink = 'ROOM_Single_' + PAD4(sel.levelIdx + 1);
     const seed = (Math.random() * 2 ** 32) >>> 0;
     // Persist the choices on the host like the local SelectWorld screen does.
@@ -253,7 +256,7 @@ class LanBridge {
     sd.mPlayer2_CharacterIndex = sel.charP2;
     sd.mDifficulty = sel.difficulty;
     sd.mGameAmount = sel.gameAmount;
-    this.send({ t: 'start', mode: sel.mode, roomLink, cfg, seed, inputDelay, wave: sel.wave ?? 1 });
+    this.send({ t: 'start', mode: sel.mode, roomLink, cfg, seed, inputDelay, wave: sel.wave ?? 1, rollback: true });
     this.launch(sel.mode, roomLink, cfg, seed, inputDelay, undefined, 0, sel.wave ?? 1);
   }
 
@@ -280,7 +283,7 @@ class LanBridge {
     this.phase = 'playing';
     this.started = true;
     this.notify();
-    this.session.startLocalGame({ mode, roomLink, cfg, seed, inputDelay, resumeTick, wave }, CMain._this);
+    this.session.startLocalGame({ mode, roomLink, cfg, seed, inputDelay, resumeTick, wave, rollback: true }, CMain._this);
     netOverlaySync(this.session);
   }
 
@@ -298,7 +301,7 @@ class LanBridge {
   startRetry(): void {
     if (!this.isHost || !this.session || this.session.phase !== 'ended' || !this.session.startOpts) return;
     const m = this.session.retryStart();
-    this.send({ t: 'start', mode: m.mode, roomLink: m.roomLink, cfg: m.cfg, seed: m.seed, inputDelay: m.inputDelay, resumeTick: m.resumeTick, wave: m.wave });
+    this.send({ t: 'start', mode: m.mode, roomLink: m.roomLink, cfg: m.cfg, seed: m.seed, inputDelay: m.inputDelay, resumeTick: m.resumeTick, wave: m.wave, rollback: true });
     this.launch(m.mode, m.roomLink, m.cfg, m.seed, m.inputDelay, m.resumeTick, 0, m.wave);
   }
 

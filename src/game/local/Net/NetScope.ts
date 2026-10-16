@@ -16,11 +16,12 @@
 //   InitFinished    - (stacked outside the v0.1.2 consumePending wrapper) hands the built world to the session.
 import { getTimer } from '../../../engine/runtime.ts';
 import { frameTime } from '../../../engine/flash/clock.ts';
-import { CMain, Thing, World } from '../../packages.ts';
+import { CMain, CSound, Thing, World } from '../../packages.ts';
 import { DESYNC_RETURN_MS, netSession } from './NetSession.ts';
 import { SLOT_ORDER } from './NetSlot.ts';
 import { MAX_NET_CATCHUP_TICKS, netStallRewind } from './protocol.ts';
-import { cameraBias, playersOf, shadowDrawOverride } from './Predict.ts';
+import { applyCorrections, queueSound } from './Rollback.ts';
+import { shadowDrawOverride } from './Predict.ts';
 
 export function installNetScope(): void {
   // ---- State_RunWorld: lockstep gate + net-owned pause ----------------------------------------
@@ -34,10 +35,11 @@ export function installNetScope(): void {
       return;
     }
     // Net mode owns the pause key: consume the latch so CWorld.Process's own pause path never fires.
+    // v0.2.3: the toggle goes through session.setPaused - pause/resume are WIRE state now (both peers show the
+    // PAUSED! overlay on the same frozen tick; either side may resume).
     if (CMain.mInput?.KEY_PAUSE?.mPressed) {
       CMain.mInput.KEY_PAUSE.IsPressed(); // consume
-      session.netPaused = !session.netPaused;
-      w.mHud.Pause(session.netPaused);
+      session.setPaused(!session.netPaused);
     }
     if (session.netPaused) {
       if (flagDraw) w.Draw();
@@ -52,12 +54,19 @@ export function installNetScope(): void {
       this.SetState('State_LanLobby');
       return;
     }
-    if (!session.tryBeginTick(w)) {
+    // v0.2.3 rollback: a late frame that differs from the prediction left a correction pending - restore the
+    // ring slot before the divergence and replay to the head NOW (messages only arrive between frames, so this
+    // always runs at a tick boundary; the head tick below then executes with true inputs).
+    if (session.rollback && session.correctionPending !== undefined && session.phase === 'playing') {
+      applyCorrections(session, w);
+    }
+    const mode = session.beginTick(w);
+    if (mode === 'stall') {
       // v0.2.1 L1: a late peer frame must not cost a cadence slot - hand the just-consumed time slice back so
       // the schedule retries THIS tick as soon as the frame lands (debt clamped by netStallRewind). The credit
       // bucket bounds the total: a PERSISTENT phase mismatch yields slots until the peers re-lock (the pre-
       // v0.2.1 skips were the only phase correction the lockstep had). Only for playing-phase stalls:
-      // reconnect/desync freezes must freeze truly.
+      // reconnect/desync freezes must freeze truly. (In rollback mode this is rare: only past the window.)
       if (session.phase === 'playing') {
         const m: any = this;
         if (session.spendCatchupCredit(getTimer(), 1000 / CMain.mFPS)) {
@@ -68,16 +77,57 @@ export function installNetScope(): void {
       if (flagDraw) w.Draw();
       return;
     }
-    stateRunWorld.call(this, flagDraw);
+    if (mode === 'confirmed' || !session.rollback) {
+      stateRunWorld.call(this, flagDraw);
+      session.afterTick(w);
+      // Natural end (coop all-dead / DM kill limit): mCompleteState was set inside this same tick on BOTH peers
+      // (deterministic sim) and the original state machine just routed away from RunWorld - tell the session so the
+      // bridge can leave 'playing' at the next room entry (v0.2.1 room-unstick; idempotent, forfeit paths unaffected).
+      if (w.mCompleteState) session.markEnded();
+      // v.2.1 L1 settle: back to the original single-tick cap once the schedule owes less than two ticks.
+      const m: any = this;
+      if (m.mFrameCap !== 1 && frameTime() - m.mTimeSlice < 2 * (1000 / CMain.mFPS)) m.mFrameCap = 1;
+      return;
+    }
+    // ---- v0.2.3 predicted tick: run the sim on the repeat-last prediction, no routing, queued sounds ----
+    const t = session.tickIndex(w);
+    session.soundRecordingTick = t;
+    try {
+      w.Process();
+      // A predicted game end must not route (the true timeline may continue) - latch it into the meta; a
+      // confirmation replay that re-derives it leaves mCompleteState set and the next confirmed tick routes;
+      // a right prediction re-applies the latch on confirm (Rollback.onRemoteFrame).
+      if (w.mCompleteState) {
+        const meta = session.tickMeta.get(t);
+        if (meta) meta.endState = w.mCompleteState;
+        w.mCompleteState = undefined;
+      }
+      if (flagDraw) w.Draw();
+    } finally {
+      session.soundRecordingTick = undefined;
+    }
     session.afterTick(w);
-    // Natural end (coop all-dead / DM kill limit): mCompleteState was set inside this same tick on BOTH peers
-    // (deterministic sim) and the original state machine just routed away from RunWorld - tell the session so the
-    // bridge can leave 'playing' at the next room entry (v0.2.1 room-unstick; idempotent, forfeit paths unaffected).
-    if (w.mCompleteState) session.markEnded();
-    // v0.2.1 L1 settle: back to the original single-tick cap once the schedule owes less than two ticks.
-    const m: any = this;
-    if (m.mFrameCap !== 1 && frameTime() - m.mTimeSlice < 2 * (1000 / CMain.mFPS)) m.mFrameCap = 1;
   };
+
+  // ---- CSound.PlaySound: queue sample starts of predicted/replayed ticks (v0.2.3 rollback) --------------
+  // EVERY start funnels through the prototype method (the per-sample fPlay closures call pClass.PlaySound) -
+  // wrap it BEFORE any RegisterSound captures it (installNetScope runs inside applyScope, before the first
+  // CMain ctor in every entrypoint). While a predicted/replayed tick records, sounds queue; the flush and the
+  // replay re-emit them through this same choke point, so the ordered audio canary stays exact.
+  const csoundProto = (CSound as any).prototype;
+  const origPlaySound = csoundProto.PlaySound;
+  if (origPlaySound) {
+    const wrapped = function (this: any, item: any, secOffset?: any, nLoop?: any): any {
+      const s = netSession();
+      if (s && s.shouldQueueSound()) {
+        queueSound(s, { item, secOffset, nLoop });
+        return;
+      }
+      return origPlaySound.call(this, item, secOffset, nLoop);
+    };
+    (wrapped as any).__boxheadNetSoundQueue = true; // belt-asserted by the netlockstep suite (T8)
+    csoundProto.PlaySound = wrapped;
+  }
 
   // ---- Player Process_Init: swap both players' controls for NetSlots --------------------------
   const playerProto = (Thing.Creature as any).CThing_Creature_Player.prototype;
@@ -111,10 +161,49 @@ export function installNetScope(): void {
     if (session && session.phase === 'starting') session.onWorldReady(this);
   };
 
-  // ---- Player Draw: render the LOCAL player at the predicted position (v0.2.1 L3) --------------------------------
-  // Display-layer only: mPosition/mAngle are swapped around the original (RNG-free) Draw call and restored - the
-  // sim, the checksums and the peer's render calls are untouched. Everything else (peer players, non-control
-  // states) draws at the authoritative position via the null path.
+  // ---- Independent camera (v0.2.3): LAN coop drops the shared-screen contract ------------------
+  // Three wrappers that MUST act together (any missing one strands a far-away player):
+  //   KeepDistance          the original 19x13 player-to-player tether clears separation-growing deltas - the
+  //                         "invisible wall" when two LAN players walk apart. No-op in net coop.
+  //   ...WithinPlayerScope  the player respawn scan accepts nothing outside the same 19x13 box and has NO
+  //                         fallback (returns undefined -> _Spawn_Player false): with the tether gone, players
+  //                         roam apart and P2 could never respawn. Always true in net coop. (Zombie/devil
+  //                         spawns never use it - they go through Spawn_ValidPosition.)
+  //   TrackThing            the coop camera anchor is the running average over BOTH players; each net client
+  //                         ignores the REMOTE player's tracking so its camera follows only its own player.
+  //                         mTrackPosition is render state (not checksummed - the DYNAMIC_VIEWPORT precedent),
+  //                         so per-client divergence is invisible to the lockstep. DM split screens are already
+  //                         independent (mTrackPositions per player) and stay untouched; offline coop keeps all
+  //                         three original behaviours.
+  const keepDistancePrev = playerProto.KeepDistance;
+  playerProto.KeepDistance = function (this: any): any {
+    const session = netSession();
+    if (session && World.CWorld.mGameMode === 'Coop') return this;
+    return keepDistancePrev.call(this);
+  };
+  const scopePrev = worldProto.Spawn_ValidPosition_WithinPlayerScope;
+  worldProto.Spawn_ValidPosition_WithinPlayerScope = function (this: any, p1: any, p2: any): boolean {
+    const session = netSession();
+    if (session && World.CWorld.mGameMode === 'Coop') return true;
+    return scopePrev.call(this, p1, p2);
+  };
+  const trackThingPrev = worldProto.TrackThing;
+  worldProto.TrackThing = function (this: any, tThing: any): void {
+    const session = netSession();
+    if (session && World.CWorld.mGameMode === 'Coop' && tThing?.mPlayerIndex !== undefined && tThing.mPlayerIndex !== session.role) return;
+    return trackThingPrev.call(this, tThing);
+  };
+
+  // (v0.2.1 L3 display prediction RETIRED in v0.2.3: with rollback the local player's SIM position is already
+  // immediate, so the Player-Draw shadow swap and the Process_Tracking camera-bias wrapper are gone - the
+  // camera follows the authoritative position natively, and the original tracking smoothing absorbs the rare
+  // one-frame snap of a correction.)
+
+  // ---- Player Draw: render the LOCAL player at the display-predicted position (v0.2.1 L3, RESTORED in the
+  // final v0.2.3 cut) ---------------------------------------------------------------------------------------------
+  // Rollback carries the sim (stall-free + jitter absorption); the shadow carries the D-tick input-delay
+  // GAP in what the player SEES - together: no cadence holes, no visible input lag. Display-layer only
+  // (mPosition/mAngle swapped around the RNG-free Draw call and restored).
   const playerDraw = playerProto.Draw;
   const scratchAngle = new (Thing.Math as any).CThing_Angle(0);
   const scratchDelta = new (Thing.Math as any).CThing_Position(1, 0, 0);
@@ -136,50 +225,5 @@ export function installNetScope(): void {
       this.mPosition = realPos;
       this.mAngle = realAngle;
     }
-  };
-
-  // ---- Camera: bias the tracking anchor toward the predicted local player (draw-time only) ------------------------
-  // Process_Tracking runs from Draw_PlayerPlane (inside CWorld.Draw), reading mTrackPosition - the running
-  // average the players' TrackThing accumulated during the last tick. Shifting the LOCAL player's share by the
-  // prediction delta moves the camera exactly as if the player already stood at the shadow: the coop anchor gets
-  // delta/liveCount, the DM split-screen slot gets the full delta. mDrawPosition/lTrackPosition are render state
-  // (not checksummed - the checksum covers score/thing-counts/player pos+life), so per-machine divergence here is
-  // invisible to the lockstep.
-  const worldTracking = worldProto.Process_Tracking;
-  worldProto.Process_Tracking = function (this: any, tIndex?: any, bmSize?: any): any {
-    const session = netSession();
-    const bias = session ? cameraBias(session, this) : null;
-    if (!bias) return worldTracking.call(this, tIndex, bmSize);
-    if (tIndex === undefined) {
-      const real = this.mTrackPosition;
-      if (real) {
-        let live = 0;
-        for (const p of playersOf(this)) if (!(p.mFlags & Thing.CThing.mFlag_DEAD)) live++;
-        if (live > 0) {
-          this.mTrackPosition = real.Clone().Add(new (Thing.Math as any).CThing_Position(bias.dx / live, bias.dy / live, 0));
-          try {
-            return worldTracking.call(this, tIndex, bmSize);
-          } finally {
-            this.mTrackPosition = real;
-          }
-        }
-      }
-      return worldTracking.call(this, tIndex, bmSize);
-    }
-    const slot = this.mTrackPositions[tIndex];
-    if (slot) {
-      const sessionRole = (session as any).role;
-      if (slot === playersOf(this)[sessionRole]) {
-        this.mTrackPositions[tIndex] = {
-          mPosition: new (Thing.Math as any).CThing_Position(slot.mPosition.mX + bias.dx, slot.mPosition.mY + bias.dy, slot.mPosition.mZ),
-        };
-        try {
-          return worldTracking.call(this, tIndex, bmSize);
-        } finally {
-          this.mTrackPositions[tIndex] = slot;
-        }
-      }
-    }
-    return worldTracking.call(this, tIndex, bmSize);
   };
 }

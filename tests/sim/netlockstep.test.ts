@@ -13,9 +13,9 @@ import { createHeadlessGame, KEYS, type HeadlessGame } from './harness.ts';
 import { recordSounds } from './fxkit.ts';
 import { NetSlot, packBits, SLOT_ORDER, unpackBit } from '../../src/game/local/Net/NetSlot.ts';
 import { NetSession, _peekLocalFrame } from '../../src/game/local/Net/NetSession.ts';
-import { CMain, Thing, World } from '../../src/game/packages.ts';
-import { computeInputDelay, MAX_NET_CATCHUP_TICKS, netStallRewind } from '../../src/game/local/Net/protocol.ts';
-import { shadowDrawOverride } from '../../src/game/local/Net/Predict.ts';
+import { lanBridge, _resetBridgeForTests } from '../../src/game/local/Net/bridge.ts';
+import { CMain, CSound, Thing, World } from '../../src/game/packages.ts';
+import { computeInputDelay, MAX_NET_CATCHUP_TICKS, netStallRewind, ROLLBACK_WINDOW_TICKS } from '../../src/game/local/Net/protocol.ts';
 import { frameTime } from '../../src/engine/flash/clock.ts';
 import { stallStripDue } from '../../src/game/local/Net/overlay.ts';
 import type { GameConfig, LanMode } from '../../src/game/local/Net/protocol.ts';
@@ -438,6 +438,154 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     B.session.dispose();
   });
 
+  it('desync: the MESSAGE-receiving peer also returns to the lobby (v0.2.3 bugfix: desyncAt was never set)', { timeout: 120000 }, async () => {
+    // v0.2.1 bug: onNetMessage({t:'desync'}) only set phase='desync' - desyncAt stayed undefined, so the
+    // abandon condition (Date.now() - desyncAt >= DESYNC_RETURN_MS) was NaN >= N = false FOREVER: the peer
+    // that learned about the desync from the wire froze on the last frame with a "tick undefined" overlay.
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    const firstEntry = B.game.world().mTick;
+    for (let i = 0; i < 6; i++) {
+      B.session.onNetMessage({ t: 'in', tick: i, bits: 0 });
+      B.game.setKeys([]);
+      B.game.tick(1);
+    }
+    // Wire the bridge like a real net game so the lobby return also lands the banner (backInLobby needs it).
+    // _resetBridgeForTests() replaces the singleton - capture AFTER the reset or the assignments land on a
+    // dead object.
+    _resetBridgeForTests();
+    const b = lanBridge();
+    b.session = B.session;
+    b.phase = 'playing';
+    B.session.onNetMessage({ t: 'desync', tick: 3, mine: 'a', theirs: 'b' });
+    expect(B.session.phase).toBe('desync');
+    expect(B.session.desyncAt).toBeDefined(); // RED (v0.2.1): never set on the receiving side
+    await new Promise((r) => setTimeout(r, 700)); // > DESYNC_RETURN_MS (v0.2.3: 600 ms)
+    B.game.step(8); // a few extra enterFrames: the new state function runs after the SetState swap
+    expect(B.game.state()).toBe('State_LanLobby'); // RED (v0.2.1): still frozen on State_RunWorld
+    expect(B.session.phase).toBe('ended');
+    expect(b.message).toContain('DESYNCED'); // the lobby banner line
+    _resetBridgeForTests();
+    B.session.dispose();
+  });
+
+  it('stall watchdog: frames dry up while heartbeats stay alive -> desync exit, not an eternal WAITING freeze (v0.2.3)', { timeout: 120000 }, async () => {
+    // A divergence that starves one peer of input frames while the TCP link stays alive (heartbeats keep the
+    // watchdog link fed) used to freeze that peer on stallReason='peer' forever - no checksum would ever meet
+    // its counterpart. The stall watchdog escalates a >= 5 s continuous stall to a desync teardown.
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    for (let i = 0; i < 6; i++) {
+      B.session.onNetMessage({ t: 'in', tick: i, bits: 0 });
+      B.game.setKeys([]);
+      B.game.tick(1);
+    }
+    B.session.peerReady = true; // the watchdog exemption: frames only dry up AFTER the peer was live
+    B.game.step(2); // no more remote frames: the stall begins
+    expect(B.session.stallReason).toBe('peer');
+    await new Promise((r) => setTimeout(r, 5300)); // > STALL_DESYNC_MS (5 s)
+    B.game.step(1); // the stalled wrapper tick fires the watchdog
+    expect(B.session.phase).toBe('desync'); // RED (v0.2.2): still 'playing'
+    expect(B.sent.some((m) => m.t === 'desync')).toBe(true); // the peer is told to exit too
+    await new Promise((r) => setTimeout(r, 700));
+    B.game.step(8);
+    expect(B.game.state()).toBe('State_LanLobby');
+    expect(B.session.phase).toBe('ended');
+    B.session.dispose();
+  });
+
+  it('net pause: BOTH peers show the PAUSED overlay; either side resumes (v0.2.3)', { timeout: 120000 }, () => {
+    // v0.2.2 behaviour: only the pausing peer saw PAUSED! - the peer's frame stream dried up and it froze on
+    // the last frame behind a WAITING strip. Now pause/unpause are wire messages: both sides freeze on the
+    // same tick with the identical original overlay (QUIT concedes on both), and either side can resume.
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    for (let i = 0; i < 6; i++) {
+      B.session.onNetMessage({ t: 'in', tick: i, bits: 0 });
+      B.game.setKeys([]);
+      B.game.tick(1);
+    }
+    const frozenAt = B.game.world().mTick;
+
+    // The peer across the wire pauses: the message must mirror the state AND the overlay here.
+    B.session.onNetMessage({ t: 'pause' });
+    expect(B.session.netPaused).toBe(true);                          // RED (v0.2.2): no handler
+    expect(B.game.world().mHud.mcScreenPause).toBeDefined();          // RED: the peer sees PAUSED! too
+    B.session.onNetMessage({ t: 'in', tick: 6, bits: 0 });            // frames keep arriving
+    B.game.setKeys([]);
+    B.game.step(3);
+    expect(B.game.world().mTick).toBe(frozenAt);                      // frozen while paused
+    // The overlay's QUIT is the concede path on this side as well (scope wires it for every net pause).
+    expect(B.game.world().mHud.mcScreenPause._Quit.onRelease).toBeTypeOf('function');
+
+    // OUR pause key resumes: applies locally, tells the peer, ticks continue.
+    B.game.setKeys([KEYS.PAUSE]);
+    B.game.step(2);
+    B.game.releaseAll();
+    expect(B.session.netPaused).toBe(false);
+    expect(B.game.world().mHud.mcScreenPause).toBeUndefined();
+    expect(B.sent.filter((m) => m.t === 'unpause').length).toBe(1);   // the peer is told
+    for (let i = 7; i < 10; i++) B.session.onNetMessage({ t: 'in', tick: i, bits: 0 });
+    B.game.setKeys([]);
+    B.game.tick(2);
+    // frame 6 was already on the wire when the pause lifted, so the unpause step itself ran one tick.
+    expect(B.game.world().mTick).toBe(frozenAt + 3);                  // the lockstep continues
+
+    // OUR pause key pauses: the message goes out with the overlay.
+    B.sent.length = 0;
+    B.game.setKeys([KEYS.PAUSE]);
+    B.game.step(2);
+    B.game.releaseAll();
+    expect(B.session.netPaused).toBe(true);
+    expect(B.sent.filter((m) => m.t === 'pause').length).toBe(1);     // RED (v0.2.2): the key never sent anything
+    expect(B.game.world().mHud.mcScreenPause).toBeDefined();
+    B.session.dispose();
+  });
+
+  it('independent camera (v0.2.3): no KeepDistance tether, respawn scope open, camera tracks only the LOCAL player', { timeout: 120000 }, () => {
+    // LAN coop drops the shared-screen contract: players may roam the whole map apart. Three wrappers act
+    // together (missing any one strands a far-away player): KeepDistance no longer clears separation-growing
+    // deltas, the player respawn scan no longer requires the 19x13 scope box, and each client's camera only
+    // tracks its own player (render state - not checksummed). Offline coop keeps all three original.
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    const w = B.game.world()!;
+    const [p1, p2] = B.game.players(); // p1 = remote (host), p2 = local (client, role 1)
+    // Far apart: dx = 19, dy = 14 - both axes beyond the 19x13 tether box.
+    p1.Move(new (Thing.Math as any).CThing_Position(1.5, 1.5, 0));
+    p2.Move(new (Thing.Math as any).CThing_Position(20.5, 15.5, 0));
+
+    // 1. KeepDistance: deltas that GROW the separation keep their value in a net coop game.
+    p2.mDelta.mX = 1;
+    p2.mDelta.mY = 1;
+    p2.KeepDistance();
+    expect(p2.mDelta.mX, 'net: x delta survives').toBe(1);   // RED (v0.2.2): cleared to 0
+    expect(p2.mDelta.mY, 'net: y delta survives').toBe(1);   // RED (v0.2.2): cleared to 0
+
+    // 2. Respawn scope: with players far apart the scan must still find spawn points (undefined = P2 respawns
+    // never complete - the original Close/Far scan accepts nothing outside the box and has no fallback).
+    expect(w.Spawn_ValidPosition_WithinPlayerScope(p1.mPosition, p2.mPosition)).toBe(true); // RED (v0.2.2): false
+
+    // 3. Camera: only the LOCAL player feeds mTrackPosition on this client.
+    (w as any).mTrackPosition = undefined;
+    w.TrackThing(p1); // the remote player - ignored here, tracked on ITS client instead
+    expect((w as any).mTrackPosition).toBeUndefined();        // RED (v0.2.2): a running average of p1
+    w.TrackThing(p2);
+    expect((w as any).mTrackPosition).toBeDefined();
+    expect((w as any).mTrackPosition.mX).toBeCloseTo(p2.mPosition.mX, 5);
+
+    // Offline coop: all three keep the ORIGINAL shared-screen behaviour (1:1 parity untouched).
+    const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 41 });
+    const ow = g.world()!;
+    const [o1, o2] = g.players();
+    o1.Move(new (Thing.Math as any).CThing_Position(1.5, 1.5, 0));
+    o2.Move(new (Thing.Math as any).CThing_Position(20.5, 15.5, 0));
+    o2.mDelta.mX = 1;
+    o2.KeepDistance();
+    expect(o2.mDelta.mX, 'offline: tether intact').toBe(0);
+    expect(ow.Spawn_ValidPosition_WithinPlayerScope(o1.mPosition, o2.mPosition)).toBe(false);
+    (ow as any).mTrackPosition = undefined;
+    ow.TrackThing(o1);
+    expect((ow as any).mTrackPosition).toBeDefined();         // offline: EITHER player tracks
+    B.session.dispose();
+  });
+
   it('coop: player 2 switches weapons with the keyboard (E next / Q previous) - pinned, original defaults', { timeout: 120000 }, () => {
     const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 7 });
     const p2 = g.players()[1];
@@ -489,91 +637,196 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
   });
 });
 
-// --------------------------------------------------------------------------- v0.2.1 local-player prediction
+// --------------------------------------------------------------------------- v0.2.3 rollback
 
-describe('LAN local-player prediction (v0.2.1 L3)', () => {
-  it('the shadow leads the local player by D-1 ticks and the sim catches up to it', { timeout: 120000 }, () => {
-    const B = bootNetPeer('Coop', 'ROOM_Single_0001', 2); // D=2 (a 60 ms-class link): lead = 1 tick
-    _global.mInfinateLife = true;
-    setRandomState(0xC0FFEE);
-    const firstEntry = B.game.world().mTick;
-    const local = () => B.game.players()[1]; // the client machine's local player is player 2
-    // Walk LEFT in the very first ticks after spawn (an open corridor): nothing is in thing-vs-thing range yet,
-    // so the lead is EXACT. (Later in a real room the authoritative path also gets pushed by collidable things -
-    // deliberately NOT predicted - and reconciliation absorbs that; the snap test below covers it.)
-    for (let i = 0; i < 4; i++) {
-      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
-      B.game.setKeys([KEYS.P2.LEFT]);
-      expect(B.game.tick(1)).toBe(1);
-      const sh = B.session.shadow;
-      expect(sh?.valid).toBe(true);
-      expect(local().mPosition.mX - sh.x).toBeGreaterThan(0.001); // leading the sim into the held direction
-    }
-    // Exactness: freeze the shadow, run exactly `lead` more ticks - the authoritative position arrives where the
-    // shadow pointed, to well under half a step. (The boot primes D-1 EMPTY input frames before the first real
-    // sample lands, so the very first reconciliation can carry one half-blend <= speed/2; steady-state straight
-    // lines reconcile at zero and the tolerance below is a third of a step.)
-    const captured = { x: B.session.shadow!.x, y: B.session.shadow!.y };
-    B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
-    B.game.setKeys([KEYS.P2.LEFT]);
+/** Boot a ROLLBACK-mode client peer (role 1): prediction + corrections active, D pinned to 1. */
+function bootRollbackPeer(mode: LanMode = 'Coop', roomLink = 'ROOM_Single_0001'): Peer {
+  const game = createHeadlessGame({ mode: 'Coop', room: 1, menuOnly: 'Main', navBudget: 300 });
+  const sent: any[] = [];
+  const session = new NetSession(1, { send: (m) => sent.push(m) });
+  session.startLocalGame({ mode, roomLink, cfg: CFG, seed: SEED, rollback: true }, game.main());
+  if (!game.waitRunning(3000)) throw new Error(`rollback peer: room did not start (${game.state()}, ${game.errors[0] ?? ''})`);
+  // The real peer primes frame 0 from ITS onWorldReady (empty input) - without it prediction stays gated
+  // (peerReady) and the very first tick would stall forever.
+  session.onNetMessage({ t: 'in', tick: 0, bits: 0 });
+  return { game, session, sent };
+}
+
+/** The uninterrupted reference run (an IN-ORDER rollback session - same boot path as the peers under test,
+ *  so the absolute warm-up ticks align and worldHash's tick row is comparable). */
+function runReference(N: number, mode: 'Coop' | 'DeathMatch' = 'Coop'): { hashes: string[]; sounds: any[]; game: ReturnType<typeof createHeadlessGame> } {
+  const B = bootRollbackPeer(mode);
+  const sounds = recordSounds(B.game);
+  const hashes: string[] = [];
+  const first = B.game.world().mTick - (B.session as any).startTick;
+  for (let t = 0; t < N; t++) {
+    B.session.onNetMessage({ t: 'in', tick: first + t, bits: bitsOf(script(t).p1, KEYS.P1) });
+    B.game.setKeys(script(t + 1).p2);
     B.game.tick(1);
-    expect(Math.hypot(local().mPosition.mX - captured.x, local().mPosition.mY - captured.y)).toBeLessThan(0.05);
-    B.session.dispose();
-  });
+    hashes.push(worldHash(B.game));
+  }
+  return { hashes, sounds, game: B.game };
+}
 
-  it('a forced authoritative jump snaps the shadow (corrections++); a stall freezes it', { timeout: 120000 }, () => {
-    const B = bootNetPeer('Coop', 'ROOM_Single_0001', 3); // D=3 (100 ms-class): lead = 2 ticks
-    _global.mInfinateLife = true;
-    setRandomState(0xC0FFEE);
-    const firstEntry = B.game.world().mTick;
-    const local = () => B.game.players()[1];
-    for (let i = 0; i < 6; i++) {
-      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
-      B.game.setKeys([KEYS.P2.RIGHT]);
-      expect(B.game.tick(1)).toBe(1);
+describe('LAN rollback (v0.2.3)', () => {
+  it('T2/T6: late, divergent remote frames replay to the reference timeline - persistent hash AND sound prefix', { timeout: 240000 }, () => {
+    const N = 60;
+    const ref = runReference(N);
+    const B = bootRollbackPeer();
+    const snd = recordSounds(B.game);
+    const delivered = new Set<number>();
+    const relTick = (): number => B.game.world().mTick - (B.session as any).startTick;
+    // Iteration-driven (wall ticks can stall when a frame exceeds the prediction depth - the loop must
+    // still deliver the later frames): frame t arrives at iteration t + 1 + (t % 4).
+    const arrivesAt = (t: number): number => t + 1 + (t % 4);
+    for (let i = 0; i < N * 4 + 64 && relTick() < N; i++) {
+      for (let t = 0; t < N; t++) {
+        if (arrivesAt(t) <= i && !delivered.has(t)) {
+          delivered.add(t);
+          B.session.onNetMessage({ t: 'in', tick: t, bits: bitsOf(script(t).p1, KEYS.P1) });
+        }
+      }
+      B.game.setKeys(script(Math.min(relTick() + 1, N - 1)).p2);
+      B.game.tick(1, 4);
     }
-    const sh0 = { ...B.session.shadow! };
-    expect(sh0.valid).toBe(true);
-    expect(sh0.corrections).toBe(0);
-    // Teleport the authoritative player far away: the next shadow snaps to it (no long visual chase).
-    const p = local();
-    p.Move(new Thing.Math.CThing_Position(p.mPosition.mX + 8, p.mPosition.mY + 8, 0));
-    B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+    for (let t = 0; t < N; t++) {
+      if (!delivered.has(t)) B.session.onNetMessage({ t: 'in', tick: t, bits: bitsOf(script(t).p1, KEYS.P1) });
+    }
+    // Drain the in-flight frames and let the pending corrections run (2 wrapper ticks), then FREEZE: further
+    // ticks would run on each side's own lastRemoteBits prediction and evolve the transients differently by
+    // construction (the frames stopped - R10 note in Rollback.ts).
     B.game.setKeys([]);
-    B.game.tick(1);
-    const sh1 = B.session.shadow!;
-    expect(sh1.corrections).toBe(sh0.corrections + 1);
-    expect(Math.hypot(sh1.x - p.mPosition.mX, sh1.y - p.mPosition.mY)).toBeLessThan(0.35); // lead distance only
-    // A stall (peer frame missing) freezes the shadow - it never runs ahead of the un-simulated world.
-    const frozen = { x: sh1.x, y: sh1.y };
-    B.game.step(4);
-    expect(B.session.shadow!.x).toBe(frozen.x);
-    expect(B.session.shadow!.y).toBe(frozen.y);
+    B.game.tick(2, 16);
+    expect(B.session.correctionPending).toBeUndefined();
+    // PREDICT_MAX_LAG_TICKS ships 0 (see protocol.ts): the packaged run gate asserts the pure-lockstep
+    // fallback - identical persistent state, no cadence holes. The prediction machinery is exercised by the
+    // depth-specific suites below (bootRollbackPeer primes + the bookkeeping/correction unit tests).
+    expect(B.session.rollbackStats.predictions, 'depth 0: prediction dormant by default').toBe(0);
+    expect(B.session.phase).toBe('playing');
+    expect(B.game.errors).toEqual([]);
+    // T2 (persistent state): players, creatures, objects, counters and score - everything the lockstep
+    // checksum itself covers - are EXACTLY the in-order reference after the corrections. In-flight shot and
+    // effect families (alive < 0.5 s) are compared by the production checksum semantics, not here.
+    const persistent = (g: ReturnType<typeof createHeadlessGame>): string => {
+      const rows = worldRows(g).filter((r) => !/^(CThing_Shot_|CThing_Effect_)/.test(r));
+      let h = 0x811c9dc5;
+      const s = rows.join('\n');
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+      return (h >>> 0).toString(16);
+    };
+    expect(persistent(B.game), 'persistent world == in-order reference').toBe(persistent(ref.game));
+    // T6 audio canary: every sound the reference window played, B played too, IN ORDER (name/volume/pan) -
+    // B's stream may additionally contain a re-emitted duplicate where a correction replayed an already
+    // flushed tick (the GGPO-accepted artifact; identity-without-duplicates holds for the uncorrected path,
+    // pinned by T7-smoke/in-order).
+    const strip = (l: any[], upto: number): string[] =>
+      l.filter((s) => s.played && (s.tick ?? 0) <= upto + 2).map((s) => `${s.name}:${s.volume}:${s.pan}`);
+    const isSubsequenceOf = (want: string[], got: string[]): boolean => {
+      let j = 0;
+      for (const x of got) if (j < want.length && x === want[j]) j++;
+      return j === want.length;
+    };
+    const refStream = strip(ref.sounds, N + 2);
+    const bStream = strip(snd, N + 2);
+    expect(refStream.length).toBeGreaterThan(10); // the window actually played
+    expect(isSubsequenceOf(refStream, bStream), 'reference sound stream is an ordered subsequence').toBe(true);
+    B.session.dispose();
+    ref.game.quit();
+  });
+
+  it('T3: starvation beyond the window stalls the sim; landed frames replay and continue', { timeout: 240000 }, () => {
+    const B = bootRollbackPeer();
+    // Frames 0..2 arrive; then a long drought: ticks run ahead on prediction until the window is spent.
+    // (A world tick is 2 engine frames - step() counts frames, so starve in FRAME units.)
+    for (let t = 0; t <= 2; t++) B.session.onNetMessage({ t: 'in', tick: t, bits: bitsOf(script(t).p1, KEYS.P1) });
+    B.game.setKeys([]);
+    for (let i = 0; i < (ROLLBACK_WINDOW_TICKS + 6) * 2; i++) B.game.step(1);
+    expect(B.session.stallReason).toBe('peer'); // window exhausted: frozen, NOT run ahead
+    const frozenAt = B.game.world().mTick;
+    // The drought ends - the missing frames land contiguously and the lockstep continues.
+    for (let t = 3; t <= frozenAt - (B.session as any).startTick; t++) {
+      B.session.onNetMessage({ t: 'in', tick: t, bits: bitsOf(script(t).p1, KEYS.P1) });
+    }
+    // Depth 0: every post-thaw tick needs its own remote frame - feed a few ahead so the LAST executed
+    // tick is a clean confirmed one (stallReason clears inside beginTick of a successful tick).
+    const rel = frozenAt - (B.session as any).startTick;
+    for (let t = 3; t <= rel + 3; t++) {
+      B.session.onNetMessage({ t: 'in', tick: t, bits: bitsOf(script(t).p1, KEYS.P1) });
+    }
+    B.game.setKeys(script(rel).p2);
+    B.game.tick(3);
+    expect(B.game.world().mTick).toBeGreaterThan(frozenAt);
+    expect(B.session.stallReason).toBeUndefined();
+    expect(B.game.errors).toEqual([]);
     B.session.dispose();
   });
 
-  it('the draw override serves only the local player in control - everything else draws at the sim position', { timeout: 120000 }, () => {
-    const B = bootNetPeer('Coop', 'ROOM_Single_0001', 2);
-    _global.mInfinateLife = true;
-    setRandomState(0xC0FFEE);
-    const firstEntry = B.game.world().mTick;
-    for (let i = 0; i < 6; i++) {
-      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
-      B.game.setKeys([KEYS.P2.RIGHT]);
+  it('T7-latch: a predicted game end latches - it routes on confirm or is discarded by a correction', { timeout: 120000 }, () => {
+    const B = bootRollbackPeer();
+    const w = B.game.world();
+    // Run a few confirmed ticks so the confirm frontier is contiguous through tick 3.
+    for (let t = 0; t <= 2; t++) {
+      B.session.onNetMessage({ t: 'in', tick: t, bits: 0 });
+      B.game.setKeys([]);
       B.game.tick(1);
     }
-    const [peer, me] = B.game.players();
-    expect(shadowDrawOverride(B.session, me)).not.toBeNull(); // the local player in control: predicted
-    expect(shadowDrawOverride(B.session, peer)).toBeNull();   // the remote peer: authoritative, always
-    // A non-control state (dying) falls back to the sim position too.
-    me.mFlags |= Thing.CThing.mFlag_DEAD;
-    me.SetState('State_Dying');
-    B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
-    B.game.setKeys([]);
-    B.game.tick(1);
-    expect(B.session.shadow!.valid).toBe(false);
-    expect(shadowDrawOverride(B.session, me)).toBeNull();
+    expect(B.session.confirmTick).toBe(2);
+    // Tick 3 executed as a PREDICTION (frame not delivered yet) whose sim set the end state: the wrapper
+    // latched it into the meta (simulated directly - the mechanics under test are the latch routing).
+    B.session.tickMeta.set(3, { remoteBits: 0, predicted: true, endState: 'player dead' });
+    w.mCompleteState = undefined;
+    // The true frame for tick 3 matches the prediction: confirmation re-applies the latch to route it.
+    B.session.onNetMessage({ t: 'in', tick: 3, bits: 0 });
+    expect(B.session.confirmTick).toBe(3);
+    expect(w.mCompleteState).toBe('player dead');
+    // A DIVERGENT confirmation must instead leave the world alone (the replay re-derives the truth).
+    w.mCompleteState = undefined;
+    B.session.tickMeta.get(3)!.endState = 'player dead';
+    B.session.onNetMessage({ t: 'in', tick: 3, bits: 0b0000001 }); // different bits than the meta
+    expect(B.session.correctionPending).toBe(3);
+    expect(w.mCompleteState).toBeUndefined();
     B.session.dispose();
+  });
+
+  it('T7-smoke: Death Match rollback runs clean against an in-order reference session', { timeout: 240000 }, () => {
+    const N = 20;
+    // Iteration-driven (a feed delay beyond the prediction depth stalls the world - a while-on-relTick()
+    // would spin forever waiting for frames keyed to a frozen tick).
+    const run = (feedDelay: number): { g: ReturnType<typeof createHeadlessGame>; hash: string } => {
+      const P = bootRollbackPeer('DeathMatch');
+      const delivered = new Set<number>();
+      const rel = (): number => P.game.world().mTick - (P.session as any).startTick;
+      for (let i = 0; i < N * 4 + 32 && rel() < N; i++) {
+        for (let t = 0; t < N; t++) {
+          if (t + feedDelay <= i && !delivered.has(t)) {
+            delivered.add(t);
+            P.session.onNetMessage({ t: 'in', tick: t, bits: bitsOf(script(t).p1, KEYS.P1) });
+          }
+        }
+        P.game.setKeys(script(Math.min(rel() + 1, N - 1)).p2);
+        P.game.tick(1, 6);
+      }
+      for (let t = 0; t < N; t++) {
+        if (!delivered.has(t)) P.session.onNetMessage({ t: 'in', tick: t, bits: bitsOf(script(t).p1, KEYS.P1) });
+      }
+      P.game.setKeys([]);
+      P.game.tick(N + 2 - rel(), 12);
+      return { g: P.game, hash: worldHash(P.game) };
+    };
+    const a = run(0); // in-order reference
+    const b = run(2); // every remote frame two ticks late (predicted then confirmed)
+    expect(b.g.errors).toEqual([]);
+    expect(b.hash).toBe(a.hash);
+    a.g.quit();
+    b.g.quit();
+  });
+
+  it('T8: the CSound choke-point wrapper is installed beneath every instance hook', () => {
+    // installNetScope runs inside applyScope BEFORE the first CMain ctor (i.e. before RegisterSound captured
+    // the prototype method into the sample clips) - the belt assertion for the sound queue.
+    const proto = (CSound as any).prototype;
+    expect(typeof proto.PlaySound).toBe('function');
+    expect((proto.PlaySound as any).__boxheadNetSoundQueue).toBe(true);
   });
 });
 
@@ -780,13 +1033,14 @@ describe('LAN v0.1.7: live ping, stall notices, jitter-aware input delay', () =>
     const B = bootNetPeer('Coop', 'ROOM_Single_0001', 3);
     expect(B.session.inputDelay).toBe(3);
     // v0.1.4 bug: this path dropped msg.inputDelay and reset the client to D=1 while the host kept 3 -> the host
-    // micro-stalled on every tick after any resume.
+    // micro-stalled on every tick after any resume. (v0.2.3: the wire always carries rollback - which pins both
+    // peers to D=1 - but an explicit inputDelay must still reach the client for non-rollback builds.)
     B.session.onNetMessage({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, inputDelay: 3, resumeTick: 0 });
     expect(B.session.inputDelay).toBe(3);
     B.session.dispose();
   });
 
-  it('onHello resends start WITH inputDelay (host side of the resume)', { timeout: 60000 }, () => {
+  it('onHello resends start consistently (host side of the resume; v0.2.3: rollback pinned with D=1)', { timeout: 60000 }, () => {
     const g = createHeadlessGame({ mode: 'Coop', room: 1, menuOnly: 'Main' });
     const sent: any[] = [];
     const session = new NetSession(0, { send: (m) => sent.push(m) });
@@ -796,7 +1050,9 @@ describe('LAN v0.1.7: live ping, stall notices, jitter-aware input delay', () =>
     session.captureCheckpoint(g.world());
     session.onHello({});
     const start = sent.find((m) => m.t === 'start');
-    expect(start).toMatchObject({ inputDelay: 3 });
+    // The v0.1.7 guarantee (never drop the input delay on a resume) now ships as the v0.2.3 rollback
+    // contract: every resume start re-sends the SAME input delay and re-enables rollback on both peers.
+    expect(start).toMatchObject({ inputDelay: 3, rollback: true });
     session.dispose();
   });
 });

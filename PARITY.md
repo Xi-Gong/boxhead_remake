@@ -389,3 +389,42 @@ mcLock #274 + 白面板 #317 原样复用，即高分表同款窗框）；内嵌
 地图居中 x=−74.5、两侧黑域像素采样、暂停带、竖屏 640x889 重分配与上下黑域、DM 分屏 0.667 缩放自适
 应）；platform 组改填充断言（原 4:3 断言更新）；`lib.mjs` 拆 stage/content 双坐标空间（`centreOf` 恒为
 root 空间）；`saveStore.test.ts` fit→fill 单测重写；aspect 锁单测移除。全套 vitest 1199 通过、e2e 178/178。
+
+## 15. v0.2.3 独立镜头 + Desync 即返 + 暂停同步 + 回滚基建 + 四个 bug 修复（2026-10-17）
+
+用户双机实测反馈的七项修复。新增 deviation 两条（`SPAWN_SOLID_FILTER`、`COOP_DEATH_WEAPON_CRATE_SOLID_RELOCATE`）;
+独立镜头/拴绳解除、暂停同步、回滚属 `LAN_MULTIPLAYER` 语义演进，Desync 即返/难度值板/红箱贴墙为 bug 修复，均不新增编号。
+
+### 15.1 独立镜头（拴绳解除 + 相机只跟本地玩家）
+
+| 项 | 行为 |
+|---|---|
+| 拴绳 | LAN Coop 下 `KeepDistance`（19×13 格双人系绳）no-op、玩家复活扫描 `Spawn_ValidPosition_WithinPlayerScope` 恒真（两者必须成对——只解拴绳不解范围，P2 远离后复活扫描全灭即永久卡死）。单机合作保持原版。 |
+| 相机 | `TrackThing` 包装：net coop 下忽略远端玩家的跟踪贡献 → 每端 `mTrackPosition` 只锚定本地玩家（渲染态、不入校验和，DYNAMIC_VIEWPORT 先例）。玩家走到地图边缘仍受原版地图夹持。DM 分屏本就独立，不动。 |
+| 验收 | 打包双实机：房间 11 走向分离 22 格，双端锚点 0.000 格锁定各自玩家；视觉 MCP 核验双端截图（远端玩家出屏、地图无虚空）。 |
+
+### 15.2 Desync 立即回大厅（原为永久冻结）
+
+根因两条：收到 `desync` 消息的一端从不设 `desyncAt`（弃局计时 NaN 比较恒假→永久冻结）；帧断供+心跳存活时无停滞看门狗（WAITING 永挂）。修复：消息补设 `desyncAt`；`DESYNC_RETURN_MS` 3000→600；新增 `STALL_DESYNC_MS`(5s) 停滞看门狗（对端世界构建期豁免——重连冷启动 ~5-8s）；大厅横幅 "CONNECTION DESYNCED - RETURNED TO LOBBY"。打包实测注入 desync：双端 2.8s 内落大厅+横幅。
+
+### 15.3 暂停双方同步显示
+
+新 `{t:'pause'}/{t:'unpause'}` 消息（TCP 与输入帧同链路保序）：任一方按 P 双端同拍进入 `netPaused` 并挂上**原版 PAUSED!/QUIT?/UPGRADE LIST 覆盖层**（此前仅暂停端可见，对端只冻结）；任意一方可继续；QUIT 双端都接判负。打包实测：主机暂停→双端覆盖层、客户端继续→双端恢复。暂停期间心跳不停、掉线走既有重连。
+
+### 15.4 回滚 netcode 基建（已就绪、默认待命）
+
+GGPO 式预测+回滚全链路落地：`WorldSnap.ts`（逐拍全量世界快照引擎——own-prop 图序列化 + 原型分派（生产 bundle 类名被 minify，名称分派全灭，实测发现）、含 RNG/导航静态/nVD 方向缓存/mDrawPosition/NorSlot；离线混沌往返测试逐位相等）、`Rollback.ts`（预测簿记/纠错重放/确认前沿/声音队列）、协议 `rollback` 标志 + `PREDICT_MAX_LAG_TICKS`。**实测结论：真实异步链路上深度 1-8 都在第 2-4 个校验和拍出现微小持久态漂移（玩家 x 差 1-3/16 格）→ 深度 0 出厂**（基础设施保留、ring 门控关闭，一行常量可再启用）；稳态延迟由自适应 D 承担（每档比 v0.1.7 少 1 拍），v0.2.1 显示影子继续承担视觉即时（显示 12-31ms、sim 按设计滞后 D 拍）。30/60/100ms 单向三档打包实测全过：后半窗停帧 0-1、显示响应 ≤31ms、锁步/分数/音频双端全等。附带修复：预测期校验和挂起发送旧值（发送时取重算后的最新值）。
+
+### 15.5 四个 bug 修复
+
+| bug | 根因 | 修复 |
+|---|---|---|
+| 难度选择消失 | v0.2.2 restyle 控件改 `getNextHighestDepth` 分配，bDiff 恰落 SubScreen 素材的固定 depth 10 被顶掉 | ctor 先挂 SubScreen 再 Build（控件从 depth 11 起，永不碰撞）；lansetup 补 attached 断言；视觉 MCP 双端核验值板可见 |
+| 出生嵌墙 | 房间 11 PATCHY 一个 P2 出生标记在 Slab 碰撞区内（原版数据缺陷），P2 出生扫描从不查 Solid → 种子依赖随机嵌墙后 PlayerCollide 永锁 | `Spawn_ValidateAll` 时剪除玩家出生表的 Solid 格条目（确定性、双端一致，登记 `SPAWN_SOLID_FILTER`）；新增 18 图 × Coop/DM × 4 种子全审计测试（spawnAudit，36 用例） |
+| 死亡红箱偶尔不掉 | Coop 死亡武器箱复用原版"死亡格 StaticImpassable 则静默放弃"——被爆炸击退贴墙死即无箱 | `crateDropPosition` 螺旋搜索最近有效格生成（确定性，登记 `COOP_DEATH_WEAPON_CRATE_SOLID_RELOCATE`）；贴墙死掉箱测试 + netlockstep 双端一致 |
+
+### 15.6 观测面
+
+`__game.lan()` 增 rollback 计数器（predictions/corrections/replayedTicks/maxDepth/confirmLag/ringSize/desyncDetail）、`__setInfiniteLife`/`__forceDesync` QA 钩子；netsmooth 探针改测**显示位置**响应（影子在则 ≤1 拍+1 帧）并记录 sim 跟进时刻。
+
+测试：`tests/sim/spawnAudit.test.ts`（36）、`rollback.snapshot.test.ts`（混沌往返+键序）、`rollback.book.test.ts`（簿记单元）、netlockstep 新增 rollback 组（T2/T6 子序列音频金丝雀、T3 窗口耗尽、T7-latch/DM、T8 声音咽喉）与 desync 消息路径/停滞看门狗/暂停双端/独立相机用例；`tests/sim/playtest.v023.mjs`（四项专项视觉验收）。全套 vitest 1244、e2e 178+28、打包 playtest lanui/typing/v012/net×4/netretry/netsmooth 30+60+100/v023、test:electron 42+6 全绿。

@@ -39,6 +39,10 @@ export class CScreen_LanSetup extends CScreen {
     this.mDepth = 100;
     this.dirty = true;
     this.subMode = '';
+    // The SubScreen must claim its fixed depth 10 BEFORE the widgets allocate: v0.2.2 moved text/pillButton
+    // to getNextHighestDepth() allocation, and with the art attached after Build() the difficulty plate
+    // landed exactly on depth 10 and was evicted by insertChild (label survived, value vanished).
+    this.attachSubScreen();
     this.Build();
     this.unregisterUi = lanBridge().onUi(() => { this.dirty = true; });
     this.Refresh();

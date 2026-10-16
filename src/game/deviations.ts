@@ -340,4 +340,28 @@ export const DEVIATIONS: Deviation[] = [
       'window (and headless tests, which have no presenter) every write is an identity no-op: rendering is ' +
       'bit-identical to v0.2.1. The Electron window no longer locks its content to 4:3 (min 640x480 stays).',
   },
+  {
+    id: 'COOP_DEATH_WEAPON_CRATE_SOLID_RELOCATE',
+    file: 'local/WeaponCrate.ts (crateDropPosition), local/scope.ts (LogKill wrapper)',
+    description:
+      'v0.2.3 amendment to COOP_DEATH_WEAPON_CRATE (v0.1.9): the wrapper used to mirror CWorld._CreatePickup\'s ' +
+      'StaticImpassable guard, silently dropping NOTHING when a player died on a solid/border cell (explosion ' +
+      'knock-back into a wall - the "sometimes no red box drops" report). Now crateDropPosition spirals out from ' +
+      'the death cell (Chebyshev rings, row-major, max 6 cells, no RNG) and the crate spawns at the first valid ' +
+      'cell instead. Deterministic, identical on both lockstep peers. The original zombie/devil _CreatePickup ' +
+      'drops keep their 1:1 suppression.',
+  },
+  {
+    id: 'SPAWN_SOLID_FILTER',
+    file: 'World/CWorld.ts (Spawn_ValidateAll wrapper in local/scope.ts; mSpawnPoint_Player list)',
+    description:
+      'Original data defect, kept 1:1 until v0.2.3: some Player2 spawn markers lie inside Solid geometry (room 11 ' +
+      'PATCHY, cell 16,9 inside the Slab_Large collision area - see tests/sim/soakSuite.ts KNOWN_SPAWN_SOLID), and ' +
+      'the original player spawn scan (Spawn_ValidPosition_Close/_Far) never tests Solid, so the seed-dependent P2 ' +
+      'pick can spawn/respawn the player inside a slab where CMap_Collide.PlayerCollide keeps them stuck forever. ' +
+      'The scope wrapper prunes Solid-cell entries from mSpawnPoint_Player inside Spawn_ValidateAll (after all init ' +
+      'markers placed, before the first spawn). Deterministic (no RNG), identical on both LAN lockstep peers; ' +
+      'rooms without a bad marker are bit-identical to the original. Gated by tests/sim/spawnAudit.test.ts ' +
+      '(18 rooms x Coop/DM x multiple seeds).',
+  },
 ];
