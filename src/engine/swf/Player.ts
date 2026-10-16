@@ -31,6 +31,7 @@ import { Library } from './Library.ts';
 import { drainActions, engine, flushConstructors, queueAction, releaseLoadQueue, resetEngine, runScript } from './state.ts';
 import { getButtonActionHandler, reportScriptError } from './registry.ts';
 import { renderStage } from './render/renderer.ts';
+import { applyStageLayout } from './stageLayout.ts';
 
 export { Library } from './Library.ts';
 export {
@@ -134,8 +135,19 @@ export class Player {
   /** Run queued actions now (tests / tools that call display-list APIs outside enterFrame). */
   flushActions(): void { drainActions(); }
 
-  /** Render the stage (640x480 logical) into ctx; ctx transform must map logical px -> device px. */
+  /**
+   * DYNAMIC_VIEWPORT: set the live stage size (>= the authored 640x480; the platform Presenter derives it from the
+   * window). Writes the engine state (render bg, mouse bounds) and takes effect for rendering in the next
+   * render(), which re-applies the root stage layout (content centred, masks stretched).
+   */
+  setStageSize(stageW: number, stageH: number): void {
+    engine.stageWidth = stageW;
+    engine.stageHeight = stageH;
+  }
+
+  /** Render the stage (live size, >= 640x480 logical) into ctx; ctx transform must map logical px -> device px. */
   render(ctx: CanvasRenderingContext2D, deviceScale: number): void {
+    applyStageLayout(this.rootClip, engine.stageWidth, engine.stageHeight);
     const bg = this.library.json.stage.bg;
     ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
     ctx.fillRect(0, 0, engine.stageWidth, engine.stageHeight);

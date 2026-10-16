@@ -72,18 +72,23 @@ async function smokeRun(): Promise<void> {
   });
   check('window title', winInfo.title === 'Boxhead: 2Play Rooms', winInfo.title);
   check('no menu bar', winInfo.menuBar === false);
-  const aspect = await app.evaluate(({ BrowserWindow }) => {
+  // DYNAMIC_VIEWPORT: the 4:3 content aspect lock is gone (the page fills any window shape and the game view grows
+  // with it) - a non-4:3 content size must simply stick now.
+  const freeSize = await app.evaluate(({ BrowserWindow }) => {
     const w = BrowserWindow.getAllWindows()[0]!;
-    const b = w.getBounds();
-    let prevented = false;
-    const ev = { preventDefault(): void { prevented = true; } };
-    w.emit('will-resize', ev, { ...b, width: b.width - 300 }, { edge: 'right' });
-    const after = w.getContentSize();
-    w.setContentSize(1280, 960);
-    return { prevented, after, restored: w.getContentSize() };
+    w.setContentSize(1600, 900);
+    return w.getContentSize();
   });
-  // 735 DIP is 1102.5 px at 150 %: allow +-1 DIP of DPI rounding.
-  check('will-resize keeps content 4:3 (Windows)', aspect.prevented && aspect.after[0] === 980 && Math.abs(aspect.after[1]! - 735) <= 1 && aspect.restored[0] === 1280, aspect);
+  check('window resizes freely to any aspect (16:9 content sticks)', freeSize[0] === 1600 && freeSize[1] === 900, freeSize);
+  await page.waitForFunction(() => window.innerWidth === 1600 && window.innerHeight === 900, undefined, { timeout: 5000 }).catch(() => {});
+  await sleep(300);
+  const stage1600 = await page.evaluate(() => {
+    const c = document.querySelector('canvas.game-canvas') as HTMLCanvasElement | null;
+    const dpr = window.devicePixelRatio || 1;
+    return { cw: c?.width, ch: c?.height, expW: Math.round(1600 * dpr), expH: Math.round(900 * dpr) };
+  });
+  check('1600x900 window: canvas fills it (backing = CSS x dpr)', stage1600.cw === stage1600.expW && stage1600.ch === stage1600.expH, stage1600);
+  await app.evaluate(({ BrowserWindow }) => { BrowserWindow.getAllWindows()[0]!.setContentSize(1280, 960); });
   await page.waitForFunction(() => window.innerWidth === 1280 && window.innerHeight === 960, undefined, { timeout: 5000 }).catch(() => {});
   await sleep(300);
   check('portable userData redirect', winInfo.userData === path.join(portableDir, 'Boxhead2PlayRooms-data'), winInfo.userData);

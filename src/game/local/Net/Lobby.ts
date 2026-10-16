@@ -2,31 +2,21 @@
 // instructions page: a synthetic frame of original characters + drawn text/buttons, original cross-fade transition).
 // v0.1.4 rework: two clean views - ENTRY (create a room / join by discovery list or IP) and ROOM (both players with
 // READY states; the host's START leads into the net setup screen once both are ready; RESUME continues a finished
-// game from its checkpoint). All state lives in the bridge (bridge.ts); this screen only renders it. Layout: Text()
-// places top-left, Button() CENTRES on (x,y) - every coordinate below is chosen with that in mind so the columns
-// (host x 30..300, join x 330..610) never overlap at any window size; the manual-IP DOM input tracks the letterboxed
-// canvas through bridge.presenter (logicalToClient + onResize).
-import { TextFormat, flash, proto, registerClass } from '../../../engine/runtime.ts';
+// game from its checkpoint). All state lives in the bridge (bridge.ts); this screen only renders it.
+// v0.2.2 restyle (UiStyle): both views sit on the ORIGINAL options-window card (localSymbols 9005 - the highscore
+// table's own chrome), with the select-screen pill buttons, the signature red headings and the #e60000@35% wash as
+// hover/selected feedback. Coordinates inside the panel are centred (x -230..230); the manual-IP DOM input tracks
+// its logical rectangle through bridge.presenter (contentToClient + onResize - the centred 640x480 content space).
+import { proto, registerClass } from '../../../engine/runtime.ts';
 import { CScreen } from '../../Screen/CScreen.ts';
 import { lanBridge } from './bridge.ts';
 import { getRunStartWave } from '../StartWave.ts';
-import { buildMenuButton, SCREEN_LAN_LOBBY_LINKAGE } from '../localSymbols.ts';
+import { SCREEN_LAN_LOBBY_LINKAGE } from '../localSymbols.ts';
 import { inputSummary } from '../InputBadge.ts';
+import { BODY_FONT, GREEN, GREY, INK, MENU_FONT, RED, glow, panelCard, pillButton, text } from '../UiStyle.ts';
 
-const INK = 0x333333;
-const ACCENT = 0xcc0000;
-const GREEN = 0x007000;
-const GREY = 0x888888;
 /** The manual-IP input's logical rectangle (top-left x/y, width, height in 640x480 stage units). */
-const IP_BOX = { x: 330, y: 316, w: 200, h: 24 };
-
-function glow(): any[] {
-  return [new flash.filters.GlowFilter(0xffffff, 1, 6, 6, 6, 2)];
-}
-
-function menuShadow(): any[] {
-  return [new flash.filters.GlowFilter(0xffffff, 1, 6, 6, 6, 2), new flash.filters.DropShadowFilter(5, 45, 0x000000, 1, 5, 5, 0.18, 1)];
-}
+const IP_BOX = { x: 95, y: 318, w: 165, h: 24 };
 
 /** Loose IPv4 / IPv4:port check - the port scan on the main side does the real work. */
 function looksLikeAddress(raw: string): boolean {
@@ -41,6 +31,7 @@ export class CScreen_LanLobby extends CScreen {
   // NOTE: display objects are created with Object.create - field initializers never run (engine DisplayObject.ts).
   // Everything is assigned in ctor() below.
   private dirty!: boolean;
+  private panel: any;
   private ipInput: HTMLInputElement | undefined;
   private unresize: (() => void) | undefined;
   private tickTimer: number | undefined;
@@ -114,23 +105,14 @@ export class CScreen_LanLobby extends CScreen {
   }
 
   Text(x: number, y: number, w: number, h: number, font: string, size: number, color: number, bold: boolean,
-    align: 'left' | 'right' | 'center', text: string, multiline = false): any {
-    const tf = this.createTextField('tf' + this.mDepth, this.mDepth++, x, y, w, h);
-    tf.embedFonts = true;
-    tf.selectable = false;
-    if (multiline) {
-      tf.multiline = true;
-      tf.wordWrap = true;
-    }
-    tf.setNewTextFormat(new TextFormat(font, size, color, bold, false, false, undefined, undefined, align));
-    tf.text = text;
-    return tf;
+    align: 'left' | 'right' | 'center', value: string, multiline = false): any {
+    return text(this.panel ?? this, 'tf' + this.mDepth, x, y, w, h, font, size, color, bold, align, value, multiline);
   }
 
-  Button(x: number, y: number, w: number, h: number, label: string, size: number, onPress: () => void): any {
-    // The name must be unique AND advance mDepth: createEmptyMovieClip REPLACES a same-named sibling (AS2 rule) -
-    // sharing names silently deleted earlier buttons (five host rows all called 'b109' ate the HOST button).
-    const b = buildMenuButton(this, 'b' + this.mDepth, x, y, w, h, label, size);
+  /** A UiStyle pill button centred on (x, y) INSIDE the panel; the unique-name rule still applies (see ctor note). */
+  Button(x: number, y: number, w: number, h: number, label: string, size: number, onPress: () => void,
+    opts: { selected?: boolean } = {}): any {
+    const b = pillButton(this.panel ?? this, 'b' + this.mDepth, x, y, w, h, label, size, opts);
     this.mDepth++;
     b.onRelease = function (this: any): void {
       onPress();
@@ -141,40 +123,36 @@ export class CScreen_LanLobby extends CScreen {
   }
 
   private Build(): void {
-    // ---- shared header + footer
-    this.Text(150, 12, 340, 40, 'Arial Rounded MT Bold', 30, INK, false, 'center', 'LAN GAME').filters = menuShadow();
-    this.Text(20, 44, 600, 20, 'Calibri', 13, ACCENT, true, 'center', '', false); // status line (Refresh keeps it)
-    this.statusText = this['tf' + (this.mDepth - 1)];
-    this.bBack = this.Button(320, 445, 180, 26, 'BACK TO MENU', 14, () => {
-      lanBridge().leaveLobby();
-      this.nState = 'State_Main';
-    });
+    // ---- the shared options-window card (dims the menu background, swallows stray clicks)
+    this.panel = panelCard(this);
 
-    // ---- ENTRY view (nothing hosted / connected yet)
     // NOTE: the element passed to entry()/room() must be the display object itself - never
     // `this.Text(...).filters = x` (that expression evaluates to the FILTER ARRAY, and _visible on an array is a
     // silent no-op, so the text would stay visible in BOTH views).
     const entry = (el: any): void => { this.entryEls.push(el); };
-    const divider = this.createEmptyMovieClip('divider', this.mDepth++);
-    divider.lineStyle(2, 0x9c9c9c);
-    divider.moveTo(320, 76);
-    divider.lineTo(320, 420);
-    entry(divider);
+    const room = (el: any): void => { this.roomEls.push(el); };
+    const heading = (label: string, x: number): any => {
+      const h = this.Text(x, -100, 210, 20, MENU_FONT, 15, RED, true, 'left', label);
+      h.filters = glow();
+      return h;
+    };
 
-    const createHeading = this.Text(30, 80, 270, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'CREATE A ROOM');
-    createHeading.filters = menuShadow();
-    entry(createHeading);
-    entry(this.Text(30, 112, 260, 32, 'Calibri', 11, INK, false, 'left', 'Set up a room on this machine - player 2 joins from theirs.', true));
-    entry(this.Button(170, 220, 220, 30, 'CREATE ROOM', 16, () => lanBridge().host()));
+    // ---- ENTRY view (nothing hosted / connected yet): CREATE column left, discovery + IP right
+    entry((() => { const t = this.Text(-230, -152, 460, 30, MENU_FONT, 24, INK, false, 'center', 'LAN GAME'); t.filters = glow(); return t; })());
+    entry((() => { const d = this.panel.createEmptyMovieClip('divider', this.panel.getNextHighestDepth()); d.lineStyle(2, 0xd8d8d8); d.moveTo(0, -78); d.lineTo(0, 112); return d; })());
+    entry(heading('CREATE A ROOM', -222));
+    entry(this.Text(-222, -74, 200, 34, BODY_FONT, 11, INK, false, 'left', 'Set up a room on this machine - player 2 joins from theirs.', true));
+    entry(this.Button(-117, -6, 150, 30, 'CREATE ROOM', 15, () => lanBridge().host()));
+    entry(this.Text(-225, 62, 210, 14, BODY_FONT, 11, INK, true, 'left', 'OR JOIN BY IP ADDRESS'));
+    // the DOM input sits over (-225..-60, 78..102); JOIN sits right of it
+    entry(this.Button(-17, 90, 60, 26, 'JOIN', 13, () => this.joinByIp()));
 
-    const joinHeading = this.Text(330, 80, 280, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'JOIN A ROOM');
-    joinHeading.filters = menuShadow();
-    entry(joinHeading);
-    this.searchingText = this.Text(330, 112, 260, 18, 'Calibri', 12, GREY, false, 'left', 'searching for games on your network...');
+    entry(heading('JOIN A ROOM', 12));
+    this.searchingText = this.Text(12, -74, 208, 16, BODY_FONT, 11, GREY, false, 'left', 'searching for games on your network...');
     entry(this.searchingText);
     for (let i = 0; i < 5; i++) {
       const idx = i;
-      const row = this.Button(470, 122 + i * 30, 260, 24, '', 11, () => {
+      const row = this.Button(115, -40 + i * 32, 210, 26, '', 11, () => {
         const b = lanBridge();
         const h = b.hosts[idx] as any;
         if (h && h.status === 'lobby' && h.players === 1) b.join(h.ip, h.port);
@@ -182,42 +160,44 @@ export class CScreen_LanLobby extends CScreen {
       this.hostRows.push(row);
       entry(row);
     }
-    entry(this.Text(330, 268, 260, 16, 'Calibri', 12, INK, true, 'left', 'OR JOIN BY IP ADDRESS'));
-    entry(this.Button(565, 328, 60, 24, 'JOIN', 12, () => this.joinByIp()));
 
     // ---- ROOM view (hosting / connected / during a reconnect window)
-    const room = (el: any): void => { this.roomEls.push(el); };
-    const roomHeading = this.Text(30, 80, 300, 24, 'Arial Rounded MT Bold', 18, ACCENT, false, 'left', 'GAME ROOM');
-    roomHeading.filters = menuShadow();
-    room(roomHeading);
-    this.pingText = this.Text(430, 86, 180, 16, 'Calibri', 12, GREEN, true, 'right', '');
+    room((() => { const t = this.Text(-230, -152, 460, 30, MENU_FONT, 24, INK, false, 'center', 'GAME ROOM'); t.filters = glow(); return t; })());
+    this.statusText = this.Text(-165, -122, 330, 16, BODY_FONT, 12, RED, true, 'center', '');
+    this.pingText = this.Text(30, -122, 195, 16, BODY_FONT, 12, GREEN, true, 'right', '');
     room(this.pingText);
-    this.addrText = this.Text(30, 108, 580, 16, 'Calibri', 12, INK, true, 'left', '');
+    this.addrText = this.Text(-230, -104, 460, 16, BODY_FONT, 11, INK, true, 'center', '');
     room(this.addrText);
-    room(this.Text(60, 140, 240, 18, 'Calibri', 14, INK, true, 'left', 'PLAYER 1 (HOST)'));
-    room(this.Text(290, 140, 90, 18, 'Calibri', 13, GREEN, true, 'right', 'READY'));
-    this.p2Row = this.Text(60, 180, 240, 18, 'Calibri', 14, INK, true, 'left', 'PLAYER 2');
+    room(this.Text(-222, -80, 180, 18, BODY_FONT, 14, INK, true, 'left', 'PLAYER 1 (HOST)'));
+    room(this.Text(15, -80, 200, 18, BODY_FONT, 13, GREEN, true, 'right', 'READY'));
+    this.p2Row = this.Text(-222, -48, 230, 18, BODY_FONT, 14, INK, true, 'left', 'PLAYER 2');
     room(this.p2Row);
-    this.p2Badge = this.Text(230, 180, 150, 18, 'Calibri', 13, GREY, true, 'right', 'WAITING');
+    this.p2Badge = this.Text(15, -48, 200, 18, BODY_FONT, 13, GREY, true, 'right', 'WAITING');
     room(this.p2Badge);
-    this.inputsText = this.Text(60, 205, 380, 16, 'Calibri', 11, GREY, false, 'left', 'YOUR INPUTS: KEYBOARD');
+    this.inputsText = this.Text(-222, -20, 420, 16, BODY_FONT, 11, GREY, false, 'left', 'YOUR INPUTS: KEYBOARD');
     room(this.inputsText);
 
-    this.resumeText = this.Text(220, 258, 200, 16, 'Calibri', 12, INK, true, 'center', 'LAST GAME AVAILABLE');
+    this.resumeText = this.Text(-230, 8, 460, 16, BODY_FONT, 12, INK, true, 'center', 'LAST GAME AVAILABLE');
     room(this.resumeText);
-    this.resumeBtn = this.Button(320, 290, 180, 26, 'RESUME GAME', 14, () => lanBridge().requestRetry());
+    this.resumeBtn = this.Button(0, 36, 190, 28, 'RESUME GAME', 14, () => lanBridge().requestRetry());
     room(this.resumeBtn);
 
-    this.readyBtn = this.Button(220, 330, 150, 28, 'READY', 15, () => lanBridge().setReady(!lanBridge().ready));
+    this.readyBtn = this.Button(-110, 100, 150, 28, 'READY', 15, () => lanBridge().setReady(!lanBridge().ready), { selected: true });
     room(this.readyBtn);
-    this.leaveBtn = this.Button(420, 330, 150, 28, 'LEAVE', 15, () => lanBridge().leaveLobby());
+    this.leaveBtn = this.Button(110, 100, 150, 28, 'LEAVE', 15, () => lanBridge().leaveLobby());
     room(this.leaveBtn);
-    this.startBtn = this.Button(220, 330, 150, 28, 'START', 15, () => lanBridge().enterSetup());
+    this.startBtn = this.Button(-110, 100, 150, 28, 'START', 15, () => lanBridge().enterSetup(), { selected: true });
     room(this.startBtn);
-    this.startHint = this.Text(170, 362, 300, 14, 'Calibri', 11, GREY, false, 'center', 'waiting for player 2 to get ready');
+    this.startHint = this.Text(-230, 134, 460, 14, BODY_FONT, 11, GREY, false, 'center', 'waiting for player 2 to get ready');
     room(this.startHint);
-    this.closeBtn = this.Button(420, 330, 150, 28, 'CLOSE ROOM', 14, () => lanBridge().leaveLobby());
+    this.closeBtn = this.Button(110, 100, 150, 28, 'CLOSE ROOM', 14, () => lanBridge().leaveLobby());
     room(this.closeBtn);
+
+    // shared (both views): the status line under the title + BACK at the panel's lower edge
+    this.bBack = this.Button(0, 132, 170, 28, 'BACK TO MENU', 14, () => {
+      lanBridge().leaveLobby();
+      this.nState = 'State_Main';
+    });
   }
 
   /** The manual-IP entry is a DOM input over the canvas (canvas text cannot be edited). */
@@ -228,10 +208,11 @@ export class CScreen_LanLobby extends CScreen {
     input.type = 'text';
     input.placeholder = '192.168.x.x';
     input.maxLength = 21;
-    // display:none until the first Refresh has placed it (otherwise the dark input flashes for a frame at the
-    // stage's top-left corner before logicalToClient positions it).
-    input.style.cssText = 'position:absolute;display:none;box-sizing:border-box;background:#181818;border:2px solid #9c9c9c;'
-      + 'color:#fff;font-family:Consolas,monospace;text-align:center;padding:0 2px;z-index:7;outline:none';
+    // display:none until the first Refresh has placed it (otherwise the input flashes for a frame at the stage's
+    // top-left corner before contentToClient positions it). v0.2.2: the white-pill look of the panel's own controls.
+    input.style.cssText = 'position:absolute;display:none;box-sizing:border-box;background:#f5f5f3;border:1px solid #d8d8d8;'
+      + 'border-radius:12px;color:#1f1f1f;font-family:Calibri,Arial,sans-serif;font-weight:bold;text-align:center;'
+      + 'padding:0 4px;z-index:7;outline:none';
     input.addEventListener('keydown', (e) => {
       e.stopPropagation();
       if (e.key === 'Enter') this.joinByIp();
@@ -251,8 +232,10 @@ export class CScreen_LanLobby extends CScreen {
     let x1: number, y1: number, x2: number, y2: number;
     const presenter = lanBridge().presenter;
     if (presenter) {
-      const a = presenter.logicalToClient(IP_BOX.x, IP_BOX.y);
-      const b = presenter.logicalToClient(IP_BOX.x + IP_BOX.w, IP_BOX.y + IP_BOX.h);
+      // DYNAMIC_VIEWPORT: IP_BOX is authored-content (640x480 screen) space - the content is centred on the grown
+      // stage, so glue through contentToClient (identity to logicalToClient at 4:3 windows).
+      const a = presenter.contentToClient(IP_BOX.x, IP_BOX.y);
+      const b = presenter.contentToClient(IP_BOX.x + IP_BOX.w, IP_BOX.y + IP_BOX.h);
       x1 = a.x; y1 = a.y; x2 = b.x; y2 = b.y;
     } else {
       // Fallback: derive the transform from the canvas' own bounding rect (640x480 logical stage).
@@ -340,7 +323,7 @@ export class CScreen_LanLobby extends CScreen {
     if (this.inputsText) this.inputsText.text = `YOUR INPUTS: ${inputSummary()}`;
     if (this.p2Badge) {
       if (!b.peerName) { this.p2Badge.text = 'WAITING'; this.p2Badge.textColor = GREY; }
-      else if (!b.ready) { this.p2Badge.text = 'NOT READY'; this.p2Badge.textColor = ACCENT; }
+      else if (!b.ready) { this.p2Badge.text = 'NOT READY'; this.p2Badge.textColor = RED; }
       else { this.p2Badge.text = 'READY'; this.p2Badge.textColor = GREEN; }
     }
     // v0.2.1: the strip appears after EVERY finished game. A surviving checkpoint keeps the old RESUME semantics;

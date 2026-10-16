@@ -66,7 +66,7 @@ try {
 
   // ---- Part 2: the debrief NAME entry (SWF input TextField on the canvas) with real keys -------------
   await page.keyboard.press('Escape'); // blur the DOM input (no game key; safe)
-  await click(320, 445); // BACK TO MENU
+  await click(320, 372); // BACK TO MENU (v0.2.2 panel layout: 240 + 132)
   if (!(await onScreen('State_Main', 'Screen_Main'))) throw new Error('no main menu (2)');
   await page.waitForTimeout(300);
   await click(320.15, 259.25); // CO-OP PLAY

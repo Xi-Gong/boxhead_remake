@@ -4,22 +4,17 @@
 // drives every control (mode, both characters, level, difficulty, frags); each change mirrors to the client through
 // bridge.setSel -> {t:'setup'} and the client's copy renders read-only behind a WAITING FOR HOST banner. START GAME
 // launches both sides through bridge.startGame(false) (level -> ROOM_Single_00XX, characters -> GameConfig).
-import { TextFormat, flash, proto, registerClass } from '../../../engine/runtime.ts';
+import { proto, registerClass } from '../../../engine/runtime.ts';
 import { CScreen } from '../../Screen/CScreen.ts';
 import { CScreen_SelectWorld } from '../../Screen/CScreen_SelectWorld.ts';
 import { CSound } from '../../packages.ts';
 import { lanBridge } from './bridge.ts';
-import { buildMenuButton, SCREEN_LAN_SETUP_LINKAGE } from '../localSymbols.ts';
+import { SCREEN_LAN_SETUP_LINKAGE } from '../localSymbols.ts';
+import { BODY_FONT, INK, glow, pillButton, text } from '../UiStyle.ts';
 import type { SetupSelection } from './protocol.ts';
 
-const INK = 0x333333;
-const GREEN = 0x00ff00;
 const DIFFICULTY = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'NIGHTMARE'];
 const FRAGS = [5, 10, 20, 50];
-
-function glow(): any[] {
-  return [new flash.filters.GlowFilter(0xffffff, 1, 6, 6, 6, 2)];
-}
 
 export class CScreen_LanSetup extends CScreen {
   // NOTE: display objects are created with Object.create - field initializers never run (engine DisplayObject.ts).
@@ -73,17 +68,14 @@ export class CScreen_LanSetup extends CScreen {
   }
 
   Text(x: number, y: number, w: number, h: number, font: string, size: number, color: number, bold: boolean,
-    align: 'left' | 'right' | 'center', text: string): any {
-    const tf = this.createTextField('tf' + this.mDepth, this.mDepth++, x, y, w, h);
-    tf.embedFonts = true;
-    tf.selectable = false;
-    tf.setNewTextFormat(new TextFormat(font, size, color, bold, false, false, undefined, undefined, align));
-    tf.text = text;
-    return tf;
+    align: 'left' | 'right' | 'center', value: string): any {
+    return text(this, 'tf' + this.mDepth, x, y, w, h, font, size, color, bold, align, value);
   }
 
-  Button(x: number, y: number, w: number, h: number, label: string, size: number, onPress: () => void): any {
-    const b = buildMenuButton(this, 'b' + this.mDepth, x, y, w, h, label, size);
+  /** A UiStyle pill button centred on (x, y) (v0.2.2 restyle - the select screens' control language). */
+  Button(x: number, y: number, w: number, h: number, label: string, size: number, onPress: () => void,
+    opts: { selected?: boolean } = {}): any {
+    const b = pillButton(this, 'b' + this.mDepth, x, y, w, h, label, size, opts);
     this.mDepth++;
     b.onRelease = function (this: any): void {
       onPress();
@@ -118,10 +110,11 @@ export class CScreen_LanSetup extends CScreen {
     this.bWaveLabel.filters = glow();
     this.bWave = this.Button(556, 394, 88, 24, '', 12, () => this.cycleWave(1));
 
-    // The client only waits (or leaves); the host starts or goes back to the room.
-    this.waitText = this.Text(170, 446, 300, 18, 'Calibri', 14, GREEN, true, 'center', 'WAITING FOR HOST...');
+    // The client only waits (or leaves); the host starts or goes back to the room. START GAME carries the
+    // options-window selected wash (the primary action); WAITING uses the body ink like the original status copy.
+    this.waitText = this.Text(170, 446, 300, 18, BODY_FONT, 14, INK, true, 'center', 'WAITING FOR HOST...');
     this.waitText.filters = glow();
-    this.bStart = this.Button(320, 452, 180, 28, 'START GAME', 15, () => lanBridge().startGame(false));
+    this.bStart = this.Button(320, 452, 180, 28, 'START GAME', 15, () => lanBridge().startGame(false), { selected: true });
     this.bBack = this.Button(90, 452, 140, 24, 'BACK', 13, () => lanBridge().backToRoom());
     this.bLeave = this.Button(550, 452, 140, 24, 'LEAVE', 13, () => lanBridge().leaveLobby());
   }

@@ -18,6 +18,8 @@ import type { GameConfig, LanMessage, SetupSelection } from './protocol.ts';
 /** The Presenter surface the bridge needs (main.ts hands the real platform Presenter over). */
 export interface PresenterLike {
   logicalToClient(x: number, y: number): { x: number; y: number };
+  /** DYNAMIC_VIEWPORT: authored-content (640x480 screen) space -> client (the content is centred on the stage). */
+  contentToClient(x: number, y: number): { x: number; y: number };
   onResize(fn: () => void): () => void;
 }
 

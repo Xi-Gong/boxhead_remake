@@ -58,7 +58,7 @@ function fakePads() {
 function makeDom(): {
   stage: ShimEl;
   inputs: ShimEl[];
-  presenter: { logicalToClient: (x: number, y: number) => { x: number; y: number } };
+  presenter: { logicalToClient: (x: number, y: number) => { x: number; y: number }; stageW: number; stageH: number };
   setHit(fn: (x: number, y: number) => ShimEl | null): void;
 } {
   const stage = new ShimEl();
@@ -73,6 +73,8 @@ function makeDom(): {
   const resizeFns: (() => void)[] = [];
   const presenter = {
     logicalToClient: (x: number, y: number) => ({ x, y }),
+    stageW: 640,
+    stageH: 480,
     onResize: (fn: () => void) => { resizeFns.push(fn); return () => { const i = resizeFns.indexOf(fn); if (i >= 0) resizeFns.splice(i, 1); }; },
   };
   initDebriefDom(presenter as never, stage as unknown as HTMLElement);

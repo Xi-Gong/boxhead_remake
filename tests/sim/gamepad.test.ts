@@ -176,7 +176,7 @@ describe('gamepad virtual cursor vs GAME_CURSOR_HIDE (v0.1.8)', () => {
     return { container, created };
   };
 
-  const presenter = { logicalToClient: (x: number, y: number) => ({ x, y }) };
+  const presenter = { logicalToClient: (x: number, y: number) => ({ x, y }), stageW: 640, stageH: 480 };
 
   afterEach(() => { vi.unstubAllGlobals(); });
 

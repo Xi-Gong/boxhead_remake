@@ -9,7 +9,7 @@
 //
 //   npx vite build --outDir generated/x1-dist --emptyOutDir && npx vite preview --outDir generated/x1-dist --port 5311
 //   node tests/e2e/ui.browser.mjs [group ...]          (GAME_URL, default http://localhost:5311/)
-// Groups: menus, options, controls, debrief, deathmatch, contextmenu, platform, audiounlock, hidpi, persistence (default: all).
+// Groups: menus, options, controls, debrief, deathmatch, contextmenu, platform, viewport, audiounlock, hidpi, persistence (default: all).
 // Output: generated/reports/x1/ui_report.json + screenshots; exit code 1 on any failed check.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -495,19 +495,22 @@ await runGroup('platform', async () => {
   await g.page.waitForTimeout(100);
   check('Alt+Enter requests fullscreen (browser build; Electron: main process)', eq(await g.eval(() => window.__fs), ['request']));
   check('Alt+Enter does not reach the game as a key', (await g.eval(() => window.__game.pkg.CMain.mInput.mKey_List[13].mDown)) === false);
-  // letterbox: wide and tall windows keep 4:3, centred, clicks map to the stage
+  // DYNAMIC_VIEWPORT: the canvas fills the window and the logical stage grows with it (>= 640x480, content centred)
   for (const [w, h] of [[1000, 500], [500, 900], [1280, 960]]) {
     await g.page.setViewportSize({ width: w, height: h });
     await g.page.waitForTimeout(250);
     const b = await g.canvasBox();
     const s = Math.min(w / 640, h / 480);
-    check(`${w}x${h}: canvas ${Math.round(640 * s)}x${Math.round(480 * s)} centred`, Math.abs(b.w - 640 * s) <= 1 && Math.abs(b.h - 480 * s) <= 1 && Math.abs(b.x - (w - b.w) / 2) <= 1 && Math.abs(b.y - (h - b.h) / 2) <= 1, b);
+    const st = await g.stageInfo();
+    check(`${w}x${h}: canvas fills the viewport`, Math.abs(b.w - w) <= 1 && Math.abs(b.h - h) <= 1 && Math.abs(b.x) <= 1 && Math.abs(b.y) <= 1, b);
+    check(`${w}x${h}: stage grows to ${Math.max(640, Math.round(w / s))}x${Math.max(480, Math.round(h / s))}`,
+      Math.abs(st.w - Math.max(640, Math.round(w / s))) <= 1 && Math.abs(st.h - Math.max(480, Math.round(h / s))) <= 1, st);
     await shot(g, `platform_${w}x${h}`);
   }
   await g.page.setViewportSize({ width: 1000, height: 500 });
   await g.page.waitForTimeout(250);
   await g.click(320, MENU_Y.Single);
-  check('click mapping on a letterboxed stage (1000x500)', await g.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld', 15000));
+  check('click mapping on the grown stage (1000x500)', await g.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld', 15000));
   await g.page.setViewportSize({ width: 640, height: 480 });
   await g.page.waitForTimeout(300); // ResizeObserver -> Presenter.resize
   await g.clickClip(`${S}.mcSubScreen.mcLevel_Selection.mcLevelIcons`);
@@ -528,6 +531,75 @@ await runGroup('platform', async () => {
   await g.page.keyboard.press('Space');
   await g.page.keyboard.press('Backspace');
   check('game keys do not scroll or navigate the page', (await g.eval(() => [window.scrollY, location.pathname])).join() === `0,${new URL(g.page.url()).pathname}`);
+  return g;
+});
+
+// ------------------------------------------------------------------------------------------------ viewport (DYNAMIC_VIEWPORT)
+await runGroup('viewport', async () => {
+  const g = await openGame(browser, { viewport: { width: 1280, height: 720 } });
+  await toMainMenu(g);
+  // px() samples the canvas backing store (device px; dsF 1 -> device = CSS px; stage 853x480 -> device = stage*1.5)
+  const px = (x, y) => g.page.evaluate(([x, y]) => {
+    const c = document.querySelector('canvas.game-canvas');
+    const d = c.getContext('2d').getImageData(x, y, 1, 1).data;
+    return [d[0], d[1], d[2], d[3]];
+  }, [Math.round(x), Math.round(y)]);
+  const st = await g.stageInfo();
+  check('1280x720: stage 853x480, authored content centred at +106.5', st.w === 853 && st.h === 480 && Math.abs(st.ox - 106.5) < 1 && st.oy === 0, st);
+  check('menu side bands are stage black', eq(await px(10, 320), [0, 0, 0, 255]) && eq(await px(1270, 320), [0, 0, 0, 255]));
+  const mid = await px(640, 360);
+  check('menu content is drawn centred', !(mid[0] === 0 && mid[1] === 0 && mid[2] === 0), mid);
+  await shot(g, 'viewport_menu_1280x720');
+  // into the world on ROOM 1 (the smallest map, 704x544): narrower than the 853-wide view -> map centred on black void
+  await g.click(320, MENU_Y.Single);
+  check('menu click maps through the content offset', await g.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld', 15000));
+  // the selection starts at level 9 (the default); cycle the real bLeft button to level 1 (the smallest map)
+  for (let i = 0; i < 8; i++) {
+    await g.clickClip(`${S}.mcSubScreen.mcLevel_Selection.bLeft`);
+    await g.page.waitForTimeout(80);
+  }
+  check('cycled the selection to level 1', (await g.expr(`${S}.mcSubScreen.mcLevel_Selection.mcLevelIcons._currentframe`)) === 1);
+  await g.clickClip(`${S}.mcSubScreen.mcLevel_Selection.mcLevelIcons`);
+  check('room 1 starts on the wide stage', await g.waitExpr("g.state()==='State_RunWorld' && m.mcWorld && m.mcWorld.mLoaded", 60000));
+  await g.page.waitForTimeout(400);
+  const w = await g.expr('({ v: [m.mcWorld.mScreenSize.x, m.mcWorld.mScreenSize.y], bm: [m.mcWorld.bmDraw.width, m.mcWorld.bmDraw.height], x: m.mcWorld._x, y: m.mcWorld._y, cam: [m.mcWorld.mDrawPosition.x, m.mcWorld.mDrawPosition.y] })');
+  check('world adopts the live stage (view size, bmDraw, counter-offset)', eq(w.v, [853, 480]) && eq(w.bm, [853, 480]) && Math.abs(w.x + 106.5) < 1 && Math.round(w.y) === 0, w);
+  check('camera centred on the smaller map (room 1 is 704 wide -> x=(704-853)/2)', Math.abs(w.cam[0] + 74.5) <= 1, w);
+  check('beyond-map void is black (both edges)', eq(await px(10, 360), [0, 0, 0, 255]) && eq(await px(1220, 360), [0, 0, 0, 255]));
+  const mapMid = await px(640, 360);
+  check('map floor shows at the centre', !(mapMid[0] === 0 && mapMid[1] === 0 && mapMid[2] === 0), mapMid);
+  await shot(g, 'viewport_world_room1_853x480');
+  // pause keeps the wide view: art shifted to the centre + wrapper-drawn side bands
+  await g.page.keyboard.press('KeyP');
+  await g.page.waitForTimeout(300);
+  const pz = await g.expr('[m.mcWorld.mHud.mcScreenPause._x, m.mcWorld._WidePauseBands !== undefined]');
+  check('pause art centred on the wide stage + band overlay present', Math.abs(pz[0] - 106.5) < 1 && pz[1] === true, pz);
+  await shot(g, 'viewport_paused_1280x720');
+  await g.page.keyboard.press('KeyP');
+  await g.page.waitForTimeout(200);
+  check('unpause removes the bands', await g.expr('m.mcWorld._WidePauseBands == undefined'));
+  // resize while playing (portrait 720x1000 -> 640x889 stage): bmDraw reallocs lazily, camera re-clamps, void above/below
+  await g.page.setViewportSize({ width: 720, height: 1000 });
+  await g.page.waitForTimeout(400);
+  const rw = await g.expr('({ v: [m.mcWorld.mScreenSize.x, m.mcWorld.mScreenSize.y], bm: [m.mcWorld.bmDraw.width, m.mcWorld.bmDraw.height], x: m.mcWorld._x, y: m.mcWorld._y })');
+  check('resize while playing -> 640x889 stage, bmDraw follows, content offset re-centred', eq(rw.v, [640, 889]) && eq(rw.bm, [640, 889]) && Math.round(rw.x) === 0 && Math.abs(rw.y + 204.5) < 1, rw);
+  check('portrait void is black above and below the 544-tall map', eq(await px(360, 10), [0, 0, 0, 255]) && eq(await px(360, 990), [0, 0, 0, 255]));
+  await shot(g, 'viewport_world_portrait_640x889');
+  // DeathMatch after the resize (stage 640x889): the split geometry self-adapts (scale stageW/2/480, views stay 480x480)
+  await g.expr('(m.mcWorld.mCompleteState = "quit", true)');
+  await g.waitScreen('State_Debrief', 'Screen_Debrief', 30000);
+  await g.page.waitForTimeout(300);
+  await g.clickClip(`${S}._Exit`);
+  await g.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld', 15000);
+  await g.page.waitForTimeout(300);
+  await g.expr('(m.SetState("State_Main"), true)');
+  await toSelect(g, 'DeathMatch');
+  await g.clickClip(`${S}.mcSubScreen.mcLevel_Selection.mcLevelIcons`);
+  check('DM room starts', await g.waitExpr("g.state()==='State_RunWorld' && m.mcWorld && m.mcWorld.mLoaded", 60000));
+  await g.page.waitForTimeout(300);
+  const dm = await g.expr('({ scalar: m.mcWorld.mSplitScreen.mScalar, views: [m.mcWorld.mSplitScreen.mScreenSize.x, m.mcWorld.mSplitScreen.mScreenSize.y], off: [m.mcWorld.mSplitScreen.mOffsets[0].x, m.mcWorld.mSplitScreen.mOffsets[1].x] })');
+  check('DM split self-adapts: 480x480 views scaled to half the 640 stage', Math.abs(dm.scalar - 640 / 960) < 0.01 && eq(dm.views, [480, 480]) && eq(dm.off, [0, 320]), dm);
+  await shot(g, 'viewport_dm_640x889');
   return g;
 });
 

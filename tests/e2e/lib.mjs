@@ -1,6 +1,9 @@
 // Lane X1: helpers for the browser UI suites (playwright-core + the installed Chrome, HEADLESS: never takes focus).
 // The game runs from a production build served by `vite preview` (GAME_URL); window.__game (src/main.ts) exposes
-// main() (the CMain clip) and state() for assertions. Stage coordinates are the 640x480 logical Flash stage.
+// main() (the CMain clip) and state() for assertions.
+// DYNAMIC_VIEWPORT: two coordinate spaces - STAGE (live logical size, >= 640x480; getBounds(root)/centreOf results)
+// and authored CONTENT (the 640x480 screens, centred on the stage; e.g. MENU_Y). stageToPage maps stage space,
+// contentToPage maps content space; identity to each other at 4:3 viewports.
 import { chromium } from 'playwright-core';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -53,13 +56,25 @@ export class Game {
   async canvasBox() {
     return this.page.evaluate(() => { const b = document.querySelector('canvas.game-canvas').getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; });
   }
-  async stageToPage(x, y) {
-    const r = await this.canvasBox();
-    return [r.x + (x / 640) * r.w, r.y + (y / 480) * r.h];
+  /** DYNAMIC_VIEWPORT: the live stage size + where the authored 640x480 content sits on it (identity at 4:3). */
+  async stageInfo() {
+    return this.page.evaluate(() => {
+      const p = window.__game?.platform?.presenter;
+      return p ? { w: p.stageW, h: p.stageH, ox: (p.stageW - 640) / 2, oy: (p.stageH - 480) / 2 } : { w: 640, h: 480, ox: 0, oy: 0 };
+    });
   }
-  async move(x, y) { const [px, py] = await this.stageToPage(x, y); await this.page.mouse.move(px, py, { steps: 2 }); }
-  async click(x, y, { button = 'left' } = {}) {
-    const [px, py] = await this.stageToPage(x, y);
+  /** STAGE-space coords (getBounds(root) / centreOf results) -> page px. */
+  async stageToPage(x, y) {
+    const [r, s] = await Promise.all([this.canvasBox(), this.stageInfo()]);
+    return [r.x + (x / s.w) * r.w, r.y + (y / s.h) * r.h];
+  }
+  /** Authored-content coords (640x480 screen space, e.g. MENU_Y) -> page px. */
+  async contentToPage(x, y) {
+    const s = await this.stageInfo();
+    return this.stageToPage(x + s.ox, y + s.oy);
+  }
+  async move(x, y) { const [px, py] = await this.contentToPage(x, y); await this.page.mouse.move(px, py, { steps: 2 }); }
+  async pageClick(px, py, { button = 'left' } = {}) {
     await this.page.mouse.move(px, py, { steps: 2 });
     await this.page.waitForTimeout(50);
     await this.page.mouse.down({ button });
@@ -67,6 +82,7 @@ export class Game {
     await this.page.mouse.up({ button });
     await this.page.waitForTimeout(60);
   }
+  async click(x, y, opts) { const [px, py] = await this.contentToPage(x, y); await this.pageClick(px, py, opts); }
   /** Centre (stage coords) of a clip given by a JS path from CMain (`m....`); null if missing / empty. */
   centreOf(expr) {
     return this.page.evaluate((expr) => {
@@ -82,7 +98,8 @@ export class Game {
   async clickClip(expr) {
     const c = await this.centreOf(expr);
     if (!c) throw new Error(`no clip ${expr}`);
-    await this.click(c.x, c.y);
+    const [px, py] = await this.stageToPage(c.x, c.y); // centreOf is root/stage space
+    await this.pageClick(px, py);
     return c;
   }
   async shot(path, clip = true) {

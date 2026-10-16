@@ -84,10 +84,10 @@ function helpers(page) {
 }
 
 const LAN_BTN = [320, 392.4];
-const CREATE_ROOM_BTN = [170, 220];
-const JOIN_BTN = [565, 328];
-const READY_BTN = [220, 330];
-const START_ROOM_BTN = [220, 330];
+const CREATE_ROOM_BTN = [320 - 117, 240 - 6]; // v0.2.2 panel layout
+const JOIN_BTN = [320 - 17, 240 + 90];
+const READY_BTN = [320 - 110, 240 + 100];
+const START_ROOM_BTN = [320 - 110, 240 + 100];
 const START_GAME_BTN = [320, 452];
 
 let H, C;

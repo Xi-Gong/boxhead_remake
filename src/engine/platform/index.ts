@@ -30,14 +30,19 @@ export type { DesktopApi } from './desktop.ts';
 export { attachKeyboard, flashAscii, flashKeyCode } from './Keyboard.ts';
 export { EF_MS, FrameScheduler, Loop } from './Loop.ts';
 export { attachMouse } from './Pointer.ts';
-export { computeFit, Presenter, STAGE_H, STAGE_W } from './Presenter.ts';
+export { computeFill, Presenter, STAGE_H, STAGE_W } from './Presenter.ts';
 export { SaveStore } from './SaveStore.ts';
 export type { RenderScale, Settings } from './SaveStore.ts';
 export { GamepadWatcher, navigatorPadProvider, STICK_DEADZONE } from './Gamepad.ts';
 export type { PadDirs, PadProvider, PadPoll, RawPad } from './Gamepad.ts';
 
 /** What the platform needs from the display-list Player (lane E's Player satisfies it; checked below). */
-export interface PlatformPlayer extends LoopPlayer, RenderablePlayer, PointerPlayer, KeyInputSink {}
+export interface StageSizedPlayer {
+  /** DYNAMIC_VIEWPORT: adopt the live stage size derived from the window (>= the authored 640x480). */
+  setStageSize(stageW: number, stageH: number): void;
+}
+
+export interface PlatformPlayer extends LoopPlayer, RenderablePlayer, PointerPlayer, KeyInputSink, StageSizedPlayer {}
 
 // Compile-time check that lane E's Player contract fits the platform.
 const playerFits = (p: Player): PlatformPlayer => p;
@@ -66,6 +71,10 @@ export interface PlatformHandle {
 export function startPlatform(opts: StartPlatformOptions): PlatformHandle {
   const { player } = opts;
   const presenter = new Presenter(opts.container, opts.presenter);
+  // DYNAMIC_VIEWPORT: the live stage follows the window; the engine re-lays the root out on every render.
+  const adoptStage = (): void => { player.setStageSize(presenter.stageW, presenter.stageH); };
+  presenter.onResize(adoptStage);
+  adoptStage();
   let menuOpen = false;
   const isBlocked = (): boolean => menuOpen;
   const mouse = attachMouse({ player, presenter, isBlocked });

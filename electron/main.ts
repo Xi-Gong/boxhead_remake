@@ -13,7 +13,7 @@
 import { app, BrowserWindow, ipcMain, Menu, powerMonitor, protocol, screen, shell } from 'electron';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { aspectLockedBounds, fullscreenShortcut, initialContentSize } from './aspect.ts';
+import { fullscreenShortcut, initialContentSize } from './aspect.ts';
 import { registerLanIpc } from './lanIpc.ts';
 
 const APP_SCHEME = 'app';
@@ -113,27 +113,14 @@ function toggleFullscreen(): void {
   if (win && !win.isDestroyed()) win.setFullScreen(!win.isFullScreen());
 }
 
-/** Keep the content area 4:3 while the user resizes (maximized/fullscreen are letterboxed by the page instead). */
-function lockContentAspect(w: BrowserWindow): void {
-  const frame = (): [number, number] => {
-    const [ww, wh] = w.getSize();
-    const [cw, ch] = w.getContentSize();
-    return [ww - cw, wh - ch];
-  };
-  const [fw, fh] = frame();
-  w.setMinimumSize(640 + fw, 480 + fh);
-  if (process.platform !== 'win32') {
-    w.setAspectRatio(4 / 3, { width: fw, height: fh });
-    return;
-  }
-  // Windows: setAspectRatio() would lock the outer window rect (frame included) and ignores extraSize.
-  w.on('will-resize', (event, newBounds, details) => {
-    const [frameW, frameH] = frame();
-    const b = aspectLockedBounds(newBounds, details?.edge ?? 'bottom-right', frameW, frameH);
-    if (b.width === newBounds.width && b.height === newBounds.height && b.x === newBounds.x && b.y === newBounds.y) return;
-    event.preventDefault();
-    w.setBounds(b);
-  });
+/**
+ * DYNAMIC_VIEWPORT: the window resizes freely to any aspect (the page fills it and the game view grows with it);
+ * only the authored minimum content size 640x480 is enforced.
+ */
+function enforceMinimumContentSize(w: BrowserWindow): void {
+  const [ww, wh] = w.getSize();
+  const [cw, ch] = w.getContentSize();
+  w.setMinimumSize(640 + (ww - cw), 480 + (wh - ch));
 }
 
 function createWindow(): void {
@@ -159,7 +146,7 @@ function createWindow(): void {
     },
   });
   win.setContentSize(size.width, size.height); // useContentSize can be off by 1 DIP at fractional DPI scales
-  lockContentAspect(win);
+  enforceMinimumContentSize(win);
   win.setMenuBarVisibility(false);
 
   // F11 / Alt+Enter work even while the page captures every key.

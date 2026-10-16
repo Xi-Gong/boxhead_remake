@@ -41,7 +41,7 @@ export interface GamepadOptions {
   /** The platform mouse handle: its last physical position wins over the pad cursor. */
   mouse?: { readonly x: number; readonly y: number };
   /** Presenter + container enable the DOM cursor arrow (browser / Electron; omitted in tests). */
-  presenter?: { logicalToClient(x: number, y: number): { x: number; y: number } };
+  presenter?: { logicalToClient(x: number, y: number): { x: number; y: number }; stageW: number; stageH: number };
   container?: HTMLElement;
   /** Pad snapshots for tests (default: navigator.getGamepads, absent in Node). */
   provider?: PadProvider;
@@ -87,6 +87,9 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   /** Accumulated button holds per pad slot (the engine reports edges; holds are what the game keys need). */
   const held: [Set<number>, Set<number>] = [new Set(), new Set()];
   const pushedByPad = new Set<number>();
+  // DYNAMIC_VIEWPORT: the cursor lives in STAGE space (engine mouse coords); menus are centred on the grown stage,
+  // so the roam range is the live stage, not the authored 640x480 (identity when there is no presenter).
+  const stageBounds = (): { w: number; h: number } => (opts.presenter ? { w: opts.presenter.stageW, h: opts.presenter.stageH } : { w: STAGE_W, h: STAGE_H });
   let cursorX = STAGE_W / 2;
   let cursorY = STAGE_H / 2;
   let lastMouseX = -1;
@@ -211,8 +214,9 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     if (p.dpad.up) dy = -CURSOR_SPEED;
     if (p.dpad.down) dy = CURSOR_SPEED;
     if (dx || dy) {
-      cursorX = clamp(cursorX + dx, 0, STAGE_W);
-      cursorY = clamp(cursorY + dy, 0, STAGE_H);
+      const sb = stageBounds();
+      cursorX = clamp(cursorX + dx, 0, sb.w);
+      cursorY = clamp(cursorY + dy, 0, sb.h);
     }
     if (p.present && (dx || dy || p.down.size || p.up.size)) lastPadActivity = Date.now();
     // A = click: press on the down edge, release on the up edge (the engine fires onRelease only when the

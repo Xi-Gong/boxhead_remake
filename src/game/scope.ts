@@ -23,6 +23,8 @@ import { debriefNameInput, installDebriefNameInput } from './local/DebriefName.t
 import { CThing_Object_WeaponCrate, captureCratePayload } from './local/WeaponCrate.ts';
 import { armStartWave, consumeArmedWaveOn, getRunStartWave, getSelectedStartWave, recordRunStartWave, resetSelectedStartWave } from './local/StartWave.ts';
 import { buildStartWaveCycler } from './local/StartWaveUi.ts';
+import { menuTextItem, text } from './local/UiStyle.ts';
+import { installViewport } from './local/Viewport.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 
 /**
@@ -341,7 +343,14 @@ export function applyScope(): void {
       }
       return;
     }
-    const btn = buildMenuButton(this.mcScreenPause, '_SaveQuit', 320, 452, 220, 26, 'SAVE & QUIT', 15);
+    // v0.2.2 restyle (UiStyle): the original pause QUIT's own language - red Calibri text, brightening on hover -
+    // instead of the old dark plate. Centred below QUIT on the same axis.
+    const btn = this.mcScreenPause.createEmptyMovieClip('_SaveQuit', this.mcScreenPause.getNextHighestDepth());
+    btn._x = 320;
+    btn._y = 452;
+    const tf = text(btn, '_Label', -160, -16, 320, 32, 'Calibri', 26, 0xff0000, true, 'center', 'SAVE & QUIT');
+    btn.onRollOver = function (): void { tf.textColor = 0xfe5f5f; };
+    btn.onRollOut = function (): void { tf.textColor = 0xff0000; };
     btn.pWorld = this.mWorld;
     btn.onRelease = function (this: any): void {
       CSound.mSamples.Click.PlaySound();
@@ -383,18 +392,20 @@ export function applyScope(): void {
     // Once the world is gone this IS the main menu (same screen, same state name as a normal boot).
     if (!this.mcWorld) this.SetState('State_Main');
   };
-  // Main menu: CONTINUE appears only while a stored run exists, styled and wired like the original items (the
-  // rollover of Register_Button works on the button's _Contents child).
+  // Main menu: CONTINUE appears only while a stored run exists. v0.2.2 restyle (UiStyle): a BARE-TEXT item in the
+  // original items' own language (ARMTB #333333 + the menu drop shadow) instead of the old dark plate - visually
+  // indistinguishable from the four baked items; Register_Button's rollover (alpha 50 -> 100 + jitter) applies to
+  // its _Contents child unchanged. The y positions sit on the menu's own 33px rhythm (226/259/292/325 + n*33).
   const mainMenuProto = Screen.CScreen_Main.prototype as any;
   const initButtonsPrev = mainMenuProto.Init_Buttons;
   mainMenuProto.Init_Buttons = function (this: any): void {
     initButtonsPrev.call(this);
     if (hasStored()) {
-      const mc = buildMenuButton(this, 'mcContinue', 320, 359.1, 260, 30, 'CONTINUE', 17);
+      const mc = menuTextItem(this, 'mcContinue', 320, 359.1, 'CONTINUE', 30);
       this.Register_Button(mc, 'State_Continue');
     }
     if (desktop?.lan) {
-      const mc = buildMenuButton(this, 'mcLanGame', 320, 392.4, 260, 30, 'LAN GAME', 17);
+      const mc = menuTextItem(this, 'mcLanGame', 320, 392.4, 'LAN GAME', 30);
       this.Register_Button(mc, 'State_LanLobby');
     }
   };
@@ -437,4 +448,7 @@ export function applyScope(): void {
     this.Process_Screen(SCREEN_LAN_SETUP_LINKAGE);
   };
   installNetScope();
+  // Dynamic viewport (deviation DYNAMIC_VIEWPORT): LAST so its Process_Tracking clamp fix runs OUTERMOST (the net
+  // camera-bias wrapper below it keeps working unchanged) and its CHud.Pause band logic wraps the savequit one.
+  installViewport();
 }

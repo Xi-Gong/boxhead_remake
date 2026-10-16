@@ -58,6 +58,7 @@ const player: PlatformPlayer = {
     drawPattern(ctx, deviceScale);
   },
   mouseMove(x: number, y: number): void { stats.mouse.x = x; stats.mouse.y = y; },
+  setStageSize(): void { /* smoke player: no stage to size */ },
   mouseDown(): void { mouseDown = true; stats.mouse.down = true; if (inButton(stats.mouse.x, stats.mouse.y)) stats.mouse.clicks++; },
   mouseUp(): void { mouseDown = false; stats.mouse.down = false; },
   get cursor(): string { return inButton(stats.mouse.x, stats.mouse.y) ? 'pointer' : 'default'; },

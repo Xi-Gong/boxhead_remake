@@ -1,7 +1,9 @@
 // v0.1.4 LAN UI geometry playtest: one packaged exe, off-screen. The manual-IP DOM input must stay GLUED to its
-// logical rectangle (x330..530, y316..340 on the 640x480 stage) across window aspect changes - the v0.1.3 bug was a
-// window-% positioned input that drifted as soon as the window was not 4:3. Also checks the entry/room view
-// visibility toggle of the input.   node tests/sim/playtest.lanui.mjs
+// logical rectangle (x95..260, y318..342 in the authored 640x480 content space - the v0.2.2 panel layout) across
+// window aspect changes - the v0.1.3 bug was a window-% positioned input that drifted as soon as the window was not
+// 4:3. DYNAMIC_VIEWPORT: the content is centred on the live stage, so both the click mapping and the expected input
+// rect go through the presenter's content offset. Also checks the entry/room view visibility toggle of the input.
+//   node tests/sim/playtest.lanui.mjs
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,8 +21,12 @@ const report = { ok: false, steps: [], errors: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
 
 const LAN_BTN = [320, 392.4];
-/** The input's logical rectangle (top-left x/y + w/h on the 640x480 stage). */
-const IP_BOX = { x: 330, y: 316, w: 200, h: 24 };
+/** The input's logical rectangle (top-left x/y + w/h in the 640x480 content space; panel coords + 320/240). */
+const IP_BOX = { x: 95, y: 318, w: 165, h: 24 };
+/** Panel-space buttons mapped to content space (the panel is centred on 320,240). */
+const CREATE_ROOM_BTN = [320 - 117, 240 - 6];
+const CLOSE_ROOM_BTN = [320 + 110, 240 + 100];
+const BACK_BTN = [320, 240 + 132];
 
 let app;
 try {
@@ -54,9 +60,17 @@ try {
   await page.waitForTimeout(300);
 
   // Enter the LAN lobby (entry view: the IP input must be visible).
+  // DYNAMIC_VIEWPORT: content coords (the authored 640x480 space) map through the live stage + its centring offset.
   const stageToPage = async (x, y) => {
-    const r = await page.evaluate(() => { const c = document.querySelector('canvas'); const b = c.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; });
-    return [r.x + (x / 640) * r.w, r.y + (y / 480) * r.h];
+    const r = await page.evaluate(() => {
+      const c = document.querySelector('canvas');
+      const b = c.getBoundingClientRect();
+      const p = window.__game?.platform?.presenter;
+      const off = p ? { x: (p.stageW - 640) / 2, y: (p.stageH - 480) / 2 } : { x: 0, y: 0 };
+      const w = p ? p.stageW : 640, h = p ? p.stageH : 480;
+      return { x: b.left, y: b.top, w: b.width, h: b.height, off, sw: w, sh: h };
+    });
+    return [r.x + ((x + r.off.x) / r.sw) * r.w, r.y + ((y + r.off.y) / r.sh) * r.h];
   };
   const click = async (x, y) => {
     const [px, py] = await stageToPage(x, y);
@@ -91,12 +105,16 @@ try {
     }
     const m = await measure();
     if (m.display !== 'block') throw new Error(`${s.name}: input not visible in the entry view (${m.display})`);
-    // Expected page-absolute rect from the canvas transform (logical -> client px).
+    // Expected page-absolute rect: content space -> stage (+ centring offset) -> client px.
+    const off = await page.evaluate(() => {
+      const p = window.__game?.platform?.presenter;
+      return p ? { x: (p.stageW - 640) / 2, y: (p.stageH - 480) / 2, sw: p.stageW, sh: p.stageH } : { x: 0, y: 0, sw: 640, sh: 480 };
+    });
     const ex = {
-      l: m.canvas.l + (IP_BOX.x / 640) * m.canvas.w,
-      t: m.canvas.t + (IP_BOX.y / 480) * m.canvas.h,
-      w: (IP_BOX.w / 640) * m.canvas.w,
-      h: (IP_BOX.h / 480) * m.canvas.h,
+      l: m.canvas.l + ((IP_BOX.x + off.x) / off.sw) * m.canvas.w,
+      t: m.canvas.t + ((IP_BOX.y + off.y) / off.sh) * m.canvas.h,
+      w: (IP_BOX.w / off.sw) * m.canvas.w,
+      h: (IP_BOX.h / off.sh) * m.canvas.h,
     };
     const near = (a, b, tol) => Math.abs(a - b) <= tol;
     for (const [k, tol] of [['l', 3], ['t', 3], ['w', 4], ['h', 4]]) {
@@ -108,7 +126,7 @@ try {
   }
 
   // Create a room: the input must disappear (room view) ...
-  await click(170, 220);
+  await click(...CREATE_ROOM_BTN);
   if (!(await waitFor(() => window.__game?.lan?.()?.bridge === 'hosting', null, 20000))) throw new Error('CREATE ROOM did not host');
   await page.waitForTimeout(600);
   let m = await measure();
@@ -122,14 +140,14 @@ try {
   if (!/^YOUR ADDRESS: \d+\.\d+\.\d+\.\d+/.test(addr ?? '')) throw new Error(`no YOUR ADDRESS line (${addr})`);
 
   // ---- regression (user report 2026-10-14): the typed-in IP box must NOT linger over the next screen ----
-  await click(420, 330); // CLOSE ROOM -> entry view
+  await click(...CLOSE_ROOM_BTN); // CLOSE ROOM -> entry view
   await page.waitForTimeout(600);
   await page.evaluate(() => { const i = document.querySelector('input[type=text]'); i?.focus(); });
   await page.keyboard.type('192.168.0.1', { delay: 30 });
   await page.waitForTimeout(200);
   const typed = await page.evaluate(() => document.querySelector('input[type=text]')?.value ?? null);
   if (typed !== '192.168.0.1') throw new Error(`typing failed after returning to the entry view (${typed})`);
-  await click(320, 445); // BACK TO MENU
+  await click(...BACK_BTN); // BACK TO MENU
   await page.waitForTimeout(1200); // let the cross-fade finish and remove the old screen
   const linger = await page.evaluate(() => document.querySelectorAll('input[type=text]').length);
   if (linger !== 0) throw new Error(`the IP input lingered on the main menu (${linger} left)`);
@@ -140,7 +158,7 @@ try {
   await page.waitForTimeout(400);
   const count2 = await page.evaluate(() => document.querySelectorAll('input[type=text]').length);
   if (count2 !== 1) throw new Error(`expected exactly 1 IP input after re-entry, found ${count2}`);
-  await click(320, 445); // BACK TO MENU again
+  await click(...BACK_BTN); // BACK TO MENU again
   await page.waitForTimeout(1200);
   const linger2 = await page.evaluate(() => document.querySelectorAll('input[type=text]').length);
   if (linger2 !== 0) throw new Error(`inputs accumulated (${linger2} left)`);

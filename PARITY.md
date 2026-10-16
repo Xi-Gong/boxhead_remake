@@ -345,3 +345,47 @@ DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢�
 | 测试钩子 | `--boxhead-net-delay=<ms>`（主进程单向延迟全部 TCP 发送，UDP beacon 不受影响）→ 本地双实例回放真实链路等级：30ms 单向得 D=2、60ms 得 D=3 |
 
 测试：`tests/sim/netlockstep.test.ts` 新增——自然全灭→双端 `'ended'`、retryStart 无检查点→起始波/有检查点→续局、进程内第二局相位同步、host 响应 `'retry'`、desync 3s 弃局回房、netStallRewind 边界、迟到一拍零时间片损失+欠账钳制、p90 去离群、令牌桶边界、影子领先 D-1 拍且 sim 追及、强制跳变快照纠正、stall 冻结影子、覆盖门控。打包 QA：`tests/sim/playtest.netretry.mjs`（自然死亡→Debrief RETRY 可见→EXIT→房间可操作→进程内第二局→client 按 RETRY→双端重开，全真实用户流程）与 `tests/sim/playtest.netsmooth.mjs [delayMs]`（D 一致、20s 操控窗持续失速≈0、tick/分数全等、rAF 探针：shadow 一拍内(6-7ms)响应而 sim 滞后 D 拍；30ms 与 60ms 双档通过）；关键画面经 zai 视觉 MCP 核验（结算 RETRY 可见、房间 RETRY AT WAVE 1/START 可点、重开对局干净）。
+
+## 14. v0.2.2 动态多分辨率视口 + 新增 UI 原版风格化（2026-10-16）
+
+两项用户需求：**宽窗口/全屏下战斗视野随之增大**（而非等比放大留黑边），与**新增界面完全融入原版视觉语言**
+（替换旧深灰底板），间距体系化并天然适配任意分辨率。新增 deviation **DYNAMIC_VIEWPORT**（渲染层）；UI 改版
+不新增编号（这些界面对原版本就不存在，属 SAVE_QUIT_RESUME / LAN_MULTIPLAYER / START_WAVE_SELECTOR /
+GAMEPAD_INPUT 既有偏差的视觉演进），风格 token 皆取自原版美术实测。
+
+### 14.1 DYNAMIC_VIEWPORT（渲染层，4:3 时逐字节不变）
+
+| 层 | 行为 |
+|---|---|
+| 舞台 | 画布铺满任意窗口形状；逻辑舞台 = cw/s × ch/s（s = min(cw/640, ch/480)）——限制维恰好 640/480 像素精确，另一维延伸，舞台永不小于 640x480（小窗口自动缩到装得下为准）。`Presenter.computeFill` 纯函数（原 `computeFit` 移除） |
+| 根布局 | 引擎每帧 `applyStageLayout`：根时间轴的遮罩层（帧 62 char 4，clipDepth 4）拉伸至全舞台（拾取的遮罩命中同步放宽）；其余**时间轴放置的**内容子级差分平移 `((W-640)/2,(H-480)/2)` 居中——菜单/大厅/设置/暂停等 640x480 原版画面居中、两侧纯黑。运行时挂载的根子级（XSI 缓存等）不受影响（按时间轴深度集判定） |
+| 世界视野 | `CWorld.Init` 包装覆写 `mScreenSize` 为活舞台 → bmDraw/DM 分屏几何按真实窗口分配；世界剪辑 `_x/_y` 反向偏移 → 世界坐标 = 舞台坐标，画面铺满全窗（看得更多，缩放比例不变）。窗口 resize 中对局：bmDraw/mSplitScreen 在下一次未暂停的 Draw 惰性重分配（同深度换挂 BitmapData 后释放旧的） |
+| 地图外 | 视图某维 > 地图 − 64px 时原 `CMath.Range` 夹持反转 → `Process_Tracking` 最外层包装（装于 NetScope 相机偏置**之外**，只修反转维、不扰预测）改为该维居中 `r=(area−w)/2`；既有 clampCopy / `world−mDrawPosition` 数学天然自洽：地面裁剪、物体落位、两侧露舞台纯黑。非 DM bmDraw 仅在可能露边时每帧清黑（DM 本就清透明）。18 图中 5 张小于 1280x960 某维——居中+黑域为既定用户决策 |
+| 暂停 | 保持宽视野：暂停画面平移居中（SAVE & QUIT 为其子级随行）+ 包装绘制的侧带按原版 shape 21 实测配色（#993300@80% 盖 y<65.75、黑@85% 其下）铺满中央 640x480 之外的整个舞台——暂停观感与原版一致、只是更宽 |
+| 过渡 | `CScreen_Transition` 首帧快照静态尺寸临时设为活舞台、入屏剪辑子级临时平移居中（`BitmapData.draw` 无矩阵=恒等、忽略源自身 _x，但渲染子级变换）、快照容器反向偏移 → 交叉淡化覆盖全窗 |
+| 输入 | 鼠标拾取本就变换感知（`pickIn/$hitGlobal`，遮罩参与命中）——居中偏移零成本生效；手柄虚拟光标活动范围改为活舞台（菜单居中于其上）；LAN IP 框/IME 通道 DOM 胶水改 `contentToClient`（内容空间 → client），DebriefName 用 root 空间 bounds 本就正确不动 |
+| Electron | 窗口不再锁 4:3（`aspectLockedBounds` 及其单测移除），保留最小 640x480、F11/Alt+Enter、初始 1280x960 |
+| 确定性 | 全部渲染态（mScreenSize/相机/bmDraw 不入校验和）；LAN 两端窗口形状不同各自正确。无 presenter 的 headless 全恒等 |
+| 金样 | 视觉套件固定 4:3 视口（640x480 / 1280x960）→ 舞台恰为 640x480，逐字节不变（`tests/visual` 零重拍） |
+
+### 14.2 新增 UI 原版风格化（UiStyle 共享模块 + 逐界面）
+
+共享层 `src/game/local/UiStyle.ts`：token 全部实测自原版（菜单项 ARMTB `#333333` + DropShadow(5°,45,5,black,0.18)、
+signature 红 `#ef1304`、选项 pill 家族 `#f5f5f3`/`#d8d8d8`/`#1f1f1f`、选项窗口选中洗 `#e60000`@35%、间距
+GAP=8/ROW_H=30/MENU_STEP=33）；构建器 `menuTextItem`（裸文字菜单项，`_Contents` 结构兼容 Register_Button
+原版翻转）、`pillButton`（胶囊 + 悬停洗 + 字色翻红）、`panelCard`（新合成 sprite 9005 = 原版选项窗口
+mcLock #274 + 白面板 #317 原样复用，即高分表同款窗框）；内嵌 SWF 字体。
+
+| 界面 | 改版 |
+|---|---|
+| 主菜单 CONTINUE / LAN GAME | 深灰底板 → 与原版四项同款裸文字（30 号、同字体/色/投影、33px 节奏续列），原版 alpha50→100+抖动翻转原生生效 |
+| 暂停 SAVE & QUIT | 深灰底板 → 原版 QUIT 的红色文字按钮语言（Calibri 26 `#ff0000`，悬停 `#fe5f5f`），居中于 QUIT 正下方 |
+| START WAVE 选择器 | 深色方块 → 原版选择控件语言：白胶囊数值板（#f5f5f3/#1f1f1f）+ 左右白底描边三角箭头（#6b6b6b 描边）+ 悬停 `#e60000`@35% 洗 |
+| LAN 大厅（ENTRY/ROOM/重试条） | 全屏散排 → 原版选项窗口面板卡（9005）承载：signature 红分区标题、白 pill 按钮、发现行为白 pill 行（满员/游戏中灰显 `#b0b0b0` 不可洗）、READY/START 主操作常驻选中洗、状态行/输入摘要居面板；IP 输入 DOM 同步白 pill + Calibri |
+| LAN 设置屏 | 值板（MODE/DIFFICULTY/FRAGS/WAVE）→ 白 pill；BACK/LEAVE pill、START GAME 主操作常驻洗；WAITING 文字统一 INK（两种旧绿 #007000/#00ff00 淘汰） |
+| 视觉验证 | 全部改版面经 zai 视觉 MCP 核验（对照原版 gallery 渲染）：主菜单四项+CONTINUE 同构、暂停红色按钮、波次器控件语言、大厅面板/两栏/pill 统一，逐项通过（见 `generated/reports/vis/`） |
+
+测试：`tests/e2e/ui.browser.mjs` 新增 **viewport** 组（18 项：853x480 舞台数学、菜单黑带像素采样、room-1
+地图居中 x=−74.5、两侧黑域像素采样、暂停带、竖屏 640x889 重分配与上下黑域、DM 分屏 0.667 缩放自适
+应）；platform 组改填充断言（原 4:3 断言更新）；`lib.mjs` 拆 stage/content 双坐标空间（`centreOf` 恒为
+root 空间）；`saveStore.test.ts` fit→fill 单测重写；aspect 锁单测移除。全套 vitest 1199 通过、e2e 178/178。

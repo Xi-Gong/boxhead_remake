@@ -8,6 +8,8 @@
 //                                 white panel #317 with its drop shadow, _Button_Close #305 "CLOSE"), centred on (0,0).
 //   9003 "Screen_LanLobby"      = v0.1.3 LAN lobby frame (menu bg #198 + _Size #56 + small logo #10).
 //   9004 "Screen_LanSetup"      = v0.1.4 LAN setup frame (same); SubScreen_Coop/DeathMatch attached at runtime.
+//   9005 "Local_PanelCard"      = v0.2.2 the 9002 chrome WITHOUT the CLOSE button (mcLock #274 + white panel #317),
+//                                 the shared options-window card for the restyled added panels (UiStyle.panelCard).
 import type { CharDef, LibraryJson, PlaceOp, SpriteDef } from '../../shared/assetSchema.ts';
 import { TextFormat } from '../../engine/runtime.ts';
 
@@ -19,6 +21,8 @@ export const SCREEN_LAN_LOBBY_ID = 9003;
 export const SCREEN_LAN_LOBBY_LINKAGE = 'Screen_LanLobby';
 export const SCREEN_LAN_SETUP_ID = 9004;
 export const SCREEN_LAN_SETUP_LINKAGE = 'Screen_LanSetup';
+export const LOCAL_PANEL_CARD_ID = 9005;
+export const LOCAL_PANEL_CARD_LINKAGE = 'Local_PanelCard';
 
 const I = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
 
@@ -61,7 +65,13 @@ export function buildLocalSymbols(json: LibraryJson): SpriteDef[] {
     copyPlace(json, 376, 4),                    // #56 _Size
     { op: 'place', depth: 6, move: false, id: 10, m: { ...I, a: 0.42, d: 0.42, tx: 466, ty: 6 } }, // #10 logo, small
   ]);
-  return [instructions, highscores, lanLobby, lanSetup];
+  // v0.2.2 the shared options-window card (no CLOSE): the restyled added panels attach it and place content in its
+  // centred coordinate space, so their chrome is the original window's, pixel for pixel.
+  const panelCard = sprite(LOCAL_PANEL_CARD_ID, [
+    copyPlace(json, 358, 1),                    // #274 mcLock (dims the page, swallows clicks)
+    copyPlace(json, 358, 3),                    // #317 white window panel (drop shadow), 0.81 scale
+  ]);
+  return [instructions, highscores, lanLobby, lanSetup, panelCard];
 }
 
 /** Add the synthetic sprites and their linkages to library.json (idempotent). Call before `new Library(json)`. */
@@ -71,6 +81,7 @@ export function installLocalSymbols(json: LibraryJson): void {
   json.exports[LOCAL_HIGHSCORES_LINKAGE] = LOCAL_HIGHSCORES_ID;
   json.exports[SCREEN_LAN_LOBBY_LINKAGE] = SCREEN_LAN_LOBBY_ID;
   json.exports[SCREEN_LAN_SETUP_LINKAGE] = SCREEN_LAN_SETUP_ID;
+  json.exports[LOCAL_PANEL_CARD_LINKAGE] = LOCAL_PANEL_CARD_ID;
 }
 
 /**

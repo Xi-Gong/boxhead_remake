@@ -318,4 +318,26 @@ export const DEVIATIONS: Deviation[] = [
       'Applied before tick 0 on both lockstep peers (start message carries the wave) - deterministic. Highscore ' +
       'eligibility unchanged (still per room x mode; a head start was always possible via difficulty).',
   },
+  {
+    id: 'DYNAMIC_VIEWPORT',
+    file: 'engine/platform/Presenter.ts (computeFill), engine/platform/index.ts (stage adoption), engine/swf/{Player.setStageSize,stageLayout.ts}, game/local/Viewport.ts (installed last in scope.ts, after installNetScope), electron/main.ts (no 4:3 lock), game/local/{Gamepad,Net/Lobby}.ts (stage-space cursor, content-space DOM glue), tests/e2e (viewport group)',
+    description:
+      'The original is a fixed 640x480 Flash stage shown letterboxed at 4:3. The remake fills ANY window shape: ' +
+      'the canvas covers the window, the logical stage grows to cw/s x ch/s (s = min(cw/640, ch/480), so the stage ' +
+      'is never smaller than the authored 640x480 and the limiting dimension is pixel-exact), the root stage mask ' +
+      'stretches and 640x480 content (every menu) centres with pure-black side bands, while the WORLD adopts the ' +
+      'live stage as its view (CWorld.mScreenSize override, bmDraw/mSplitScreen sized accordingly) and counter-' +
+      'offsets the centring so the game view fills the window - more map is simply VISIBLE, never scaled differently. ' +
+      'When a view dimension exceeds the map minus its two 32px insets (5 of the 18 rooms are smaller than a ' +
+      'fullscreen view), the original CMath.Range camera clamp inverts; that dimension is centred on the map instead ' +
+      'and the void beyond shows the stage black (non-DM bmDraw is cleared each frame in that case; DeathMatch ' +
+      'already clears transparent and its split geometry self-adapts: two 480x480 views at stageW/2/480 scale). ' +
+      'Pausing keeps the wide view: the pause art is shifted to the centre and wrapper-drawn bands in the art\'s own ' +
+      'shape-21 colours (#993300@80% over y<65.75, black@85% below) dim the rest; screen transitions snapshot the ' +
+      'full stage. Everything is render-state only (mScreenSize/camera/bmDraw are not checksummed; the ' +
+      'Process_Tracking wrapper installs OUTERMOST, after the net camera-bias wrapper, and only fixes inverted ' +
+      'dimensions) - LAN peers with different window sizes stay in lockstep, each seeing their own view. At a 4:3 ' +
+      'window (and headless tests, which have no presenter) every write is an identity no-op: rendering is ' +
+      'bit-identical to v0.2.1. The Electron window no longer locks its content to 4:3 (min 640x480 stays).',
+  },
 ];

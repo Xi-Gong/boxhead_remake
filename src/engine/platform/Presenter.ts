@@ -1,16 +1,21 @@
 /**
- * Game canvas: 640x480 logical stage, letterboxed 4:3 into the container, device-pixel-ratio aware.   OWNER: lane D
+ * Game canvas: the window is FILLED at the original aspect scale and the logical stage grows with it
+ * (deviation DYNAMIC_VIEWPORT): scale s = min(cw/640, ch/480), so the limiting dimension stays exactly
+ * 640x480 and the other extends — the stage is never smaller than the authored 640x480 content.
+ * 640x480-authored content (menus) is centred on the grown stage by the engine's stage layout; the
+ * in-game world view uses the full stage. At a 4:3 window this is byte-identical to the old letterbox.
+ * Device-pixel-ratio aware.   OWNER: lane D
  *
  *     const presenter = new Presenter(document.getElementById('stage')!);
  *     presenter.render(player);                    // sets ctx transform logical->device, calls player.render(ctx, s)
  *     presenter.clientToLogical(e.clientX, e.clientY)
  *     presenter.toggleFullscreen()                 // Electron: IPC to main; browser: Fullscreen API
  *
- * The container is expected to fill the window (index.html #stage: position:absolute; inset:0). Bars are black
- * (container background) like the Flash standalone player's "showAll" scale mode.
+ * The container is expected to fill the window (index.html #stage: position:absolute; inset:0).
  */
 import { toggleFullscreen } from './desktop.ts';
 
+/** The AUTHORED content size (the original SWF stage). The live stage is always >= STAGE_W x STAGE_H. */
 export const STAGE_W = 640;
 export const STAGE_H = 480;
 
@@ -25,23 +30,34 @@ export interface PresenterOptions {
   imageSmoothingQuality?: ImageSmoothingQuality;
 }
 
-export interface Fit { cssW: number; cssH: number; left: number; top: number; deviceW: number; deviceH: number }
+export interface Fill { deviceW: number; deviceH: number; stageW: number; stageH: number }
 
-/** Pure: fit a 4:3 stage into a container (CSS px) and choose the backing-store size (device px). */
-export function computeFit(containerW: number, containerH: number, dpr: number, stageW = STAGE_W, stageH = STAGE_H): Fit {
+/**
+ * Pure: fill a container (CSS px) with the canvas and derive the live logical stage + backing store (device px).
+ * Whole device pixels (never larger than the container) so the compositor does not resample the canvas; the stage
+ * is rounded to whole logical px and clamped to >= the authored size (sub-pixel backing rounding then shrinks the
+ * scale by a hair instead of cropping content).
+ */
+export function computeFill(containerW: number, containerH: number, dpr: number, stageW0 = STAGE_W, stageH0 = STAGE_H): Fill {
   const cw = Math.max(1, containerW), ch = Math.max(1, containerH);
-  const scale = Math.min(cw / stageW, ch / stageH);
-  // Whole device pixels (never larger than the container) so the compositor does not resample the canvas.
-  const deviceW = Math.max(1, Math.floor(stageW * scale * dpr + 1e-6));
-  const deviceH = Math.max(1, Math.floor(stageH * scale * dpr + 1e-6));
-  const cssW = deviceW / dpr, cssH = deviceH / dpr;
-  return { cssW, cssH, left: (cw - cssW) / 2, top: (ch - cssH) / 2, deviceW, deviceH };
+  const scale = Math.min(cw / stageW0, ch / stageH0);
+  const deviceW = Math.max(1, Math.floor(cw * dpr + 1e-6));
+  const deviceH = Math.max(1, Math.floor(ch * dpr + 1e-6));
+  return {
+    deviceW,
+    deviceH,
+    stageW: Math.max(stageW0, Math.round(deviceW / (dpr * scale))),
+    stageH: Math.max(stageH0, Math.round(deviceH / (dpr * scale))),
+  };
 }
 
 export class Presenter {
   readonly canvas: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
   readonly container: HTMLElement;
+  /** Live logical stage size (>= 640x480; equals it at 4:3 windows). Read by tests and the stage layout. */
+  stageW = STAGE_W;
+  stageH = STAGE_H;
   /** Device px per logical px (x and y; equal up to rounding). */
   scaleX = 1;
   scaleY = 1;
@@ -91,18 +107,22 @@ export class Presenter {
   readonly resize = (): void => {
     const r = this.container.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-    const f = computeFit(r.width || window.innerWidth, r.height || window.innerHeight, dpr);
+    const f = computeFill(r.width || window.innerWidth, r.height || window.innerHeight, dpr);
     const c = this.canvas;
     if (c.width !== f.deviceW || c.height !== f.deviceH) {
       c.width = f.deviceW;
       c.height = f.deviceH;
     }
-    c.style.width = `${f.cssW}px`;
-    c.style.height = `${f.cssH}px`;
-    c.style.left = `${f.left}px`;
-    c.style.top = `${f.top}px`;
-    this.scaleX = f.deviceW / STAGE_W;
-    this.scaleY = f.deviceH / STAGE_H;
+    // Whole-device CSS size centred in the container (identical to it up to sub-pixel backing rounding).
+    const cssW = f.deviceW / dpr, cssH = f.deviceH / dpr;
+    c.style.width = `${cssW}px`;
+    c.style.height = `${cssH}px`;
+    c.style.left = `${(r.width - cssW) / 2}px`;
+    c.style.top = `${(r.height - cssH) / 2}px`;
+    this.stageW = f.stageW;
+    this.stageH = f.stageH;
+    this.scaleX = f.deviceW / f.stageW;
+    this.scaleY = f.deviceH / f.stageH;
     this.applyContextState();
     for (const l of this.listeners) l();
     this.reassertCursor();
@@ -143,19 +163,44 @@ export class Presenter {
     ctx.restore();
   }
 
-  /** Client (CSS px, e.g. MouseEvent.clientX/Y) -> logical stage px (may be outside 0..640/0..480 over the bars). */
+  /**
+   * Where the authored 640x480 content sits on the live stage ((stageW-STAGE_W)/2, (stageH-STAGE_H)/2; (0,0) at 4:3).
+   * Menu-space (content) coordinates = stage coordinates - this offset.
+   */
+  get contentOffset(): { x: number; y: number } {
+    return { x: (this.stageW - STAGE_W) / 2, y: (this.stageH - STAGE_H) / 2 };
+  }
+
+  /** Client (CSS px, e.g. MouseEvent.clientX/Y) -> logical STAGE px (may be outside 0..stageW/0..stageH). */
   clientToLogical(clientX: number, clientY: number): { x: number; y: number } {
     const r = this.canvas.getBoundingClientRect();
     return {
-      x: ((clientX - r.left) * STAGE_W) / (r.width || 1),
-      y: ((clientY - r.top) * STAGE_H) / (r.height || 1),
+      x: ((clientX - r.left) * this.stageW) / (r.width || 1),
+      y: ((clientY - r.top) * this.stageH) / (r.height || 1),
     };
   }
 
-  /** Logical stage px -> client CSS px (e.g. to place the HTML context menu). */
+  /** Logical STAGE px -> client CSS px (e.g. to place the HTML context menu). */
   logicalToClient(x: number, y: number): { x: number; y: number } {
     const r = this.canvas.getBoundingClientRect();
-    return { x: r.left + (x * r.width) / STAGE_W, y: r.top + (y * r.height) / STAGE_H };
+    return { x: r.left + (x * r.width) / this.stageW, y: r.top + (y * r.height) / this.stageH };
+  }
+
+  /**
+   * Authored-content (menu space, 640x480) px -> client CSS px: DOM widgets glued to SWF art below the stage's
+   * content offset (the LAN IP box, the debrief name conduit) use this so they follow the centred content at any
+   * window shape. Identity to logicalToClient at 4:3 windows.
+   */
+  contentToClient(x: number, y: number): { x: number; y: number } {
+    const o = this.contentOffset;
+    return this.logicalToClient(x + o.x, y + o.y);
+  }
+
+  /** Client CSS px -> authored-content (menu space) px (inverse of contentToClient). */
+  clientToContent(clientX: number, clientY: number): { x: number; y: number } {
+    const o = this.contentOffset;
+    const p = this.clientToLogical(clientX, clientY);
+    return { x: p.x - o.x, y: p.y - o.y };
   }
 
   /** CSS cursor over the stage ('default' | 'pointer' | 'none' ...). */

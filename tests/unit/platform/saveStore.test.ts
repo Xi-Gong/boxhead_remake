@@ -4,7 +4,7 @@ import type { KeyValueStorage } from '../../../src/engine/flash/SharedObject.ts'
 import { defaultRenderScale, parseSettings, SaveStore } from '../../../src/engine/platform/SaveStore.ts';
 import { buildMenuRows, renderScaleRow } from '../../../src/engine/platform/ContextMenu.ts';
 import { ContextMenu, ContextMenuItem } from '../../../src/engine/flash/stubs.ts';
-import { computeFit } from '../../../src/engine/platform/Presenter.ts';
+import { computeFill } from '../../../src/engine/platform/Presenter.ts';
 
 function fakeStorage(): KeyValueStorage & { map: Map<string, string> } {
   const map = new Map<string, string>();
@@ -157,19 +157,27 @@ describe('Settings (renderScale) and context-menu rows', () => {
   });
 });
 
-describe('Presenter fit (4:3 letterbox)', () => {
-  it('fits and centres the stage, backing store in whole device pixels', () => {
-    expect(computeFit(1280, 960, 1)).toEqual({ cssW: 1280, cssH: 960, left: 0, top: 0, deviceW: 1280, deviceH: 960 });
-    const wide = computeFit(1920, 1080, 1);
-    expect(wide.cssH).toBe(1080);
-    expect(wide.cssW).toBe(1440);
-    expect(wide.left).toBe(240);
-    const tall = computeFit(800, 1000, 1.5);
+describe('Presenter fill (DYNAMIC_VIEWPORT: stage grows with the window, never below 640x480)', () => {
+  it('fills the container; 4:3 keeps the stage authored; wide/tall windows extend the other dimension', () => {
+    expect(computeFill(1280, 960, 1)).toEqual({ deviceW: 1280, deviceH: 960, stageW: 640, stageH: 480 });
+    const wide = computeFill(1920, 1080, 1);
+    expect(wide.stageH).toBe(480);
+    expect(wide.stageW).toBe(Math.round(1920 / (1080 / 480)));
+    const tall = computeFill(800, 1000, 1.5);
     expect(tall.deviceW).toBe(1200);
-    expect(tall.deviceH).toBe(900);
-    expect(tall.top).toBe(200);
-    const odd = computeFit(1001, 777, 1.25);
+    expect(tall.deviceH).toBe(1500);
+    expect(tall.stageW).toBe(640);
+    expect(tall.stageH).toBe(800);
+    const tiny = computeFill(500, 400, 1);
+    expect(tiny.stageW).toBe(640);
+    expect(tiny.stageH).toBe(512);
+  });
+
+  it('keeps the backing store whole device pixels and the stage whole logical pixels', () => {
+    const odd = computeFill(1001, 777, 1.25);
     expect(Number.isInteger(odd.deviceW) && Number.isInteger(odd.deviceH)).toBe(true);
-    expect(odd.deviceW / odd.deviceH).toBeCloseTo(4 / 3, 2);
+    expect(Number.isInteger(odd.stageW) && Number.isInteger(odd.stageH)).toBe(true);
+    expect(odd.stageW).toBeGreaterThanOrEqual(640);
+    expect(odd.stageH).toBeGreaterThanOrEqual(480);
   });
 });
