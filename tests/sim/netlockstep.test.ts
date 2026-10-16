@@ -591,6 +591,20 @@ describe('LAN stall catch-up (v0.2.1 L1)', () => {
     expect(netStallRewind(undefined, 1000, T, 3)).toBe(undefined);
   });
 
+  it('spendCatchupCredit: transient stalls spend the bucket, a persistent phase mismatch yields until re-lock', () => {
+    const s = new NetSession(0, { send: () => {} });
+    const T = 40;
+    // A fresh game starts with full credit: three ticks of rewinds, then the bucket is dry.
+    expect(s.spendCatchupCredit(1000, T)).toBe(true);
+    expect(s.spendCatchupCredit(1040, T)).toBe(true);
+    expect(s.spendCatchupCredit(1080, T)).toBe(true);
+    expect(s.spendCatchupCredit(1120, T)).toBe(false);
+    // ~1 s later roughly one refill tick's worth came back (post-lock hiccups stay hidden).
+    expect(s.spendCatchupCredit(2200, T)).toBe(true);
+    expect(s.spendCatchupCredit(2240, T)).toBe(false);
+    s.dispose();
+  });
+
   it('a one-tick-late peer frame costs no cadence slot - the gate retries the same tick', { timeout: 120000 }, () => {
     const B = bootNetPeer('Coop', 'ROOM_Single_0001');
     setRandomState(0xC0FFEE);

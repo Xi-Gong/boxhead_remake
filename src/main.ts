@@ -74,6 +74,10 @@ const dbg: GameDebug = {
       inputDelay: s?.startOpts?.inputDelay ?? s?.inputDelay ?? null, endReason: s?.endReason ?? null,
       worldTick: s?.world?.mTick, state: (window as any).__game?.state?.(),
       checkpoint: s?.netCheckpoint?.tick ?? null, frames,
+      // v0.2.1 smoothness observability: stall episodes this game, prediction health (netlockstep pins the
+      // semantics; the netsmooth playtest asserts on these over a delayed-link window).
+      stallCount: s?.stallCount ?? null,
+      shadow: s?.shadow ? { valid: s.shadow.valid, x: s.shadow.x, y: s.shadow.y, corrections: s.shadow.corrections, divergencePx: s.shadow.lastDivergencePx } : null,
     };
   },
   main: () => CMain?._this,

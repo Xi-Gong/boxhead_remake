@@ -54,12 +54,16 @@ export function installNetScope(): void {
     }
     if (!session.tryBeginTick(w)) {
       // v0.2.1 L1: a late peer frame must not cost a cadence slot - hand the just-consumed time slice back so
-      // the schedule retries THIS tick as soon as the frame lands (debt clamped by netStallRewind). Only for
-      // playing-phase stalls: reconnect/desync freezes must freeze truly.
+      // the schedule retries THIS tick as soon as the frame lands (debt clamped by netStallRewind). The credit
+      // bucket bounds the total: a PERSISTENT phase mismatch yields slots until the peers re-lock (the pre-
+      // v0.2.1 skips were the only phase correction the lockstep had). Only for playing-phase stalls:
+      // reconnect/desync freezes must freeze truly.
       if (session.phase === 'playing') {
         const m: any = this;
-        m.mTimeSlice = netStallRewind(m.mTimeSlice, frameTime(), 1000 / CMain.mFPS, MAX_NET_CATCHUP_TICKS);
-        m.mFrameCap = 2; // bounded catch-up burst while the schedule owes ticks
+        if (session.spendCatchupCredit(getTimer(), 1000 / CMain.mFPS)) {
+          m.mTimeSlice = netStallRewind(m.mTimeSlice, frameTime(), 1000 / CMain.mFPS, MAX_NET_CATCHUP_TICKS);
+          m.mFrameCap = 2; // bounded catch-up burst while the schedule owes ticks
+        }
       }
       if (flagDraw) w.Draw();
       return;

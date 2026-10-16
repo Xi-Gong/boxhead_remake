@@ -55,6 +55,15 @@ const DM_CHECKPOINT_EVERY = 1500;
 const RECONNECT_WINDOW_MS = 30000;
 /** v0.2.1: how long a checksum-desync freeze shows its overlay before BOTH peers abandon to the LAN room. */
 export const DESYNC_RETURN_MS = 3000;
+/**
+ * v0.2.1 L1 stall-catch-up token bucket: schedule credit in ms. Transient late frames spend it (their slot is
+ * rewound and invisibly retried); a PERSISTENT phase mismatch drains it, after which stalls yield their slots
+ * and the schedule slips until the peers re-lock - the pre-v0.2.1 skips were the lockstep's only phase
+ * correction, and without this the rewind would keep an unlucky-phase peer micro-stalling forever. Refills
+ * slowly so post-lock hiccups (about one per second) stay invisible.
+ */
+export const CATCHUP_CREDIT_MAX_MS = 120;
+export const CATCHUP_REFILL_MS_PER_S = 40;
 
 function fnv(s: string): string {
   let h = 0x811c9dc5;
@@ -101,6 +110,10 @@ export class NetSession {
   private world: any = undefined;
   netPaused = false;
   stallReason: 'peer' | 'local' | 'waiting' | undefined;
+  /** v0.2.1 observability: how many stall EPISODES this game has had (entering a reason from none). */
+  stallCount = 0;
+  private catchupCreditMs = CATCHUP_CREDIT_MAX_MS;
+  private catchupRefillAt = 0;
   /** v0.2.1 L3: the local player's display prediction (see Predict.ts); invalid until the first afterTick. */
   shadow: ShadowState = newShadow();
   /** Date.now() when the current stall began (the overlay's WAITING strip waits out a grace window; v0.1.7). */
@@ -227,6 +240,8 @@ export class NetSession {
     this.endReason = undefined;
     this.inputDelay = start.inputDelay ?? LAN_INPUT_DELAY;
     (main as any).mFrameCap = 1; // v0.2.1 L1: every game starts with the original single-tick cap
+    this.stallCount = 0; // v0.2.1 observability: per-game stall episodes
+    this.catchupCreditMs = CATCHUP_CREDIT_MAX_MS; // v0.2.1 L1: a fresh game starts with full catch-up credit
     this.applyConfig(start.cfg);
     World.CWorld.mGameMode = start.mode;
     // A reconnect resume replaces a live (frozen) world: dispose it outright (DeleteWorld's body, without its
@@ -338,6 +353,7 @@ export class NetSession {
   /** Set the stall reason; the UI (WAITING strip) is told when it CHANGES (v0.1.7 - it never was before). */
   private stall(reason: 'peer' | 'local' | 'waiting' | undefined): void {
     if (this.stallReason === reason) return;
+    if (reason !== undefined && this.stallReason === undefined) this.stallCount++;
     this.stallReason = reason;
     this.stallSince = reason === undefined ? undefined : Date.now();
     this.onStateChange?.();
@@ -380,6 +396,23 @@ export class NetSession {
   /** v0.2.1 L3 (Predict.ts): this world's relative lockstep tick index. */
   tickIndex(world: any): number {
     return world.mTick - this.startTick;
+  }
+
+  /**
+   * v0.2.1 L1: spend one tick of schedule catch-up credit (true = rewind the stalled slot and retry it),
+   * or yield it (false - the schedule slips a tick and the peers re-lock; see CATCHUP_CREDIT_MAX_MS).
+   */
+  spendCatchupCredit(nowMs: number, tickMs: number): boolean {
+    const dt = nowMs - this.catchupRefillAt;
+    if (dt > 0) {
+      this.catchupCreditMs = Math.min(CATCHUP_CREDIT_MAX_MS, this.catchupCreditMs + (dt / 1000) * CATCHUP_REFILL_MS_PER_S);
+      this.catchupRefillAt = nowMs;
+    }
+    if (this.catchupCreditMs >= tickMs) {
+      this.catchupCreditMs -= tickMs;
+      return true;
+    }
+    return false;
   }
 
   /** The __set__mLevel hook calls this on every wave advance (the field is empty then - a clean checkpoint). */

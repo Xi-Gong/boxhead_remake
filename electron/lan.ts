@@ -44,6 +44,16 @@ interface Peer {
   watchdog: LinkWatchdog;
 }
 
+// --boxhead-net-delay=<ms> (v0.2.1 smoothness QA): delay every TCP send by N ms (one way) so localhost
+// dual-instance runs behave like a real link of that class (the UDP discovery beacons are untouched). The
+// heartbeat RTT then measures the injected delay and computeInputDelay picks the same input delay the real
+// link would.
+const NET_DELAY_MS = (() => {
+  const a = process.argv.find((s) => s.startsWith('--boxhead-net-delay='));
+  const n = a ? Number(a.split('=')[1]) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : 0;
+})();
+
 export class LanTransport {
   private readonly identity: string; // proto/app build string both sides must share
   private readonly hostName: string;
@@ -334,7 +344,9 @@ export class LanTransport {
 
   private rawSend(socket: TcpSocket, msg: LanMessage): void {
     if (socket.destroyed) return;
-    socket.write(encodeFrame(msg));
+    const buf = encodeFrame(msg);
+    if (NET_DELAY_MS > 0) setTimeout(() => { if (!socket.destroyed) socket.write(buf); }, NET_DELAY_MS);
+    else socket.write(buf);
   }
 
   send(msg: LanMessage): void {
