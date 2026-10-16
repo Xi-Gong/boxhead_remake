@@ -30,18 +30,21 @@ export const LAN_CHECKSUM_EVERY = 50;
 export const LAN_INPUT_DELAY = 1;
 
 /**
- * Lockstep input delay in ticks for a measured link (v0.1.7). The input frame for tick T is sampled right after
- * tick T-D ran and must arrive within D ticks (D * tickMs); the wire distance is ONE way (~ RTT/2 + the renderer
- * IPC hops), so half the WORST recently sampled heartbeat RTT plus a fixed margin covers jitter and path
- * asymmetry. Smaller than v0.1.4's full-RTT formula (which also paid a built-in extra tick of index slack): a
- * 60-100 ms virtual-LAN link lands at D=2-3 instead of 3-4. gameSpeed follows GameConfig (0 slow / 1 normal /
- * 2 fast -> 80 / 40 / 20 ms ticks), so fast games scale the tick count up.
+ * Lockstep input delay in ticks for a measured link (v0.1.7; statistic hardened in v0.2.1). The input frame for
+ * tick T is sampled right after tick T-D ran and must arrive within D ticks (D * tickMs); the wire distance is
+ * ONE way (~ RTT/2 + the renderer IPC hops), so half the p90 of the recently sampled heartbeat RTTs plus a fixed
+ * margin covers jitter and path asymmetry. v0.2.1: p90 instead of the raw worst - the lobby samples for minutes,
+ * and a SINGLE pre-START heartbeat hiccup (renderer GC, a busy EF) used to add +1..2 D for an entire game; with
+ * a 20-sample window p90 drops the worst two outliers, while small windows still resolve to the max (nothing to
+ * drop yet - every pinned band below is unchanged). gameSpeed follows GameConfig (0 slow / 1 normal / 2 fast ->
+ * 80 / 40 / 20 ms ticks), so fast games scale the tick count up.
  */
 export function computeInputDelay(rttSamples: readonly number[] | undefined, gameSpeed: number): number {
   if (!rttSamples || rttSamples.length === 0) return LAN_INPUT_DELAY;
   const tickMs = 1000 / (25 * (gameSpeed === 0 ? 0.5 : gameSpeed));
-  const worst = Math.max(...rttSamples);
-  return Math.max(1, Math.min(8, Math.ceil((worst / 2 + 35) / tickMs)));
+  const sorted = [...rttSamples].sort((a, b) => a - b);
+  const ref = sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.9) - 1)];
+  return Math.max(1, Math.min(8, Math.ceil((ref / 2 + 35) / tickMs)));
 }
 
 /** v0.2.1 L1: the largest schedule debt (in ticks) a net stall may bank before slots are surrendered for good. */

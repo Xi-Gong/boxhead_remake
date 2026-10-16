@@ -612,6 +612,16 @@ describe('LAN v0.1.7: live ping, stall notices, jitter-aware input delay', () =>
     expect(computeInputDelay([60], 0)).toBe(1);
   });
 
+  it('computeInputDelay ignores heartbeat RTT outliers (p90, v0.2.1)', () => {
+    // The lobby samples RTTs for minutes; ONE pre-START heartbeat hiccup used to add +1..2 D for a whole game.
+    const clean = Array.from({ length: 20 }, (_, i) => 55 + (i % 3) * 3); // a steady 60 ms-class link
+    expect(computeInputDelay(clean, 1)).toBe(2);
+    const spiked = [...clean.slice(0, 18), 180, 240]; // two hb hiccups at the end of the window
+    expect(computeInputDelay(spiked, 1)).toBe(2);     // RED pre-v0.2.1: worst-of-20 -> D=4
+    // Small windows still resolve to the max (nothing to drop yet).
+    expect(computeInputDelay([40, 55, 60], 1)).toBe(2);
+  });
+
   it('heartbeat refreshes rttMs AND notifies the UI while playing (ended sessions stay silent)', { timeout: 60000 }, () => {
     const B = bootNetPeer('Coop', 'ROOM_Single_0001');
     let notified = 0;
