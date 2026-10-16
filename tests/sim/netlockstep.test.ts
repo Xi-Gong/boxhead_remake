@@ -15,6 +15,7 @@ import { NetSlot, packBits, SLOT_ORDER, unpackBit } from '../../src/game/local/N
 import { NetSession, _peekLocalFrame } from '../../src/game/local/Net/NetSession.ts';
 import { CMain, Thing, World } from '../../src/game/packages.ts';
 import { computeInputDelay, MAX_NET_CATCHUP_TICKS, netStallRewind } from '../../src/game/local/Net/protocol.ts';
+import { shadowDrawOverride } from '../../src/game/local/Net/Predict.ts';
 import { frameTime } from '../../src/engine/flash/clock.ts';
 import { stallStripDue } from '../../src/game/local/Net/overlay.ts';
 import type { GameConfig, LanMode } from '../../src/game/local/Net/protocol.ts';
@@ -485,6 +486,94 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     const h1 = run();
     const h2 = run();
     expect(h2).toBe(h1); // the rebuild+continue path is deterministic
+  });
+});
+
+// --------------------------------------------------------------------------- v0.2.1 local-player prediction
+
+describe('LAN local-player prediction (v0.2.1 L3)', () => {
+  it('the shadow leads the local player by D-1 ticks and the sim catches up to it', { timeout: 120000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001', 2); // D=2 (a 60 ms-class link): lead = 1 tick
+    _global.mInfinateLife = true;
+    setRandomState(0xC0FFEE);
+    const firstEntry = B.game.world().mTick;
+    const local = () => B.game.players()[1]; // the client machine's local player is player 2
+    // Walk LEFT in the very first ticks after spawn (an open corridor): nothing is in thing-vs-thing range yet,
+    // so the lead is EXACT. (Later in a real room the authoritative path also gets pushed by collidable things -
+    // deliberately NOT predicted - and reconciliation absorbs that; the snap test below covers it.)
+    for (let i = 0; i < 4; i++) {
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+      B.game.setKeys([KEYS.P2.LEFT]);
+      expect(B.game.tick(1)).toBe(1);
+      const sh = B.session.shadow;
+      expect(sh?.valid).toBe(true);
+      expect(local().mPosition.mX - sh.x).toBeGreaterThan(0.001); // leading the sim into the held direction
+    }
+    // Exactness: freeze the shadow, run exactly `lead` more ticks - the authoritative position arrives where the
+    // shadow pointed, to well under half a step. (The boot primes D-1 EMPTY input frames before the first real
+    // sample lands, so the very first reconciliation can carry one half-blend <= speed/2; steady-state straight
+    // lines reconcile at zero and the tolerance below is a third of a step.)
+    const captured = { x: B.session.shadow!.x, y: B.session.shadow!.y };
+    B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+    B.game.setKeys([KEYS.P2.LEFT]);
+    B.game.tick(1);
+    expect(Math.hypot(local().mPosition.mX - captured.x, local().mPosition.mY - captured.y)).toBeLessThan(0.05);
+    B.session.dispose();
+  });
+
+  it('a forced authoritative jump snaps the shadow (corrections++); a stall freezes it', { timeout: 120000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001', 3); // D=3 (100 ms-class): lead = 2 ticks
+    _global.mInfinateLife = true;
+    setRandomState(0xC0FFEE);
+    const firstEntry = B.game.world().mTick;
+    const local = () => B.game.players()[1];
+    for (let i = 0; i < 6; i++) {
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+      B.game.setKeys([KEYS.P2.RIGHT]);
+      expect(B.game.tick(1)).toBe(1);
+    }
+    const sh0 = { ...B.session.shadow! };
+    expect(sh0.valid).toBe(true);
+    expect(sh0.corrections).toBe(0);
+    // Teleport the authoritative player far away: the next shadow snaps to it (no long visual chase).
+    const p = local();
+    p.Move(new Thing.Math.CThing_Position(p.mPosition.mX + 8, p.mPosition.mY + 8, 0));
+    B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+    B.game.setKeys([]);
+    B.game.tick(1);
+    const sh1 = B.session.shadow!;
+    expect(sh1.corrections).toBe(sh0.corrections + 1);
+    expect(Math.hypot(sh1.x - p.mPosition.mX, sh1.y - p.mPosition.mY)).toBeLessThan(0.35); // lead distance only
+    // A stall (peer frame missing) freezes the shadow - it never runs ahead of the un-simulated world.
+    const frozen = { x: sh1.x, y: sh1.y };
+    B.game.step(4);
+    expect(B.session.shadow!.x).toBe(frozen.x);
+    expect(B.session.shadow!.y).toBe(frozen.y);
+    B.session.dispose();
+  });
+
+  it('the draw override serves only the local player in control - everything else draws at the sim position', { timeout: 120000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001', 2);
+    _global.mInfinateLife = true;
+    setRandomState(0xC0FFEE);
+    const firstEntry = B.game.world().mTick;
+    for (let i = 0; i < 6; i++) {
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+      B.game.setKeys([KEYS.P2.RIGHT]);
+      B.game.tick(1);
+    }
+    const [peer, me] = B.game.players();
+    expect(shadowDrawOverride(B.session, me)).not.toBeNull(); // the local player in control: predicted
+    expect(shadowDrawOverride(B.session, peer)).toBeNull();   // the remote peer: authoritative, always
+    // A non-control state (dying) falls back to the sim position too.
+    me.mFlags |= Thing.CThing.mFlag_DEAD;
+    me.SetState('State_Dying');
+    B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+    B.game.setKeys([]);
+    B.game.tick(1);
+    expect(B.session.shadow!.valid).toBe(false);
+    expect(shadowDrawOverride(B.session, me)).toBeNull();
+    B.session.dispose();
   });
 });
 

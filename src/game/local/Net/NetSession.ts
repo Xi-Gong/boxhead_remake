@@ -33,6 +33,7 @@ import { CMain, Thing, World } from '../../packages.ts';
 import { armSnapshot, capture, type RunSnapshot } from '../Resume.ts';
 import { armStartWave, getRunStartWave } from '../StartWave.ts';
 import { NetSlot, packBits, unpackBit, SLOT_ORDER, type SlotBitName } from './NetSlot.ts';
+import { advanceShadow, newShadow, type ShadowState } from './Predict.ts';
 import {
   LAN_CHECKSUM_EVERY, LAN_INPUT_DELAY, type GameConfig, type LanChecksum, type LanMessage, type LanMode, type LanRole,
 } from './protocol.ts';
@@ -100,6 +101,8 @@ export class NetSession {
   private world: any = undefined;
   netPaused = false;
   stallReason: 'peer' | 'local' | 'waiting' | undefined;
+  /** v0.2.1 L3: the local player's display prediction (see Predict.ts); invalid until the first afterTick. */
+  shadow: ShadowState = newShadow();
   /** Date.now() when the current stall began (the overlay's WAITING strip waits out a grace window; v0.1.7). */
   stallSince: number | undefined;
   rttMs: number | undefined;
@@ -288,6 +291,7 @@ export class NetSession {
   onWorldReady(world: any): void {
     this.world = world;
     this.phase = 'playing';
+    this.shadow = newShadow(); // v0.2.1 L3: every world starts unpredicted (reconciled on the first afterTick)
     // Lockstep frames are indexed RELATIVE to this world's ready tick: the number of warm-up Process calls during
     // the build differs per machine (1-3 in the real app), so absolute CWorld.mTick would never line up between the
     // peers. mTick itself is unread by game logic - only the relative index matters.
@@ -360,6 +364,22 @@ export class NetSession {
     const prune = t - (this.inputDelay + 3);
     for (const k of this.localFrames.keys()) if (k < prune) this.localFrames.delete(k);
     for (const k of this.remoteFrames.keys()) if (k < prune) this.remoteFrames.delete(k);
+    advanceShadow(this, world); // v0.2.1 L3: reconcile + lead the local player's display prediction
+  }
+
+  /** v0.2.1 L3 (Predict.ts): the already-sampled local input frame for tick u, if still inside the window. */
+  peekLocalBits(u: number): number | undefined {
+    return this.localFrames.get(u);
+  }
+
+  /** v0.2.1 L3 (Predict.ts): the world this session drives (identity check for draw overrides). */
+  currentWorld(): any {
+    return this.world;
+  }
+
+  /** v0.2.1 L3 (Predict.ts): this world's relative lockstep tick index. */
+  tickIndex(world: any): number {
+    return world.mTick - this.startTick;
   }
 
   /** The __set__mLevel hook calls this on every wave advance (the field is empty then - a clean checkpoint). */

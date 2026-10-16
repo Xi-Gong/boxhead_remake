@@ -20,6 +20,7 @@ import { CMain, Thing, World } from '../../packages.ts';
 import { DESYNC_RETURN_MS, netSession } from './NetSession.ts';
 import { SLOT_ORDER } from './NetSlot.ts';
 import { MAX_NET_CATCHUP_TICKS, netStallRewind } from './protocol.ts';
+import { cameraBias, playersOf, shadowDrawOverride } from './Predict.ts';
 
 export function installNetScope(): void {
   // ---- State_RunWorld: lockstep gate + net-owned pause ----------------------------------------
@@ -104,5 +105,77 @@ export function installNetScope(): void {
     initFinished.call(this);
     const session = netSession();
     if (session && session.phase === 'starting') session.onWorldReady(this);
+  };
+
+  // ---- Player Draw: render the LOCAL player at the predicted position (v0.2.1 L3) --------------------------------
+  // Display-layer only: mPosition/mAngle are swapped around the original (RNG-free) Draw call and restored - the
+  // sim, the checksums and the peer's render calls are untouched. Everything else (peer players, non-control
+  // states) draws at the authoritative position via the null path.
+  const playerDraw = playerProto.Draw;
+  const scratchAngle = new (Thing.Math as any).CThing_Angle(0);
+  const scratchDelta = new (Thing.Math as any).CThing_Position(1, 0, 0);
+  playerProto.Draw = function (this: any, ...args: any[]): any {
+    const session = netSession();
+    const o = session ? shadowDrawOverride(session, this) : null;
+    if (!o) return playerDraw.apply(this, args as any[]);
+    const realPos = this.mPosition;
+    const realAngle = this.mAngle;
+    scratchDelta.mX = o.dx;
+    scratchDelta.mY = o.dy;
+    scratchDelta.mZ = 0;
+    scratchAngle.__set__mDelta(scratchDelta);
+    this.mPosition = new (Thing.Math as any).CThing_Position(o.x, o.y, realPos.mZ);
+    this.mAngle = scratchAngle;
+    try {
+      return playerDraw.apply(this, args as any[]);
+    } finally {
+      this.mPosition = realPos;
+      this.mAngle = realAngle;
+    }
+  };
+
+  // ---- Camera: bias the tracking anchor toward the predicted local player (draw-time only) ------------------------
+  // Process_Tracking runs from Draw_PlayerPlane (inside CWorld.Draw), reading mTrackPosition - the running
+  // average the players' TrackThing accumulated during the last tick. Shifting the LOCAL player's share by the
+  // prediction delta moves the camera exactly as if the player already stood at the shadow: the coop anchor gets
+  // delta/liveCount, the DM split-screen slot gets the full delta. mDrawPosition/lTrackPosition are render state
+  // (not checksummed - the checksum covers score/thing-counts/player pos+life), so per-machine divergence here is
+  // invisible to the lockstep.
+  const worldTracking = worldProto.Process_Tracking;
+  worldProto.Process_Tracking = function (this: any, tIndex?: any, bmSize?: any): any {
+    const session = netSession();
+    const bias = session ? cameraBias(session, this) : null;
+    if (!bias) return worldTracking.call(this, tIndex, bmSize);
+    if (tIndex === undefined) {
+      const real = this.mTrackPosition;
+      if (real) {
+        let live = 0;
+        for (const p of playersOf(this)) if (!(p.mFlags & Thing.CThing.mFlag_DEAD)) live++;
+        if (live > 0) {
+          this.mTrackPosition = real.Clone().Add(new (Thing.Math as any).CThing_Position(bias.dx / live, bias.dy / live, 0));
+          try {
+            return worldTracking.call(this, tIndex, bmSize);
+          } finally {
+            this.mTrackPosition = real;
+          }
+        }
+      }
+      return worldTracking.call(this, tIndex, bmSize);
+    }
+    const slot = this.mTrackPositions[tIndex];
+    if (slot) {
+      const sessionRole = (session as any).role;
+      if (slot === playersOf(this)[sessionRole]) {
+        this.mTrackPositions[tIndex] = {
+          mPosition: new (Thing.Math as any).CThing_Position(slot.mPosition.mX + bias.dx, slot.mPosition.mY + bias.dy, slot.mPosition.mZ),
+        };
+        try {
+          return worldTracking.call(this, tIndex, bmSize);
+        } finally {
+          this.mTrackPositions[tIndex] = slot;
+        }
+      }
+    }
+    return worldTracking.call(this, tIndex, bmSize);
   };
 }
