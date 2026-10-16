@@ -69,7 +69,9 @@ npm run dev         # http://localhost:5173/
 - **Start-wave selector** — start any run at wave 1–100 with the loadout the original's difficulty curve would
   have granted by then.
 - **LAN multiplayer** (portable build) — host & auto-discover or join by IP, lockstep-verified co-op and death
-  match with 30 s reconnect + checkpoint resume (~2–4 KB/s each way).
+  match with 30 s reconnect + checkpoint resume (~2–4 KB/s each way). After a finished match either player
+  can RETRY straight from the debrief (checkpoint first, else a fresh run at the failed wave), and local-player
+  display prediction keeps control feeling like single-player even on 60 ms-class links.
 
 All 23 deviations are registered in [`src/game/deviations.ts`](src/game/deviations.ts) and audited in
 [`PARITY.md`](PARITY.md): sponsor content (CMG logo, online scores, external links) is replaced by local

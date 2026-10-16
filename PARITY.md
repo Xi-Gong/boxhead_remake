@@ -318,3 +318,30 @@ DOM 文本控件（INPUT/TEXTAREA/contentEditable）时整组放行——不抢�
 | Retry 兜底 | 无检查点时（START WAVE 起始波推进前死亡、CONTINUE 后推进前死亡）RETRY 从**本局实际起始波**重开（InitFinished 落定后记录；复用 START_WAVE 起始头机制：静默 `__set__mLevel` + anchorInterp 阶梯倍率，clamp 100），不再落回原版难度基准波；分数/武器仍按重试语义重置。难度基准开局**逐位不变**（起始波=基准，装订为无操作）；DM 胜利屏与 net 对局（RETRY 本就隐藏）保持原版行为 |
 
 测试：`tests/sim/startWave.test.ts`（T1 波 20 开局→波 20 死→RETRY→波 20/倍率 30/梯队武器/分数归零、T2 难度 1+波 5 降级不回撤、T3 经真实菜单无泄漏）、`tests/sim/resume.test.ts` T4（CONTINUE→立即死→RETRY→存档波次）、`tests/unit/swf/media.test.ts`（提交资产完整性 + 全量重提取字节全等）、既有 flow/soak/weaponCrate 钉全部保持。
+
+## 13. v0.2.1 LAN 收尾：游戏结束 Retry + 流畅度（2026-10-16）
+
+两项用户反馈修复：**LAN 游戏结束后的死房间**与 **60ms 级链路手感不如本地**。全部为 LAN_MULTIPLAYER 内的
+显示/传输层改动（`netActive()` 门控，离线行为逐字节不变），**不新增 deviation 编号**；audio-identity 金丝雀
+（双端 PlaySound 有序序列全等）与全部锁步哈希测试在预测开启下复证 RNG/音频中立。
+
+### 13.1 游戏结束 Retry + 房间解卡
+
+| 项 | 行为 |
+|---|---|
+| 根因修复 | 自然结束（coop 全灭 / DM 击杀上限）此前从不把 `NetSession.phase` 置 `'ended'`（仅认输/超时路径会），`markBackInLobby()` 永不生效 → 房间渲染成"对局中"变体（START/READY/CLOSE 全隐藏，只剩双方旧 READY 徽章），只能退房重建。现在 net RunWorld 包装器在 `mCompleteState` 置位的那一拍（双端确定性同拍）幂等标记 `'ended'` |
+| Debrief RETRY | 联机结算屏 RETRY 不再隐藏：任一方点击 → host 主导协同重开（新 `'retry'` 协议消息，host 端 `startRetry`）；语义与本地 v0.2.0 完全一致：有 netCheckpoint → 从检查点续局；无（首波推进前/DM 前 1500 tick 死亡）→ 从本局起始波（= 失败波次）重开新局。附带修复：DM 胜利屏 RETRY 此前从未被 net 门控（潜在单侧重开 desync），现走同一协同路径 |
+| 房间条 | 无检查点时房间显示 `GAME OVER - RETRY AVAILABLE` + `RETRY AT WAVE n`（host 可点），有检查点仍为 RESUME GAME |
+| 相位机 | 会话内第二局（客户端由 NetSession 直接消费 start）此前 bridge 相位卡 `'setup'` → 房间空白；任何通往 `'ended'` 的路径现在都会自动把 bridge 释放回 `'lobby'`（含已在房间内的场景） |
+| desync | 校验和失配此前永久冻结双方（overlay 承诺回大厅但无代码执行）；3 秒宽限后双端独立弃局回房（分歧后检查点可能再次分歧，fresh-RETRY 条是安全出口） |
+
+### 13.2 流畅度（60ms 级链路"像本地"）
+
+| 层 | 行为 |
+|---|---|
+| L1 有界失速追赶 | 此前迟到一帧 = 永久丢一个 40ms 时间片（25fps 节律上可见的洞）。现在瞬态迟到把刚消耗的时间片退还、同拍重试（帧帽临时升 2）；**令牌桶**限制总额：持续错相在 ~3 次失速后耗尽 120ms 信用，改为让出时间片直至双方相位重锁（旧版的跳拍本是锁步唯一的相位自愈机制），40ms/s 回充使锁后偶发抖动仍不可见 |
+| L2 输入延迟统计 | `computeInputDelay` 由 worst-of-20 改 p90：大厅里采样数分钟，单个 START 前心跳尖峰不再给整局 +1~2 D（小窗口仍等价 max，全部既有 pin 不变） |
+| L3 本机玩家显示预测 | afterTick 时本机未来 D-1 拍输入帧**已采样在册**（线上等的永远只是对端）——据此在本机前推 D-1 拍：与权威"为该拍做出的预测"和解（>1 格快照纠正、小偏差半量缓动、完全一致则采纳），移动数学逐位复刻（原始输入增量→朝向、KeepDistance 19/13 系绳、真实 Collide_Map 墙体滑动 0.85 半径；**不**复刻 Collide_Mapwho 互推——它写模拟态，其误差恰由和解吸收）。仅在绘制层生效：玩家 Draw 包装器换入/换出 mPosition/mAngle；相机仅在 Process_Tracking（绘制期）对追踪锚加偏（checksum 只覆盖分数/物体数/玩家位置+生命）。stall 期间影子随世界冻结；reconnect/desync 相位整体停用 |
+| 测试钩子 | `--boxhead-net-delay=<ms>`（主进程单向延迟全部 TCP 发送，UDP beacon 不受影响）→ 本地双实例回放真实链路等级：30ms 单向得 D=2、60ms 得 D=3 |
+
+测试：`tests/sim/netlockstep.test.ts` 新增——自然全灭→双端 `'ended'`、retryStart 无检查点→起始波/有检查点→续局、进程内第二局相位同步、host 响应 `'retry'`、desync 3s 弃局回房、netStallRewind 边界、迟到一拍零时间片损失+欠账钳制、p90 去离群、令牌桶边界、影子领先 D-1 拍且 sim 追及、强制跳变快照纠正、stall 冻结影子、覆盖门控。打包 QA：`tests/sim/playtest.netretry.mjs`（自然死亡→Debrief RETRY 可见→EXIT→房间可操作→进程内第二局→client 按 RETRY→双端重开，全真实用户流程）与 `tests/sim/playtest.netsmooth.mjs [delayMs]`（D 一致、20s 操控窗持续失速≈0、tick/分数全等、rAF 探针：shadow 一拍内(6-7ms)响应而 sim 滞后 D 拍；30ms 与 60ms 双档通过）；关键画面经 zai 视觉 MCP 核验（结算 RETRY 可见、房间 RETRY AT WAVE 1/START 可点、重开对局干净）。

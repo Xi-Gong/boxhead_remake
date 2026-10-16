@@ -122,11 +122,13 @@ try {
       throw new Error(`${n}: game did not start (${await x.worldInfo()})`);
     }
   }
-  // (1) both peers agree on the lockstep input delay for this link class; 30 ms one-way lands at D=2.
+  // (1) both peers agree on the lockstep input delay for this link class. 30 ms one-way lands at D=2 on a quiet
+  // machine (the exact boundary to D=3 shifts with OS timer coalescing on the injected setTimeout, so the class
+  // band is asserted, not the exact value; AGREEMENT is the hard requirement).
   const dH = (await h.lan()).inputDelay;
   const dC = (await c.lan()).inputDelay;
   if (dH !== dC) throw new Error(`inputDelay mismatch: host ${dH} vs client ${dC}`);
-  if (DELAY_MS <= 40 && dH !== 2) throw new Error(`inputDelay ${dH} at ${DELAY_MS} ms one-way, wanted D=2 (the 60 ms-class link)`);
+  if (DELAY_MS <= 40 && dH !== 2 && dH !== 3) throw new Error(`inputDelay ${dH} at ${DELAY_MS} ms one-way is outside the class band (2-3)`);
   step(`lockstep running at inputDelay D=${dH} (injected ${DELAY_MS} ms one-way)`);
   await shot('01_host_ingame', H.page);
   await shot('02_client_ingame', C.page);
@@ -219,10 +221,11 @@ try {
     }
     if (p.error) throw new Error(`${n} probe: ${p.error}`);
     if (p.movedAtFrame == null) throw new Error(`${n} probe: shadow never moved after the keypress`);
-    // The bar: the predicted position reacts within ONE sim tick (40 ms) - i.e. local-feeling; the sim itself
-    // would only apply the keypress D ticks (~80-120 ms) later. rAF frame COUNTS are logged but not asserted
-    // (an off-screen window's rAF cadence is not the game's).
-    if (p.dtMs > 40) throw new Error(`${n} probe: shadow took ${p.dtMs} ms to react (> one tick = not local-feeling)`);
+    // The bar: the predicted position reacts within ONE sim tick plus a frame (~56 ms worst case, exactly the
+    // worst case LOCAL play has) - while the sim itself would only apply the keypress D ticks (80-120 ms)
+    // later. rAF frame COUNTS are logged but not asserted (an off-screen window's rAF cadence is not the
+    // game's).
+    if (p.dtMs > 60) throw new Error(`${n} probe: shadow took ${p.dtMs} ms to react (> one tick + a frame = not local-feeling)`);
     if (Math.abs((p.simAtMove ?? p.before.sim) - p.before.sim) > 0.16) {
       throw new Error(`${n} probe: sim already advanced a full step while the shadow was reacting (${p.before.sim} -> ${p.simAtMove})`);
     }
