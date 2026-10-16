@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { createHeadlessGame } from './harness.ts';
 import { lanBridge, _resetBridgeForTests } from '../../src/game/local/Net/bridge.ts';
+import { NetSession } from '../../src/game/local/Net/NetSession.ts';
 
 describe('LAN lobby screen (v0.1.4)', () => {
   it('entry view: renders discovery rows, dims unjoinable rooms, hides the searching hint', { timeout: 60000 }, () => {
@@ -87,6 +88,48 @@ describe('LAN lobby screen (v0.1.4)', () => {
     s.bBack.onRelease.call(s.bBack);
     expect(g.waitScreen('State_Main', 'Screen_Main', 600)).toBe(true);
     expect(g.errors).toEqual([]);
+    _resetBridgeForTests();
+  });
+
+  // v0.2.1: a wire 'start' arriving while the session still lives (the SECOND+ in-process game) is consumed by
+  // NetSession directly - the bridge used to keep its stale phase (stuck 'setup' -> blank room after the game).
+  const CFG: any = { difficulty: 0, gameSpeed: 1, devils: true, collisions: true, damage: true, gameAmount: 0, detail: true, charP1: 0, charP2: 0 };
+
+  it('in-process second game: a wire start with a live session re-enters playing (was: bridge stuck at setup)', { timeout: 120000 }, () => {
+    _resetBridgeForTests();
+    const g = createHeadlessGame({ mode: 'Single', room: 1, menuOnly: 'Main' });
+    const b = lanBridge();
+    b.isHost = false;
+    (b as any).onMessage({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: 1234, inputDelay: 1, wave: 1 });
+    expect(g.waitRunning(3000)).toBe(true); // first game: the bridge created the session and launched
+    expect(b.phase).toBe('playing');
+    // The game ends and the host drives a fresh setup + start; the new start lands while the session lives.
+    b.session!.markEnded();
+    b.phase = 'setup';
+    (b as any).onMessage({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: 4321, inputDelay: 1, wave: 7 });
+    expect(g.waitRunning(3000)).toBe(true);
+    expect(b.phase).toBe('playing'); // RED before v0.2.1: the bridge never learned about session-driven restarts
+    expect((b as any).started).toBe(true);
+    expect(g.snapshot().level).toBe(7);
+    b.leaveLobby();
+    _resetBridgeForTests();
+  });
+
+  it('host: a peer retry request drives the coordinated restart (no checkpoint -> fresh at the run-start wave)', { timeout: 120000 }, () => {
+    _resetBridgeForTests();
+    const g = createHeadlessGame({ mode: 'Single', room: 1, menuOnly: 'Main' });
+    const b = lanBridge();
+    b.isHost = true;
+    b.session = new NetSession(0, { send: () => {} });
+    b.session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: 7, inputDelay: 1, wave: 4 }, g.main());
+    expect(g.waitRunning(3000)).toBe(true);
+    b.session.markEnded();
+    b.phase = 'lobby';
+    (b as any).onMessage({ t: 'retry' }); // the client pressed Debrief RETRY / the room strip
+    expect(g.waitRunning(3000)).toBe(true); // the host rebuilt the world for the retry
+    expect(b.phase).toBe('playing');
+    expect(g.snapshot().level).toBe(4); // no checkpoint survived -> fresh run armed at the run-start wave
+    b.leaveLobby();
     _resetBridgeForTests();
   });
 });

@@ -16,7 +16,7 @@
 //   InitFinished    - (stacked outside the v0.1.2 consumePending wrapper) hands the built world to the session.
 import { getTimer } from '../../../engine/runtime.ts';
 import { CMain, Thing, World } from '../../packages.ts';
-import { netSession } from './NetSession.ts';
+import { DESYNC_RETURN_MS, netSession } from './NetSession.ts';
 import { SLOT_ORDER } from './NetSlot.ts';
 
 export function installNetScope(): void {
@@ -40,12 +40,25 @@ export function installNetScope(): void {
       if (flagDraw) w.Draw();
       return;
     }
+    // v0.2.1: a checksum desync used to freeze both peers forever - the overlay promised a lobby return that no
+    // code ever performed. After the grace window (so the players see what happened) both peers abandon to the
+    // room independently; a checkpoint taken after divergence may diverge again, so the fresh-RETRY strip is the
+    // safe escape (both peers hold the identical checkpoint by determinism of the captures themselves).
+    if (session.phase === 'desync' && session.desyncAt !== undefined && Date.now() - session.desyncAt >= DESYNC_RETURN_MS) {
+      session.abandonToLobby();
+      this.SetState('State_LanLobby');
+      return;
+    }
     if (!session.tryBeginTick(w)) {
       if (flagDraw) w.Draw();
       return;
     }
     stateRunWorld.call(this, flagDraw);
     session.afterTick(w);
+    // Natural end (coop all-dead / DM kill limit): mCompleteState was set inside this same tick on BOTH peers
+    // (deterministic sim) and the original state machine just routed away from RunWorld - tell the session so the
+    // bridge can leave 'playing' at the next room entry (v0.2.1 room-unstick; idempotent, forfeit paths unaffected).
+    if (w.mCompleteState) session.markEnded();
   };
 
   // ---- Player Process_Init: swap both players' controls for NetSlots --------------------------

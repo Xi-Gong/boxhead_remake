@@ -9,6 +9,7 @@
 import { TextFormat, flash, proto, registerClass } from '../../../engine/runtime.ts';
 import { CScreen } from '../../Screen/CScreen.ts';
 import { lanBridge } from './bridge.ts';
+import { getRunStartWave } from '../StartWave.ts';
 import { buildMenuButton, SCREEN_LAN_LOBBY_LINKAGE } from '../localSymbols.ts';
 import { inputSummary } from '../InputBadge.ts';
 
@@ -204,7 +205,7 @@ export class CScreen_LanLobby extends CScreen {
 
     this.resumeText = this.Text(220, 258, 200, 16, 'Calibri', 12, INK, true, 'center', 'LAST GAME AVAILABLE');
     room(this.resumeText);
-    this.resumeBtn = this.Button(320, 290, 180, 26, 'RESUME GAME', 14, () => lanBridge().startGame(true));
+    this.resumeBtn = this.Button(320, 290, 180, 26, 'RESUME GAME', 14, () => lanBridge().requestRetry());
     room(this.resumeBtn);
 
     this.readyBtn = this.Button(220, 330, 150, 28, 'READY', 15, () => lanBridge().setReady(!lanBridge().ready));
@@ -342,9 +343,22 @@ export class CScreen_LanLobby extends CScreen {
       else if (!b.ready) { this.p2Badge.text = 'NOT READY'; this.p2Badge.textColor = ACCENT; }
       else { this.p2Badge.text = 'READY'; this.p2Badge.textColor = GREEN; }
     }
-    const canResume = b.isHost && b.session?.phase === 'ended' && !!b.session.netCheckpoint;
-    if (this.resumeText) this.resumeText._visible = room && canResume;
-    if (this.resumeBtn) this.resumeBtn._visible = room && canResume;
+    // v0.2.1: the strip appears after EVERY finished game. A surviving checkpoint keeps the old RESUME semantics;
+    // without one (died before the first wave advance / DM tick 1500) it becomes the failed-wave RETRY instead -
+    // the net analog of the local debrief fallback (see NetSession.retryStart).
+    const sess = b.session;
+    const ended = sess?.phase === 'ended' && !!sess.startOpts;
+    const canResume = b.isHost && ended && !!sess!.netCheckpoint;
+    const canRetryFresh = b.isHost && ended && !sess!.netCheckpoint;
+    const showRetryStrip = canResume || canRetryFresh;
+    if (this.resumeText) {
+      this.resumeText._visible = room && showRetryStrip;
+      this.resumeText.text = canResume ? 'LAST GAME AVAILABLE' : 'GAME OVER - RETRY AVAILABLE';
+    }
+    if (this.resumeBtn) {
+      this.resumeBtn._visible = room && showRetryStrip;
+      if (showRetryStrip) this.resumeBtn._Contents._Label.text = canResume ? 'RESUME GAME' : `RETRY AT WAVE ${getRunStartWave()}`;
+    }
 
     // Client: READY toggle; Host: START (gated on player 2 being connected AND ready) + CLOSE ROOM.
     const bothReady = !!b.peerName && b.ready;

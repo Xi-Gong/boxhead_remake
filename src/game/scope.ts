@@ -213,14 +213,18 @@ export function applyScope(): void {
   // Debrief RETRY arms the checkpoint; without one (START WAVE death before the first advance, CONTINUE death before
   // the first advance) v0.2.0 falls back to the wave the run actually started at instead of the original difficulty
   // base - same head-start mechanism as the START WAVE selector, so score/weapons still reset (fresh-run semantics).
-  // Hidden in net games (an unsynchronized single-side restart is a desync by definition; the net lobby owns rematches).
+  // v0.2.1: in a NET game RETRY stays live but drives the HOST-COORDINATED restart (checkpoint resume, else a fresh
+  // run at the failed wave) - an unsynchronized single-side restart is a desync by definition. Either peer may
+  // press; the host decides, both peers rebuild through the normal wire start path.
   debriefProto.ctor = (function (previous: any) {
     return function (this: any): void {
       previous.call(this);
       if (this._Retry) {
         if (netActive()) {
-          this._Retry._visible = false;
-          this._Retry.enabled = false;
+          this._Retry.onPress = function (): void {
+            CSound.mSamples.Click.PlaySound();
+            lanBridge().requestRetry();
+          };
           return;
         }
         this._Retry.onPress = function (this: any): void {
@@ -231,6 +235,20 @@ export function applyScope(): void {
       }
     };
   })(debriefProto.ctor);
+  // v0.2.1: the DM winner screen's RETRY was never net-gated (a latent single-side restart = desync) - route it
+  // through the same coordinated retry. Local DM behavior is untouched.
+  const winnerProto = Screen.CScreen_Debrief_Winner.prototype as any;
+  winnerProto.ctor = (function (previous: any) {
+    return function (this: any): void {
+      previous.call(this);
+      if (this._Retry && netActive()) {
+        this._Retry.onPress = function (): void {
+          CSound.mSamples.Click.PlaySound();
+          lanBridge().requestRetry();
+        };
+      }
+    };
+  })(winnerProto.ctor);
   // Consume an armed snapshot once the freshly built world finished its init (no-op without one), then record the
   // settled start wave (after the difficulty head start, the armed start wave and any pending snapshot) as the
   // Debrief RETRY fallback. Re-recorded at every world build, so it never goes stale between games.

@@ -345,6 +345,97 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     C.session.dispose();
   });
 
+  it('coop: natural all-players-dead marks the net session ended (was: phase stuck playing - dead-end room)', { timeout: 120000 }, () => {
+    // The root cause of the v0.2.1 room bug: coop all-dead / DM kill-limit set mCompleteState and route to the
+    // debrief, but nothing moved NetSession.phase off 'playing' - markBackInLobby() then no-oped at every room
+    // entry and the lobby rendered its in-game variant (START/READY/CLOSE hidden, stale READY badges).
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    _global.mInfinateLife = true; // keep the scripted deaths the ONLY deaths (zombies cannot interfere)
+    setRandomState(0xC0FFEE);
+    const firstEntry = B.game.world().mTick;
+    const killBoth = (g: HeadlessGame): void => {
+      // The real damage path sets DEAD before State_Dying (the crate-test pattern, applied to both players).
+      for (const p of g.players()) {
+        p.mFlags |= Thing.CThing.mFlag_DEAD;
+        p.SetState('State_Dying');
+      }
+    };
+    for (let i = 0; i < 40; i++) { // live lockstep ticks first: the session really is mid-game
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+      B.game.setKeys([]);
+      expect(B.game.tick(1)).toBe(1);
+    }
+    expect(B.session.phase).toBe('playing');
+    killBoth(B.game);
+    let endedState = '';
+    for (let i = 0; i < 400; i++) { // dying animation -> removal -> PlayerDead -> mCompleteState -> debrief screen
+      B.session.onNetMessage({ t: 'in', tick: B.game.world().mTick - firstEntry, bits: 0 });
+      B.game.setKeys([]);
+      B.game.tick(1);
+      const st = B.game.state();
+      if (st !== 'State_RunWorld') { endedState = st ?? ''; break; }
+    }
+    expect(endedState).toBe('State_Debrief');   // the natural coop end routed to the debrief screen
+    expect(B.session.phase).toBe('ended');      // RED until the session learns about natural ends
+    expect(B.session.endReason).toBeUndefined(); // no forfeit routing happened - this was a natural end
+    B.session.dispose();
+  });
+
+  it('retry: no checkpoint -> fresh run at the run-start wave (retryStart feeds a wire start, v0.2.1)', { timeout: 120000 }, () => {
+    // The net analog of the local debrief fallback `if (!armFromCheckpoint()) armStartWave(getRunStartWave())`:
+    // dying before the first wave advance means the failed wave IS the run-start wave.
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001', undefined);
+    B.session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, wave: 5 }, B.game.main());
+    if (!B.game.waitRunning(3000)) throw new Error(`wave-5 run did not start (${B.game.state()})`);
+    B.game.tick(20); // idle: no wave advance, so no coop checkpoint exists
+    B.session.markEnded();
+    expect(B.session.netCheckpoint).toBeUndefined();
+    const m = B.session.retryStart();
+    expect(m.resumeTick).toBeUndefined(); // fresh run, not a resume
+    expect(m.wave).toBe(5); // the run started at wave 5 -> retry restarts at wave 5
+    B.session.onNetMessage({ t: 'start', mode: m.mode, roomLink: m.roomLink, cfg: m.cfg, seed: m.seed, inputDelay: m.inputDelay, wave: m.wave });
+    if (!B.game.waitRunning(3000)) throw new Error(`retry rebuild did not start (${B.game.state()})`);
+    expect(B.game.snapshot().level).toBe(5);
+    B.session.dispose();
+  });
+
+  it('retry: a surviving checkpoint wins - retryStart resumes from it (v0.2.1)', { timeout: 120000 }, () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    B.game.tick(10);
+    B.session.captureCheckpoint(B.game.world()); // the every-N path (coop normally checkpoints at wave advances)
+    B.session.markEnded();
+    const m = B.session.retryStart();
+    expect(m.resumeTick).toBe(B.session.netCheckpoint!.tick); // resume from the checkpoint, not a fresh wave
+    expect(m.wave).toBe(B.session.startOpts!.wave); // the original start wave still rides along (no-snap fallback)
+    B.session.onNetMessage({ t: 'start', mode: m.mode, roomLink: m.roomLink, cfg: m.cfg, seed: m.seed, inputDelay: m.inputDelay, resumeTick: m.resumeTick, wave: m.wave });
+    if (!B.game.waitRunning(3000)) throw new Error(`retry resume did not start (${B.game.state()})`);
+    B.session.dispose();
+  });
+
+  it('desync: both peers abandon to the LAN room after the grace window (was: frozen forever, v0.2.1)', { timeout: 120000 }, () => {
+    // The overlay always PROMISED a lobby return; no code ever performed it. Now: checksum mismatch -> 'desync'
+    // freeze -> after DESYNC_RETURN_MS both peers independently route to the room (phase 'ended').
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    setRandomState(0xC0FFEE);
+    const firstEntry = B.game.world().mTick;
+    let desynced = false;
+    for (let i = 0; i < 70 && !desynced; i++) {
+      const idx = B.game.world().mTick - firstEntry;
+      // A fabricated remote checksum on every frame (keyed by the frame index like the wire does): the first
+      // checksum tick (index 50) mismatches ours.
+      B.session.onNetMessage({ t: 'in', tick: idx, bits: 0, sum: { tick: idx, score: -1, things: -1, zombies: -1, q: [0, 0, 0, 0, 0, 0] } });
+      B.game.setKeys([]);
+      B.game.tick(1);
+      if (B.session.phase === 'desync') desynced = true;
+    }
+    expect(desynced).toBe(true);
+    (B.session as any).desyncAt = Date.now() - 4000; // backdate past the grace window
+    B.game.step(2);
+    expect(B.game.state()).toBe('State_LanLobby'); // the promised return actually happened
+    expect(B.session.phase).toBe('ended');         // and the room is actionable again
+    B.session.dispose();
+  });
+
   it('coop: player 2 switches weapons with the keyboard (E next / Q previous) - pinned, original defaults', { timeout: 120000 }, () => {
     const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 7 });
     const p2 = g.players()[1];

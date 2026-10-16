@@ -119,6 +119,9 @@ export type LanMessage =
   // ('timeout' = the 30 s reconnect window ran out; 'concede' = the pause-screen QUIT) so both peers route to the
   // same end screen (timeout -> main menu, concede -> the regular Debrief/Winner screens).
   | { t: 'leave'; reason: 'quit' | 'forfeit'; via?: 'timeout' | 'concede' }
+  // client -> host, v0.2.1: the client pressed RETRY (Debrief screen / room strip). The host drives the
+  // coordinated restart through the normal 'start' path (checkpoint resume, else a fresh run at the failed wave).
+  | { t: 'retry' }
   // informational divergence report (each side already acts on its own checksum mismatch).
   | { t: 'desync'; tick: number; mine: string; theirs: string };
 

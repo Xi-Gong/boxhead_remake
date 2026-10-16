@@ -149,12 +149,19 @@ class LanBridge {
 
   /** State_LanLobby entry: after a finished net game both players land back here (checkpoint kept for 续局). */
   markBackInLobby(): void {
-    if (this.session && this.session.phase === 'ended' && this.phase === 'playing') {
-      this.phase = 'lobby';
-      this.message = ''; // the room view shows its own RESUME strip when a checkpoint survives
-      void desktop?.lan?.hostSetStatus('lobby');
-      this.notify();
-    }
+    if (this.session && this.session.phase === 'ended' && this.phase === 'playing') this.backInLobby();
+  }
+
+  /**
+   * The one transition out of an in-game bridge phase (v0.2.1: also fired from the session's state changes, so a
+   * game that ends while the player never re-enters the lobby screen still frees the room - the old one-shot
+   * markBackInLobby could not see those).
+   */
+  private backInLobby(): void {
+    this.phase = 'lobby';
+    this.message = ''; // the room view shows its own RESUME/RETRY strip when a game survived
+    void desktop?.lan?.hostSetStatus('lobby');
+    this.notify();
   }
 
   // ---------------------------------------------------------------------------------------------- room / setup flow
@@ -252,7 +259,19 @@ class LanBridge {
   private launch(mode: 'Coop' | 'DeathMatch', roomLink: string, cfg: GameConfig, seed: number, inputDelay: number | undefined, resumeTick: number | undefined, role: 0 | 1, wave: number | undefined): void {
     if (!this.session) this.session = new NetSession(role, { send: (m) => this.send(m) });
     this.session.onStateChange = () => {
-      netOverlaySync(this.session);
+      const s = this.session;
+      if (s) {
+        // v0.2.1 phase sync: session-driven restarts (a second+ wire 'start' consumed by NetSession itself) must
+        // re-enter 'playing' here too - the bridge used to keep its stale phase (stuck 'setup' -> blank room).
+        // Any later route to 'ended' frees the room even if the player never re-enters the lobby screen.
+        if (s.phase === 'starting' && this.phase !== 'playing') {
+          this.phase = 'playing';
+          this.started = true;
+        } else if (s.phase === 'ended' && this.phase === 'playing') {
+          this.backInLobby();
+        }
+      }
+      netOverlaySync(s);
       this.notify();
     };
     void desktop?.lan?.hostSetStatus('playing');
@@ -261,6 +280,24 @@ class LanBridge {
     this.notify();
     this.session.startLocalGame({ mode, roomLink, cfg, seed, inputDelay, resumeTick, wave }, CMain._this);
     netOverlaySync(this.session);
+  }
+
+  /**
+   * v0.2.1: EITHER peer's retry request (the Debrief RETRY button / the room strip). The host owns the decision
+   * and drives both peers through the normal start path; the client just asks over the wire.
+   */
+  requestRetry(): void {
+    if (!this.session || this.session.phase !== 'ended') return;
+    if (this.isHost) this.startRetry();
+    else this.send({ t: 'retry' });
+  }
+
+  /** Host: resume from the surviving net checkpoint when one exists, else a fresh run at the failed wave. */
+  startRetry(): void {
+    if (!this.isHost || !this.session || this.session.phase !== 'ended' || !this.session.startOpts) return;
+    const m = this.session.retryStart();
+    this.send({ t: 'start', mode: m.mode, roomLink: m.roomLink, cfg: m.cfg, seed: m.seed, inputDelay: m.inputDelay, resumeTick: m.resumeTick, wave: m.wave });
+    this.launch(m.mode, m.roomLink, m.cfg, m.seed, m.inputDelay, m.resumeTick, 0, m.wave);
   }
 
   // ---------------------------------------------------------------------------------------------- transport events
@@ -325,6 +362,12 @@ class LanBridge {
       this.message = this.isHost ? 'player 2 left the room' : 'the host closed the room';
       CMain._this?.SetState('State_LanLobby');
       this.notify();
+      return;
+    }
+    if (msg.t === 'retry') {
+      // v0.2.1: the client pressed RETRY - the host drives the coordinated restart (guards inside no-op it when
+      // the game is not retryable).
+      this.startRetry();
       return;
     }
     if (msg.t === 'hb') {

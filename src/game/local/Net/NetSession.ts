@@ -31,7 +31,7 @@
 import { getRandomState, setRandomState } from '../../../engine/flash/rng.ts';
 import { CMain, Thing, World } from '../../packages.ts';
 import { armSnapshot, capture, type RunSnapshot } from '../Resume.ts';
-import { armStartWave } from '../StartWave.ts';
+import { armStartWave, getRunStartWave } from '../StartWave.ts';
 import { NetSlot, packBits, unpackBit, SLOT_ORDER, type SlotBitName } from './NetSlot.ts';
 import {
   LAN_CHECKSUM_EVERY, LAN_INPUT_DELAY, type GameConfig, type LanChecksum, type LanMessage, type LanMode, type LanRole,
@@ -52,6 +52,8 @@ export function _resetNetForTests(): void { active?.dispose(); active = null; }
 
 const DM_CHECKPOINT_EVERY = 1500;
 const RECONNECT_WINDOW_MS = 30000;
+/** v0.2.1: how long a checksum-desync freeze shows its overlay before BOTH peers abandon to the LAN room. */
+export const DESYNC_RETURN_MS = 3000;
 
 function fnv(s: string): string {
   let h = 0x811c9dc5;
@@ -102,6 +104,8 @@ export class NetSession {
   stallSince: number | undefined;
   rttMs: number | undefined;
   desyncTick: number | undefined;
+  /** When the desync freeze started (DESYNC_RETURN_MS later both peers abandon to the room; v0.2.1). */
+  desyncAt: number | undefined;
   /** Latest in-session net checkpoint (identical on both peers; memory only). */
   netCheckpoint: NetCheckpoint | undefined;
   private startTick = 0;
@@ -388,6 +392,34 @@ export class NetSession {
     this.onStateChange?.();
   }
 
+  /**
+   * A NATURAL game end (coop all-dead / DM kill limit) set mCompleteState on BOTH peers in the same tick and the
+   * original state machine routed to the debrief - mirror that into the phase machine (v0.2.1). Without this the
+   * bridge stayed 'playing' forever: markBackInLobby() no-oped and the room rendered its in-game variant (START /
+   * READY / CLOSE hidden) - the "leave and recreate the room" dead end. Idempotent, and deliberately leaves
+   * endReason / mCompleteState alone so the forfeit routing is unchanged.
+   */
+  markEnded(): void {
+    if (this.phase === 'ended') return;
+    if (this.phase !== 'playing' && this.phase !== 'starting') return;
+    this.phase = 'ended';
+    this.onStateChange?.();
+  }
+
+  /**
+   * v0.2.1 LAN retry decision - the net analog of the local debrief handler `if (!armFromCheckpoint())
+   * armStartWave(getRunStartWave())`: with a surviving net checkpoint, resume from it (identical to the room's
+   * old RESUME semantics); without one (coop death before the first wave advance / DM before tick 1500) rebuild
+   * a FRESH run armed at the run's start wave - which in that no-checkpoint case is exactly the wave the players
+   * died on. The result feeds the normal wire 'start' path, so both peers rebuild identically.
+   */
+  retryStart(): NetStart {
+    const o = this.startOpts;
+    if (!o) throw new Error('retryStart: no game has been started on this session');
+    if (this.netCheckpoint) return { ...o, resumeTick: this.netCheckpoint.tick };
+    return { ...o, resumeTick: undefined, wave: getRunStartWave() };
+  }
+
   dispose(): void {
     if (active === this) active = null;
     this.phase = 'ended';
@@ -467,7 +499,16 @@ export class NetSession {
     if (ours === undefined || theirs === undefined || ours === theirs) return;
     this.desyncTick = tick;
     this.phase = 'desync';
+    this.desyncAt = Date.now();
     this.link.send({ t: 'desync', tick, mine: ours, theirs });
+    this.onStateChange?.();
+  }
+
+  /** v0.2.1: leave the desync freeze for the LAN room (the overlay always promised it; no code performed it). */
+  abandonToLobby(): void {
+    if (this.phase !== 'desync') return;
+    this.phase = 'ended';
+    this.desyncAt = undefined;
     this.onStateChange?.();
   }
 }
