@@ -6,7 +6,7 @@
 // generated/disasm/button_<id>_1.txt + clip_sprite<id>_f1_d<depth>_1.txt (their getURL targets) and the gallery
 // renders generated/reports/gallery/Screen_Main.png, Screen_SelectWorld.png, Screen_Debrief.png, LevelIcons_Single_f7.png.
 import { Mouse } from '../engine/flash/input.ts';
-import { Button, MovieClip, _global } from '../engine/runtime.ts';
+import { Button, MovieClip, _global, forIn } from '../engine/runtime.ts';
 import { getFrameScript, registerFrameScript, setInstanceHook } from '../engine/swf/Player.ts';
 import { CMain, CSaveData, CSound, External, Screen, World } from './packages.ts';
 import { hasTable, roomIndexOfLibLink, showHighscoreTable, submitLocalScore } from './local/Highscores.ts';
@@ -24,6 +24,7 @@ import { CThing_Object_WeaponCrate, captureCratePayload, crateDropPosition } fro
 import { armStartWave, consumeArmedWaveOn, getRunStartWave, getSelectedStartWave, recordRunStartWave, resetSelectedStartWave } from './local/StartWave.ts';
 import { recordWaveReached } from './local/WaveUnlock.ts';
 import { buildStartWaveCycler } from './local/StartWaveUi.ts';
+import { setBadgeHidden } from './local/InputBadge.ts';
 import { menuTextItem, text } from './local/UiStyle.ts';
 import { installViewport } from './local/Viewport.ts';
 import { desktop } from '../engine/platform/desktop.ts';
@@ -333,6 +334,17 @@ export function applyScope(): void {
       buildStartWaveCycler(this, 100, 364);
     }
   };
+  // v0.2.5 (modal z-order): the cycler is drawn at runtime, so in AS2 depth terms it sits ABOVE the SWF-authored
+  // Options/Controls windows - it stayed fully bright over the open modal, hiding its content. The four window
+  // Open/Close methods are the only writers of the windows' _visible, so sync the cycler through them.
+  for (const m of ['WindowOptions_Open', 'WindowOptions_Close', 'WindowControls_Open', 'WindowControls_Close']) {
+    const prev = selectProto[m];
+    if (typeof prev !== 'function') continue;
+    selectProto[m] = function (this: any): void {
+      prev.call(this);
+      if (this.mcStartWave) this.mcStartWave._visible = !(this.mcWindow_Options._visible || this.mcWindow_Controls._visible);
+    };
+  }
   const loadLevelPrev = selectProto.LoadLevel;
   selectProto.LoadLevel = function (this: any, tLevelIndex: any): void {
     armStartWave(getSelectedStartWave());
@@ -348,6 +360,9 @@ export function applyScope(): void {
   const setStatePrev = mainProtoCursor.SetState;
   mainProtoCursor.SetState = function (this: any, nState: any): void {
     if (this[nState] != undefined) cursorHidden(nState === 'State_RunWorld');
+    // v0.2.5: the instructions page's footer owns the bottom strip - hide the input badge there (reading page; the
+    // badge comes back on every other screen).
+    setBadgeHidden(nState === 'State_Instructions');
     setStatePrev.call(this, nState);
   };
 
@@ -371,10 +386,18 @@ export function applyScope(): void {
       return;
     }
     // v0.2.2 restyle (UiStyle): the original pause QUIT's own language - red Calibri text, brightening on hover -
-    // instead of the old dark plate. Centred below QUIT on the same axis.
+    // instead of the old dark plate. Centred below QUIT on the same axis. v0.2.5 (list overlap): with 64+ upgrades
+    // unlocked the ported 3-column list runs past the fixed y=452 slot - measure the duplicated rows' actual bottom
+    // (they are laid out at column._y + row*17 in this same parent) and place the button below it.
+    let listBottom = 0;
+    for (const k of forIn(this.mcScreenPause)) {
+      if (!/^upgrade_/.test(k)) continue;
+      const row: any = this.mcScreenPause[k];
+      if (typeof row?._y === 'number') listBottom = Math.max(listBottom, row._y + 16);
+    }
     const btn = this.mcScreenPause.createEmptyMovieClip('_SaveQuit', this.mcScreenPause.getNextHighestDepth());
     btn._x = 320;
-    btn._y = 452;
+    btn._y = Math.max(452, listBottom + 12);
     const tf = text(btn, '_Label', -160, -16, 320, 32, 'Calibri', 26, 0xff0000, true, 'center', 'SAVE & QUIT');
     btn.onRollOver = function (): void { tf.textColor = 0xfe5f5f; };
     btn.onRollOut = function (): void { tf.textColor = 0xff0000; };
@@ -469,6 +492,11 @@ export function applyScope(): void {
   mainProtoLan.State_LanLobby = function (this: any): void {
     lanBridge().markBackInLobby();
     this.Process_Screen(SCREEN_LAN_LOBBY_LINKAGE);
+    // v0.2.5 (desync teardown): entering the lobby straight from a run (the desync abandon, NetScope) used to leave
+    // the world clip attached - it kept drawing over the lobby panel forever, hiding it. Same shape as
+    // State_NetEnd/State_SaveQuitMenu: once the new screen has normalized, tear the world down (DeleteWorld itself
+    // no-ops until then, and the per-frame state handler retries).
+    if (this.mcWorld) this.DeleteWorld();
   };
   // The net setup screen (host picks mode / both characters / level / options; the client mirrors it read-only).
   mainProtoLan.State_LanSetup = function (this: any): void {

@@ -241,6 +241,22 @@ try {
     if (d.state !== 'State_LanLobby') throw new Error(`${n} did not return to the lobby (state ${d.state})`);
     if (!String(d.msg).includes('DESYNCED')) throw new Error(`${n} lobby banner missing: "${d.msg}"`);
   }
+  // v0.2.5 (desync teardown): the lobby must actually REPLACE the run visually - the world clip torn down (it used to
+  // keep drawing over the lobby panel forever, hiding it) and the "RUN OVER" end pill hidden by its own 2.5 s timer.
+  await H.page.waitForTimeout(1200); // past the end pill's hideSoon(2500) from the abandon moment
+  for (const [n, pg] of [['host', H.page], ['client', C.page]]) {
+    const vis = await pg.evaluate(() => ({
+      world: !!window.__game.main().mcWorld,
+      worldVisible: window.__game.main().mcWorld?._visible ?? false,
+      pillShown: [...document.querySelectorAll('div,p,span')].some((e) => {
+        const t = e.textContent ?? '';
+        return /RUN OVER|GAME OVER/.test(t) && t.length < 40 && e.style.display !== 'none' && e.offsetParent !== null;
+      }),
+    }));
+    if (vis.world) throw new Error(`${n}: world clip still attached after desync lobby return`);
+    if (vis.pillShown) throw new Error(`${n}: RUN OVER pill still shown after the desync lobby return`);
+    step(`desync teardown ${n}: ${JSON.stringify(vis)}`);
+  }
   await shot('07_host_desync_lobby', H.page);
   await shot('08_client_desync_lobby', C.page);
   report.ok = report.errors.length === 0;

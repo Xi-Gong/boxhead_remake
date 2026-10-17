@@ -82,6 +82,12 @@ function draw(): void {
 }
 
 /** The LAN room view shows this line so both players can confirm their controllers before starting. */
+/** v0.2.5: some screens reserve the bottom-left strip for their own text (instructions footer) - hide the badge
+ *  there (display, not opacity: it must stop covering the page immediately and not fight the idle fade). */
+export function setBadgeHidden(hidden: boolean): void {
+  if (el) el.style.display = hidden ? 'none' : 'flex';
+}
+
 export function inputSummary(): string {
   if (!handle) return 'KEYBOARD';
   const n = handle.status().pads.filter((p) => p.present).length;

@@ -464,3 +464,35 @@ electron/main.ts：`BOXHEAD_USER_DATA`（QA/playtest，`BOXHEAD_DIST_DIR` 家族
 `startWave.test.ts` 新增解锁组（新档钉在 1、区间内回绕、开局/推进记录且只增、无缓存直读、BEST 文案）+ 既有用例补种子；lansetup 补房主上限+双端 BEST 用例；netlockstep 波次开局补双端记录断言；e2e 新 `wave` 组（新档钉 1→种子 3→区间回绕+存档成员）；`playtest.v024.mjs`（打包三段：新档钉 1 / 种子 25 开局 LEVEL 25+局中推进落盘+**同目录重启 BEST 30 持久** / LAN 房主 30 双端 BEST 30+循环至 WAVE 3）；v019/v020 补 `__setWaveUnlock(100)` 种子行。v024 全部截图经 zai 视觉 MCP 核验（箭头可见、BEST 间距无重叠、LAN 盘下 BEST 对齐）。
 
 测试：全套 vitest 1249、e2e ui 188+audio 28、test:electron 45+6、打包 playtest browser/v012/typing/lanui/net/netretry/netsmooth 30+60+100/v019/v020/v023/v024 全绿。
+
+## 17. v0.2.5 全量视觉 QA 修复六项（2026-10-17）
+
+发布前对 v0.2.4 做全量后台验证（门禁 + ~60 用户表面 zai 视觉走查 + 专项探针，证据 `generated/reports/v025-qa/`），发现并修复 6 个 remake 层 bug；另有 4 条视觉疑点经几何/代码复核推翻（过渡"孤岛"= authored 态自身黑边、合作开局帧 label 时差、DM"缺 frags 选择器"、HUD 误读），多组"异常"核实为原版 parity（Debrief 无 epitaph——原版屏本无该文本框、DM winner 无比分、新档默认 9/18 = 移植默认 `_LevelIndex_Single:8`、暂停/重连横幅下 HUD 浮字 = 移植绘制序等，台账见 bugs.md）。
+
+### 17.1 LAN desync 返回大厅：世界拆除（S2，`LAN_MULTIPLAYER` 修订）
+
+v0.2.3 的"desync 即返大厅"只切了状态机：`State_LanLobby` 处理器仅 `Process_Screen`，而 `DeleteWorld()` 只由 `State_Debrief*` 调用 → 世界剪辑永不拆除、一直画在大厅面板之上（探针实测 6s 仍在、面板不可见，玩家视角软锁）。修复：`State_LanLobby` 处理器补 `if (this.mcWorld) this.DeleteWorld()`（与 `State_NetEnd`/`State_SaveQuitMenu` 同型——过渡完成前 DeleteWorld 自身 no-op，逐帧状态处理器重试）。`playtest.v023.mjs` D 段补断言：返回大厅后双端 `!mcWorld` 且 RUN OVER 结束 pill 已被自身 2.5s 计时隐藏。
+
+### 17.2 弹窗层级：cycler 让位（S3，`START_WAVE_SELECTOR` 修订）
+
+运行时创建的 cycler 在 AS2 深度上必然高于 SWF 原生内容（`getNextHighestDepth` > 全部 authored 深度），v0.2.2 后一直以全亮压在 Options/Controls 弹窗上、遮住弹窗左下内容（输入锁定本身有效）。修复：包装四个 `Window{Options,Controls}_{Open,Close}`（窗口 `_visible` 的仅有关点），弹窗开启期间 `mcStartWave._visible = false`。
+
+### 17.3 暂停列表与 SAVE & QUIT 重叠（S3，`SAVE_QUIT_RESUME` 修订）
+
+红字 SAVE & QUIT 固定 `_y=452`，而解锁 ≥64 项时移植的三列列表延伸越过该槽（三张截图独立复现：默认窗 + 两种宽窗）。修复：Pause 包装实测本帧 `upgrade_*` 行底边（`列起点+行数*17`，同一父空间），`_y = max(452, 底边+12)` 仍居中同轴。
+
+### 17.4 说明页页脚重排 + 徽章让位（S4，`GAMEPAD_INPUT` 修订）
+
+旧页脚三行 y432/448/464：GAMEPAD/SAVING 行与左下输入徽章条（DOM，窗口底 y≈449-470）叠字，LAN 行越 480 底边被裁；武器行 y392/414 也与页脚相触。修复：武器行收紧 y390/410；三行文案各缩到 560px 单行（11px Calibri 不换行）置 y436/450/464；说明页期间徽章隐藏（`setBadgeHidden`，静态阅读页徽章纯噪音，其余屏幕照常）。
+
+### 17.5 手柄光标边角钳制（S4，`GAMEPAD_INPUT` 修订）
+
+光标锚点可钳到 `sb.w/sb.h` = 14×14 箭头盒完全出画（持续满偏摇杆 ~8s 即"消失"；DOM 探针实测钉在 (960,720)）。修复：钳到 `sb.w-14 / sb.h-14`（修复后实测 (939,699) 全可见）。
+
+### 17.6 同机双实例发现错误文案（S4，`LAN_MULTIPLAYER` 修订）
+
+同机第二个实例绑定固定发现端口 47630 必失败，大厅红字直显 `bind EADDRINUSE 0.0.0.0:47630`（真机 LAN 不受影响，每机各绑）。修复：EADDRINUSE 特判为 `another game on this machine listens - join by IP`（49 字符，适配 330px 状态字段；首版 84 字符文案两端被裁，已缩短）。附带结论：loopback 双实例永远无法验证发现列表行渲染（残留风险，文字断言已覆盖行构造逻辑）。
+
+### 17.7 测试与视觉验收
+
+修复全部走 wrapper/平台层（src/game/ported 文件零改动）；v023 补 desync 拆除断言（RED 于 v0.2.4 复现、GREEN 于修复版通过）；六项修复面全部重拍并经 zai 视觉复核确认（desync 后 GAME ROOM 面板完整可见、两弹窗 cycler 隐藏、SAVE & QUIT 低于列表留 8-10px 净空、说明页页脚三行完整+徽章隐藏、光标 (939,699) 边界内、EADDRINUSE 友好文案）；随后按发布门禁全量复跑（typecheck/vitest/e2e/playtest 全家桶/test:electron）。

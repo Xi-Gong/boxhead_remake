@@ -87,7 +87,15 @@ class LanBridge {
   refresh(): void {
     if (!this.available) return;
     void desktop!.lan.discoverStart().then((r) => {
-      if (!r.ok) { this.message = `discovery unavailable: ${r.reason}`; this.notify(); }
+      if (!r.ok) {
+        // v0.2.5: two instances on ONE machine share the fixed discovery port (47630) - the raw EADDRINUSE bind
+        // error read like a crash. Name the real situation instead; real LANs are unaffected (each machine binds).
+        // (Short on purpose: the lobby status field is 330 px wide at 12 px bold - longer copy clips at both ends.)
+        this.message = /EADDRINUSE/.test(String(r.reason))
+          ? 'another game on this machine listens - join by IP'
+          : `discovery unavailable: ${r.reason}`;
+        this.notify();
+      }
     });
   }
 

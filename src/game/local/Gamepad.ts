@@ -215,8 +215,10 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     if (p.dpad.down) dy = CURSOR_SPEED;
     if (dx || dy) {
       const sb = stageBounds();
-      cursorX = clamp(cursorX + dx, 0, sb.w);
-      cursorY = clamp(cursorY + dy, 0, sb.h);
+      // v0.2.5: clamp so the whole 14x14 arrow box stays on stage - at the right/bottom edge the old clamp let the
+      // cursor's anchor reach sb.w/sb.h, putting the entire triangle outside the window ("cursor vanished").
+      cursorX = clamp(cursorX + dx, 0, Math.max(0, sb.w - 14));
+      cursorY = clamp(cursorY + dy, 0, Math.max(0, sb.h - 14));
     }
     if (p.present && (dx || dy || p.down.size || p.up.size)) lastPadActivity = Date.now();
     // A = click: press on the down edge, release on the up edge (the engine fires onRelease only when the

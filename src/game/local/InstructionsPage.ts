@@ -55,11 +55,12 @@ export const INSTRUCTIONS = {
     ['9', 'Charge Pack', 'x55'],
     ['0', 'Railgun', 'x70'],
   ],
-  // v0.1.2 additions (GAMEPAD_INPUT / SAVE_QUIT_RESUME / WAVE_CHECKPOINT_RETRY).
-  gamepad: 'GAMEPAD: stick or d-pad moves - RT or A fires - RB / LB change weapon - START pauses - in menus the stick moves the cursor and A clicks',
-  saving: 'SAVE & QUIT (pause screen) parks the run - CONTINUE (main menu) resumes the current wave - after death RETRY restarts the current wave',
+  // v0.1.2 additions (GAMEPAD_INPUT / SAVE_QUIT_RESUME / WAVE_CHECKPOINT_RETRY). v0.2.5: each line shortened to
+  // fit ONE 560 px row at 11 px (the old wrapped lines ran into the input-badge strip / off the 480 bottom).
+  gamepad: 'GAMEPAD: stick or d-pad moves - RT or A fires - RB / LB change weapon - START pauses - stick + A navigate menus',
+  saving: 'SAVE & QUIT (pause) parks the run - CONTINUE (menu) resumes it - after death RETRY restarts the current wave',
   // v0.1.3 addition (LAN_MULTIPLAYER); v0.1.4: room + ready + host-driven setup flow.
-  lan: 'LAN GAME (main menu, exe only): CREATE ROOM or join by list / IP - player 2 readies up, the host picks mode, both characters and the level - either key set or pad drives the local player - a ticking 30 s countdown guards reconnects',
+  lan: 'LAN (exe only): CREATE ROOM or join by list / IP - player 2 readies up, the host picks mode, characters and level',
 } as const;
 
 /** Short label of a Flash key code for the page (CInput.mValidKeys names without the quotes). */
@@ -155,17 +156,18 @@ export class CScreen_Instructions extends CScreen {
       const col = i % 5;
       const row = Math.floor(i / 5);
       const x = 40 + col * 116;
-      const y = 392 + row * 22;
+      const y = 390 + row * 20;
       const [key, name, at] = C.weapons[i]!;
       this.Text(x, y, 24, 22, 'Arial Rounded MT Bold', 14, ACCENT, false, 'left', key).filters = glow();
       this.Text(x + 15, y + 1, 76, 22, 'Calibri', 13, 0x000000, true, 'left', name).filters = glow();
       this.Text(x + 88, y + 1, 30, 22, 'Calibri', 13, INK, false, 'left', at).filters = glow();
     }
 
-    // v0.1.2 / v0.1.3 additions: three compact lines in the free bottom strip.
-    this.Text(40, 432, 560, 18, 'Calibri', 11, INK, false, 'center', C.gamepad, true).filters = glow();
-    this.Text(40, 448, 560, 18, 'Calibri', 11, INK, false, 'center', C.saving, true).filters = glow();
-    this.Text(40, 464, 560, 18, 'Calibri', 11, INK, false, 'center', C.lan, true).filters = glow();
+    // v0.1.2 / v0.1.3 additions: three single-line rows in the free bottom strip (v0.2.5: the strip was moved to
+    // 436..478 - clear of the weapons rows above and inside the 480 bottom - and the input badge hides on this page).
+    this.Text(40, 436, 560, 14, 'Calibri', 11, INK, false, 'center', C.gamepad).filters = glow();
+    this.Text(40, 450, 560, 14, 'Calibri', 11, INK, false, 'center', C.saving).filters = glow();
+    this.Text(40, 464, 560, 14, 'Calibri', 11, INK, false, 'center', C.lan).filters = glow();
   }
 }
 proto(CScreen_Instructions, { _CLASSID_: 'CScreen_Instructions' });
