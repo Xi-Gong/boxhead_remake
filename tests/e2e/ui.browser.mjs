@@ -9,7 +9,7 @@
 //
 //   npx vite build --outDir generated/x1-dist --emptyOutDir && npx vite preview --outDir generated/x1-dist --port 5311
 //   node tests/e2e/ui.browser.mjs [group ...]          (GAME_URL, default http://localhost:5311/)
-// Groups: menus, options, controls, debrief, deathmatch, contextmenu, platform, viewport, audiounlock, hidpi, persistence (default: all).
+// Groups: menus, wave, options, controls, debrief, deathmatch, contextmenu, platform, viewport, audiounlock, hidpi, persistence (default: all).
 // Output: generated/reports/x1/ui_report.json + screenshots; exit code 1 on any failed check.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -137,6 +137,37 @@ await runGroup('menus', async () => {
   const skins = await g.expr(`(() => { const tc = m.mcWorld.mThing_Collection; const ps = Object.keys(tc.mPlayerThings).map((k) => tc.mPlayerThings[k]).sort((a, b) => a.mPlayerIndex - b.mPlayerIndex); return ps.map((p, i) => p.mXSI_Collection === P.Thing.Creature.CThing_Creature_Player.GetCollection(P.CMain.mSaveData['mPlayer' + (i + 1) + '_CharacterIndex'])); })()`);
   check('in-game skins = the selected characters', eq(skins, [true, true]), skins);
   await shot(g, 'menus_05_coop_room');
+  return g;
+});
+
+// ------------------------------------------------------------------------------------------------ start wave cycler (v0.2.4)
+await runGroup('wave', async () => {
+  const g = await openGame(browser); // clean storage = a fresh save
+  await toSelect(g, 'Single');
+  const mc = `${S}.mcStartWave`;
+  check('fresh save: cycler default 1, BEST 1', eq(await g.expr(`[${mc}.mcValue.text, ${mc}.mcBest.text]`), ['1', 'BEST 1']));
+  await g.clickClip(`${mc}.bRight`);
+  await g.clickClip(`${mc}.bRight`);
+  check('fresh save: the cycler is pinned at wave 1', (await g.expr(`${mc}.mcValue.text`)) === '1');
+  await shot(g, 'wave_01_fresh');
+  // Seed the persisted best through the QA path of the real record, then re-enter the screen - exactly the
+  // production "next session" flow (the BEST copy is authored at cycler build).
+  await g.eval(() => window.__game.__setWaveUnlock(3));
+  await g.clickClip(`${S}._Icon_Back`);
+  check('back to menu', await g.waitScreen('State_Main', 'Screen_Main', 15000));
+  await g.click(320, MENU_Y.Single);
+  if (!(await g.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld', 15000))) throw new Error('no selection after re-entry');
+  check('seeded best 3: BEST copy beside the cycler', (await g.expr(`${mc}.mcBest.text`)) === 'BEST 3');
+  const seq = [];
+  for (let i = 0; i < 4; i++) { await g.clickClip(`${mc}.bRight`); seq.push(await g.expr(`${mc}.mcValue.text`)); }
+  check('cycler wraps WITHIN 1..3', eq(seq, ['2', '3', '1', '2']), seq);
+  await g.clickClip(`${mc}.bLeft`);
+  check('left from 2 -> 1', (await g.expr(`${mc}.mcValue.text`)) === '1');
+  await g.clickClip(`${mc}.bLeft`);
+  check('left from 1 wraps to 3', (await g.expr(`${mc}.mcValue.text`)) === '3');
+  const stored = await g.eval(() => localStorage.getItem('SO:BXHD_2PLAY_6'));
+  check('the best persists in the save member mMaxWaveReached', JSON.parse(stored ?? '{}').mMaxWaveReached === 3, String(stored).slice(0, 120));
+  await shot(g, 'wave_02_unlocked');
   return g;
 });
 

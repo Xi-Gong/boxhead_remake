@@ -428,3 +428,39 @@ GGPO 式预测+回滚全链路落地：`WorldSnap.ts`（逐拍全量世界快照
 `__game.lan()` 增 rollback 计数器（predictions/corrections/replayedTicks/maxDepth/confirmLag/ringSize/desyncDetail）、`__setInfiniteLife`/`__forceDesync` QA 钩子；netsmooth 探针改测**显示位置**响应（影子在则 ≤1 拍+1 帧）并记录 sim 跟进时刻。
 
 测试：`tests/sim/spawnAudit.test.ts`（36）、`rollback.snapshot.test.ts`（混沌往返+键序）、`rollback.book.test.ts`（簿记单元）、netlockstep 新增 rollback 组（T2/T6 子序列音频金丝雀、T3 窗口耗尽、T7-latch/DM、T8 声音咽喉）与 desync 消息路径/停滞看门狗/暂停双端/独立相机用例；`tests/sim/playtest.v023.mjs`（四项专项视觉验收）。全套 vitest 1244、e2e 178+28、打包 playtest lanui/typing/v012/net×4/netretry/netsmooth 30+60+100/v023、test:electron 42+6 全绿。
+
+## 16. v0.2.4 按钮可见性修复 + 历史最高解锁 + 用户数据统一 ~/.boxhead（2026-10-17）
+
+用户反馈三项：① v0.2.2 改版后 START WAVE 循环器按钮透明不可见；② 波次选择器改为进度解锁（默认第 1 波、上限为历史最高打到过的波次、跨次启动可选历史最高直入，联机以房主上限为准，旁标 BEST）；③ 所有用户游戏数据统一存放 `%USERPROFILE%\.boxhead` 便于管理备份。另按用户指令：GitHub Release Notes 一律英文（v0.2.3 的中文 notes 已整改）。
+
+### 16.1 透明按钮回归（根因：AS2 绘图 alpha 是 0..100 百分比）
+
+v0.2.2 改版把 CSS 习惯的 alpha 写法带进了引擎绘图 API（`alpha100To255`：`trunc(min(a,100)/100*255)`），`beginFill(color, 1)` → 2/255 ≈ 0.8% 不透明度 = 不可见，`35/100` → 0 = 从不渲染（`renderFill` 对 a≤0 早退）。新增 UI 里仅有的分数/数值 alpha 全部命中：
+
+| 位置 | 原 | 修复 |
+|---|---|---|
+| UiStyle.ts WASH_ALPHA | `35/100`（悬停红晕从不显示） | `35` |
+| UiStyle.ts pillBase ×2 | `beginFill(PILL_*, 1)`（所有药丸底板 alpha 2） | `100` |
+| StartWaveUi.ts 箭头方块/三角 ×2 | `beginFill(*, 1)`（循环器只剩描边+浮字） | `100` |
+| Viewport.ts 暂停上下遮罩 ×2 | `204/255`、`217/255`（宽窗口暂停带不可见） | `80`、`85` |
+
+纯渲染修复（描边与文本本就不透明，测试的几何断言不经过像素故全绿）；LAN 大厅/设置的全部药丸底板、悬停反馈、宽屏暂停带随之恢复 v0.2.2 设计原貌。
+
+### 16.2 历史最高解锁（`START_WAVE_SELECTOR` 修订，撤销 v0.1.9 "不持久化" 决定）
+
+| 项 | 行为 |
+|---|---|
+| 记录 | `local/WaveUnlock.ts`：存档成员 `mMaxWaveReached`（Highscores/Resume 同款持久化：仅增长时写入、即时 `SaveData()` 落盘；每次读取直读存档不缓存，测试重置无需失效）。**进入即解锁**——局中波次推进（`__set__mLevel` 包装，与波次检查点同守卫）与开局即处于第 N 波（`InitFinished`，紧随 `recordRunStartWave`）都算"打到过"；单/双人本地与联机双端各自写各自存档（同步 localStorage 写、无 RNG/网络/校验和状态 → 锁步无感） |
+| 上限 | 本地循环器在 [1..历史最高] 内回绕（新存档恒为 1，须从第一关打起）；`armStartWave` 保持 [1,100]（客机不知道房主上限，开局消息的波次双端权威）。LAN 设置界面波次盘按 `SetupSelection.maxWave`（新增可选字段，随既有 `{t:'setup'}` 镜像）回绕 = **房主上限**（波次本就房主独占操作，无需协议强制） |
+| 展示 | 两处灰色 `BEST n` 小字：本地选关界面循环器右侧（stage ≈x182-252，与右箭头 9px 间距）；LAN 设置界面波次盘正下方 y420（盘 394-418 与底行 446 之间的空档），双端同显房主值 |
+| 死斗 | 无波次，不记录、不显示、循环器本就不建 |
+
+### 16.3 用户数据统一 `%USERPROFILE%\.boxhead`（新 deviation `USER_DATA_DIR`）
+
+electron/main.ts：`BOXHEAD_USER_DATA`（QA/playtest，`BOXHEAD_DIST_DIR` 家族）指向精确目录（无迁移，测试要的就是所指内容）；否则 userData 恒为 `<用户主目录>/.boxhead`（便携版也不例外——v0.1.x 随 exe 存放的行为废止），首次运行且 `.boxhead/Local Storage` 不存在时从旧便携目录（`<PORTABLE_EXECUTABLE_DIR>/Boxhead2PlayRooms-data`）或旧 `%APPDATA%/Boxhead 2Play Rooms` 迁移 Local Storage（userData 里唯一属主内容，缓存/GPU/日志自建）。存档+设置=一个文件夹，便于管理备份。全部打包 playtest 改用 `BOXHEAD_USER_DATA` 隔离（v019/v020 为浏览器临时档案本就隔离，只补 unlock 种子）。附带：`--window-position=X,Y` 现在窗口**出生即定位**且以 `showInactive()` 显示（测试后台跑不再闪现/抢前台，CDP 注入输入无需 OS 焦点）；playtest 点击映射改走 presenter（DYNAMIC_VIEWPORT 非等比窗口下 /640,/480 直除会偏移——v0.12 CONTINUE 误点 LAN GAME 的根因）。
+
+### 16.4 测试与视觉验收
+
+`startWave.test.ts` 新增解锁组（新档钉在 1、区间内回绕、开局/推进记录且只增、无缓存直读、BEST 文案）+ 既有用例补种子；lansetup 补房主上限+双端 BEST 用例；netlockstep 波次开局补双端记录断言；e2e 新 `wave` 组（新档钉 1→种子 3→区间回绕+存档成员）；`playtest.v024.mjs`（打包三段：新档钉 1 / 种子 25 开局 LEVEL 25+局中推进落盘+**同目录重启 BEST 30 持久** / LAN 房主 30 双端 BEST 30+循环至 WAVE 3）；v019/v020 补 `__setWaveUnlock(100)` 种子行。v024 全部截图经 zai 视觉 MCP 核验（箭头可见、BEST 间距无重叠、LAN 盘下 BEST 对齐）。
+
+测试：全套 vitest 1249、e2e ui 188+audio 28、test:electron 45+6、打包 playtest browser/v012/typing/lanui/net/netretry/netsmooth 30+60+100/v019/v020/v023/v024 全绿。

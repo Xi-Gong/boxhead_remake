@@ -36,7 +36,7 @@ try {
     cwd: ROOT,
     timeout: 60000,
     args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
-    env: { ...process.env, PORTABLE_EXECUTABLE_DIR: join(OUT, 'net-ui') },
+    env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, 'net-ui') },
   });
   const page = await app.firstWindow();
   await app.evaluate(({ BrowserWindow }, [x, y]) => {
@@ -128,8 +128,8 @@ try {
   // Create a room: the input must disappear (room view) ...
   await click(...CREATE_ROOM_BTN);
   if (!(await waitFor(() => window.__game?.lan?.()?.bridge === 'hosting', null, 20000))) throw new Error('CREATE ROOM did not host');
-  await page.waitForTimeout(600);
   let m = await measure();
+  for (let i = 0; i < 20 && m.display === 'block'; i++) { await page.waitForTimeout(150); m = await measure(); } // the ~700ms cross-fade settle rule
   if (m.display === 'block') throw new Error('input still visible in the room view');
   step('room view: input hidden ✓');
   await page.screenshot({ path: join(OUT, 'net_ui_room_wide.png') });

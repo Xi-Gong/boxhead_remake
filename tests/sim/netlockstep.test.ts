@@ -14,6 +14,7 @@ import { recordSounds } from './fxkit.ts';
 import { NetSlot, packBits, SLOT_ORDER, unpackBit } from '../../src/game/local/Net/NetSlot.ts';
 import { NetSession, _peekLocalFrame } from '../../src/game/local/Net/NetSession.ts';
 import { lanBridge, _resetBridgeForTests } from '../../src/game/local/Net/bridge.ts';
+import { maxUnlockedWave } from '../../src/game/local/WaveUnlock.ts';
 import { CMain, CSound, Thing, World } from '../../src/game/packages.ts';
 import { computeInputDelay, MAX_NET_CATCHUP_TICKS, netStallRewind, ROLLBACK_WINDOW_TICKS } from '../../src/game/local/Net/protocol.ts';
 import { frameTime } from '../../src/engine/flash/clock.ts';
@@ -337,12 +338,14 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     for (const p of s.players) {
       expect(p.weapons).toEqual(['pistol', 'uzi', 'shotgun']); // tiers x5 / x10 unlocked
     }
+    expect(maxUnlockedWave()).toBeGreaterThanOrEqual(12); // v0.2.4: the run-start record (save-only, lockstep-neutral)
     // The client-side consumption of a wire start message carries the wave too.
     const C = bootNetPeer('Coop', 'ROOM_Single_0001', undefined);
     C.session.onNetMessage({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: SEED, wave: 20 });
     if (!C.game.waitRunning(3000)) throw new Error(`client room did not start (${C.game.state()})`);
     expect(C.game.snapshot().level).toBe(20);
     expect(C.game.snapshot().multiplier).toBe(30);
+    expect(maxUnlockedWave()).toBeGreaterThanOrEqual(20); // v0.2.4: the client-side build records its start wave too
     B.session.dispose();
     C.session.dispose();
   });

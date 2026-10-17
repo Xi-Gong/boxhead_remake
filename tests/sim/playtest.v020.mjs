@@ -68,6 +68,8 @@ if (!(await waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld'))) { fai
 await page.waitForTimeout(400);
 const waveText = () => page.evaluate(() => window.__game.main().mcScreen.mcStartWave?.mcValue?.text);
 if ((await waveText()) !== '1') fail('cycler default is not 1: ' + (await waveText()));
+// v0.2.4: the cycler is capped at the persisted best wave (a fresh profile pins it at 1) - seed to 100 first.
+await page.evaluate(() => window.__game.__setWaveUnlock(100));
 const arrow = await centreOf('m.mcScreen.mcStartWave.bRight');
 if (!arrow) fail('cycler right arrow not found on screen');
 for (let i = 0; i < 24; i++) await clickStage(arrow.x, arrow.y);

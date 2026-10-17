@@ -16,7 +16,7 @@ const app = await electron.launch({
   cwd: ROOT,
   timeout: 60000,
   args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
-  env: { ...process.env, PORTABLE_EXECUTABLE_DIR: join(ROOT, 'generated/reports/qa/net-typing') },
+  env: { ...process.env, BOXHEAD_USER_DATA: join(ROOT, 'generated/reports/qa/net-typing') },
 });
 const page = await app.firstWindow();
 try {
@@ -38,8 +38,13 @@ try {
   await page.waitForTimeout(400);
 
   const stageToPage = async (x, y) => {
-    const r = await page.evaluate(() => { const c = document.querySelector('canvas'); const b = c.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; });
-    return [r.x + (x / 640) * r.w, r.y + (y / 480) * r.h];
+    // DYNAMIC_VIEWPORT: map through the presenter (centred content; plain /640,/480 skews on non-4:3 windows).
+    const r = await page.evaluate(() => {
+      const c = document.querySelector('canvas'); const b = c.getBoundingClientRect();
+      const p = window.__game?.platform?.presenter;
+      return { x: b.left, y: b.top, w: b.width, h: b.height, ox: p ? (p.stageW - 640) / 2 : 0, oy: p ? (p.stageH - 480) / 2 : 0, sw: p?.stageW ?? 640, sh: p?.stageH ?? 480 };
+    });
+    return [r.x + ((x + r.ox) / r.sw) * r.w, r.y + ((y + r.oy) / r.sh) * r.h];
   };
   const click = async (x, y) => {
     const [px, py] = await stageToPage(x, y);

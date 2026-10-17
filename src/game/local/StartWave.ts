@@ -1,6 +1,9 @@
 // LOCAL deviation START_WAVE_SELECTOR (v0.1.9): pick the starting wave (LEVEL n) before a game; the player starts
-// with the capability the original's own difficulty head start would grant at that wave. NOT persisted: the choice
-// resets to wave 1 every time the selection screen is entered ("didn't touch it = start from the beginning").
+// with the capability the original's own difficulty head start would grant at that wave. The CHOICE is not
+// persisted (it still resets to wave 1 every time the selection screen is entered - "didn't touch it = start from
+// the beginning"); v0.2.4 caps its RANGE at the historical highest wave ever entered, which IS persisted
+// (local/WaveUnlock.ts, save member mMaxWaveReached) - a fresh save can only start at wave 1, the best-so-far can
+// be jumped back to on any later session, and the LAN setup cycler is capped by the HOST's best.
 //
 // Two states:
 //   selected - what the selection screens show (reset on every CScreen_SelectWorld construction; Coop LAN setup
@@ -9,6 +12,7 @@
 //              CUpgrades.SetDifficulty scope wrapper, which applies it at world build time - BEFORE tick 0, so both
 //              lockstep peers compute it identically - and consumes it. Default 1 = exactly the original behaviour.
 import { World } from '../packages.ts';
+import { maxUnlockedWave } from './WaveUnlock.ts';
 
 /**
  * Starting wave -> starting multiplier. Anchors = the original difficulty pairs of CUpgrades.SetDifficulty
@@ -34,11 +38,12 @@ let armed = 1;
 // re-records it anyway).
 let runStart = 1;
 
-/** The selection screens' cycler value (1..100, wrapping). Reset to 1 on every screen entry. */
+/** The selection screens' cycler value (wrapping within 1..the save's max unlocked wave, v0.2.4). Reset to 1 on every screen entry. */
 export function getSelectedStartWave(): number { return selected; }
-export function setSelectedStartWave(n: number): void { selected = Math.min(Math.max(Math.floor(n), 1), 100); }
+export function setSelectedStartWave(n: number): void { selected = Math.min(Math.max(Math.floor(n), 1), maxUnlockedWave()); }
 export function cycleSelectedStartWave(delta: number): number {
-  setSelectedStartWave(((selected - 1 + delta) % 100 + 100) % 100 + 1);
+  const max = maxUnlockedWave();
+  setSelectedStartWave(((selected - 1 + delta) % max + max) % max + 1);
   return selected;
 }
 export function resetSelectedStartWave(): void { selected = 1; }

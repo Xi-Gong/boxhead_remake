@@ -5,8 +5,8 @@
  * - Remake settings (not part of the original save): `renderScale` (1 | 2, default 2; 1 on low-memory devices),
  *   localStorage `boxhead.settings`. Changing renderScale stores it and emits a change event; it applies on the next
  *   start of the app (every cached bitmap is built at the boot scale, see activeRenderScale).
- * Electron: localStorage of the app:// origin lives in `userData/Local Storage`, and the portable exe redirects
- * userData to `<exe dir>/Boxhead2PlayRooms-data` (electron/main.ts), so saves travel with the exe.
+ * Electron: localStorage of the app:// origin lives in `userData/Local Storage`; since v0.2.4 (USER_DATA_DIR)
+ * userData is `<user home>/.boxhead` for every build, so all user game data sits in one manageable folder.
  */
 import { SharedObject } from '../flash/SharedObject.ts';
 import type { KeyValueStorage } from '../flash/SharedObject.ts';

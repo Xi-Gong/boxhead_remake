@@ -303,18 +303,23 @@ export const DEVIATIONS: Deviation[] = [
   },
   {
     id: 'START_WAVE_SELECTOR',
-    file: 'game/local/StartWave.ts, game/scope.ts (CUpgrades.SetDifficulty wrapper, CScreen_SelectWorld ctor/LoadLevel wrappers), local/Net/{Setup,protocol,bridge,NetSession}.ts (wave on the start message)',
+    file: 'game/local/StartWave.ts + StartWaveUi.ts + WaveUnlock.ts, game/scope.ts (CUpgrades.SetDifficulty / __set__mLevel wrappers, CScreen_SelectWorld ctor/LoadLevel wrappers), local/Net/{Setup,protocol,bridge,NetSession}.ts (wave + maxWave on the setup/start messages)',
     description:
       'The original always starts a run at the difficulty base wave (1/10/20/35 by difficulty). The remake adds a ' +
       'START WAVE cycler to the Single/Coop level selection (and the Coop LAN setup screen, host-authored and ' +
-      'mirrored to the client): waves 1..100, default 1, NOT persisted - the cycler resets to 1 on every screen ' +
-      'entry ("did not touch it = start from the beginning", user decision). A chosen wave N > 1 is applied at world ' +
-      'build through the ORIGINAL head-start mechanism, right after CUpgrades.SetDifficulty: one silent ' +
-      '__set__mLevel(N), then the multiplier stepped one index at a time up to the anchor-interpolated value of ' +
-      'the difficulty pairs (wave->multiplier 1/1, 10/10, 20/30, 35/50, linear between them, last-segment slope ' +
-      'beyond 35, clamped to the table maximum 125) - so the player begins with the weapons/upgrades a run that ' +
-      'reached wave N would hold, full magazines. The multiplier only ever rises (a wave below the difficulty jump ' +
-      'keeps the difficulty tiers); Death Match (no waves) is immune; wave 1 is bit-identical to the original. ' +
+      'mirrored to the client). v0.2.4: the CHOICE is still not persisted (resets to 1 on every screen entry, ' +
+      '"did not touch it = start from the beginning", v0.1.9 user decision) but its RANGE is capped at the ' +
+      'historical highest wave ever entered, which IS persisted (local/WaveUnlock.ts, save member mMaxWaveReached, ' +
+      'written only when it grows): recorded on every wave entered mid-run AND on starting at a wave - on both LAN ' +
+      'peers, each writing its own save - while the LAN setup cycler is capped by the HOST\'s best (carried as ' +
+      'SetupSelection.maxWave on the existing setup mirror). A fresh save is pinned at wave 1 (the campaign is ' +
+      'fought up from the start); a grey BEST n copy beside each cycler shows the cap. A chosen wave N > 1 is ' +
+      'applied at world build through the ORIGINAL head-start mechanism, right after CUpgrades.SetDifficulty: one ' +
+      'silent __set__mLevel(N), then the multiplier stepped one index at a time up to the anchor-interpolated ' +
+      'value of the difficulty pairs (wave->multiplier 1/1, 10/10, 20/30, 35/50, linear between them, last-segment ' +
+      'slope beyond 35, clamped to the table maximum 125) - so the player begins with the weapons/upgrades a run ' +
+      'that reached wave N would hold, full magazines. The multiplier only ever rises (a wave below the difficulty ' +
+      'jump keeps the difficulty tiers); Death Match (no waves) is immune; wave 1 is bit-identical to the original. ' +
       'Applied before tick 0 on both lockstep peers (start message carries the wave) - deterministic. Highscore ' +
       'eligibility unchanged (still per room x mode; a head start was always possible via difficulty).',
   },
@@ -363,5 +368,18 @@ export const DEVIATIONS: Deviation[] = [
       'markers placed, before the first spawn). Deterministic (no RNG), identical on both LAN lockstep peers; ' +
       'rooms without a bad marker are bit-identical to the original. Gated by tests/sim/spawnAudit.test.ts ' +
       '(18 rooms x Coop/DM x multiple seeds).',
+  },
+  {
+    id: 'USER_DATA_DIR',
+    file: 'electron/main.ts (userData resolution + one-time migration), engine/flash/SharedObject.ts + engine/platform/SaveStore.ts (docs), tests/unit/platform/electron-smoke.run.ts',
+    description:
+      'v0.2.4 (user request): ALL user game data - the SharedObject save BXHD_2PLAY_6 plus the remake settings, ' +
+      'both localStorage of the app:// origin, i.e. userData/Local Storage - lives in ONE place, ' +
+      '<user home>/.boxhead, whatever build was launched: the portable exe included (v0.1.x had redirected it next ' +
+      'to the exe; unpackaged/dev runs used %APPDATA%/Boxhead 2Play Rooms). The first run without an existing ' +
+      '.boxhead/Local Storage migrates it from the old portable dir first, else the old %APPDATA% dir (Local ' +
+      'Storage only - caches/GPU/logs re-create themselves). BOXHEAD_USER_DATA (QA/playtests, the BOXHEAD_DIST_DIR ' +
+      'family) points userData at an exact directory instead: isolated saves per test run, NO migration. One ' +
+      'folder to manage and back up.',
   },
 ];

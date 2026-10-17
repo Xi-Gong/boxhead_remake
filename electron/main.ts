@@ -4,14 +4,19 @@
  *
  * - Serves the Vite build (`dist/`) through a privileged `app://game/` scheme (standard + secure origin, so
  *   fetch(), WebAudio decoding and localStorage work and persist under userData).
- * - Portable exe: userData is redirected next to the exe (`<exe dir>/Boxhead2PlayRooms-data`) so saves travel with it.
+ * - USER_DATA_DIR (v0.2.4): userData = `<user home>/.boxhead` for EVERY build (portable exe included) - one place
+ *   for all user game data (save + settings), easy to manage and back up; the pre-v0.2.4 locations are migrated on
+ *   first run. BOXHEAD_USER_DATA (QA/playtests, the BOXHEAD_DIST_DIR family) points userData at an exact directory
+ *   instead - isolated saves per test run, no migration.
  * - 4:3 window (content 1280x960, smaller if the screen is), black background, no application menu (keys are never stolen),
  *   F11 / Alt+Enter toggle fullscreen (intercepted before the page sees them), single instance.
  * - Dev: VITE_DEV_SERVER_URL=http://localhost:5173/ loads the Vite dev server instead.
  *   Unpackaged testing only: BOXHEAD_DIST_DIR overrides the served folder, BOXHEAD_START_PAGE the start page.
  */
 import { app, BrowserWindow, ipcMain, Menu, powerMonitor, protocol, screen, shell } from 'electron';
+import { cpSync, existsSync, mkdirSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fullscreenShortcut, initialContentSize } from './aspect.ts';
 import { registerLanIpc } from './lanIpc.ts';
@@ -22,18 +27,54 @@ const TITLE = 'Boxhead: 2Play Rooms';
 
 // ---------------------------------------------------------------------------------------------- before 'ready'
 
-const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
-if (portableDir) app.setPath('userData', path.join(portableDir, 'Boxhead2PlayRooms-data'));
+// USER_DATA_DIR (v0.2.4): all user game data (the SharedObject save + remake settings - both localStorage of the
+// app:// origin) lives under `<user home>/.boxhead`, whatever build was launched. Local Storage is the only
+// user-owned content of an Electron userData dir (caches / GPU / logs re-create themselves), so the one-time
+// migration copies just that folder from the first existing pre-v0.2.4 home:
+//   - portable exe: `<PORTABLE_EXECUTABLE_DIR>/Boxhead2PlayRooms-data` (v0.1.x "saves travel with the exe");
+//   - unpackaged / dev: `%APPDATA%/Boxhead 2Play Rooms` (Electron's default userData - read from the APPDATA env,
+//     because app.getPath('appData') is unavailable before 'ready' in unpackaged runs; Windows-only shipped app).
+const qaUserData = process.env.BOXHEAD_USER_DATA;
+if (qaUserData) {
+  app.setPath('userData', qaUserData);
+} else {
+  const oldHomes = [
+    process.env.PORTABLE_EXECUTABLE_DIR ? path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Boxhead2PlayRooms-data') : undefined,
+    process.env.APPDATA ? path.join(process.env.APPDATA, 'Boxhead 2Play Rooms') : undefined,
+  ];
+  const userData = path.join(os.homedir(), '.boxhead');
+  app.setPath('userData', userData);
+  const targetLs = path.join(userData, 'Local Storage');
+  if (!existsSync(targetLs)) {
+    for (const old of oldHomes) {
+      if (!old) continue;
+      const srcLs = path.join(old, 'Local Storage');
+      try {
+        if (!existsSync(srcLs)) continue;
+        mkdirSync(userData, { recursive: true });
+        cpSync(srcLs, targetLs, { recursive: true });
+        break;
+      } catch (e) {
+        console.warn('[userData] migration from ' + old + ' failed:', e); // keep booting; worst case the old save stays put
+      }
+    }
+  }
+}
 
 protocol.registerSchemesAsPrivileged([
   { scheme: APP_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true, codeCache: true } },
 ]);
 
 // --boxhead-multi (v0.1.3 LAN testing): skip the single-instance lock so two builds can run on one machine
-// (the packaged dual-instance playtest additionally isolates saves via different PORTABLE_EXECUTABLE_DIR values,
-// which already gives each instance its own lock; this flag covers the unpackaged / shared-userData case).
+// (the packaged dual-instance playtest additionally isolates saves via different BOXHEAD_USER_DATA values, which
+// already gives each instance its own lock; this flag covers the unpackaged / shared-userData case).
 const multiInstance = process.argv.includes('--boxhead-multi');
 const gotLock = multiInstance || app.requestSingleInstanceLock();
+
+// --window-position=X,Y (playtests): the window is BORN at that position and shown with showInactive() instead of
+// show(), so a test run neither flashes over the player's screen nor steals the foreground from their real work
+// (test input is CDP-injected and needs no OS focus; without the flag the behaviour is exactly as before).
+const windowPosition = /^--window-position=(-?\d+),(-?\d+)$/.exec(process.argv.find((a) => a.startsWith('--window-position=')) ?? '');
 
 // ---------------------------------------------------------------------------------------------- static server
 
@@ -126,6 +167,7 @@ function enforceMinimumContentSize(w: BrowserWindow): void {
 function createWindow(): void {
   const size = initialContentSize(screen.getPrimaryDisplay().workAreaSize); // 1280x960 unless the screen is small
   win = new BrowserWindow({
+    ...(windowPosition ? { x: Number(windowPosition[1] ?? 0), y: Number(windowPosition[2] ?? 0) } : {}),
     width: size.width,
     height: size.height,
     useContentSize: true,
@@ -171,7 +213,7 @@ function createWindow(): void {
     if (!url.startsWith(`${APP_SCHEME}://${APP_HOST}/`) && !(process.env.VITE_DEV_SERVER_URL && url.startsWith(process.env.VITE_DEV_SERVER_URL))) e.preventDefault();
   });
   win.on('page-title-updated', (e) => e.preventDefault());
-  win.once('ready-to-show', () => win?.show());
+  win.once('ready-to-show', () => (windowPosition ? win?.showInactive() : win?.show()));
   // v0.1.10: the audio watchdog self-heals within ~5 s on its own; a nudge shaves that latency after the events
   // where Chromium may park the AudioContext (minimized/hidden window, OS suspend/resume, another instance
   // refocusing this window whose audio had wedged - the "restart didn't help" scenario).

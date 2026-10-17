@@ -71,6 +71,10 @@ await shot('select_single_wave1');
 const waveText = () => page.evaluate(() => window.__game.main().mcScreen.mcStartWave?.mcValue?.text);
 if ((await waveText()) !== '1') fail('cycler default is not 1: ' + (await waveText()));
 
+// v0.2.4: the cycler wraps within the persisted best wave (a fresh profile pins it at 1) - seed the unlock to 100
+// first, as a player who has already fought up to the final wave would have.
+await page.evaluate(() => window.__game.__setWaveUnlock(100));
+
 // 24 real clicks on the cycler's right arrow -> wave 25 (the arrow's own onRelease handler).
 const arrow = await centreOf('m.mcScreen.mcStartWave.bRight');
 if (!arrow) { fail('cycler right arrow not found on screen'); await shot('arrow_debug'); }

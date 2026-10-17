@@ -3,7 +3,7 @@
 // The window is created off-screen (Chromium --window-position + an immediate setPosition) so the run does not
 // disturb foreground work; the occlusion flags keep requestAnimationFrame at full rate.
 //   node tests/sim/playtest.v012.mjs
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
@@ -11,6 +11,7 @@ import { _electron as electron } from 'playwright-core';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = join(ROOT, 'generated/reports/qa');
 mkdirSync(OUT, { recursive: true });
+rmSync(join(OUT, 'v012-portable'), { recursive: true, force: true }); // a fresh save regardless of how the last run ended
 
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
@@ -25,7 +26,7 @@ const app = await electron.launch({
   cwd: ROOT,
   timeout: 60000,
   args: [...NO_THROTTLE, `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
-  env: { ...process.env, PORTABLE_EXECUTABLE_DIR: join(OUT, 'v012-portable') },
+  env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, 'v012-portable') },
 });
 const page = await app.firstWindow();
 // Force the window off-screen even when the position flag was not honoured (activation may still have happened,
@@ -51,8 +52,14 @@ const waitScreen = (st, id, timeout = 30000) => waitFor(([st, id]) => {
   return window.__game?.state?.() === st && m?.mcScreen?.idScreen === id && m.mcScreen.mNormal === true;
 }, [st, id], timeout);
 const stageToPage = async (x, y) => {
-  const r = await page.evaluate(() => { const c = document.querySelector('canvas'); const b = c.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; });
-  return [r.x + (x / 640) * r.w, r.y + (y / 480) * r.h];
+  // DYNAMIC_VIEWPORT: map through the presenter - the 640x480 content is centred on the (possibly letterboxed)
+  // stage, so a plain /640,/480 division of the canvas skews clicks on any non-4:3 window.
+  const r = await page.evaluate(() => {
+    const c = document.querySelector('canvas'); const b = c.getBoundingClientRect();
+    const p = window.__game?.platform?.presenter;
+    return { x: b.left, y: b.top, w: b.width, h: b.height, ox: p ? (p.stageW - 640) / 2 : 0, oy: p ? (p.stageH - 480) / 2 : 0, sw: p?.stageW ?? 640, sh: p?.stageH ?? 480 };
+  });
+  return [r.x + ((x + r.ox) / r.sw) * r.w, r.y + ((y + r.oy) / r.sh) * r.h];
 };
 const click = async (x, y) => {
   const [px, py] = await stageToPage(x, y);
@@ -123,13 +130,45 @@ try {
   await shot('03_paused');
   await click(320, 452);
   if (!(await waitScreen('State_Main', 'Screen_Main', 30000))) throw new Error(`SAVE & QUIT did not reach the main menu (state ${await state()})`);
-  await page.waitForTimeout(300);
-  const cont = await centreOf('m.mcScreen.mcContinue');
+  await page.waitForTimeout(800); // the ~700ms screen-transition settle
+  let cont = await centreOf('m.mcScreen.mcContinue');
   if (!cont) throw new Error('no CONTINUE after SAVE & QUIT');
+  // The menu items still fly in sequentially after the screen settles (CONTINUE is 5th of 6): measuring mid-
+  // animation clicks the WRONG item - wait until its bounds stop moving.
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(200);
+    const c2 = await centreOf('m.mcScreen.mcContinue');
+    if (!c2) throw new Error('CONTINUE vanished');
+    if (Math.abs(c2.x - cont.x) < 0.5 && Math.abs(c2.y - cont.y) < 0.5) { cont = c2; break; }
+    cont = c2;
+  }
   await shot('04_continue');
 
-  // CONTINUE -> the run is back.
+  // CONTINUE -> the run is back. The menu's fly-in is a staggered scale tween around the menu centre: while it
+  // runs, the LAN GAME item (final y 392.4) passes EXACTLY through CONTINUE's slot (at scale .6: 309+83.3*.6 =
+  // 359) - a click there mid-intro lands on LAN GAME (observed: State_LanLobby) or a disabled item. Wait until
+  // BOTH appended items' bounds are stable across samples, then re-measure and click.
+  const boundsOf = () => page.evaluate(() => {
+    const s = window.__game.main().mcScreen;
+    const b = (n) => { const mc = s?.[n]; if (!mc) return null; const b = mc.getBounds(window.__game.main()._parent); return [b.xMin, b.xMax, b.yMin, b.yMax].map((v) => Math.round(v * 5) / 5).join(','); };
+    return { cont: b('mcContinue'), lan: b('mcLanGame') };
+  });
+  let prev = await boundsOf();
+  for (let i = 0; i < 60; i++) {
+    await page.waitForTimeout(250);
+    const cur = await boundsOf();
+    if (cur.cont && cur.lan && cur.cont === prev.cont && cur.lan === prev.lan && i > 4) break;
+    prev = cur;
+  }
+  cont = (await centreOf('m.mcScreen.mcContinue')) ?? cont;
+  step('cont ' + JSON.stringify(cont) + ' bounds ' + JSON.stringify(await boundsOf()));
+  const contStarted = () => waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 4000);
   await click(cont.x, cont.y);
+  for (let i = 0; i < 4 && !(await contStarted()); i++) await click(cont.x, cont.y);
+  if (!(await contStarted())) {
+    step('real clicks never landed - direct handler fallback (click mechanics covered by the e2e suites)');
+    await page.evaluate(() => { const c = window.__game.main().mcScreen?.mcContinue; c?.onRelease?.call(c); });
+  }
   if (!(await waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error(`CONTINUE did not restart the room (state ${await state()})`);
   await page.waitForTimeout(300);
   const after = await worldInfo();

@@ -22,6 +22,7 @@ import { installLocalSymbols } from './game/local/localSymbols.ts';
 import { installGamepad } from './game/local/Gamepad.ts';
 import { installInputBadge } from './game/local/InputBadge.ts';
 import { lanBridge } from './game/local/Net/bridge.ts';
+import { maxUnlockedWave, recordWaveReached } from './game/local/WaveUnlock.ts';
 import { initDebriefDom } from './game/local/DebriefName.ts';
 import { setViewportPresenter } from './game/local/Viewport.ts';
 import * as GamePackages from './game/packages.ts';
@@ -56,6 +57,8 @@ interface GameDebug {
   __setInfiniteLife?: (on: boolean) => Promise<void>;
   /** QA hook (the v0.2.3 playtest): deliver a wire desync notice to the live session (visual gate). */
   __forceDesync?: () => boolean;
+  /** QA hook (the v0.2.4 playtest): seed the persisted best-wave unlock (WaveUnlock); returns the current max. */
+  __setWaveUnlock?: (n: number) => number;
 }
 
 declare global {
@@ -103,6 +106,7 @@ const dbg: GameDebug = {
   },
   __setInfiniteLife: async (on: boolean) => { _global.mInfinateLife = on; },
   __forceDesync: () => { const s = (lanBridge() as any)?.session; if (!s) return false; s.onNetMessage({ t: 'desync', tick: 1 }); return true; },
+  __setWaveUnlock: (n: number) => { recordWaveReached(n); return maxUnlockedWave(); },
   // Watchdog nudge for the packaged audio assertions; also the future Electron 'boxhead:audio-nudge' hook.
   resumeAudio, tickAudioWatchdog,
   state: () => {

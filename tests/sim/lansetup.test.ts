@@ -34,7 +34,8 @@ describe('LAN net setup screen (v0.1.4)', () => {
     expect(s.bStart._visible).toBe(true);
     expect(s.waitText._visible).toBe(false);
 
-    // START_WAVE_SELECTOR (v0.1.9): coop shows the wave plate in the frags slot; it cycles sel.wave 1..100.
+    // START_WAVE_SELECTOR (v0.1.9): coop shows the wave plate in the frags slot; it cycles sel.wave within
+    // sel.maxWave (absent = uncapped, the legacy-peer tolerance; v0.2.4 caps it at the HOST's best).
     expect(s.bWave._visible).toBe(true);
     expect(s.bWaveLabel._visible).toBe(true);
     expect(s.bWave._Contents._Label.text).toBe('WAVE 1');
@@ -87,6 +88,35 @@ describe('LAN net setup screen (v0.1.4)', () => {
     expect(s.bDiff.$removed).toBe(false);
     expect(s.$list).toContain(s.bDiff);
     expect(g.errors).toEqual([]);
+    _resetBridgeForTests();
+  });
+
+  it('wave plate wraps within the HOST best (SetupSelection.maxWave, v0.2.4) and shows BEST on both sides', { timeout: 60000 }, () => {
+    const { g, b, s } = openSetup(true);
+    b.sel = { ...b.sel, wave: 1, maxWave: 3 };
+    b.notify();
+    g.step(4);
+    expect(s.bBest._visible).toBe(true);
+    expect(s.bBest.text).toBe('BEST 3');
+    s.bWave.onRelease.call(s.bWave);
+    g.step(4);
+    expect(b.sel.wave).toBe(2);
+    s.bWave.onRelease.call(s.bWave);
+    g.step(4);
+    expect(b.sel.wave).toBe(3); // at the host's cap
+    s.bWave.onRelease.call(s.bWave);
+    g.step(4);
+    expect(b.sel.wave).toBe(1); // wraps within 1..3, never beyond the cap
+
+    // The client mirror renders the SAME host cap copy next to its dimmed plate.
+    const cl = openSetup(false);
+    cl.b.sel = { ...cl.b.sel, wave: 2, maxWave: 3 };
+    cl.b.notify();
+    cl.g.step(4);
+    expect(cl.s.bBest.text).toBe('BEST 3');
+    expect(cl.s.bWave._Contents._Label.text).toBe('WAVE 2');
+    expect(g.errors).toEqual([]);
+    expect(cl.g.errors).toEqual([]);
     _resetBridgeForTests();
   });
 

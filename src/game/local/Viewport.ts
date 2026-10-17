@@ -138,10 +138,10 @@ export function installViewport(): void {
 
 /** The pause art's own overlay geometry (HUD.Paused shape 21): #993300 @ 80% over y<65.75, black @ 85% below. */
 const BAND_TOP_COLOR = 0x993300;
-const BAND_TOP_ALPHA = 204 / 255;
+const BAND_TOP_ALPHA = 80; // AS2 drawing-API alpha: percent - 80% = 204/255, as the pause art's own shape
 const BAND_TOP_Y = 65.75;
 const BAND_COLOR = 0x000000;
-const BAND_ALPHA = 217 / 255;
+const BAND_ALPHA = 85;   // 85% = 217/255, as the pause art's own shape
 const BANDS_NAME = '_WidePauseBands';
 
 /** Dim everything on the stage outside the centred 640x480 pause art (called after Pause(true)). */

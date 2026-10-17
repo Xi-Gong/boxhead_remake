@@ -97,8 +97,10 @@ export interface SetupSelection {
   difficulty: number;
   /** 0..3 index into the Death Match kill limits [5,10,20,50]. */
   gameAmount: number;
-  /** START_WAVE_SELECTOR (v0.1.9): chosen starting wave 1..100 (Coop only on the setup screen; never persisted). */
+  /** START_WAVE_SELECTOR (v0.1.9): chosen starting wave 1..maxWave (Coop only on the setup screen; the choice itself is never persisted - every setup entry starts at wave 1). */
   wave: number;
+  /** START_WAVE_SELECTOR (v0.2.4): the HOST's historical highest wave ever entered (WaveUnlock) - the setup cycler's cap, shown as BEST on both setup screens. Host-authored; absent (older peer) = uncapped. */
+  maxWave?: number;
 }
 
 /** The CSaveData fields the host's StartGame imposes on the client (they shape the simulation; see PARITY §9). */

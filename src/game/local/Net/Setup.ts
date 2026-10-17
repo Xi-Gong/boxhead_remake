@@ -10,7 +10,7 @@ import { CScreen_SelectWorld } from '../../Screen/CScreen_SelectWorld.ts';
 import { CSound } from '../../packages.ts';
 import { lanBridge } from './bridge.ts';
 import { SCREEN_LAN_SETUP_LINKAGE } from '../localSymbols.ts';
-import { BODY_FONT, INK, glow, pillButton, text } from '../UiStyle.ts';
+import { BODY_FONT, GREY, INK, glow, pillButton, text } from '../UiStyle.ts';
 import type { SetupSelection } from './protocol.ts';
 
 const DIFFICULTY = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'NIGHTMARE'];
@@ -29,6 +29,7 @@ export class CScreen_LanSetup extends CScreen {
   private fragsLabel: any;
   private bWave: any;
   private bWaveLabel: any;
+  private bBest: any;
   private bStart: any;
   private bBack: any;
   private bLeave: any;
@@ -113,6 +114,10 @@ export class CScreen_LanSetup extends CScreen {
     this.bWaveLabel = this.Text(462, 380, 44, 16, 'Calibri', 12, INK, true, 'left', 'WAVE');
     this.bWaveLabel.filters = glow();
     this.bWave = this.Button(556, 394, 88, 24, '', 12, () => this.cycleWave(1));
+    // START_WAVE_SELECTOR (v0.2.4): the host's historical best wave = the cycler's cap, mirrored to the client with
+    // every setup change - small grey copy centred under the plate, in the gap above the bottom button row.
+    this.bBest = this.Text(512, 420, 88, 14, BODY_FONT, 11, GREY, true, 'center', 'BEST 1');
+    this.bBest.filters = glow();
 
     // The client only waits (or leaves); the host starts or goes back to the room. START GAME carries the
     // options-window selected wash (the primary action); WAITING uses the body ink like the original status copy.
@@ -174,7 +179,8 @@ export class CScreen_LanSetup extends CScreen {
   private cycleWave(d: number): void {
     CSound.mSamples.Click2.PlaySound();
     const b = lanBridge();
-    const w = ((b.sel.wave - 1 + d) % 100 + 100) % 100 + 1;
+    const max = Math.max(1, Math.floor(b.sel.maxWave ?? 100)); // v0.2.4: wrap within the HOST's best (sel is host-authored)
+    const w = ((b.sel.wave - 1 + d) % max + max) % max + 1;
     b.setSel({ ...b.sel, wave: w });
   }
 
@@ -198,6 +204,7 @@ export class CScreen_LanSetup extends CScreen {
     setLabel(this.bDiff, DIFFICULTY[sel.difficulty]!);
     setLabel(this.bFrags, String(FRAGS[sel.gameAmount]!));
     setLabel(this.bWave, 'WAVE ' + (sel.wave ?? 1));
+    this.bBest.text = 'BEST ' + Math.max(1, Math.floor(sel.maxWave ?? 1));
     const showFrags = sel.mode === 'DeathMatch';
     this.bFrags._visible = showFrags;
     this.bFrags.enabled = showFrags;
@@ -206,6 +213,7 @@ export class CScreen_LanSetup extends CScreen {
     this.bWave._visible = showWave;
     this.bWave.enabled = showWave;
     this.bWaveLabel._visible = showWave;
+    this.bBest._visible = showWave;
 
     // Mirror the selection into the original art (preview frames are 1-based).
     if (this.mcSubScreen) {

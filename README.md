@@ -66,14 +66,18 @@ npm run dev         # http://localhost:5173/
   original retry).
 - **Coop death weapon crate** — a fallen player drops their whole arsenal with live ammo; pickup restores the
   owner exactly and gives the teammate the best of both.
-- **Start-wave selector** — start any run at wave 1–100 with the loadout the original's difficulty curve would
-  have granted by then.
+- **Start-wave selector with progression** — the level-select `START WAVE` cycler lets you jump straight back to
+  the best wave you have fought up to (shown as `BEST` beside it), with the loadout the original's difficulty
+  curve would have granted by then. A fresh save can only start at wave 1 — the historical best persists in the
+  save and caps the cycler; in LAN the host's best is the cap.
 - **LAN multiplayer** (portable build) — host & auto-discover or join by IP, lockstep-verified co-op and death
   match with 30 s reconnect + checkpoint resume (~2–4 KB/s each way). After a finished match either player
   can RETRY straight from the debrief (checkpoint first, else a fresh run at the failed wave), and local-player
   display prediction keeps control feeling like single-player even on 60 ms-class links.
+- **One data folder** — every build (the portable exe included) keeps all user game data — saves and settings —
+  in `%USERPROFILE%\.boxhead`, migrated there automatically on first run: one folder to manage and back up.
 
-All 23 deviations are registered in [`src/game/deviations.ts`](src/game/deviations.ts) and audited in
+All 27 deviations are registered in [`src/game/deviations.ts`](src/game/deviations.ts) and audited in
 [`PARITY.md`](PARITY.md): sponsor content (CMG logo, online scores, external links) is replaced by local
 highscores; timing stays at the original 50 fps logic on any refresh rate.
 

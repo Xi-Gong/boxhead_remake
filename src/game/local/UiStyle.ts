@@ -23,7 +23,7 @@ export const GREY_LIGHT = 0xb0b0b0;     // empty/disabled rows
 export const GREEN = 0x007000;          // status-ok copy (ready states, ping) on light surfaces
 /** The options-window selected marker's wash (sprite 358: #e60000 at 35% alpha). */
 export const WASH_COLOR = 0xe60000;
-export const WASH_ALPHA = 35 / 100;
+export const WASH_ALPHA = 35;               // AS2 drawing-API alpha: percent (0..100), not 0..1
 /** The select-screen pill family. */
 export const PILL_FILL = 0xf5f5f3;
 export const PILL_SHADE = 0xd8d8d8;     // the soft bottom/right shade of the raised pill
@@ -69,10 +69,10 @@ export function menuText(parent: any, name: string, x: number, y: number, w: num
 /** Draw the raised pill base into `g` at (0,0)-(w,h): soft shade capsule + the near-white capsule on top. */
 export function pillBase(g: any, w: number, h: number): void {
   g.lineStyle();
-  g.beginFill(PILL_SHADE, 1);
+  g.beginFill(PILL_SHADE, 100);
   capsule(g, 1, 1.5, w, h);
   g.endFill();
-  g.beginFill(PILL_FILL, 1);
+  g.beginFill(PILL_FILL, 100);
   capsule(g, 0, 0, w, h);
   g.endFill();
 }

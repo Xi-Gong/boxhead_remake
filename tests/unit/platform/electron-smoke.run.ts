@@ -5,7 +5,8 @@
  * 1. vite-builds platform-smoke.html (+ public/assets) into generated/reports/platform/smoke-dist
  * 2. bundles electron/*.ts (tools/build-electron.ts) unless --skip-build
  * 3. launches Electron via playwright-core with BOXHEAD_DIST_DIR / BOXHEAD_START_PAGE (unpackaged-only overrides) and
- *    PORTABLE_EXECUTABLE_DIR pointing into generated/ (exercises the portable userData redirect)
+ *    BOXHEAD_USER_DATA pointing into generated/ (exercises the USER_DATA_DIR override); a second launch with
+ *    USERPROFILE + PORTABLE_EXECUTABLE_DIR redirected proves the <home>/.boxhead default + first-run migration
  * 4. checks EF rate, window/canvas size, keys, mouse, context menu (+ loop pause), fullscreen, persistence across a
  *    relaunch, console errors; screenshots + JSON report in generated/reports/platform/
  * 5. if dist/index.html exists (npx vite build), launches the default app://game/index.html and checks the protocol
@@ -60,7 +61,7 @@ async function launch(env: Record<string, string>, exe?: string): Promise<{ app:
 
 async function smokeRun(): Promise<void> {
   rmSync(portableDir, { recursive: true, force: true });
-  const env = { BOXHEAD_DIST_DIR: smokeDist, BOXHEAD_START_PAGE: 'platform-smoke.html', PORTABLE_EXECUTABLE_DIR: portableDir };
+  const env = { BOXHEAD_DIST_DIR: smokeDist, BOXHEAD_START_PAGE: 'platform-smoke.html', BOXHEAD_USER_DATA: portableDir };
   let { app, page, consoleErrors } = await launch(env);
   await page.waitForFunction(() => (window as unknown as { __smoke?: { ready: boolean } }).__smoke?.ready === true, undefined, { timeout: 30000 });
 
@@ -91,7 +92,7 @@ async function smokeRun(): Promise<void> {
   await app.evaluate(({ BrowserWindow }) => { BrowserWindow.getAllWindows()[0]!.setContentSize(1280, 960); });
   await page.waitForFunction(() => window.innerWidth === 1280 && window.innerHeight === 960, undefined, { timeout: 5000 }).catch(() => {});
   await sleep(300);
-  check('portable userData redirect', winInfo.userData === path.join(portableDir, 'Boxhead2PlayRooms-data'), winInfo.userData);
+  check('BOXHEAD_USER_DATA userData override (USER_DATA_DIR)', winInfo.userData === portableDir, winInfo.userData);
   const desk = await page.evaluate(() => (window as unknown as { boxheadDesktop?: { isElectron: boolean } }).boxheadDesktop?.isElectron ?? false);
   check('preload API exposed (contextIsolation + sandbox)', desk === true);
   const nodeLeak = await page.evaluate(() => typeof (window as unknown as { require?: unknown }).require);
@@ -198,11 +199,31 @@ async function smokeRun(): Promise<void> {
   const persisted = await page.evaluate(() => ({ so: localStorage.getItem('SO:BXHD_2PLAY_6'), settings: localStorage.getItem('boxhead.settings') }));
   s = await smoke(page);
   check('localStorage persists across restart (portable dir)', persisted.so === '{"mLevelIndex_Single":5,"mSoundActive":false}' && s.renderScale === 1, persisted);
-  check('Local Storage written next to "exe"', existsSync(path.join(portableDir, 'Boxhead2PlayRooms-data', 'Local Storage')));
+  check('Local Storage written under BOXHEAD_USER_DATA', existsSync(path.join(portableDir, 'Local Storage')));
   await page.evaluate(() => localStorage.clear());
   const errs = [...errs1, ...consoleErrors, ...s.errors];
   check('no console errors (smoke page)', errs.length === 0, errs);
   await app.close();
+
+  // USER_DATA_DIR (v0.2.4): without the BOXHEAD_USER_DATA override, userData defaults to <home>/.boxhead and the
+  // first run migrates the old portable data dir's Local Storage. USERPROFILE redirects os.homedir(),
+  // PORTABLE_EXECUTABLE_DIR the old portable home; APPDATA points at an absent scratch so the second candidate
+  // can never resolve against the real machine save.
+  const migHome = path.join(outDir, 'migrate-home');
+  const migPortable = path.join(outDir, 'migrate-portable');
+  rmSync(migHome, { recursive: true, force: true });
+  rmSync(migPortable, { recursive: true, force: true });
+  const migOldLs = path.join(migPortable, 'Boxhead2PlayRooms-data', 'Local Storage');
+  mkdirSync(migOldLs, { recursive: true });
+  writeFileSync(path.join(migOldLs, '00.log'), 'x');
+  {
+    const m = await launch({ BOXHEAD_DIST_DIR: smokeDist, BOXHEAD_START_PAGE: 'platform-smoke.html', USERPROFILE: migHome, PORTABLE_EXECUTABLE_DIR: migPortable, APPDATA: path.join(outDir, 'migrate-appdata-absent') });
+    const ud = await m.app.evaluate(({ app }) => app.getPath('userData'));
+    check('userData defaults to <home>/.boxhead (USER_DATA_DIR)', ud === path.join(migHome, '.boxhead'), ud);
+    check('portable Local Storage migrated on first run', existsSync(path.join(migHome, '.boxhead', 'Local Storage', '00.log')));
+    check('no console errors (migration launch)', m.consoleErrors.length === 0, [...m.consoleErrors]);
+    await m.app.close();
+  }
 }
 
 async function productionRun(exe?: string): Promise<void> {
@@ -211,7 +232,7 @@ async function productionRun(exe?: string): Promise<void> {
     check('production dist/ present (run `npx vite build` first)', false, 'skipped');
     return;
   }
-  const { app, page, consoleErrors } = await launch({ PORTABLE_EXECUTABLE_DIR: portableDir }, exe);
+  const { app, page, consoleErrors } = await launch({ BOXHEAD_USER_DATA: portableDir }, exe);
   await page.waitForLoadState('load');
   await sleep(1500);
   check(`${tag}no console errors (dist/index.html)`, consoleErrors.length === 0, [...consoleErrors]);

@@ -11,6 +11,7 @@
 //     host may offer RESUME GAME (续局) from the surviving checkpoint.
 import { desktop } from '../../../engine/platform/desktop.ts';
 import { CMain } from '../../packages.ts';
+import { maxUnlockedWave } from '../WaveUnlock.ts';
 import { NetSession } from './NetSession.ts';
 import { computeInputDelay } from './protocol.ts';
 import type { GameConfig, LanMessage, SetupSelection } from './protocol.ts';
@@ -43,7 +44,7 @@ class LanBridge {
   /** The client player's READY flag (host: from the 'ready' message; client: local via setReady). */
   ready = false;
   /** The shared setup-screen selection (host authors it in enterSetup/setSel; client mirrors via 'setup'). */
-  sel: SetupSelection = { mode: 'Coop', charP1: 3, charP2: 0, levelIdx: 0, difficulty: 0, gameAmount: 0, wave: 1 };
+  sel: SetupSelection = { mode: 'Coop', charP1: 3, charP2: 0, levelIdx: 0, difficulty: 0, gameAmount: 0, wave: 1, maxWave: 1 };
   /** Peer link round-trip time (heartbeat echo; live already while in the room). */
   rttMs: number | undefined;
   /** Recent heartbeat RTT samples (ms, newest last, capped) - the input-delay picker uses their worst (v0.1.7). */
@@ -183,7 +184,8 @@ class LanBridge {
       levelIdx: sd?.mLevelIndex_Coop != null ? sd.mLevelIndex_Coop : 0,
       difficulty: sd?.mDifficulty != null ? sd.mDifficulty : 0,
       gameAmount: sd?.mGameAmount != null ? sd.mGameAmount : 0,
-      wave: 1, // START_WAVE_SELECTOR: not persisted - every setup entry starts at wave 1
+      wave: 1, // START_WAVE_SELECTOR: the choice is not persisted - every setup entry starts at wave 1...
+      maxWave: maxUnlockedWave(), // ...but its cap = the HOST's historical best (v0.2.4, WaveUnlock); both setup screens show it
     };
     this.send({ t: 'setup', sel: this.sel });
     this.phase = 'setup';

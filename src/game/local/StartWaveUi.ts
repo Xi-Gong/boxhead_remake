@@ -3,10 +3,12 @@
 // footprint). v0.2.2 restyle (UiStyle): the select screens' own control language - a near-white capsule value
 // plate with the bold near-black number, flanked by outlined white arrow buttons (the level selector's arrow
 // family) with the options-window #e60000@35% wash as hover feedback - instead of the old dark plates.
-// Single/Coop only (Death Match has no waves); the value is screen-session state (StartWave.ts), never the save.
+// Single/Coop only (Death Match has no waves); the value is screen-session state (StartWave.ts), while its cap -
+// shown as the grey BEST copy right of the cycler - is the persisted best wave (v0.2.4, WaveUnlock.ts).
 import { CSound } from '../packages.ts';
 import { cycleSelectedStartWave, getSelectedStartWave } from './StartWave.ts';
-import { PILL_FILL, PILL_LABEL, menuText, pillBase, washCapsule } from './UiStyle.ts';
+import { maxUnlockedWave } from './WaveUnlock.ts';
+import { GREY, PILL_FILL, PILL_LABEL, menuText, pillBase, washCapsule } from './UiStyle.ts';
 
 /** An outlined white square arrow button with a solid dark triangle (the level selector's arrow family). */
 function arrow(parent: any, name: string, x: number, y: number, dir: -1 | 1, onPress: () => void): any {
@@ -18,7 +20,7 @@ function arrow(parent: any, name: string, x: number, y: number, dir: -1 | 1, onP
   c._x = -S / 2;
   c._y = -S / 2;
   c.lineStyle(2, 0x6b6b6b);
-  c.beginFill(PILL_FILL, 1);
+  c.beginFill(PILL_FILL, 100);
   c.moveTo(0, 0);
   c.lineTo(S, 0);
   c.lineTo(S, S);
@@ -26,7 +28,7 @@ function arrow(parent: any, name: string, x: number, y: number, dir: -1 | 1, onP
   c.lineTo(0, 0);
   c.endFill();
   c.lineStyle();
-  c.beginFill(PILL_LABEL, 1);
+  c.beginFill(PILL_LABEL, 100);
   const cx = S / 2, half = 6;
   c.moveTo(cx + dir * half, S / 2);
   c.lineTo(cx - dir * half * 0.6, S / 2 - half);
@@ -59,11 +61,16 @@ export function buildStartWaveCycler(parent: any, x: number, y: number): any {
   plate._y = -14;
   pillBase(plate, 90, 28);
   const value = menuText(plate, 'mcValue', 0, 3, 90, 24, '1', 18, PILL_LABEL);
-  const refresh = (): void => { value.text = String(getSelectedStartWave()); };
+  const best = menuText(mc, 'mcBest', 82, -8, 70, 16, 'BEST 1', 11, GREY); // right of the right arrow, plate-row centred
+  const refresh = (): void => {
+    value.text = String(getSelectedStartWave());
+    best.text = 'BEST ' + maxUnlockedWave();
+  };
   const bump = (d: number): void => { cycleSelectedStartWave(d); refresh(); };
   mc.bLeft = arrow(mc, 'bLeft', -60, 0, -1, () => bump(-1));
   mc.bRight = arrow(mc, 'bRight', 60, 0, 1, () => bump(1));
   mc.mcValue = value;
+  mc.mcBest = best;
   refresh();
   return mc;
 }

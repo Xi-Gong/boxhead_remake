@@ -22,6 +22,7 @@ import { installNetOverlay } from './local/Net/overlay.ts';
 import { debriefNameInput, installDebriefNameInput } from './local/DebriefName.ts';
 import { CThing_Object_WeaponCrate, captureCratePayload, crateDropPosition } from './local/WeaponCrate.ts';
 import { armStartWave, consumeArmedWaveOn, getRunStartWave, getSelectedStartWave, recordRunStartWave, resetSelectedStartWave } from './local/StartWave.ts';
+import { recordWaveReached } from './local/WaveUnlock.ts';
 import { buildStartWaveCycler } from './local/StartWaveUi.ts';
 import { menuTextItem, text } from './local/UiStyle.ts';
 import { installViewport } from './local/Viewport.ts';
@@ -198,10 +199,11 @@ export function applyScope(): void {
     return r;
   };
 
-  // Wave checkpoint + death RETRY (deviation WAVE_CHECKPOINT_RETRY). The wave-advance condition of
-  // CUpgrades.Process guarantees no zombie/devil is alive when __set__mLevel runs, so capturing right after it is a
-  // clean wave-start state. Guards: mLoaded excludes the InitLists / SetDifficulty build-time calls; the resume
-  // module's own fast-forward suppresses re-capture.
+  // Wave checkpoint + death RETRY (deviation WAVE_CHECKPOINT_RETRY) + wave-unlock record (START_WAVE_SELECTOR
+  // v0.2.4). The wave-advance condition of CUpgrades.Process guarantees no zombie/devil is alive when __set__mLevel
+  // runs, so capturing right after it is a clean wave-start state. Guards: mLoaded excludes the InitLists /
+  // SetDifficulty build-time calls; the resume module's own fast-forward suppresses re-capture. The unlock record
+  // fires on BOTH lockstep peers (each writes only its own save - no RNG, no net traffic, no checksum state).
   const upgradesProto = World.CUpgrades.prototype as any;
   const setMLevel = upgradesProto.__set__mLevel;
   upgradesProto.__set__mLevel = function (this: any, a: any): any {
@@ -209,6 +211,7 @@ export function applyScope(): void {
     if (this.mWorld?.mLoaded === true && !isSuppressing()) {
       recordCheckpoint(this.mWorld);
       netSession()?.onWaveAdvanced(this.mWorld); // LAN coop checkpoint at the same clean wave-start moment
+      if (World.CWorld.mGameMode !== 'DeathMatch') recordWaveReached(this.mLevelIndex); // entered wave N -> unlock
     }
     return r;
   };
@@ -260,6 +263,7 @@ export function applyScope(): void {
     initFinished.call(this);
     consumePending(this);
     recordRunStartWave(this.mUpgrades.mLevelIndex);
+    recordWaveReached(this.mUpgrades.mLevelIndex); // v0.2.4: starting AT wave N counts as entering it
   };
   // A new run that was not armed by CONTINUE / checkpoint-RETRY drops every stored resume (one slot). A NET game
   // never touches the stored single-player run (its own checkpoint lives in the NetSession).
@@ -318,9 +322,9 @@ export function applyScope(): void {
     setDifficultyPrev.call(this, tDifficulty);
     consumeArmedWaveOn(this);
   };
-  // The level selection screens: reset the cycler to wave 1 on every entry (NOT persisted - "didn't touch it =
-  // start from the beginning"), draw it in the empty bottom-left promo band (Single / Coop only), and arm the
-  // chosen wave right before the room is loaded.
+  // The level selection screens: reset the cycler to wave 1 on every entry (the choice is not persisted - "didn't
+  // touch it = start from the beginning"; its RANGE is capped by the persisted best, WaveUnlock), draw it in the
+  // empty bottom-left promo band (Single / Coop only), and arm the chosen wave right before the room is loaded.
   const selectCtorPrev = selectProto.ctor;
   selectProto.ctor = function (this: any): void {
     selectCtorPrev.call(this);

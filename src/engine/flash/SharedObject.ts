@@ -2,8 +2,8 @@
  * AS2 SharedObject.getLocal(name) -> { data, flush(), clear(), getSize() }.   OWNER: lane D (platform)
  *
  * Persists `data` as JSON in storage key `SO:<name>`:
- *   - browser / Electron: window.localStorage (Electron: the app:// origin's Local Storage lives in userData, which the
- *     portable exe redirects next to itself — see electron/main.ts);
+ *   - browser / Electron: window.localStorage (Electron: the app:// origin's Local Storage lives in userData, which
+ *     v0.2.4 (USER_DATA_DIR) pins to `<user home>/.boxhead` — see electron/main.ts);
  *   - Node tests / headless: an in-memory store (or one injected with `_setStorage`).
  *
  * Flash semantics kept:

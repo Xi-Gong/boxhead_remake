@@ -41,14 +41,14 @@ async function openPage() {
   const app = PACKAGED ? await _electron.launch({
     executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'), cwd: ROOT, timeout: 60000,
     args: noThrottle,
-    env: { ...process.env, PORTABLE_EXECUTABLE_DIR: join(OUT, 'packaged-portable') },
+    env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, 'packaged-portable') },
   }) : await _electron.launch({
     executablePath: createRequire(import.meta.url)('electron'), cwd: ROOT, timeout: 60000,
     // keep rAF running when the window is covered by other windows: Chromium's native Windows occlusion tracking
     // otherwise drops the requestAnimationFrame rate to ~1 Hz for an occluded window (observed: 1 EF/s, 50 EF/s once
     // in front) — a desktop/test-environment effect, the game's own frame cost is < 1 ms
     args: ['.', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'],
-    env: { ...process.env, BOXHEAD_DIST_DIR: join(ROOT, 'generated/qa-dist'), PORTABLE_EXECUTABLE_DIR: join(OUT, 'electron-portable') },
+    env: { ...process.env, BOXHEAD_DIST_DIR: join(ROOT, 'generated/qa-dist'), BOXHEAD_USER_DATA: join(OUT, 'electron-portable') },
   });
   const page = await app.firstWindow();
   // a minimized window gets no requestAnimationFrame (the game loop stalls): such a run is inconclusive, not a failure
