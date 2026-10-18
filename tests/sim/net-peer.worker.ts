@@ -38,7 +38,7 @@ process.on('message', (m: any) => {
       ...(m.dumpTick !== undefined ? { snapshot: session.ring.find(slot => slot.tRel === m.dumpTick)?.data } : {}),
       desync: session.desyncDetail, complete: world.mCompleteState, state: game.state(), endReason: session.endReason,
       errors: game.errors, stats: session.rollbackStats, weapons: [...weapons],
-      checkpoint: session.netCheckpoint?.tick, startTick: session.startTick,
+      checkpoint: session.netCheckpoint?.tick, startTick: world.mTick - session.tickIndex(world),
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash],
         decals: [session.decals.confirmedCount, session.decals.confirmedHash] } : {}) });
