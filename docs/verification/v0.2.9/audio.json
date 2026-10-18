@@ -1,0 +1,351 @@
+{
+  "checks": [
+    {
+      "group": "boot",
+      "name": "all 31 sounds decoded",
+      "ok": true,
+      "detail": {
+        "state": "running",
+        "decoded": 31,
+        "total": 31,
+        "failed": [],
+        "voices": 0,
+        "recoveries": 0,
+        "muted": false
+      }
+    },
+    {
+      "group": "boot",
+      "name": "context running",
+      "ok": true,
+      "detail": "running"
+    },
+    {
+      "group": "boot",
+      "name": "no failed sounds",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "boot",
+      "name": "no recoveries needed",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "group": "boot",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "boot",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "retryHeal",
+      "name": "558.mp3 aborted exactly once (healed by the boot retry)",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "group": "retryHeal",
+      "name": "boot retry healed the aborted sound before ready",
+      "ok": true,
+      "detail": {
+        "state": "running",
+        "decoded": 31,
+        "total": 31,
+        "failed": [],
+        "voices": 0,
+        "recoveries": 0,
+        "muted": false
+      }
+    },
+    {
+      "group": "retryHeal",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "retryHeal",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "stuckHeal",
+      "name": "permanently aborted sound reported failed at ready",
+      "ok": true,
+      "detail": {
+        "state": "running",
+        "decoded": 30,
+        "total": 31,
+        "failed": [
+          558
+        ],
+        "voices": 0,
+        "recoveries": 0,
+        "muted": false
+      }
+    },
+    {
+      "group": "stuckHeal",
+      "name": "play on the missing buffer returns normally (silent, heal fired)",
+      "ok": true
+    },
+    {
+      "group": "stuckHeal",
+      "name": "background heal refetched the sound",
+      "ok": true
+    },
+    {
+      "group": "stuckHeal",
+      "name": "the sample plays (mPlaying latch set)",
+      "ok": true
+    },
+    {
+      "group": "stuckHeal",
+      "name": "no failed sounds remain",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "stuckHeal",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "stuckHeal",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "suspend",
+      "name": "context suspended",
+      "ok": true
+    },
+    {
+      "group": "suspend",
+      "name": "watchdog resumes within ~3 s",
+      "ok": true
+    },
+    {
+      "group": "suspend",
+      "name": "click plays after recovery",
+      "ok": true
+    },
+    {
+      "group": "suspend",
+      "name": "no recovery counted (resume is not recreation)",
+      "ok": true
+    },
+    {
+      "group": "suspend",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "suspend",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "kill",
+      "name": "kill() closed the context (or the watchdog already recovered)",
+      "ok": true
+    },
+    {
+      "group": "kill",
+      "name": "watchdog recreated the context within 15 s (running, 31 decoded, +1 recovery)",
+      "ok": true
+    },
+    {
+      "group": "kill",
+      "name": "click plays on the recreated context",
+      "ok": true
+    },
+    {
+      "group": "kill",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "kill",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "construct",
+      "name": "construction fault left game running without context",
+      "ok": true
+    },
+    {
+      "group": "construct",
+      "name": "audio recovers without reloading the page",
+      "ok": true
+    },
+    {
+      "group": "construct",
+      "name": "actual audio output contains a nonzero waveform",
+      "ok": true,
+      "detail": {
+        "peak": 0.8395016193389893
+      }
+    },
+    {
+      "group": "construct",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "construct",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "decode",
+      "name": "audio recovers without reloading the page",
+      "ok": true
+    },
+    {
+      "group": "decode",
+      "name": "actual audio output contains a nonzero waveform",
+      "ok": true,
+      "detail": {
+        "peak": 0.8395016193389893
+      }
+    },
+    {
+      "group": "decode",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "decode",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "nodes",
+      "name": "audio recovers without reloading the page",
+      "ok": true
+    },
+    {
+      "group": "nodes",
+      "name": "actual audio output contains a nonzero waveform",
+      "ok": true,
+      "detail": {
+        "peak": 0.8395016193389893
+      }
+    },
+    {
+      "group": "nodes",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "nodes",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "clock",
+      "name": "audio recovers without reloading the page",
+      "ok": true
+    },
+    {
+      "group": "clock",
+      "name": "actual audio output contains a nonzero waveform",
+      "ok": true,
+      "detail": {
+        "peak": 0.8395016193389893
+      }
+    },
+    {
+      "group": "clock",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "clock",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "resume",
+      "name": "audio recovers without reloading the page",
+      "ok": true
+    },
+    {
+      "group": "resume",
+      "name": "actual audio output contains a nonzero waveform",
+      "ok": true,
+      "detail": {
+        "peak": 0.8395016193389893
+      }
+    },
+    {
+      "group": "resume",
+      "name": "no engine script errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "group": "resume",
+      "name": "no console errors",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "failed": 0,
+  "groups": {
+    "boot": {
+      "ms": 715
+    },
+    "retryHeal": {
+      "ms": 697
+    },
+    "stuckHeal": {
+      "ms": 6776
+    },
+    "suspend": {
+      "ms": 5866
+    },
+    "kill": {
+      "ms": 5938
+    },
+    "construct": {
+      "ms": 6742
+    },
+    "decode": {
+      "ms": 6616
+    },
+    "nodes": {
+      "ms": 6400
+    },
+    "clock": {
+      "ms": 9675
+    },
+    "resume": {
+      "ms": 7703
+    }
+  }
+}

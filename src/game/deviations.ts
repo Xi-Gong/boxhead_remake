@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'AUDIO_BOOT_RECOVERY',
+    file: 'engine/platform/AudioEngine.ts; main.ts',
+    description: 'Arm the audio watchdog before the first context construction, retain gesture retries on '+
+      'failure, and proactively resume Electron audio. Resume callers share one attempt; context generations '+
+      'reject old decode/resume callbacks. Closed, wedged, repeatedly failing node graphs and running clocks '+
+      'stalled during expected playback rebuild automatically, preserving mute and releasing completion '+
+      'latches without replaying queued effects. No gameplay or asset changes.',
+  },
+  {
     id: 'CONFIRMED_SCORE_FLIGHTS',
     file: 'local/Net/FloatingScores.ts, Growth.ts, GrowthHud.ts, NetScope.ts, NetSession.ts',
     description: 'Personal-growth score flights use confirmed per-kill event identities and a separate '+

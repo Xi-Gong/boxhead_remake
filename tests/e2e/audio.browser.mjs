@@ -36,12 +36,29 @@ const playPistol = (g) => g.expr('P.CSound.mSamples.Weapon_Pistol_Fire_wav.PlayS
 const sampleReady = (g) => g.waitExpr('P.CSound.mSamples && P.CSound.mSamples.Weapon_Pistol_Fire_wav', 30000);
 
 /** openGame, but with page.route()s installed before navigation (fault injection). */
-async function openRouted(routes) {
+async function openRouted(routes, fault) {
   const ctx = await browser.newContext({ viewport: { width: 640, height: 480 } });
   const page = await ctx.newPage();
   const log = [];
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') log.push(`[${m.type()}] ${m.text().slice(0, 400)}`); });
   page.on('pageerror', (e) => log.push(`[pageerror] ${e.message}`));
+  if(fault)await page.addInitScript(fault=>{
+    const Native=window.AudioContext,q=window.__audioFault={contexts:[],block: fault==='construct',decodeFailures:fault==='decode'?3:0,nodeFailures:0,resumeFailures:0,freeze:null};
+    window.AudioContext=class extends Native {
+      constructor(...args){if(q.block)throw new Error('injected initial audio failure');super(...args);q.contexts.push(this);}
+      decodeAudioData(...args){if(q.decodeFailures-->0)return Promise.reject(new Error('injected decode failure'));return super.decodeAudioData(...args);}
+      createBufferSource(){if(q.nodeFailures-->0)throw new Error('injected node failure');return super.createBufferSource();}
+      resume(){if(q.resumeFailures-->0)return Promise.reject(new Error('injected resume failure'));return super.resume();}
+      get currentTime(){return q.freeze===this?q.frozenAt:super.currentTime;}
+      get state(){return q.freeze===this?'running':super.state;}
+    };
+    const connect=AudioNode.prototype.connect;
+    AudioNode.prototype.connect=function(...args){
+      const result=connect.apply(this,args);
+      if(args[0]===this.context.destination){const a=this.context.createAnalyser();a.fftSize=2048;connect.call(this,a);q.analyser=a;}
+      return result;
+    };
+  },fault);
   for (const r of routes) await page.route(r.pattern, r.handler);
   await page.goto(URL_);
   const g = new Game(page, ctx, log);
@@ -146,6 +163,46 @@ await runGroup('kill', async () => {
   }, rec0, 15000));
   await g.expr('P.CSound.mSamples.Click2.PlaySound(), true');
   check('click plays on the recreated context', await g.expr('P.CSound.mSamples.Click2.mPlaying') === true);
+  return g;
+});
+
+async function signal(g){
+  return g.eval(async()=>{
+    let peak=0;const samples=new Float32Array(2048);
+    for(let n=0;n<40;n++){
+      window.__audioFault.analyser?.getFloatTimeDomainData(samples);
+      for(const x of samples)peak=Math.max(peak,Math.abs(x));
+      await new Promise(resolve=>setTimeout(resolve,10));
+    }
+    return peak;
+  });
+}
+for(const fault of ['construct','decode','nodes','clock','resume'])await runGroup(fault,async()=>{
+  const g=await openRouted([],fault);await sampleReady(g);
+  if(fault==='construct'){
+    check('construction fault left game running without context',(await audio(g)).state==='none');
+    await g.eval(()=>{window.__audioFault.block=false;});
+  }else if(fault==='resume'){
+    await g.eval(async()=>{const q=window.__audioFault;q.resumeFailures=2;await q.contexts.at(-1).suspend();});
+  }else if(fault==='nodes'){
+    await g.eval(()=>{
+      const q=window.__audioFault; q.nodeFailures=3;
+      const sample=window.__game.pkg.CSound.mSamples.Weapon_Pistol_Fire_wav;
+      for(let n=0;n<3;n++){sample.StopSound();sample.PlaySound();}
+    });
+  }else if(fault==='clock'){
+    await g.eval(()=>{
+      const q=window.__audioFault,c=q.contexts.at(-1);q.frozenAt=c.currentTime;q.freeze=c;
+      window.__game.pkg.CSound.mSamples.Weapon_Pistol_Fire_wav.PlaySound();
+      void c.suspend();
+    });
+  }
+  check('audio recovers without reloading the page',await g.waitFor(fault=>{
+    const a=window.__game.audio();return a.state==='running'&&a.decoded===31&&a.failed.length===0&&
+      (!['nodes','clock'].includes(fault)||a.recoveries>0);
+  },fault,15000));
+  await playPistol(g);const peak=await signal(g);
+  check('actual audio output contains a nonzero waveform',peak>.001,{peak});
   return g;
 });
 

@@ -269,6 +269,7 @@ export function startVoice(s: VoiceStart): Voice {
   if (c && buf && loopLenSec > 0) {
     try {
       const src = c.createBufferSource();
+      v.src = src;
       src.buffer = buf;
       let dest: AudioNode = (s.owner ? busFor(s.owner) : masterBus).node(c);
       if (s.envelope && s.envelope.length) dest = buildEnvelope(c, v, s.envelope, dest, startTime);
@@ -283,10 +284,14 @@ export function startVoice(s: VoiceStart): Voice {
       }
       src.onended = () => finishVoice(v, true);
       v.src = src;
+      nodeFailures = 0;
     } catch (e) {
       // A node-graph failure must not abort the calling frame script (on one LAN peer that would be a desync):
       // fall back to the silent timed voice; position/completion stay correct via pumpSoundEvents().
       console.warn('[audio] voice start failed:', e);
+      try { v.src?.stop(); v.src?.disconnect(); } catch { /* partially built source */ }
+      v.src = undefined;
+      nodeFailures++;
     }
   }
   return v;
@@ -412,7 +417,12 @@ export function registerBuffer(charId: number, buffer: AudioBuffer, linkage?: st
 // ------------------------------------------------------------------------------------------------ context
 
 let wedgedTicks = 0;
-let resumeInFlight = false;
+let resumeAttempt: { context: AudioContext; promise: Promise<boolean> } | undefined;
+let rebuilding = false;
+let contextGeneration = 0;
+let nodeFailures = 0;
+let clockTime = -1;
+let clockProgressAt = 0;
 let recoveryCount = 0;
 let watchdogTimer: ReturnType<typeof setInterval> | undefined;
 let lastConstructWarn = -Infinity;
@@ -443,6 +453,7 @@ function constructAudioContext(): AudioContext | undefined {
  * recreates a context that wedges later (tickAudioWatchdog).
  */
 export function getAudioContext(): AudioContext | undefined {
+  startWatchdog(); // construction failure must not disable future recovery
   if (ctx) return ctx;
   const c = constructAudioContext();
   if (!c) {
@@ -452,19 +463,22 @@ export function getAudioContext(): AudioContext | undefined {
     }
     return undefined;
   }
+  // Silent fallback voices used the wall clock. Retire them before switching to a new context clock.
+  for (const voice of [...voices]) finishVoice(voice, true);
   ctx = c;
+  contextGeneration++;
+  clockTime = c.currentTime; clockProgressAt = nowMs();
   c.addEventListener('statechange', onContextStateChange);
   // Output device hot-swap: Chromium usually migrates the stream itself; nudge the watchdog in case it didn't.
   if (!deviceChangeInstalled && typeof navigator !== 'undefined' && navigator.mediaDevices?.addEventListener) {
     deviceChangeInstalled = true;
     navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
   }
-  startWatchdog();
   return ctx;
 }
 
-function onContextStateChange(): void {
-  if (!ctx) return;
+function onContextStateChange(event?: Event): void {
+  if (!ctx || (event && event.target !== ctx)) return;
   if (ctx.state === 'running') wedgedTicks = 0;
   else tickAudioWatchdog(); // nudge: the first resume attempt starts now, not at the next interval beat
 }
@@ -488,56 +502,71 @@ export function tickAudioWatchdog(): void {
     void getAudioContext(); // construction failed earlier: retry
   } else if (c.state === 'running') {
     wedgedTicks = 0;
+    if (!voices.size || c.currentTime > clockTime) clockProgressAt = nowMs();
+    clockTime = c.currentTime;
+    if (voices.size && nowMs() - clockProgressAt >= 3000) wedgedTicks = WATCHDOG_WEDGED_LIMIT;
   } else if (c.state === 'closed') {
     wedgedTicks = WATCHDOG_WEDGED_LIMIT; // closed is terminal
   } else {
     // suspended / interrupted
-    if (!resumeInFlight) {
-      resumeInFlight = true;
-      void Promise.race([c.resume(), sleep(500)])
-        .catch(() => { /* a rejected resume is counted by the wedged ticks below */ })
-        .finally(() => { resumeInFlight = false; });
-    }
+    void resumeContext(c, 500);
     // A synchronous resume (mock contexts, some engines) may have flipped the state already: re-read it un-narrowed.
     const stateAfterResume = c.state as AudioContextState;
     if (stateAfterResume !== 'running') wedgedTicks++;
   }
-  if (wedgedTicks >= WATCHDOG_WEDGED_LIMIT) void recreateAudioContext();
+  if (wedgedTicks >= WATCHDOG_WEDGED_LIMIT || nodeFailures >= 3) void recreateAudioContext();
   for (const id of failedIds) void healSound(id);
 }
 
 /** Last-resort recovery: finish voices naturally, close the wedged context, rebuild the graph and the buffers. */
 async function recreateAudioContext(): Promise<void> {
-  const old = ctx;
-  // Finish every voice NATURALLY: onComplete fires and every CSound mPlaying latch clears (otherwise ambience
-  // channels wedge forever). Natural completion also keeps position/completion bookkeeping consistent.
-  for (const v of [...voices]) {
-    if (v.src) { try { v.src.stop(); } catch { /* not started / already stopped */ } }
-    finishVoice(v, true);
-  }
-  ctx = undefined;
-  wedgedTicks = 0;
-  resumeInFlight = false;
-  muteNode = undefined;
-  masterBus.resetGraph();
-  targetBuses = new WeakMap(); // WeakMap can't be iterated: reassign; CSound re-applies volume/pan on every play
-  if (old) void old.close().catch(() => { /* already closed */ });
-  const c = getAudioContext();
-  if (!c) return; // construction failed: the watchdog retries on the next beat
-  recoveryCount++;
-  // Re-decode every retained sound into the new context (raw bytes are context-independent). Buffers decoded by the
-  // old context stay usable meanwhile; a failed re-decode lands back in failedIds for the watchdog sweep.
-  void (async () => {
-    for (const [id, raw] of [...rawBuffers.entries()]) {
-      try {
-        buffers.set(id, await c.decodeAudioData(raw.slice(0)));
-        failedIds.delete(id);
-      } catch (e) {
-        failedIds.add(id);
-        console.warn(`[audio] sound ${id} re-decode after context recreation failed:`, e);
-      }
+  if (rebuilding) return;
+  rebuilding = true;
+  try {
+    const old = ctx;
+    // Finish every voice NATURALLY: onComplete fires and every CSound mPlaying latch clears (otherwise ambience
+    // channels wedge forever). Natural completion also keeps position/completion bookkeeping consistent.
+    for (const v of [...voices]) {
+      if (v.src) { try { v.src.stop(); } catch { /* not started / already stopped */ } }
+      finishVoice(v, true);
     }
-  })();
+    ctx = undefined;
+    contextGeneration++;
+    wedgedTicks = 0;
+    resumeAttempt = undefined;
+    nodeFailures = 0;
+    healInflight.clear(); healLastAttempt.clear();
+    for (const id of defs.keys()) if (!buffers.has(id)) failedIds.add(id);
+    muteNode = undefined;
+    masterBus.resetGraph();
+    targetBuses = new WeakMap(); // WeakMap can't be iterated: reassign; CSound re-applies volume/pan on every play
+    if (old) {
+      old.removeEventListener('statechange', onContextStateChange);
+      try { void old.close().catch(() => { /* already closed */ }); } catch { /* driver unavailable */ }
+    }
+    const c = getAudioContext();
+    if (!c) return; // construction failed: the watchdog retries on the next beat
+    recoveryCount++;
+    const generation = contextGeneration;
+    void resumeContext(c, 500);
+    // Re-decode every retained sound into the new context (raw bytes are context-independent). Buffers decoded by the
+    // old context stay usable meanwhile; a failed re-decode lands back in failedIds for the watchdog sweep.
+    void (async () => {
+      for (const [id, raw] of [...rawBuffers.entries()]) {
+        try {
+          const decoded = await c.decodeAudioData(raw.slice(0));
+          if (ctx !== c || contextGeneration !== generation) return;
+          buffers.set(id, decoded);
+          failedIds.delete(id);
+        } catch (e) {
+          if (ctx !== c || contextGeneration !== generation) return;
+          buffers.delete(id);
+          failedIds.add(id);
+          console.warn(`[audio] sound ${id} re-decode after context recreation failed:`, e);
+        }
+      }
+    })();
+  } finally { rebuilding = false; }
 }
 
 export interface PreloadResult { loaded: number; failed: number[]; total: number }
@@ -546,11 +575,14 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 
 /** Fetch + decode one sound into `buffers`; on success the pristine bytes are retained and the id leaves failedIds. */
 async function loadSound(c: AudioContext, def: SoundDef): Promise<void> {
+  const generation = contextGeneration;
   const res = await fetch(new URL(def.file, libraryBase));
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const raw = await res.arrayBuffer();
+  if (ctx !== c || contextGeneration !== generation) return;
+  rawBuffers.set(def.id, raw);
   const decoded = await c.decodeAudioData(raw.slice(0)); // decodeAudioData detaches its input: decode a copy
-  rawBuffers.set(def.id, raw); // pristine bytes retained so a recreated AudioContext re-decodes without refetching
+  if (ctx !== c || contextGeneration !== generation) return;
   buffers.set(def.id, decoded);
   failedIds.delete(def.id);
 }
@@ -567,6 +599,7 @@ export function healSound(charId: number): Promise<void> {
   const inflight = healInflight.get(charId);
   if (inflight) return inflight;
   const c = ctx;
+  const generation = contextGeneration;
   const def = defs.get(charId);
   if (!c || !def || !libraryBase || buffers.has(charId)) return Promise.resolve();
   const now = nowMs();
@@ -577,15 +610,19 @@ export function healSound(charId: number): Promise<void> {
   const p = (async () => {
     try {
       if (raw) {
-        buffers.set(charId, await c.decodeAudioData(raw.slice(0)));
+        const decoded = await c.decodeAudioData(raw.slice(0));
+        if (ctx !== c || contextGeneration !== generation) return;
+        buffers.set(charId, decoded);
         failedIds.delete(charId);
       } else {
         await loadSound(c, def);
       }
     } catch (e) {
+      if (ctx !== c || contextGeneration !== generation) return;
+      failedIds.add(charId);
       console.warn(`[audio] sound ${charId} (${def.file}) heal failed:`, e);
     } finally {
-      healInflight.delete(charId);
+      if (ctx === c && contextGeneration === generation) healInflight.delete(charId);
     }
   })();
   healInflight.set(charId, p);
@@ -606,6 +643,7 @@ export async function preloadSounds(
   const total = list.length;
   let done = 0;
   const c = getAudioContext();
+  const generation = contextGeneration;
   onProgress?.(0, total);
   if (!c) {
     for (const d of list) failedIds.add(d.id);
@@ -618,6 +656,7 @@ export async function preloadSounds(
       try {
         await loadSound(c, def);
       } catch (e) {
+        if (ctx !== c || contextGeneration !== generation) return;
         failedIds.add(def.id);
         console.warn(`[audio] sound ${def.id} (${def.file}) failed to load:`, e);
       }
@@ -636,6 +675,7 @@ export async function preloadSounds(
       try {
         await loadSound(c, def);
       } catch (e) {
+        if (ctx !== c || contextGeneration !== generation) return { loaded: buffers.size, failed: [...failedIds], total };
         console.warn(`[audio] sound ${def.id} (${def.file}) retry ${round}/2 failed:`, e);
       }
     }
@@ -648,21 +688,36 @@ export async function preloadSounds(
 export async function resumeAudio(timeoutMs = 300): Promise<boolean> {
   const c = getAudioContext();
   if (!c) return false;
-  if (c.state === 'running') return true;
-  try {
-    await Promise.race([c.resume(), new Promise((r) => setTimeout(r, timeoutMs))]);
-  } catch { /* ignore */ }
-  return (c.state as AudioContextState) === 'running';
+  return resumeContext(c, timeoutMs);
+}
+
+/** One resume attempt for every caller; stale completions cannot unlock a replacement context. */
+function resumeContext(c: AudioContext, timeoutMs: number): Promise<boolean> {
+  if (c !== ctx) return Promise.resolve(false);
+  if (c.state === 'running') return Promise.resolve(true);
+  if (resumeAttempt?.context === c) return resumeAttempt.promise;
+  // Suspended sources must not burst out after recovery. Completing them releases sample latches.
+  for (const v of [...voices]) {
+    try { v.src?.stop(); } catch { /* source not started */ }
+    finishVoice(v, true);
+  }
+  const generation = contextGeneration;
+  let resuming: Promise<void>;
+  try { resuming = c.resume(); } catch { resuming = Promise.reject(); }
+  const promise = Promise.race([resuming, sleep(timeoutMs)])
+    .catch(() => {})
+    .then(() => ctx === c && generation === contextGeneration && c.state === 'running');
+  resumeAttempt = { context: c, promise };
+  const settled = () => { if (resumeAttempt?.promise === promise) resumeAttempt = undefined; };
+  void resuming.then(settled, settled);
+  return promise;
 }
 
 /** Resume the AudioContext on the first user gesture (pointer/key/touch). Harmless when already running. */
 export function installAudioUnlock(target: EventTarget = window): () => void {
   const events = ['pointerdown', 'mousedown', 'keydown', 'touchend'];
   const handler = (): void => {
-    const c = getAudioContext();
-    if (!c) return remove();
-    if (c.state === 'running') return remove();
-    void c.resume().then(() => { if (c.state === 'running') remove(); }, () => { /* rejected (autoplay race): the next gesture retries */ });
+    void resumeAudio().then(running => { if (running) remove(); });
   };
   const remove = (): void => { for (const e of events) target.removeEventListener(e, handler, true); };
   for (const e of events) target.addEventListener(e, handler, true);
@@ -690,7 +745,7 @@ export async function unlockAudioOverlay(container: HTMLElement, text = 'Click t
       + 'background:#000;color:#fff;font:bold 22px Arial,Helvetica,sans-serif;cursor:pointer;z-index:10;user-select:none';
     const go = (e: Event): void => {
       e.preventDefault();
-      void c.resume();
+      void resumeAudio();
       el.remove();
       window.removeEventListener('keydown', go, true);
       dismissAudioOverlayFn = undefined;
@@ -762,7 +817,9 @@ export function playTimelineSound(charId: number, info: SoundInfo = {}, owner?: 
 
 /** Tests: install (or clear) the AudioContext. Drops the node graph built against any previous context. */
 export function _setAudioContextForTests(c: AudioContext | undefined): void {
+  contextGeneration++;
   ctx = c;
+  clockTime = c?.currentTime ?? -1; clockProgressAt = nowMs();
   muteNode = undefined;
   masterBus.resetGraph();
   targetBuses = new WeakMap();
@@ -782,7 +839,9 @@ export function _resetAudioForTests(): void {
   masterBus.t = defaultTransform();
   mutedFlag = false;
   wedgedTicks = 0;
-  resumeInFlight = false;
+  resumeAttempt = undefined;
+  rebuilding = false;
+  nodeFailures = 0;
   recoveryCount = 0;
   lastConstructWarn = -Infinity;
   contextFactory = undefined;

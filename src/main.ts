@@ -218,6 +218,7 @@ async function boot(): Promise<void> {
   // v0.1.10: Electron nudges the audio watchdog on window focus/restore, OS resume and second-instance refocus
   // (the watchdog would self-heal within ~5 s anyway - the nudge just removes that latency).
   desktop?.onAudioNudge?.(() => { void resumeAudio(); tickAudioWatchdog(); });
+  if (isElectron()) { void resumeAudio(); tickAudioWatchdog(); }
   if (!isElectron() && !sceneId) await unlockAudioOverlay(stage);
   msg.remove();
 

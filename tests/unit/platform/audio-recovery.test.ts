@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   _resetAudioForTests, _setAudioContextFactoryForTests, _setAudioContextForTests, activeVoiceCount,
   audioDiagnostics, getAudioContext, healSound, preloadSounds, pumpSoundEvents, registerBuffer, SoundEngine,
-  startVoice, tickAudioWatchdog,
+  startVoice, tickAudioWatchdog, installAudioUnlock, resumeAudio,
 } from '../../../src/engine/platform/AudioEngine.ts';
 import { advanceVirtual, nowMs, useRealClock, useVirtualClock } from '../../../src/engine/flash/clock.ts';
 import type { SoundDef } from '../../../src/shared/assetSchema.ts';
@@ -36,7 +36,8 @@ class MockAudioContext {
   /** 'fix': resume() flips to running; 'stuck': resume() resolves but the state never recovers. */
   resumeBehavior: 'fix' | 'stuck' = 'fix';
   decodeCalls = 0;
-  get currentTime(): number { return nowMs() / 1000; }
+  frozenClock = false;
+  get currentTime(): number { return this.frozenClock ? 0 : nowMs() / 1000; }
   createGain(): MockGainNode { return new MockGainNode(); }
   createChannelSplitter(): MockNode { return new MockNode(); }
   createChannelMerger(): MockNode { return new MockNode(); }
@@ -166,6 +167,91 @@ describe('audio context watchdog (v0.1.10)', () => {
   afterEach(() => { vi.unstubAllGlobals(); _resetAudioForTests(); useRealClock(); });
 
   const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+
+  it('arms recovery before first construction fails, without requiring another game launch', () => {
+    let beat: (() => void) | undefined, attempts=0;
+    vi.stubGlobal('window', {});
+    const timer=vi.spyOn(globalThis,'setInterval').mockImplementation(((fn:()=>void)=>{beat=fn;return 1;}) as any);
+    try {
+      _setAudioContextFactoryForTests(()=>{
+        expect(beat).toBeDefined();
+        if(++attempts===1)throw new Error('first construction unavailable');
+        return asCtx(new MockAudioContext());
+      });
+      expect(getAudioContext()).toBeUndefined(); beat!();
+      expect(SoundEngine.context?.state).toBe('running'); expect(attempts).toBe(2);
+    } finally { _resetAudioForTests();timer.mockRestore(); }
+  });
+
+  it('keeps gesture retries after construction failure and removes them only after successful resume', async () => {
+    let attempts=0;const target=new EventTarget(),remove=vi.spyOn(target,'removeEventListener');
+    _setAudioContextFactoryForTests(()=>{
+      if(++attempts===1)throw new Error('first construction unavailable');
+      const c=new MockAudioContext();c.state='suspended';return asCtx(c);
+    });
+    const cleanup=installAudioUnlock(target);
+    target.dispatchEvent(new Event('pointerdown'));await flush();expect(remove).not.toHaveBeenCalled();
+    target.dispatchEvent(new Event('keydown'));await flush();expect(SoundEngine.context?.state).toBe('running');
+    expect(remove).toHaveBeenCalledTimes(4);cleanup();
+  });
+
+  it('shares resume attempts and rejects stale completion after context replacement', async () => {
+    const made:MockAudioContext[]=[];let finish!:()=>void,calls=0;
+    _setAudioContextFactoryForTests(()=>{const c=new MockAudioContext();made.push(c);return asCtx(c);});
+    getAudioContext();const old=made[0]!;old.state='suspended';
+    old.resume=()=>{calls++;return new Promise<void>(resolve=>{finish=resolve;});};
+    const a=resumeAudio(),b=resumeAudio();tickAudioWatchdog();expect(calls).toBe(1);
+    old.state='closed';tickAudioWatchdog();expect(made).toHaveLength(2);
+    old.state='running';finish();expect(await a).toBe(false);expect(await b).toBe(false);
+    expect(SoundEngine.context).toBe(asCtx(made[1]!));
+  });
+
+  it('rebuilds after three node failures and clears completion latches without replaying old sounds', () => {
+    const made:MockAudioContext[]=[];let done=0;
+    _setAudioContextFactoryForTests(()=>{const c=new MockAudioContext();c.throwOnBufferSource=made.length===0;made.push(c);return asCtx(c);});
+    getAudioContext();registerBuffer(558,{duration:1} as AudioBuffer);
+    for(let n=0;n<3;n++)startVoice({charId:558,owner:undefined,offsetSec:0,loops:1,onComplete:()=>done++});
+    tickAudioWatchdog();expect(made).toHaveLength(2);expect(done).toBe(3);expect(activeVoiceCount()).toBe(0);
+    const next=startVoice({charId:558,owner:undefined,offsetSec:0,loops:1});expect((next as any).src).toBeDefined();
+  });
+
+  it('recovers a running context whose playback clock stalls, but leaves an idle clock alone', () => {
+    const made:MockAudioContext[]=[];let done=0;
+    _setAudioContextFactoryForTests(()=>{const c=new MockAudioContext();c.frozenClock=made.length===0;made.push(c);return asCtx(c);});
+    getAudioContext();advanceVirtual(10000);tickAudioWatchdog();expect(made).toHaveLength(1);
+    registerBuffer(558,{duration:1} as AudioBuffer);
+    startVoice({charId:558,owner:undefined,offsetSec:0,loops:60,onComplete:()=>done++});
+    advanceVirtual(3100);tickAudioWatchdog();expect(made).toHaveLength(2);expect(done).toBe(1);
+  });
+
+  it('ignores old decode completion after recovery instead of replacing the new buffer', async () => {
+    const made:MockAudioContext[]=[];let finish!:(value:AudioBuffer)=>void;
+    _setAudioContextFactoryForTests(()=>{
+      const c=new MockAudioContext();
+      if(!made.length)c.decodeAudioData=()=>new Promise(resolve=>{finish=resolve;});
+      made.push(c);return asCtx(c);
+    });
+    vi.stubGlobal('fetch',controlledFetch(new Set()));
+    const loading=preloadSounds({exports:{},chars:{558:def(558)}},'https://game.test/assets/');await flush();
+    made[0]!.state='closed';tickAudioWatchdog();await flush();
+    finish({duration:999} as AudioBuffer);await loading;
+    const next=startVoice({charId:558,owner:undefined,offsetSec:0,loops:1});
+    expect(next.totalSec).toBe(1);expect(audioDiagnostics().failed).toEqual([]);
+  });
+
+  it('retires suspended sources rather than playing accumulated effects when resume succeeds', async () => {
+    const c=new MockAudioContext();_setAudioContextForTests(asCtx(c));registerBuffer(558,{duration:1} as AudioBuffer);
+    let done=0;startVoice({charId:558,owner:undefined,offsetSec:0,loops:1,onComplete:()=>done++});
+    c.state='suspended';expect(await resumeAudio()).toBe(true);
+    expect(done).toBe(1);expect(activeVoiceCount()).toBe(0);
+  });
+
+  it('releases silent fallback voices when the first context recovers with a different clock origin', () => {
+    advanceVirtual(60000);registerBuffer(558,{duration:1} as AudioBuffer);
+    let done=0;startVoice({charId:558,owner:undefined,offsetSec:0,loops:1,onComplete:()=>done++});
+    _setAudioContextFactoryForTests(()=>{const c=new MockAudioContext();c.frozenClock=true;return asCtx(c);});
+    getAudioContext();expect(done).toBe(1);expect(activeVoiceCount()).toBe(0);
+  });
 
   it('no sticky latch: a failed construction is retried on the next call', () => {
     let calls = 0;
