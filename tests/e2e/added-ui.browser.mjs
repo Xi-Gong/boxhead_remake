@@ -4,6 +4,19 @@ import { mkdirSync } from 'node:fs';
 import { launch, openGame, toMainMenu } from './lib.mjs';
 const out='generated/reports/v026/ui';mkdirSync(out,{recursive:true});
 const browser=await launch();
+async function surface(g,name){
+ for(const [width,height] of [[640,480],[960,720],[1280,720],[640,889]]){
+  await g.page.setViewportSize({width,height});await g.page.waitForTimeout(750);
+  await g.shot(`${out}/${name}-${width}x${height}.png`,false);
+ }
+ const cdp=await g.page.context().newCDPSession(g.page);
+ await cdp.send('Emulation.setDeviceMetricsOverride',{width:960,height:720,deviceScaleFactor:2,mobile:false});
+ await g.page.waitForTimeout(750);
+ assert.equal(await g.page.evaluate(()=>document.querySelector('canvas.game-canvas').width),1920,'DPR2 backing store');
+ await g.shot(`${out}/${name}-960x720-dpr2.png`,false);
+ await cdp.send('Emulation.clearDeviceMetricsOverride');await cdp.detach();
+ await g.page.setViewportSize({width:1280,height:720});await g.page.waitForTimeout(300);
+}
 try {
  const g=await openGame(browser,{viewport:{width:960,height:720},init:()=>{
   localStorage.setItem('SO:BXHD_2PLAY_6',JSON.stringify({mResumeData:{version:2,players:[],objects:[],roomLibLink:'ROOM_Single_0001',wave:1}}));
@@ -15,12 +28,11 @@ try {
  }});
  await toMainMenu(g);
  assert.deepEqual(await g.expr('[m.mcScreen.mcSinglePlay,m.mcScreen.mcCoopPlay,m.mcScreen.mcDeathPlay,m.mcScreen.mcInstructions,m.mcScreen.mcContinue,m.mcScreen.mcLanGame].map(b=>b._y)'),[226,256,286,316,346,376]);
- for(const [w,h] of [[640,480],[960,720],[1280,720],[640,889]]){
-  await g.page.setViewportSize({width:w,height:h});await g.page.waitForTimeout(750);await g.shot(`${out}/main-${w}x${h}.png`,false);
- }
+ await surface(g,'main');
  await g.clickClip('m.mcScreen.mcLanGame');
  assert.ok(await g.waitScreen('State_LanLobby','Screen_LanLobby'));
  await g.page.waitForTimeout(750);await g.shot(`${out}/lan-empty.png`,false);
+ await surface(g,'lan-empty');
  await g.page.evaluate(()=>window.__qa.hosts([
   {ip:'192.168.1.2',name:'AVAILABLE ROOM',status:'lobby',players:1,port:47631},
   {ip:'192.168.1.3',name:'FULL ROOM',status:'lobby',players:2,port:47631},
@@ -28,23 +40,25 @@ try {
  await g.page.waitForTimeout(500);await g.shot(`${out}/lan-discovery.png`,false);
  assert.equal(await g.expr('m.mcScreen.hostRows.filter(r=>r._visible).length'),3);
  assert.deepEqual(await g.expr('m.mcScreen.hostRows.slice(0,3).map(r=>r.enabled)'),[true,false,false]);
- for(const [w,h] of [[640,480],[1280,720]]){
-  await g.page.setViewportSize({width:w,height:h});await g.page.waitForTimeout(750);await g.shot(`${out}/lan-discovery-${w}x${h}.png`,false);
- }
+ await surface(g,'lan-discovery');
  await g.clickClip('m.mcScreen.entryEls.find(b=>b?._Contents?._Label?.text==="CREATE ROOM")');
  assert.ok(await g.waitExpr('g.lan().bridge==="hosting"'));
  await g.page.waitForTimeout(500);await g.shot(`${out}/lan-host-waiting.png`,false);
+ await surface(g,'lan-host-waiting');
  await g.page.evaluate(()=>window.__qa.message({t:'hello',name:'QA GUEST',sid:'qa',char:0}));
  assert.ok(await g.waitExpr('g.lan().bridge==="lobby"'));
  assert.equal(await g.expr('m.mcScreen.startBtn.enabled'),false);
  await g.page.waitForTimeout(500);await g.shot(`${out}/lan-host-not-ready.png`,false);
+ await surface(g,'lan-host-not-ready');
  await g.page.evaluate(()=>window.__qa.message({t:'ready',ready:true}));
  assert.ok(await g.waitExpr('m.mcScreen.startBtn.enabled===true'));
  await g.clickClip('m.mcScreen.startBtn');
  assert.ok(await g.waitScreen('State_LanSetup','Screen_LanSetup'));
  await g.page.waitForTimeout(750);await g.shot(`${out}/lan-setup-host-coop.png`,false);
+ await surface(g,'lan-setup-host-coop');
  await g.clickClip('m.mcScreen.bMode');await g.page.waitForTimeout(500);
  assert.equal(await g.expr('g.lan().sel.mode'),'DeathMatch');await g.shot(`${out}/lan-setup-host-dm.png`,false);
+ await surface(g,'lan-setup-host-dm');
  await g.page.mouse.move(5,5);await g.page.waitForTimeout(200);
  const ink=await g.page.evaluate(()=>{
   const p=window.__game.platform.presenter,c=document.querySelector('canvas.game-canvas'),r=c.getBoundingClientRect();
@@ -66,6 +80,7 @@ try {
  assert.equal(await g.expr('m.mcScreen.bMode.enabled'),false);
  assert.equal(await g.expr('m.mcScreen.bStart._visible'),false);
  await g.page.waitForTimeout(750);await g.shot(`${out}/lan-setup-guest.png`,false);
+ await surface(g,'lan-setup-guest');
  assert.equal(await g.page.locator('input[type=text]').count(),0,'lobby DOM is removed on transition');
  await g.expr('m.SetState("State_SelectWorld_Single")');
  assert.ok(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
@@ -76,9 +91,7 @@ try {
  const bounds=await g.expr('(()=>{const p=m.mcWorld.mHud.mcScreenPause;return {save:p._SaveQuit.getBounds(p),quit:p._Quit.getBounds(p)};})()');
  assert.ok(bounds.save.yMax<=65.75,'save action stays inside header');
  assert.ok(bounds.save.xMin>=bounds.quit.xMax+8,'pause actions have separate hit areas');
- for(const [w,h] of [[640,480],[1280,720]]){
-  await g.page.setViewportSize({width:w,height:h});await g.page.waitForTimeout(750);await g.shot(`${out}/pause-${w}x${h}.png`,false);
- }
+ await surface(g,'pause');
  await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');
  assert.ok(await g.waitScreen('State_Main','Screen_Main'));
  assert.ok(await g.expr('!!m.mcScreen.mcContinue'));
