@@ -6,7 +6,6 @@
 // constructor) or shows up as a hash mismatch.
 import { describe, expect, it } from 'vitest';
 import { createHeadlessGame, KEYS, thingList, type HeadlessGame } from './harness.ts';
-import { World } from '../../src/game/packages.ts';
 import { captureWorldSnap, restoreWorldSnap, makeSnapCtx, type RingSlot } from '../../src/game/local/Net/WorldSnap.ts';
 
 const TOTAL = 60;

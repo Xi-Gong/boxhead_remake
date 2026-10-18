@@ -582,3 +582,7 @@ START WAVE 与 OPTIONS/CONTROLS 在同一基线；BEST 移到数值下方，方�
 ### 18.21 FlashType字符覆盖检查缓存
 
 暂停CPU采样定位到缓存文字每帧仍逐字符调用$font/fontCodeMap检查覆盖。按不可变layout对象与Library身份缓存覆盖结果，WeakMap不延长已移除TextField生命周期；文本/格式/password/embedFonts/layout变化或库切换自动失效。新增回归旧版重复扫描失败，修复后缓存帧0次字体查询；CJK缺字仍完整回退。53项文字/滤镜/FlashType黄金回归、完整1265项Vitest及类型检查通过。实际函数微基准20000次变更等价，240000调用三轮中位65.67→3.65ms（约18倍，仅覆盖检查路径）；整游戏新对照另记录。
+
+### 18.22 测试代码死项清理
+
+全面unused审计进一步删除未调用的旧rollback flushVia模拟实现及其私有字段、无用类型/值导入和只读临时变量；保留有副作用的createHeadlessGame调用，给接口桩的有意忽略参数加下划线。所有断言和用例仍保留。148项相关回归通过；全项目noUnused额外扫描现只剩受移植契约保护的原版文件告警，引擎/工具的强制门禁保持通过。

@@ -293,7 +293,7 @@ describe('Navigation flow field (CMap_Cell.Nav_*)', () => {
     }
     return d.map((row: number[]) => row.map((v) => (v < 0 ? -1 : Math.max(0, v - 1))));
   }
-  function runUntilFinished(map: any, cells: any[], maxCalls = 100): number {
+  function runUntilFinished(_map: any, cells: any[], maxCalls = 100): number {
     const C = World.Map.CMap_Cell;
     let calls = 0;
     do {

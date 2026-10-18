@@ -4,7 +4,7 @@
 // pickup drop. The crate never expires.
 import { describe, expect, it } from 'vitest';
 import { Thing, World } from '../../src/game/packages.ts';
-import { CThing_Object_WeaponCrate, applyCratePayload, captureCratePayload } from '../../src/game/local/WeaponCrate.ts';
+import { applyCratePayload, captureCratePayload } from '../../src/game/local/WeaponCrate.ts';
 import { RESUME_VERSION, applyToWorld, capture, clearAll } from '../../src/game/local/Resume.ts';
 import { createHeadlessGame, thingList, type HeadlessGame } from './harness.ts';
 

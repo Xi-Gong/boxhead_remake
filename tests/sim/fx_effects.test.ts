@@ -3,7 +3,7 @@
 // destruction, claymore fuse, pickups (map / Death Match respawn, dropped pickups), bullet hit sparks, blood decals,
 // LOW quality switches. Bytecode: generated/disasm/Thing.Effect.*.txt, Thing.Object.*.txt, World.CWorld.txt.
 import { describe, expect, it } from 'vitest';
-import { createHeadlessGame, KEYS } from './harness.ts';
+import { createHeadlessGame } from './harness.ts';
 import {
   addDevil, addZombie, holdMultiplier, noSpawn, ofClass, openFloorGame, placePlayer, pos, raiseMultiplier, recordAdds,
   recordDecals, recordMessages, recordSounds, select, tapFire, things,

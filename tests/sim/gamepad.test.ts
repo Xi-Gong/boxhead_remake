@@ -7,7 +7,7 @@ import { Key, Mouse } from '../../src/engine/flash/input.ts';
 import { engine } from '../../src/engine/swf/state.ts';
 import { installGamepad } from '../../src/game/local/Gamepad.ts';
 import { CMain } from '../../src/game/packages.ts';
-import { createHeadlessGame, KEYS, type HeadlessGame } from './harness.ts';
+import { createHeadlessGame, KEYS } from './harness.ts';
 
 interface PadSpec { axes?: number[]; pressed?: number[]; connected?: boolean }
 

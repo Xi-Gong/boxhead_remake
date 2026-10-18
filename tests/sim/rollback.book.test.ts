@@ -15,17 +15,8 @@ function fakeSession() {
     correctionPending: undefined as number | undefined,
     lastRemoteBits: 0,
     soundRecordingTick: undefined as number | undefined,
-    flushed: [] as any[],
   };
 }
-// flushConfirmedSounds goes through CSound.prototype.PlaySound - stub it for the unit test.
-const flushVia = (s: any): void => {
-  for (const t of [...s.pendingSounds.keys()].sort((a, b) => a - b)) {
-    if (t > s.confirmTick || s.correctionPending !== undefined) continue;
-    s.flushed.push(...s.pendingSounds.get(t)!);
-    s.pendingSounds.delete(t);
-  }
-};
 /** The real path stores the frame in onNetMessage BEFORE calling onRemoteFrame - mirror that. */
 const feed = (s: any, tick: number, bits: number): void => {
   s.remoteFrames.set(tick, bits);

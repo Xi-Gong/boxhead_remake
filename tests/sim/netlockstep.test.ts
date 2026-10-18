@@ -447,7 +447,6 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     // abandon condition (Date.now() - desyncAt >= DESYNC_RETURN_MS) was NaN >= N = false FOREVER: the peer
     // that learned about the desync from the wire froze on the last frame with a "tick undefined" overlay.
     const B = bootNetPeer('Coop', 'ROOM_Single_0001');
-    const firstEntry = B.game.world().mTick;
     for (let i = 0; i < 6; i++) {
       B.session.onNetMessage({ t: 'in', tick: i, bits: 0 });
       B.game.setKeys([]);
@@ -984,7 +983,6 @@ describe('LAN session config (v0.1.4)', () => {
     const ins = sent.filter((m) => m.t === 'in');
     expect(ins.slice(0, 2).map((m) => m.tick)).toEqual([0, 1]);
 
-    const first = g.world().mTick;
     for (let T = 0; T < 12; T++) {
       session.onNetMessage({ t: 'in', tick: T, bits: 0 }); // the remote frame for relative tick T
       session.onNetMessage({ t: 'in', tick: T + 1, bits: 0 }); // one ahead, so the tick never stalls

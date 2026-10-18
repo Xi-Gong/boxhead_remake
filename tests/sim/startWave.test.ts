@@ -301,7 +301,7 @@ describe('start wave unlock cap (v0.2.4: WaveUnlock, persisted best wave)', () =
   });
 
   it('maxUnlockedWave reads the save live (no module cache: wiping the member drops it back to 1)', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 46, menuOnly: 'Select' });
+    createHeadlessGame({ mode: 'Single', room: 1, seed: 46, menuOnly: 'Select' });
     seedUnlock(7);
     delete CSaveData.mSharedObject.data[MAXWAVE_MEMBER]; // what resetProcessState's storage wipe leaves behind
     expect(maxUnlockedWave()).toBe(1); // no invalidation needed
