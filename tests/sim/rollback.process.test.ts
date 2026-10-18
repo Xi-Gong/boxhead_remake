@@ -46,6 +46,7 @@ it.each([{pause:false,reconnect:false},{pause:true,reconnect:false},{pause:false
     const final = await Promise.all([0, 1].map(i => ask(i, { settle: true, messages: queues[i]!.map(x => x.message) })));
     expect(final[0].digest).toEqual(final[1].digest);
     expect(final[0].events).toEqual(final[1].events);
+    expect(final[0].decals).toEqual(final[1].decals);
     for (const r of final) { expect(r.stats.corrections).toBeGreaterThan(0); expect(r.errors).toEqual([]); }
   } finally { for (const child of children) child.kill(); }
 }, 120000);

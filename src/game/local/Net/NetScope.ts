@@ -16,7 +16,7 @@
 //   InitFinished    - (stacked outside the v0.1.2 consumePending wrapper) hands the built world to the session.
 import { getTimer } from '../../../engine/runtime.ts';
 import { frameTime, withTimerValue } from '../../../engine/flash/clock.ts';
-import { CMain, CSound, Thing, World } from '../../packages.ts';
+import { CMain, CSound, DrawPrimitive, Thing, World } from '../../packages.ts';
 import { DESYNC_RETURN_MS, netSession } from './NetSession.ts';
 import { SLOT_ORDER } from './NetSlot.ts';
 import { MAX_NET_CATCHUP_TICKS, netStallRewind } from './protocol.ts';
@@ -24,6 +24,23 @@ import { applyCorrections, queueSound } from './Rollback.ts';
 import { shadowDrawOverride } from './Predict.ts';
 
 export function installNetScope(): void {
+  // Random decal choices still happen inside simulation; persistent pixels commit only once confirmed.
+  const decalProto = DrawPrimitive.MovieClip.CDrawPrimitive_MovieClip_Directional.prototype;
+  const stampDecal = decalProto.QRender_Mask;
+  decalProto.QRender_Mask = function (this: any, bitmap: any, point: any, direction: any, mask: any): void {
+    const session = netSession();
+    if (!session?.rollbackV2 || session.soundRecordingTick === undefined || bitmap !== session.currentWorld()?.bmFloor) {
+      stampDecal.call(this, bitmap, point, direction, mask);
+      return;
+    }
+    const captured = Object.create(decalProto);
+    captured.bmList = this.bmList;
+    captured.mAnimationPosition = this.mAnimationPosition;
+    const position = point.clone();
+    const kind = this === World.Map.CMap_Decal.bmBloodSplat ? 'blood' : 'scorch';
+    session.decals.record(session.soundRecordingTick, -1, `${kind}:${position.x}:${position.y}:${direction}:${this.mAnimationPosition}`,
+      () => stampDecal.call(captured, bitmap, position, direction, mask));
+  };
   // ---- State_RunWorld: lockstep gate + net-owned pause ----------------------------------------
   const mainProto = CMain.prototype as any;
   const stateRunWorld = mainProto.State_RunWorld;

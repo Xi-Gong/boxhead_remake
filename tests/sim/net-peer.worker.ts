@@ -33,7 +33,8 @@ process.on('message', (m: any) => {
     process.send?.({ sent, tick: session.tickIndex(world), phase: session.phase, paused: session.netPaused, sameWorld: world === originalWorld,
       desync: session.desyncDetail, errors: game.errors, stats: session.rollbackStats,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
-        events: [session.events.confirmedCount, session.events.confirmedHash] } : {}) });
+        events: [session.events.confirmedCount, session.events.confirmedHash],
+        decals: [session.decals.confirmedCount, session.decals.confirmedHash] } : {}) });
     sent = [];
   } catch (error) { process.send?.({ error: String(error), stack: (error as Error).stack }); }
 });

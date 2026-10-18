@@ -161,6 +161,7 @@ export class NetSession {
   rollback = false;
   confirmedThrough = -1;
   events = new EventJournal();
+  decals = new EventJournal();
   presentation = new NetPresentation();
   soundOwner = -1;
   presentingSound = false;
@@ -415,6 +416,7 @@ export class NetSession {
     resetRollback(this); // fresh ring / meta / sound queue for the new game
     this.confirmedThrough = -1;
     this.events = new EventJournal();
+    this.decals = new EventJournal();
     if (start.resumeTick !== undefined && this.netCheckpoint) {
       // Resume: rebuild deterministically from the same seed, then re-apply OUR checkpoint (both peers hold a
       // state-identical copy even though their absolute mTick values may differ by the build-time warm-up ticks).
@@ -694,6 +696,7 @@ export class NetSession {
     delete meta.checkpoint;
     this.pendingSounds.delete(tick);
     this.events.begin(tick);
+    this.decals.begin(tick);
     this.soundRecordingTick = tick;
     try { world.Process(); } finally { this.soundRecordingTick = undefined; }
     meta.endState = world.mCompleteState;
@@ -711,6 +714,7 @@ export class NetSession {
         if (this.mode !== 'DeathMatch') recordWaveReached(meta.checkpoint.snap.wave);
       }
       this.events.confirm(t);
+      this.decals.confirm(t);
       this.pendingSounds.delete(t);
       this.confirmedThrough = t;
       this.compareSum(t + 1);
@@ -868,6 +872,7 @@ export class NetSession {
     resetRollback(this);
     this.snapCtx = undefined;
     this.events = new EventJournal();
+    this.decals = new EventJournal();
     if (this.savedCfg) {
       const C = World.Map.CMap_Cell as any;
       C.mNavBudgetMode = this.prevNavBudget;

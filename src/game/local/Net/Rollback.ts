@@ -94,7 +94,7 @@ function flushConfirmedSounds(session: any): void {
 export function pushSlot(session: any, world: any): void {
   const ctx: SnapCtx = session.snapCtx;
   const tRel = world.mTick - session.startTick;
-  const slot: RingSlot = { tRel, data: captureWorldSnap(world, ctx), instances: ctx.instances, sharedObjs: ctx.sharedObjs };
+  const slot: RingSlot = { tRel, data: captureWorldSnap(world, ctx, !session.rollbackV2), instances: ctx.instances, sharedObjs: ctx.sharedObjs };
   const index = tRel % (ROLLBACK_WINDOW_TICKS + 1);
   releaseSlot(session.ring[index]);
   session.ring[index] = slot;

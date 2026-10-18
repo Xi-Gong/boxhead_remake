@@ -53,6 +53,7 @@ function run(delay: number, modern = false) {
   const result = { rows, rng: getRandomState(), score: w.mHud.nTotalScore,
     full: simulationDigest(captureWorldSnap(w, makeSnapCtx(w, (session as any).slots))),
     events: modern ? [session.events.confirmedCount, session.events.confirmedHash] : undefined,
+    decals: modern ? [session.decals.confirmedCount, session.decals.confirmedHash] : undefined,
     navigationClock: [nav.nSTimer, nav.nSID, nav.nState, nav.nSDist] };
   const stats = { ...session.rollbackStats };
   expect(game.errors).toEqual([]);
