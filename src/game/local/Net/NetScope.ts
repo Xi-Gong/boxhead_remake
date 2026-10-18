@@ -42,7 +42,7 @@ export function installNetScope(): void {
       session.setPaused(!session.netPaused);
     }
     if (session.netPaused && session.phase !== 'desync') {
-      if (flagDraw && !session.presentation.external) w.Draw();
+      if (flagDraw) w.Draw();
       return;
     }
     // v0.2.1: a checksum desync used to freeze both peers forever - the overlay promised a lobby return that no
@@ -62,6 +62,10 @@ export function installNetScope(): void {
     }
     if (session.rollbackV2) {
       session.commitConfirmed(w);
+      if (session.updatePauseBarrier()) {
+        if (flagDraw && !session.presentation.external) w.Draw();
+        return;
+      }
       // A speculative terminal state waits for confirmation; never route away from a rewindable world.
       if (w.mCompleteState) {
         if (session.confirmedThrough >= session.tickIndex(w) - 1 || session.endReason) {

@@ -18,6 +18,7 @@ process.on('message', (m: any) => {
   try {
     for (const message of m.messages ?? []) session.onNetMessage(message);
     const world = game.world();
+    if (typeof m.pause === 'boolean') session.setPaused(m.pause);
     if (m.step && session.tickIndex(world) < m.total) {
       const t = session.tickIndex(world);
       game.setKeys(t < 2 ? [] : [t % 21 < 10 ? (role ? KEYS.P1.LEFT : KEYS.P1.RIGHT) : KEYS.P1.UP,
@@ -26,7 +27,7 @@ process.on('message', (m: any) => {
       for (let i = 0; i < (m.extraDraws ?? 0); i++) world.Draw();
     }
     if (m.settle) { applyCorrections(session, world); session.commitConfirmed(world); }
-    process.send?.({ sent, tick: session.tickIndex(world), phase: session.phase,
+    process.send?.({ sent, tick: session.tickIndex(world), phase: session.phase, paused: session.netPaused,
       desync: session.desyncDetail, errors: game.errors, stats: session.rollbackStats,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash] } : {}) });

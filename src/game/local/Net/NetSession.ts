@@ -43,6 +43,7 @@ import { simulationDigest } from './StateDigest.ts';
 import { recordWaveReached } from '../WaveUnlock.ts';
 import { EventJournal } from './Events.ts';
 import { NetPresentation } from './Presentation.ts';
+import { PauseBarrier } from './PauseBarrier.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -198,12 +199,18 @@ export class NetSession {
   constructor(role: LanRole, link: NetLink) {
     this.role = role;
     this.link = link;
+    this.pauseBarrier = new PauseBarrier(role, m => this.link.send(m));
     active = this;
   }
 
   // ---------------------------------------------------------------------------------------------- inbound (bridge/test)
 
   onNetMessage(msg: LanMessage): void {
+    if ((msg.t === 'pause-request' || msg.t === 'pause-barrier') && this.rollbackV2 && this.phase === 'playing') {
+      this.pauseBarrier.receive(msg, this.tickIndex(this.world));
+      this.updatePauseBarrier();
+      return;
+    }
     if (msg.t === 'in') {
       this.remoteFrames.set(msg.tick, msg.bits);
       if (this.rollback) rollbackOnRemoteFrame(this, msg.tick, msg.bits);
@@ -305,6 +312,7 @@ export class NetSession {
   startLocalGame(start: NetStart, main: any): void {
     if (!main) return;
     this.startOpts = start;
+    this.pauseBarrier = new PauseBarrier(this.role, m => this.link.send(m));
     this.mode = start.mode;
     this.endReason = undefined;
     this.rollback = start.rollback === true || this.rollbackV2;
@@ -477,11 +485,28 @@ export class NetSession {
    * next tick; QUIT on the overlay concedes on either side (the scope CHud.Pause wrapper wires it).
    */
   setPaused(paused: boolean, fromWire = false): void {
+    if (this.rollbackV2 && this.phase === 'playing' && !fromWire) {
+      this.pauseBarrier.request(paused, this.tickIndex(this.world));
+      this.updatePauseBarrier();
+      return;
+    }
     if (this.phase !== 'playing' || this.netPaused === paused) return;
     this.netPaused = paused;
     this.world?.mHud?.Pause(paused);
     if (!fromWire) this.link.send(paused ? { t: 'pause' } : { t: 'unpause' });
     this.onStateChange?.();
+  }
+
+  pauseBarrier: PauseBarrier;
+  updatePauseBarrier(): boolean {
+    const head = this.tickIndex(this.world);
+    const paused = this.pauseBarrier.settled(head, this.confirmedThrough, this.correctionPending !== undefined);
+    if (paused !== this.netPaused) {
+      this.netPaused = paused;
+      this.world?.mHud?.Pause(paused);
+      this.onStateChange?.();
+    }
+    return this.pauseBarrier.blocks(head);
   }
 
   /** Set the stall reason; the UI (WAITING strip) is told when it CHANGES (v0.1.7 - it never was before). */

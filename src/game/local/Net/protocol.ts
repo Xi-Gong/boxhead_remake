@@ -129,6 +129,8 @@ export interface LanChecksum {
 }
 
 export type LanMessage =
+  | { t: 'pause-request'; paused: boolean }
+  | { t: 'pause-barrier'; stage: 'freeze' | 'ready' | 'commit' | 'resume'; id: number; tick: number }
   | { t: 'input-path'; version: 1; port: number; token: string }
   // client -> host, first frame on the wire (transport-level handshake; main process replies `welcome`).
   | { t: 'hello'; proto: number; app: string; name: string; sid?: string; char: number; capTick?: number; netcodes?: string[] }
