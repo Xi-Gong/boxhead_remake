@@ -198,8 +198,10 @@ export function installNetScope(): void {
       const s = netSession();
       if (!s?.rollbackV2 || !s.shouldQueueSound()) return previous.apply(this, args);
       const values = args.map(arg => arg?.clone ? arg.clone() : arg);
-      s.events.record(s.soundRecordingTick!, s.soundOwner, `${name}:${this.mLinkID}`, () => {
+      const tick = s.soundRecordingTick!, owner = s.soundOwner;
+      s.events.record(tick, owner, `${name}:${this.mLinkID}`, () => {
         s.presentingSound = true;
+        s.responseTrace.record('sound', tick, owner, this.mLinkID);
         try { previous.apply(this, values); } finally { s.presentingSound = false; }
       });
     };

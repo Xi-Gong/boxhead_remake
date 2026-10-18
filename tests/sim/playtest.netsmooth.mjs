@@ -23,11 +23,13 @@ const DELAY_MS = Number(process.argv[2] ?? 30);
 const MODERN = process.env.BOXHEAD_NETCODE === 'rollback-v2';
 const COMBAT = process.env.BOXHEAD_NET_COMBAT === '1';
 const RECOVERY = process.env.BOXHEAD_NET_RECOVERY === '1';
+const RESPONSE_TRACE = process.env.BOXHEAD_RESPONSE_TRACE === '1';
+const CLIENT_FIRST = process.env.BOXHEAD_CLIENT_FIRST === '1';
 const EXPLOSIONS = Number(process.env.BOXHEAD_NET_EXPLOSIONS ?? 0);
 // User-approved practical acceptance: keep the ordinary one-tick-plus-frame target, allow a bounded
 // peak during 256 simultaneous explosive roots. Correctness and sustained-stall gates are unchanged.
 const RESPONSE_LIMIT_MS = EXPLOSIONS ? 100 : 60;
-if (!Number.isFinite(DELAY_MS) || DELAY_MS <= 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>0]');
+if (!Number.isFinite(DELAY_MS) || DELAY_MS < 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>=0]');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = join(ROOT, 'generated/reports/qa');
@@ -302,7 +304,7 @@ try {
   const probe = async (pg, key, phase) => {
     await pg.keyboard.up(key);
     await pg.waitForTimeout(500);
-    return pg.evaluate(async ({key, phase}) => {
+    return pg.evaluate(async ({key, phase, tracing}) => {
     const lan = () => window.__game.lan();
     let observedTickElapsedMs;
     if (phase !== undefined) {
@@ -346,6 +348,7 @@ try {
     if(before.bits & 8)return {error:'direction already held',before};
     if (before.sim == null) return { error: 'no player', before };
     if (!inControl()) return { error: 'not in control', before };
+    if (tracing) window.__game.__responseTrace?.(true);
     window.dispatchEvent(new KeyboardEvent('keydown', { code: key, key, bubbles: true }));
     let frames = 0;
     const t0 = performance.now();
@@ -364,10 +367,13 @@ try {
       requestAnimationFrame(tick);
     });
     window.dispatchEvent(new KeyboardEvent('keyup', { code: key, key, bubbles: true }));
+    const responseTrace = tracing ? window.__game.__responseTrace?.() : undefined;
+    if (tracing) window.__game.__responseTrace?.(false);
     return { before, frames, dispAtMs: dispAtMs != null ? Math.round(dispAtMs) : null, simAtMs: simAtMs != null ? Math.round(simAtMs) : null, positionAtMs,
+      ...(responseTrace ? { responseTrace } : {}),
       startAtMs:t0,endAtMs:performance.now(),tickAfter:window.__game.main().mcWorld.mTick,
       ...(phase !== undefined ? {phase,observedTickElapsedMs} : {}) };
-    }, {key,phase});
+    }, {key,phase,tracing:RESPONSE_TRACE});
   };
   const probeWithRetry = async (pg, key, phase) => {
     let p = await probe(pg, key, phase);
@@ -380,8 +386,16 @@ try {
     }
     return p;
   };
-  const probeH = await probeWithRetry(H.page, 'ArrowRight');
-  const probeC = await probeWithRetry(C.page, 'KeyD');
+  let probeH, probeC;
+  if (CLIENT_FIRST) {
+    probeC = await probeWithRetry(C.page, 'KeyD');
+    probeH = await probeWithRetry(H.page, 'ArrowRight');
+  } else {
+    probeH = await probeWithRetry(H.page, 'ArrowRight');
+    probeC = await probeWithRetry(C.page, 'KeyD');
+  }
+  report.probeOrder = CLIENT_FIRST ? ['client','host'] : ['host','client'];
+  report.responseDiagnostics = RESPONSE_TRACE;
   // A single free-phase press can land anywhere in the 40ms simulation cycle. Keep that sample,
   // then symmetrically cover the whole cycle for matched comparisons. Every sample retains the
   // original absolute response assertions; the comparison uses the worst of all five, never a mean.

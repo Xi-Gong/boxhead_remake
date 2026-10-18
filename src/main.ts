@@ -58,6 +58,7 @@ interface GameDebug {
   __setInfiniteLife?: (on: boolean) => Promise<void>;
   __setRollbackV2?: (on: boolean) => void;
   __netDigest?: () => unknown;
+  __responseTrace?: (enabled?: boolean) => unknown;
   /** QA hook (the v0.2.3 playtest): deliver a wire desync notice to the live session (visual gate). */
   __forceDesync?: () => boolean;
   /** QA hook (the v0.2.4 playtest): seed the persisted best-wave unlock (WaveUnlock); returns the current max. */
@@ -116,6 +117,11 @@ const dbg: GameDebug = {
   __setInfiniteLife: async (on: boolean) => { _global.mInfinateLife = on; },
   __setRollbackV2: (on: boolean) => { lanBridge().useRollbackV2 = on; },
   __netDigest: () => netSession()?.debugChecksum(),
+  __responseTrace: (enabled?: boolean) => {
+    const trace = netSession()?.responseTrace;
+    if (enabled !== undefined) trace?.setEnabled(enabled);
+    return trace?.read() ?? [];
+  },
   __forceDesync: () => { const s = (lanBridge() as any)?.session; if (!s) return false; s.onNetMessage({ t: 'desync', tick: 1 }); return true; },
   __setWaveUnlock: (n: number) => { recordWaveReached(n); return maxUnlockedWave(); },
   // Watchdog nudge for the packaged audio assertions; also the future Electron 'boxhead:audio-nudge' hook.
@@ -127,6 +133,14 @@ const dbg: GameDebug = {
   },
 };
 window.__game = dbg;
+for (const type of ['keydown', 'keyup']) window.addEventListener(type, event => {
+  const session = netSession();
+  if (!session?.responseTrace.enabled || session.phase !== 'playing') return;
+  const key = event as KeyboardEvent, target = key.target as HTMLElement | null;
+  if (target?.matches('input, textarea, [contenteditable="true"]')) return;
+  session.responseTrace.record('input', session.tickIndex(session.currentWorld()), session.role,
+    { type, code: key.code, repeat: key.repeat });
+}, true);
 
 function status(el: HTMLElement, text: string): void {
   el.textContent = text;

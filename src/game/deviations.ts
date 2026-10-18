@@ -14,6 +14,14 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'LAN_RESPONSE_DIAGNOSTICS',
+    file: 'local/Net/ResponseTrace.ts, NetSession.ts, NetScope.ts, Presentation.ts, Rollback.ts; main.ts',
+    description: 'Optional bounded session diagnostics timestamp keyboard events, sampling, NetSlot application, '+
+      'first display per tick, sound presentation, wait transitions and replay duration. Disabled by default; '+
+      'never serialized or used by simulation, RNG, wire messages or checksums. Both roles retain the same '+
+      'zero-extra-delay rollback-v2 input and local presentation path.',
+  },
+  {
     id:'DEVIL_SUPPLIES',
     file:'local/Armor.ts, Supplies.ts, Resume.ts; local/Net/bridge.ts, protocol.ts; electron/lan.ts',
     description:'PvE Devil kills use one seeded roll: 20% armor crate, 20% whole-backpack ammunition crate, '+

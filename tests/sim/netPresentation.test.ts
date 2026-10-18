@@ -6,9 +6,10 @@ import { captureWorldSnap, makeSnapCtx } from '../../src/game/local/Net/WorldSna
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 import { Thing } from '../../src/game/packages.ts';
 
-it('display frames interpolate movement, restore positions, and leave gameplay unchanged', () => {
+it.each([0, 1] as const)('role %i display frames interpolate movement, restore positions, and leave gameplay unchanged', role => {
   const game = createHeadlessGame({ menuOnly: 'Main' });
-  const s = new NetSession(0, { send() {} });
+  const s = new NetSession(role, { send() {} });
+  s.responseTrace.setEnabled(true);
   s.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, netcode: 'rollback-v2',
     cfg: { difficulty: 0, gameSpeed: 1, devils: true, collisions: true, damage: true,
       gameAmount: 0, detail: true, charP1: 0, charP2: 0 } }, game.main());
@@ -17,7 +18,10 @@ it('display frames interpolate movement, restore positions, and leave gameplay u
   game.tick(1);
   game.setKeys([KEYS.P1.RIGHT]);
   game.tick(1);
-  const w = game.world(), me = game.players()[0], position = me.mPosition;
+  const w = game.world(), me = game.players().find((p: any) => p.mPlayerIndex === role), position = me.mPosition;
+  expect(s.inputDelay).toBe(0);
+  expect(s.responseTrace.read().some(e => e.stage === 'sample' && e.role === role && e.detail !== 0)).toBe(true);
+  expect(s.responseTrace.read().some(e => e.stage === 'apply' && e.role === role && e.detail !== 0)).toBe(true);
   const explosion=w.mThing_Collection.AddThing_Effect(new Thing.Effect.CThing_Effect_Explosion(me.mPosition.Clone(),me.mAngle.Clone(),me,100));
   const explosionPosition=explosion.mPosition;
   const digest = () => simulationDigest(captureWorldSnap(w, makeSnapCtx(w, (s as any).slots), false));
@@ -35,6 +39,7 @@ it('display frames interpolate movement, restore positions, and leave gameplay u
     expect(digest()).toEqual(before);
   }
   expect(displayed[0]).toBeGreaterThan(position.mX);
+  expect(s.responseTrace.read().some(e => e.stage === 'display' && e.role === role)).toBe(true);
   for (let i = 1; i < displayed.length; i++) expect(displayed[i]).toBeGreaterThan(displayed[i - 1]!);
   expect(game.errors).toEqual([]);
   // A moving explosion (e.g. a position shared with a grenade) still follows ordinary interpolation.

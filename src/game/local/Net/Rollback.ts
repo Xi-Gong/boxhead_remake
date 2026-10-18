@@ -128,6 +128,7 @@ export function resetRollback(session: any): void {
 export function applyCorrections(session: any, world: any): number {
   const c = session.correctionPending;
   if (c === undefined) return 0;
+  const traceStart = session.responseTrace?.enabled ? performance.now() : undefined;
   session.correctionPending = undefined;
   const head = world.mTick - session.startTick; // the tick about to execute
   // Ring slots are pushed in afterTick, AFTER mTick incremented: slot.tRel is the index of the NEXT tick to
@@ -173,6 +174,8 @@ export function applyCorrections(session: any, world: any): number {
   // head ticks executed => virtualTimeMs = head * tickMs (afterTick-equivalent advance).
   session.virtualTimeMs = session.tickIndex(world) * (1000 / CMain.mFPS);
   if (session.rollbackV2) session.presentation.corrected(session, world);
+  if (traceStart !== undefined) session.responseTrace.record('replay', head, session.role,
+    { from: slot.tRel, ticks: replayed, ms: performance.now() - traceStart });
   return replayed;
 }
 

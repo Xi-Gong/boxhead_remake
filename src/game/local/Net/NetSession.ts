@@ -38,6 +38,7 @@ import {
   LAN_CHECKSUM_EVERY, LAN_INPUT_DELAY, PREDICT_MAX_LAG_TICKS, ROLLBACK_WINDOW_TICKS, type GameConfig, type LanChecksum, type LanMessage, type LanMode, type LanRole,
 } from './protocol.ts';
 import { mayPredict, onRemoteFrame as rollbackOnRemoteFrame, predictedRemoteBits, pushSlot as rollbackPushSlot, resetRollback } from './Rollback.ts';
+import { ResponseTrace } from './ResponseTrace.ts';
 import { captureWorldSnap, makeSnapCtx } from './WorldSnap.ts';
 import { simulationDigest } from './StateDigest.ts';
 import { recordWaveReached } from '../WaveUnlock.ts';
@@ -126,6 +127,7 @@ export class NetSession {
   private runGeneration = 0;
   private recoveryNeed: number | undefined;
   readonly diagnostics: { at: number; event: string; tick: number; confirmed: number; detail?: unknown }[] = [];
+  readonly responseTrace = new ResponseTrace();
   private lastRepairAt = -Infinity;
   private trace(event: string, detail?: unknown): void {
     this.diagnostics.push({ at: performance.now(), event, tick: this.world ? this.tickIndex(this.world) : -1, confirmed: this.confirmTick, detail });
@@ -635,6 +637,7 @@ export class NetSession {
     this.stallReason = reason;
     this.stallSince = reason === undefined ? undefined : now;
     this.trace(reason ? 'waiting' : 'input-restored', reason);
+    this.responseTrace.record('wait', this.world ? this.tickIndex(this.world) : -1, this.role, reason ?? null);
     this.onStateChange?.();
   }
 
@@ -772,6 +775,7 @@ export class NetSession {
     if (this.localFrames.has(tick)) return;
     CMain.mInput?.ProcessAllKeys();
     const bits = this.sampleLocalBits();
+    this.responseTrace.record('sample', tick, this.role, bits);
     this.localFrames.set(tick, bits);
     this.link.send({ t: 'in', tick, bits });
   }
@@ -918,6 +922,7 @@ export class NetSession {
 
   dispose(): void {
     this.releaseSchedule();
+    this.responseTrace.setEnabled(false);
     if (active === this) active = null;
     this.phase = 'ended';
     this.world = undefined;
@@ -947,6 +952,7 @@ export class NetSession {
   private applyPlayer(role: LanRole, bits: number, tick: number): void {
     const table = this.slots[role];
     for (const name of SLOT_ORDER) table[name].setHeld(unpackBit(bits, name as SlotBitName), tick, this.virtualTimeMs);
+    this.responseTrace.record('apply', tick, role, bits);
   }
 
   /**

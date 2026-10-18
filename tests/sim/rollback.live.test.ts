@@ -189,6 +189,7 @@ describe('actual rollback prediction', () => {
     const game = createHeadlessGame({ menuOnly: 'Main' });
     const sent: any[] = [];
     const s = new NetSession(role, { send: m => sent.push(m) });
+    s.responseTrace.setEnabled(true);
     s.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242,
       netcode: 'rollback-v2' }, game.main());
     expect(game.waitRunning(3000)).toBe(true);
@@ -203,6 +204,11 @@ describe('actual rollback prediction', () => {
     expect(game.players()[role].mPosition.mX).toBeGreaterThan(before);
     expect(s.rollbackStats.predictions).toBeGreaterThan(0);
     expect(CSound.mSamples.Weapon_Pistol_Fire_wav.mPlaying).toBe(true);
+    const trace = s.responseTrace.read();
+    expect(trace.find(e => e.stage === 'sample' && e.tick === tick)).toMatchObject({ role, detail: 24 });
+    expect(trace.find(e => e.stage === 'apply' && e.tick === tick && e.role === role)).toMatchObject({ detail: 24 });
+    expect(trace.some(e => e.stage === 'sound' && e.tick === tick && e.role === role)).toBe(true);
+    expect(trace.filter(e => e.stage === 'sound' && e.tick === tick && e.role === role)).toHaveLength(1);
     expect(game.errors).toEqual([]);
     game.quit();
   });

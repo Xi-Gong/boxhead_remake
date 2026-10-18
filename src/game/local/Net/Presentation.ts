@@ -110,7 +110,11 @@ export class NetPresentation {
       hud.mScores = clone(scores); hud.mMessages = clone(messages);
       restore.push(() => { hud.mScores = scores; hud.mMessages = messages; });
     }
-    try { withTimerValue(session.virtualNow(), original); }
+    try {
+      withTimerValue(session.virtualNow(), original);
+      if (this.advancing && session.responseTrace.enabled) session.responseTrace.record('display', session.tickIndex(world) - 1, session.role,
+        { position: this.localDisplay, camera: this.camera ? { x: this.camera.mX, y: this.camera.mY } : undefined });
+    }
     finally { for (let i = restore.length - 1; i >= 0; i--) restore[i]!(); this.advancing = false; }
   }
 }
