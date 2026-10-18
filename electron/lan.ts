@@ -337,8 +337,10 @@ export class LanTransport {
 
   /** Route already-parsed frames of the live link: heartbeats echo ONCE, everything else reaches the renderer. */
   private handlePeerMessages(peer: Peer, msgs: unknown[]): void {
+    if (this.peer !== peer) return;
     peer.watchdog.heard();
     for (const m of msgs) {
+      if (this.peer !== peer) return;
       const msg = m as LanMessage;
       if (msg?.t === 'hb') {
         // Echo the peer's probe; our own returning echo is surfaced so the renderer can compute RTT (now - ts).
@@ -361,23 +363,24 @@ export class LanTransport {
     socket.removeAllListeners('close');
     socket.removeAllListeners('timeout');
     socket.on('data', (chunk: Buffer) => {
+      if (this.peer !== peer) return;
       let msgs: unknown[];
-      try { msgs = peer.decoder.push(chunk); } catch { this.endPeer('protocol'); return; }
+      try { msgs = peer.decoder.push(chunk); } catch { this.endPeer('protocol', peer); return; }
       this.handlePeerMessages(peer, msgs);
     });
-    socket.on('error', () => this.endPeer('error'));
-    socket.on('close', () => this.endPeer('closed'));
+    socket.on('error', () => this.endPeer('error', peer));
+    socket.on('close', () => this.endPeer('closed', peer));
     this.heartbeatTimer = setInterval(() => {
       if (this.peer !== peer) return;
       this.rawSend(socket, { t: 'hb', ts: Date.now() });
-      if (peer.watchdog.check()) this.endPeer('lost');
+      if (peer.watchdog.check()) this.endPeer('lost', peer);
     }, LAN_HEARTBEAT_MS);
     this.emit({ kind: 'peer', connected: true });
   }
 
-  private endPeer(reason: string): void {
+  private endPeer(reason: string, expected = this.peer): void {
     const peer = this.peer;
-    if (!peer) return;
+    if (!peer || peer !== expected) return;
     this.peer = undefined;
     if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = undefined; }
     peer.socket.destroy();

@@ -1,7 +1,7 @@
 // LAN protocol + transport unit tests (v0.1.3 L0): pure framing/beacon/watchdog, then the real node transport
 // over localhost sockets (the LanTransport itself has no Electron dependency).
 import { afterAll, describe, expect, it } from 'vitest';
-import { connect as tcpConnect } from 'node:net';
+import { connect as tcpConnect, Socket } from 'node:net';
 import {
   decodeBeacon, encodeBeacon, encodeFrame, FrameDecoder, LinkWatchdog,
   LAN_FRAME_MAX, LAN_MAGIC, LAN_PROTOCOL_VERSION,
@@ -98,6 +98,36 @@ function pair(opts?: { identity?: string; linkDeadMs?: number }): { host: LanTra
 }
 
 describe('LanTransport over localhost', () => {
+  it('ignores late close, error and data callbacks from a replaced connection', () => {
+    const transport = new LanTransport({ identity: ID });
+    const oldSocket = new Socket();
+    const currentSocket = new Socket();
+    const events: LanEvent[] = [];
+    const messages: unknown[] = [];
+    transport.onEvent(e => events.push(e));
+    transport.onMessage(m => messages.push(m));
+    try {
+      (transport as any).attachPeer(oldSocket, new FrameDecoder());
+      const close = oldSocket.listeners('close')[0] as () => void;
+      const error = oldSocket.listeners('error')[0] as (e: Error) => void;
+      const data = oldSocket.listeners('data')[0] as (b: Buffer) => void;
+      transport.closePeer();
+      (transport as any).attachPeer(currentSocket, new FrameDecoder());
+      const before = events.length;
+      data(Buffer.from(encodeFrame({ t: 'leave', reason: 'forfeit' })));
+      data(Buffer.from([255, 255, 255, 255]));
+      error(new Error('late error'));
+      close();
+      expect(transport.hasPeer).toBe(true);
+      expect(currentSocket.destroyed).toBe(false);
+      expect(events).toHaveLength(before);
+      expect(messages).toEqual([]);
+    } finally {
+      transport.shutdown();
+      oldSocket.destroy();
+      currentSocket.destroy();
+    }
+  });
   it('discovers real UDP beacons and mirrors room availability', async () => {
     const { host, client } = pair();
     let hosts: NonNullable<LanEvent['hosts']> = [];
