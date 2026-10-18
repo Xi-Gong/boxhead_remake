@@ -76,6 +76,7 @@ try {
  await g.clickClip('m.mcScreen.bBack');assert.ok(await g.waitScreen('State_LanLobby','Screen_LanLobby'));
  await g.clickClip('m.mcScreen.closeBtn');
  const ip=g.page.locator('input[type=text]');await ip.waitFor({state:'visible'});
+ const lobbyInput=await ip.elementHandle();
  await ip.click();await g.page.keyboard.type('192.168.1.5');await g.page.keyboard.press('Enter');
  assert.ok(await g.waitExpr('g.lan().bridge==="lobby" && !g.lan().isHost'));
  await g.page.evaluate(()=>window.__qa.message({t:'setup',sel:{mode:'Coop',charP1:0,charP2:1,levelIdx:2,difficulty:2,gameAmount:0,wave:3,maxWave:10}}));
@@ -84,7 +85,11 @@ try {
  assert.equal(await g.expr('m.mcScreen.bStart._visible'),false);
  await g.page.waitForTimeout(750);await g.shot(`${out}/lan-setup-guest.png`,false);
  await surface(g,'lan-setup-guest');
- assert.equal(await g.page.locator('input[type=text]').count(),0,'lobby DOM is removed on transition');
+ assert.equal(await lobbyInput.evaluate(input=>input.isConnected),false,'lobby IP input is removed on transition');
+ const waveInput=g.page.locator('input[aria-label="Start wave"]');
+ assert.equal(await waveInput.count(),1,'setup owns exactly one wave input');
+ assert.equal(await waveInput.evaluate(input=>input.readOnly),true,'guest wave input is readonly');
+ assert.equal(await g.page.locator('input[type=text]').count(),1,'no extra lobby input remains');
  await g.expr('m.SetState("State_SelectWorld_Single")');
  assert.ok(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
  await g.expr('m.mcScreen.LoadLevel(0)');

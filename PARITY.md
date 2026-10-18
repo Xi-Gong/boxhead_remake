@@ -1035,3 +1035,7 @@ Chrome真实点击开局、四尺寸三色箱几何/像素、满医疗箱保留�
 ### 21.13 实际便携版完整归档验证
 
 重新build后在仓库外生成0.2.9单文件便携版，实际NSIS启动通过独立CDP端口连接，窗口从创建起隐藏且不可聚焦，存档隔离。原玩法、保存/继续、31个音频样本及running状态检查通过；新增完整提取asar的SHA256比对，并把preload加入逐字节运行文件检查。实际提取asar与已验证联机候选完全相同，均为d56222ff408fbdb5fb9e80f1e691e2df97bde99564cfd65877e57cd0c8bd8cf2。原始结果generated/reports/v029/portable/launch-0.2.9.json；完整发行门禁和性能仍继续执行，通过前不推送发行标签。
+
+### 21.14 输入清理回归适配新增波次字段
+
+旧added-ui测试要求从大厅进入客机设置页后所有text输入数量为零，新版设置页有一个只读波次输入，因此该旧断言失败。现在保留原大厅IP输入的ElementHandle，明确断言它已从DOM移除，同时断言设置页恰好一个Start wave且readOnly，没有多余输入；不是放宽清理要求。完整added-ui实际点击、四尺寸、DPR2、主菜单/大厅/房主/客机/暂停和存档继续通过，直接复核客机截图。原失败日志保留于generated/reports/v029/gates-from-ui/added-ui.log，通过日志位于gates-from-added-ui/added-ui.log。
