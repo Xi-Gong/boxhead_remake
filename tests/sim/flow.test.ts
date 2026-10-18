@@ -59,7 +59,7 @@ describe('Single: death -> debrief -> retry / exit', () => {
 
 describe('Coop: the game ends only when both players are down', () => {
   it('a dead player respawns close to the living one (after 4 s dead + 1 s); debrief when the player count reaches 0', () => {
-    const g = createHeadlessGame({ mode: 'Coop', room: 3, seed: 5, difficulty: 1 });
+    const g = createHeadlessGame({ classicGrowth:true, mode: 'Coop', room: 3, seed: 5, difficulty: 1 });
     const w = g.world();
     const DOWN = ['State_Dying', 'State_Dead', 'State_Respawn'];
     let sawOneDown = false;

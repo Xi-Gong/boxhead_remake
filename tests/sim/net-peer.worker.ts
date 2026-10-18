@@ -6,7 +6,7 @@ import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 import { advanceVirtual } from '../../src/engine/flash/clock.ts';
 import { Thing } from '../../src/game/packages.ts';
 import { explosionBurst } from './explosionFixture.ts';
-import {CThing_Object_SupplyCrate,armorValue} from '../../src/game/local/Supplies.ts';
+import {CThing_Object_SupplyCrate,armorValue,armorMaximum} from '../../src/game/local/Supplies.ts';
 
 const role = Number(process.argv[2]) as 0 | 1;
 const options = JSON.parse(process.argv[3] ?? '{}');
@@ -14,7 +14,7 @@ const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: tru
 let sent: unknown[] = [];
 const session = new NetSession(role, { send: message => sent.push(message) });
 session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, wave:options.wave, netcode: 'rollback-v2',
-  cfg: { ...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
+  cfg: { ...(options.survival?{survival:'survival-v1' as const}:{}),...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
     gameAmount: 3, detail: options.detail ?? true, charP1: 0, charP2: 0 } }, game.main());
 if (!game.waitRunning(3000)) throw new Error('boot failed');
 if (options.weapons||options.supplies) for (const player of game.players()) for (const name of Object.keys(player.mWeapons)) player.NewWeapon(name);
@@ -22,7 +22,7 @@ process.send?.({ ready: true, sent });
 sent = [];
 const originalWorld = game.world();
 let peakExplosions = 0;
-let peakArmor=0,ammoGrants=0;
+let peakArmor=0,ammoGrants=0,protectedHits=0;
 if (options.growth || options.explosions || options.supplies) {
   const processWorld = originalWorld.Process;
   originalWorld.Process = function (this: any) {
@@ -31,12 +31,21 @@ if (options.growth || options.explosions || options.supplies) {
       const player=game.players()[Math.floor(tick/31)%2];
       const crate=this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(player.mPosition.Clone(),Math.floor(tick/31)%2?'armor':'ammo'));
       crate.Process_DeleteCounter_Init();crate.PickedUp();
-      peakArmor=Math.max(peakArmor,...game.players().map(p=>armorValue(p.mArmor)));
+      peakArmor=Math.max(peakArmor,...game.players().map(p=>armorValue(p.mArmor,armorMaximum(p))));
       if(crate.mSupplyConsumed&&crate.mSupplyKind==='ammo'){
         if(!game.players().some(p=>p.mWeaponList.every((e:any)=>!e.mActive||e.mThing.mAmmo===e.mThing.mTotalAmmo)))throw new Error('ammo crate did not refill an entire inventory');
         ammoGrants++;
       }
       new Thing.Affect.CThing_Affect_ZombieAttack(player,35).AffectThing(player);
+    }
+    if(options.survival&&tick>0&&tick%29===0){
+      const player=game.players()[Math.floor(tick/29)%2];
+      player.mInvincible=0;player.mArmor=20;
+      const enemy={mPosition:player.mPosition.Add(new Thing.Math.CThing_Position(1,0,0)),mAngle:player.mAngle};
+      player.mAffectors=[new Thing.Affect.CThing_Affect_FireBall(enemy,enemy,30,enemy.mAngle)];
+      const state=player.mStateID;player.ProcessAffects();
+      if(player.mLife>0&&player.mStateID!==state)throw new Error('protected hit interrupted a player');
+      protectedHits++;
     }
     if(options.supplies&&tick>0&&tick%47===0&&this.mUpgrades.Level.Devil_TotalCount>0){
       const owner=game.players()[0],victim=new Thing.Creature.CThing_Creature_Devil(owner.mPosition.Clone(),owner.mAngle.Clone());
@@ -81,8 +90,8 @@ process.on('message', (m: any) => {
       checkpoint: session.netCheckpoint?.tick, startTick: world.mTick - session.tickIndex(world),
       growth: world.mUpgrades.lanGrowth,
       confirmedEnemies: session.confirmedEnemies,
-      armor:game.players().map(p=>armorValue(p.mArmor)),
-      peakArmor,ammoGrants,
+      armor:game.players().map(p=>armorValue(p.mArmor,armorMaximum(p))),
+      peakArmor,ammoGrants,protectedHits,
       peakExplosions,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash],

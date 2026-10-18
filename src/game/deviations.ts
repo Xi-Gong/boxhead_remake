@@ -14,6 +14,18 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'GROWING_SURVIVAL',
+    file: 'local/SurvivalRules.ts, ShieldResilience.ts, Armor.ts, Supplies.ts, Resume.ts; local/Net/Growth.ts, NetSession.ts, bridge.ts, protocol.ts',
+    description: 'v0.2.9 modern PvE health and armor caps are 200 + 4*(personal level-1). Living level-ups add '+
+      'only the health-cap difference; shields never refill on level-up. Cooperative respawn keeps level, fills '+
+      'scaled health and clears armor. Original natural regeneration formula is unchanged. Enemy hits with '+
+      'positive pre-hit armor, including the breaking hit, absorb shield/health damage without changing control, '+
+      'facing or hit reaction; subsequent affects recheck armor. Protected lethal hits still enter normal death. '+
+      'Synchronous reaction guards remain outside snapshots; all mutable vitals remain in the original player '+
+      'snapshot/checksum graph. survival-v1 is optional and requires growth plus supplies; old peers retain '+
+      '100 armor, 200 health and original reactions. Existing v2 saves retain current vitals on restore.',
+  },
+  {
     id: 'LOCAL_PERSONAL_GROWTH',
     file: 'local/LocalGrowth.ts, Resume.ts; local/Net/GrowthHud.ts; scope.ts',
     description: 'v0.2.9 extends permanent LAN personal kill ownership, score, balanced XP and weapon upgrades '+

@@ -64,7 +64,7 @@ describe('fresh XSI animation object without an animation [BC DrawPrimitive.XSI.
         const q = g.players()[0];
         expect(q.mStateID).toBe('State_PlayerControl');
         expect(q.Process).toBe(q.Process_Normal);
-        expect(q.mLife).toBe(200);
+        expect(q.mLife).toBe(200+4*(w.mUpgrades.lanGrowth.players[q.mPlayerIndex].level-1));
         expect(q.mWeapon_Current.mNameID).toBe('pistol');
         expect(w.mUpgrades.mPlayerCount).toBe(g.players().filter((x) => !DOWN.includes(x.mStateID)).length);
       }

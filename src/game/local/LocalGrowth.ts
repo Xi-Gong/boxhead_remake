@@ -3,6 +3,7 @@ import { CMain, World } from '../packages.ts';
 import { balancedStartLevel, difficultyIndex, DIFFICULTY_START_WAVES } from './BalanceRules.ts';
 import { grantGrowthLoadout, growthOf, MAX_LEVEL, newGrowth } from './Net/Growth.ts';
 import { netActive } from './Net/NetSession.ts';
+import { settleVitals } from './SurvivalRules.ts';
 
 const classicFixtures = new WeakSet<object>();
 /** Explicit oracle fixture; never exposed in player settings or saves. */
@@ -37,4 +38,5 @@ export function initializeLocalGrowth(world: any, restored: boolean): void {
     state.players[0].score = single ? total : Math.ceil(total / 2);
     state.players[1].score = single ? 0 : Math.floor(total / 2);
   } else grantGrowthLoadout(world);
+  settleVitals(world, restored);
 }

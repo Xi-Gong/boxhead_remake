@@ -3,14 +3,21 @@ import {flash,random} from '../../engine/runtime.ts';
 import {Thing,World} from '../packages.ts';
 import {netActive,netSession} from './Net/NetSession.ts';
 import {crateDropPosition} from './WeaponCrate.ts';
-import {ARMOR_MAX,SUPPLY_RULE,armorValue,CThing_Object_SupplyCrate,devilSupply,suppliesEnabled,setSuppliesEnabled} from './Supplies.ts';
+import {SUPPLY_RULE,armorValue,armorMaximum,CThing_Object_SupplyCrate,devilSupply,suppliesEnabled,setSuppliesEnabled} from './Supplies.ts';
+import { SURVIVAL_RULE, setSurvivalEnabled, syncVitals } from './SurvivalRules.ts';
+import { localGrowthEnabled } from './LocalGrowth.ts';
+import { installShieldResilience, protectEnemyHit } from './ShieldResilience.ts';
 
 const bars=new WeakMap<object,any>();
 const fills=new WeakMap<object,any>();
 export function installArmorScope():void{
+  installShieldResilience();
   const world=World.CWorld.prototype as any,ready=world.InitFinished,logKill=world.LogKill;
   world.InitFinished=function(this:any):any{
     setSuppliesEnabled(this,World.CWorld.mGameMode!=='DeathMatch'&&(!netActive()||netSession()?.startOpts?.cfg.supplies===SUPPLY_RULE));
+    setSurvivalEnabled(this,World.CWorld.mGameMode!=='DeathMatch'&&(netActive()
+      ? netSession()?.startOpts?.cfg.survival===SURVIVAL_RULE && suppliesEnabled(this) && netSession()?.startOpts?.cfg.progression==='personal-growth-v1'
+      : localGrowthEnabled()));
     return ready.call(this);
   };
   world.LogKill=function(this:any,victim:any):any{
@@ -31,7 +38,9 @@ export function installArmorScope():void{
     Thing.Affect.CThing_Affect_FireBall,Thing.Affect.CThing_Affect_ZombieAttack,Thing.Affect.CThing_Affect_DevilAttack]){
     const prototype=ctor.prototype as any,affect=prototype.AffectThing;
     prototype.AffectThing=function(this:any,victim:any):any{
-      const before=victim.mLife,shield=armorValue(victim.mArmor),result=affect.call(this,victim);
+      const before=victim.mLife,shield=armorValue(victim.mArmor,armorMaximum(victim));
+      protectEnemyHit(victim,this,shield);
+      const result=affect.call(this,victim);
       if(victim._CLASSID_==='CThing_Creature_Player'&&before>0&&shield>0&&suppliesEnabled(victim.mWorld)
         &&typeof result==='number'&&Number.isFinite(result)&&result>0){
         const absorbed=Math.min(shield,result);
@@ -44,7 +53,7 @@ export function installArmorScope():void{
   const player=Thing.Creature.CThing_Creature_Player.prototype as any,respawn=player.State_Respawn;
   player.State_Respawn=function(this:any):any{
     const before=this.mLife,result=respawn.call(this);
-    if(before<=0&&this.mLife>0&&suppliesEnabled(this.mWorld))delete this.mArmor;
+    if(before<=0&&this.mLife>0&&suppliesEnabled(this.mWorld)){delete this.mArmor;syncVitals(this,'full');}
     return result;
   };
   const hud=World.CHud.prototype as any,update=hud.UpdatePlayer;
@@ -52,7 +61,7 @@ export function installArmorScope():void{
     const result=update.call(this,p,...args);
     if(!suppliesEnabled(this.mWorld))return result;
     const head=this.mcPlayers[p.mPlayerIndex];if(!head)return result;
-    const amount=armorValue(p.mArmor);let bar=bars.get(head);
+    const maximum=armorMaximum(p),amount=armorValue(p.mArmor,maximum);let bar=bars.get(head);
     if(amount>0&&!bar){
       bar=head.mcLife.duplicateMovieClip('_ArmorBar',head.getNextHighestDepth());
       bars.set(head,bar);
@@ -61,7 +70,7 @@ export function installArmorScope():void{
     if(bar){
       bar._visible=amount>0;
       if(amount>0){
-        bar.gotoAndStop(Math.floor(Math.min(bar._totalframes,Math.max(1,bar._totalframes*amount/ARMOR_MAX+1))));
+        bar.gotoAndStop(Math.floor(Math.min(bar._totalframes,Math.max(1,bar._totalframes*amount/maximum+1))));
         // Only armor's fill overlays health. Its duplicate background would dim/cover the exposed health.
         const background=bar.getInstanceAtDepth(1);if(background)background._visible=false;
         // Authored HUD.Player life clip: depth 1 outline/background, depth 2 mask, depth 3 fill.

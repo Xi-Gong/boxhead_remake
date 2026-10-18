@@ -8,7 +8,7 @@ import {getRandomState,setRandomState} from '../../src/engine/flash/rng.ts';
 import {random} from '../../src/engine/runtime.ts';
 
 it('absorbs damage first, spills only excess into health, and never heals on armor pickup',()=>{
-  const g=createHeadlessGame({mode:'Single',room:1}),p=g.players()[0],w=g.world();expect(suppliesEnabled(w)).toBe(true);
+  const g=createHeadlessGame({classicGrowth:true,mode:'Single',room:1}),p=g.players()[0],w=g.world();expect(suppliesEnabled(w)).toBe(true);
   p.mLife=137;refillArmor(p);
   new Thing.Affect.CThing_Affect_Bullet(p,p,30,p.mAngle).AffectThing(p);
   expect(p.mArmor).toBe(70);expect(p.mLife).toBe(137);
@@ -19,7 +19,7 @@ it('absorbs damage first, spills only excess into health, and never heals on arm
 });
 
 it('keeps original health regeneration at the same rate while armor is full, partial, empty or refilled',()=>{
-  const g=createHeadlessGame({mode:'Single',room:1}),p=g.players()[0];
+  const g=createHeadlessGame({classicGrowth:true,mode:'Single',room:1}),p=g.players()[0];
   const step=p.mMaxLife/(CMain.mFPS*30);
   for(const amount of [undefined,0,45,100]){
     p.mArmor=amount;p.mLife=137;
@@ -32,7 +32,7 @@ it('keeps original health regeneration at the same rate while armor is full, par
 });
 
 it('uses actual explosion falloff and preserves the original hit return values',()=>{
-  const g=createHeadlessGame({mode:'Single',room:1}),p=g.players()[0];p.mLife=100;refillArmor(p);
+  const g=createHeadlessGame({classicGrowth:true,mode:'Single',room:1}),p=g.players()[0];p.mLife=100;refillArmor(p);
   const affector={mPosition:p.mPosition.Add(new Thing.Math.CThing_Position(2,0,0))};
   expect(new Thing.Affect.CThing_Affect_Explosion(p,affector,40,2).AffectThing(p)).toBe(20);
   expect(p.mArmor).toBe(80);expect(p.mLife).toBe(100);
@@ -43,7 +43,7 @@ it('uses actual explosion falloff and preserves the original hit return values',
 });
 
 it('picks armor up once without changing health and overlays the original life bar geometry',()=>{
-  const g=createHeadlessGame({mode:'Single',room:1}),w=g.world(),p=g.players()[0];p.mLife=73;
+  const g=createHeadlessGame({classicGrowth:true,mode:'Single',room:1}),w=g.world(),p=g.players()[0];p.mLife=73;
   const crate=w.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(p.mPosition.Clone()));
   crate.Process_DeleteCounter_Init();crate.PickedUp();expect(p.mArmor).toBe(100);expect(p.mLife).toBe(73);
   p.mArmor=17;crate.PickedUp();expect(p.mArmor).toBe(17);
@@ -58,7 +58,7 @@ it('picks armor up once without changing health and overlays the original life b
 });
 
 it('restores armor in rollback and v2 saves while old v2 saves start without armor',()=>{
-  const g=createHeadlessGame({mode:'Single',room:1}),w=g.world(),p=g.players()[0];p.mLife=77;p.mArmor=63;
+  const g=createHeadlessGame({classicGrowth:true,mode:'Single',room:1}),w=g.world(),p=g.players()[0];p.mLife=77;p.mArmor=63;
   const ctx=makeSnapCtx(w),data=captureWorldSnap(w,ctx,false),slot={tRel:0,data,instances:ctx.instances,sharedObjs:ctx.sharedObjs};
   p.mArmor=0;p.mLife=4;restoreWorldSnap(w,slot,ctx);expect(p.mArmor).toBe(63);expect(p.mLife).toBe(77);
   const snap=capture(w);p.mArmor=2;expect(applyToWorld(w,snap)).toBe(true);expect(p.mArmor).toBe(63);expect(p.mLife).toBe(77);
@@ -66,7 +66,7 @@ it('restores armor in rollback and v2 saves while old v2 saves start without arm
 });
 
 it('rolls armor only for devils, deterministically, and never rolls a corpse twice',()=>{
-  const g=createHeadlessGame({mode:'Single',room:1}),w=g.world(),p=g.players()[0];
+  const g=createHeadlessGame({classicGrowth:true,mode:'Single',room:1}),w=g.world(),p=g.players()[0];
   let seed=1;for(;seed<10000;seed++){setRandomState(seed);if(random(100)<20)break;}
   setRandomState(seed);const ordinary={_CLASSID_:'CThing_Creature_Zombie',mPosition:p.mPosition.Clone(),mScore:100};
   w.LogKill(ordinary);expect(g.things().some(t=>t._CLASSID_==='CThing_Object_SupplyCrate')).toBe(false);

@@ -113,6 +113,8 @@ export interface GameConfig {
   progression?: 'personal-growth-v1';
   /** Optional PvE armor/ammunition loot rules; absent peers retain the original simulation. */
   supplies?: 'armor-ammo-v1';
+  /** Level-scaled health/armor and protected enemy-hit resilience; requires growth and supplies. */
+  survival?: 'survival-v1';
   /** Optional difficulty/growth curve; requires personal growth and supply capabilities. */
   balance?: 'pve-balance-v1';
   difficulty: number;

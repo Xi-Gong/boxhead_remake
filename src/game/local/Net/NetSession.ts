@@ -48,6 +48,7 @@ import { PauseBarrier } from './PauseBarrier.ts';
 import { GROWTH_RULE, newGrowth, copyGrowth, growthOf, grantGrowthLoadout, type GrowthState } from './Growth.ts';
 import {BALANCE_RULE,balancedStartLevel,DIFFICULTY_START_WAVES,difficultyIndex} from '../BalanceRules.ts';
 import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
+import { settleVitals } from '../SurvivalRules.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -482,6 +483,7 @@ export class NetSession {
         for(const player of world.mUpgrades.lanGrowth.players)player.curve=BALANCE_RULE;
         if(fresh)grantGrowthLoadout(world);
       }
+      settleVitals(world, !fresh);
       this.confirmedGrowth = copyGrowth(world.mUpgrades.lanGrowth);
       this.confirmedWave = world.mUpgrades.mLevelIndex;
       this.confirmedEnemies = remainingEnemies(world);

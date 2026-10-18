@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
-const out='generated/reports/v028/supplies-ui';mkdirSync(out,{recursive:true});
+const survival=process.env.BOXHEAD_SURVIVAL==='1';
+const maximum=survival?380:100,healthMaximum=survival?380:200,health=healthMaximum*.685;
+const out=survival?'generated/reports/v029/survival-ui':'generated/reports/v028/supplies-ui';mkdirSync(out,{recursive:true});
 const browser=await launch(),report={ok:false,shots:[],states:[],geometry:[]};let g;
 try{
  g=await openGame(browser,{init:()=>{
@@ -12,14 +14,14 @@ try{
    hostSetStatus(){},shutdown(){},addresses:async()=>[],send(m){if(m.t==='in')setTimeout(()=>q.message({t:'in',tick:m.tick,bits:0}),0);}}};
  }});
  await toMainMenu(g);await g.clickClip('m.mcScreen.mcLanGame');assert(await g.waitScreen('State_LanLobby','Screen_LanLobby'));
- await g.eval(()=>window.__supplyQA.message({t:'start',mode:'Coop',roomLink:'ROOM_Single_0001',seed:4242,netcode:'rollback-v2',inputDelay:0,
-  cfg:{progression:'personal-growth-v1',supplies:'armor-ammo-v1',difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:3,charP2:0}}));
+ await g.eval(survival=>window.__supplyQA.message({t:'start',mode:'Coop',roomLink:'ROOM_Single_0001',seed:4242,netcode:'rollback-v2',inputDelay:0,...(survival?{wave:20}:{}),
+  cfg:{progression:'personal-growth-v1',supplies:'armor-ammo-v1',...(survival?{survival:'survival-v1',balance:'pve-balance-v1'}:{}),difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:3,charP2:0}}),survival);
  assert(await g.waitExpr('g.state()==="State_RunWorld" && m.mcWorld?._LanGrowthHud'));
  await g.eval(()=>{
   const q=window.__supplyQA,w=window.__game.main().mcWorld,P=window.__game.pkg;
   // A received wire start takes the client path (role 1); this fixture does not run a real join handshake.
   const role=1,p=Object.values(w.mThing_Collection.mPlayerThings).find(p=>p.mPlayerIndex===role);q.role=role;
-  p.Move(new P.Thing.Math.CThing_Position(7.5,9.5,0));p.mInvincible=0;p.mLife=137;
+  p.Move(new P.Thing.Math.CThing_Position(7.5,9.5,0));p.mInvincible=0;p.mLife=p.mMaxLife*.685;
   for(const t of Object.values(w.mThing_Collection.mThings))if(t._CLASSID_==='CThing_Creature_Zombie'||t._CLASSID_==='CThing_Creature_Devil')t.Delete();
   w.Spawn_Zombie=()=>false;w.Spawn_Devil=()=>false;
   for(const name of ['uzi','shotgun','grenade','mine'])p.NewWeapon(name);
@@ -30,7 +32,7 @@ try{
   }
   const process=w.Process;
   w.Process=function(){
-   if(q.damage){const damage=q.damage;delete q.damage;p.mLife=137;
+   if(q.damage){const damage=q.damage;delete q.damage;p.mLife=p.mMaxLife*.685;
     new P.Thing.Affect.CThing_Affect_Bullet(p,p,damage,p.mAngle).AffectThing(p);q.result={life:p.mLife,armor:p.mArmor};}
    return process.call(this);
   };
@@ -51,17 +53,17 @@ try{
    await shot('failed-walk');throw new Error('walk-over pickup failed: '+JSON.stringify(report.failure));
   }
  }finally{await g.page.keyboard.up(key);}};
- await walk('ArrowLeft','armor');let current=await state();assert.equal(current.armor,100);assert(current.life<200);assert(current.bar&&current.lifeBar);report.states.push(current);
+ await walk('ArrowLeft','armor');let current=await state();assert.equal(current.armor,maximum);assert(current.life<healthMaximum);assert(current.bar&&current.lifeBar);report.states.push(current);
  const full=await shot('armor-full-640x480');current=await state();
  const pixels=PNG.sync.read(readFileSync(full));let blue=0,green=0;
  for(let y=Math.floor(current.bounds.yMin);y<=Math.ceil(current.bounds.yMax);y++)for(let x=Math.floor(current.bounds.xMin);x<=Math.ceil(current.bounds.xMax);x++){
   const i=(y*pixels.width+x)*4,r=pixels.data[i],a=pixels.data[i+1],b=pixels.data[i+2];if(b>r+50&&b>a+20)blue++;if(a>r+50&&a>b+50)green++;
  }
  assert(blue>20&&green===0,'armor uses blue only, without revealing the green health fill');report.pixels={blue,green};
- await g.eval(()=>{window.__supplyQA.damage=40;});assert(await g.waitExpr('window.__supplyQA.result?.armor===60'));
- assert.deepEqual(await g.eval(()=>window.__supplyQA.result),{life:137,armor:60});
+ await g.eval(damage=>{window.__supplyQA.damage=damage;},maximum*.4);assert(await g.waitExpr(`window.__supplyQA.result?.armor===${maximum*.6}`));
+ assert.deepEqual(await g.eval(()=>window.__supplyQA.result),{life:health,armor:maximum*.6});
  const partial=PNG.sync.read(readFileSync(await shot('armor-partial-640x480')));current=await state();
- assert.equal(current.armor,60);let partialBlue=0,partialGreen=0;
+ assert.equal(current.armor,maximum*.6);let partialBlue=0,partialGreen=0;
  for(let y=Math.floor(current.bounds.yMin);y<=Math.ceil(current.bounds.yMax);y++)for(let x=Math.floor(current.bounds.xMin);x<=Math.ceil(current.bounds.xMax);x++){
   const i=(y*partial.width+x)*4,r=partial.data[i],a=partial.data[i+1],b=partial.data[i+2];
   if(b>r+50&&b>a+20)partialBlue++;if(a>r+50&&a>b+50)partialGreen++;
@@ -73,8 +75,8 @@ try{
   current=await state();assert(current.bar&&current.lifeBar);report.geometry.push({width,height,bounds:current.bounds});
  }
  await g.page.setViewportSize({width:640,height:480});
- await g.eval(()=>{window.__supplyQA.damage=40;});assert(await g.waitExpr('window.__supplyQA.result?.armor===20'));
- assert.deepEqual(await g.eval(()=>window.__supplyQA.result),{life:137,armor:20});
+ await g.eval(damage=>{window.__supplyQA.damage=damage;},maximum*.4);assert(await g.waitExpr(`window.__supplyQA.result?.armor===${maximum*.2}`));
+ assert.deepEqual(await g.eval(()=>window.__supplyQA.result),{life:health,armor:maximum*.2});
  const low=PNG.sync.read(readFileSync(await shot('armor-low-640x480')));current=await state();
  let lowBlue=0,exposedGreen=0,blueLeft=Infinity,greenRight=-Infinity;
  for(let y=Math.floor(current.bounds.yMin);y<=Math.ceil(current.bounds.yMax);y++)for(let x=Math.floor(current.bounds.xMin);x<=Math.ceil(current.bounds.xMax);x++){
@@ -85,9 +87,9 @@ try{
  // The authored life clip fills from right to left; keep that direction for both layers.
  assert(lowBlue>0&&exposedGreen>0&&greenRight<blueLeft,'partial armor exposes the actual health fill beside it');
  report.partialPixels={blue:lowBlue,green:exposedGreen,blueLeft,greenRight};
- await g.eval(()=>{window.__supplyQA.damage=80;});assert(await g.waitExpr('window.__supplyQA.result?.armor===0'));
- assert.deepEqual(await g.eval(()=>window.__supplyQA.result),{life:77,armor:0});await shot('armor-empty-health-640x480');current=await state();assert(!current.bar&&current.lifeBar);
- await walk('ArrowRight','ammo');current=await state();assert(current.ammo.every(w=>w.ammo===w.total));assert(current.life<200);assert.equal(current.armor,0);
+ await g.eval(damage=>{window.__supplyQA.damage=damage;},maximum*.2+60);assert(await g.waitExpr('window.__supplyQA.result?.armor===0'));
+ assert.deepEqual(await g.eval(()=>window.__supplyQA.result),{life:health-60,armor:0});await shot('armor-empty-health-640x480');current=await state();assert(!current.bar&&current.lifeBar);
+ await walk('ArrowRight','ammo');current=await state();assert(current.ammo.every(w=>w.ammo===w.total));assert(current.life<healthMaximum);assert.equal(current.armor,0);
  report.states.push(current);await shot('ammo-picked-640x480');
  assert.deepEqual(await g.expr('g.errors'),[]);assert.deepEqual(g.log,[]);report.ok=true;
 }finally{writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));await g?.close();await browser.close();}

@@ -4,6 +4,7 @@ import { forIn } from '../../../engine/runtime.ts';
 import { Thing, World } from '../../packages.ts';
 import {BALANCE_RULE,balancedXpRequired} from '../BalanceRules.ts';
 import { recordGrowthScore } from './FloatingScores.ts';
+import { syncVitals } from '../SurvivalRules.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
 export const MAX_LEVEL = 125;
@@ -153,6 +154,7 @@ export function installGrowthScope(): void {
     finally { if (own) Object.defineProperty(hud, 'AddScore', own); else delete hud.AddScore; }
     if (personal && personal.level !== before) {
       const player = findPlayer(this, slot);
+      if (player) syncVitals(player, 'level');
       for (let n = before! + 1; n <= personal.level; n++) for (const key of forIn(this.mUpgrades.mMultipliers[n])) {
         const item = this.mUpgrades.mMultipliers[n][key];
         if (item.mClassID === 'CThing_Creature_Player' && typeof item.mValue === 'string' && player?.mWeapons?.[item.mValue]) player.NewWeapon(item.mValue);

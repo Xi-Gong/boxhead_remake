@@ -188,7 +188,7 @@ describe('player', () => {
 
   it('Coop: a dead player respawns near the partner with 125 invincible ticks, full life, pistol only; Death Match: 25 ticks, far away', () => {
     for (const [mode, inv] of [['Coop', 125], ['DeathMatch', 25]] as const) {
-      const g = createHeadlessGame({ mode, room: 9, seed: 5, difficulty: mode === 'Coop' ? 1 : 0 });
+      const g = createHeadlessGame({ classicGrowth:true, mode, room: 9, seed: 5, difficulty: mode === 'Coop' ? 1 : 0 });
       noSpawn(g);
       const [p1, p2] = g.players();
       p2.mInvincible = 0;

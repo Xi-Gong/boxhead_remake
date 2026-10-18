@@ -21,8 +21,9 @@ import { getRandomState, setRandomState } from '../../engine/flash/rng.ts';
 import { CSaveData, Thing, World } from '../packages.ts';
 import { CThing_Object_WeaponCrate, type CrateWeapon } from './WeaponCrate.ts';
 import { copyGrowth, type GrowthState } from './Net/Growth.ts';
-import { armorValue, suppliesEnabled } from './Supplies.ts';
+import { armorValue, armorMaximum, suppliesEnabled } from './Supplies.ts';
 import { initializeLocalGrowth, localGrowthEnabled } from './LocalGrowth.ts';
+import { SURVIVAL_RULE, survivalEnabled, settleVitals } from './SurvivalRules.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -73,6 +74,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  survival?: typeof SURVIVAL_RULE;
   /** Optional v2 extension shared by local and LAN permanent progression. */
   growth?: GrowthState;
   version: number;
@@ -172,7 +174,7 @@ function capturePlayer(p: any): PlayerState {
     x: p.mPosition.mX, y: p.mPosition.mY, z: p.mPosition.mZ,
     angle: p.mAngle.mAngle,
     life: p.mLife, maxLife: p.mMaxLife,
-    ...(p.mArmor!==undefined?{armor:armorValue(p.mArmor)}:{}),
+    ...(p.mArmor!==undefined?{armor:armorValue(p.mArmor,armorMaximum(p))}:{}),
     invincible: p.mInvincible ?? 0, alpha: p.mAlpha, flags: p.mFlags,
     stateID: p.mStateID, returnStateID: p.mReturnStateID, baseStateID: p.mBaseStateID, stateCount: p.mStateCount ?? 0,
     weapons,
@@ -220,6 +222,7 @@ export function capture(world: any): RunSnapshot {
     .map(captureObject);
   return {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
+    ...(survivalEnabled(world) ? { survival: SURVIVAL_RULE } : {}),
     version: RESUME_VERSION,
     gameMode: World.CWorld.mGameMode,
     roomLibLink: world.mWorldLibLink,
@@ -264,7 +267,7 @@ function applyPlayer(world: any, s: PlayerState): void {
   p.mAngle.__set__mAngle(s.angle);
   p.mLife = s.life;
   p.mMaxLife = s.maxLife;
-  if(suppliesEnabled(world)){if(s.armor!==undefined)p.mArmor=armorValue(s.armor);else delete p.mArmor;}
+  if(suppliesEnabled(world)){if(s.armor!==undefined)p.mArmor=armorValue(s.armor,armorMaximum(p));else delete p.mArmor;}
   p.mInvincible = s.invincible;
   p.mAlpha = s.alpha;
   p.mFlags = s.flags;
@@ -408,6 +411,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
       hud.mPlayer2_Deaths = snap.deaths[1];
     }
     initializeLocalGrowth(world, true);
+    settleVitals(world, true);
     setRandomState(snap.rngState);
     world.mTick = snap.tick;
   } finally {

@@ -1,0 +1,205 @@
+{
+  "ok": true,
+  "shots": [
+    "generated/reports/v029/survival-ui/boxes-640x480.png",
+    "generated/reports/v029/survival-ui/armor-full-640x480.png",
+    "generated/reports/v029/survival-ui/armor-partial-640x480.png",
+    "generated/reports/v029/survival-ui/armor-partial-960x720.png",
+    "generated/reports/v029/survival-ui/armor-partial-1280x720.png",
+    "generated/reports/v029/survival-ui/armor-partial-640x889.png",
+    "generated/reports/v029/survival-ui/armor-low-640x480.png",
+    "generated/reports/v029/survival-ui/armor-empty-health-640x480.png",
+    "generated/reports/v029/survival-ui/ammo-picked-640x480.png"
+  ],
+  "states": [
+    {
+      "life": 276.0066666666665,
+      "armor": 380,
+      "armorTaken": true,
+      "ammoTaken": false,
+      "bar": true,
+      "lifeBar": true,
+      "bounds": {
+        "xMin": 131.35,
+        "xMax": 164.65,
+        "yMin": 213.85,
+        "yMax": 221.35
+      },
+      "ammo": [
+        {
+          "name": "pistol",
+          "ammo": 999999,
+          "total": 999999
+        },
+        {
+          "name": "uzi",
+          "ammo": 0,
+          "total": 400
+        },
+        {
+          "name": "shotgun",
+          "ammo": 0,
+          "total": 80
+        },
+        {
+          "name": "barrel",
+          "ammo": 0,
+          "total": 10
+        },
+        {
+          "name": "grenade",
+          "ammo": 0,
+          "total": 40
+        },
+        {
+          "name": "fakewall",
+          "ammo": 0,
+          "total": 5
+        },
+        {
+          "name": "mine",
+          "ammo": 0,
+          "total": 10
+        }
+      ]
+    },
+    {
+      "life": 222.59333333333308,
+      "armor": 0,
+      "armorTaken": true,
+      "ammoTaken": true,
+      "bar": false,
+      "lifeBar": true,
+      "bounds": {
+        "xMin": 251.35,
+        "xMax": 284.65,
+        "yMin": 213.85,
+        "yMax": 221.35
+      },
+      "ammo": [
+        {
+          "name": "pistol",
+          "ammo": 999999,
+          "total": 999999
+        },
+        {
+          "name": "uzi",
+          "ammo": 400,
+          "total": 400
+        },
+        {
+          "name": "shotgun",
+          "ammo": 80,
+          "total": 80
+        },
+        {
+          "name": "barrel",
+          "ammo": 40,
+          "total": 40
+        },
+        {
+          "name": "grenade",
+          "ammo": 40,
+          "total": 40
+        },
+        {
+          "name": "fakewall",
+          "ammo": 10,
+          "total": 10
+        },
+        {
+          "name": "mine",
+          "ammo": 10,
+          "total": 10
+        }
+      ]
+    }
+  ],
+  "geometry": [
+    {
+      "width": 960,
+      "height": 720,
+      "bounds": {
+        "xMin": 131.35,
+        "xMax": 164.65,
+        "yMin": 213.85,
+        "yMax": 221.35
+      }
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "bounds": {
+        "xMin": 237.85,
+        "xMax": 271.15,
+        "yMin": 213.85,
+        "yMax": 221.35
+      }
+    },
+    {
+      "width": 640,
+      "height": 889,
+      "bounds": {
+        "xMin": 131.35,
+        "xMax": 164.65,
+        "yMin": 418.35,
+        "yMax": 425.85
+      }
+    }
+  ],
+  "pixels": {
+    "blue": 160,
+    "green": 0
+  },
+  "sixtyPercentPixels": {
+    "blue": 95,
+    "green": 24
+  },
+  "partialPixels": {
+    "blue": 30,
+    "green": 96,
+    "blueLeft": 158,
+    "greenRight": 156
+  },
+  "rule": "survival-v1",
+  "maximum": 380,
+  "review": "Direct screenshot review, real keyboard walk-over pickup, four window sizes, blue/green pixels and original bar geometry. Separate legacy 100-armor browser run also passed.",
+  "imageHashes": [
+    {
+      "sha256": "c05620b99d3ac798066a96857ec68657998243207b1139ab7ae00b46d52c143f",
+      "path": "generated/reports/v029/survival-ui/boxes-640x480.png"
+    },
+    {
+      "sha256": "61eb1dce4a4c18c8304bb4200a3111a5dd7009b86286ab05307f2f1a710e20b3",
+      "path": "generated/reports/v029/survival-ui/armor-full-640x480.png"
+    },
+    {
+      "sha256": "e4b18bb3b3e508fbbfbeb1c1a0a6495199bf38bf4174e19fec7e55f48674352f",
+      "path": "generated/reports/v029/survival-ui/armor-partial-640x480.png"
+    },
+    {
+      "sha256": "ccac6db4e4b0ac1ab9b4ed0d588ce634f1ee87cb7e931da4422052f897b45324",
+      "path": "generated/reports/v029/survival-ui/armor-partial-960x720.png"
+    },
+    {
+      "sha256": "435749fffbea556910c0eea359ee4dc29baf7a31d20ba020d8b616f3a3dedf80",
+      "path": "generated/reports/v029/survival-ui/armor-partial-1280x720.png"
+    },
+    {
+      "sha256": "8b3e286c8a21d06b1885f291f37bb7dd108d56f416723a3baac77be33322b8fb",
+      "path": "generated/reports/v029/survival-ui/armor-partial-640x889.png"
+    },
+    {
+      "sha256": "8e87cd24aed2eff5b6a5b2944f13fb2ee2868b792ed18bff3690ece70b7027d4",
+      "path": "generated/reports/v029/survival-ui/armor-low-640x480.png"
+    },
+    {
+      "sha256": "09c79f359a291bc4156b4a310d5e5d392fc552dd5da3207fc770f51e72b9de6b",
+      "path": "generated/reports/v029/survival-ui/armor-empty-health-640x480.png"
+    },
+    {
+      "sha256": "077efd8a84de74ae2e015127c023ead046b5c01eb5e9cb4291b035a8f5fcf8fb",
+      "path": "generated/reports/v029/survival-ui/ammo-picked-640x480.png"
+    }
+  ]
+}

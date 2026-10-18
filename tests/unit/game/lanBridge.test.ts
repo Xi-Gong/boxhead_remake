@@ -39,7 +39,7 @@ describe('LAN bridge operation lifetime',()=>{
   b.setSel({...before,difficulty:3});expect(b.sel).toBe(before);expect(lan.send).not.toHaveBeenCalled();
   b.isHost=true;b.phase='playing';b.setSel({...before,difficulty:3});expect(b.sel).toBe(before);
  });
- it.each([[],['personal-growth-v1'],['armor-ammo-v1'],['personal-growth-v1','armor-ammo-v1'],['pve-balance-v1'],['personal-growth-v1','pve-balance-v1'],['personal-growth-v1','armor-ammo-v1','pve-balance-v1']].map(features=>({features})))('negotiates gameplay rules from advertised features $features',({features})=>{
+ it.each([[],['personal-growth-v1'],['armor-ammo-v1'],['personal-growth-v1','armor-ammo-v1'],['pve-balance-v1'],['personal-growth-v1','pve-balance-v1'],['personal-growth-v1','armor-ammo-v1','pve-balance-v1'],['survival-v1'],['survival-v1','personal-growth-v1'],['survival-v1','personal-growth-v1','armor-ammo-v1']].map(features=>({features})))('negotiates gameplay rules from advertised features $features',({features})=>{
   const b=lanBridge(), previous=CMain.mSaveData;
   CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
@@ -50,6 +50,7 @@ describe('LAN bridge operation lifetime',()=>{
    expect(start.cfg.progression).toBe(features.includes('personal-growth-v1')?'personal-growth-v1':undefined);
    expect(start.cfg.supplies).toBe(features.includes('armor-ammo-v1')?'armor-ammo-v1':undefined);
    expect(start.cfg.balance).toBe(['personal-growth-v1','armor-ammo-v1','pve-balance-v1'].every(f=>features.includes(f))?'pve-balance-v1':undefined);
+   expect(start.cfg.survival).toBe(['personal-growth-v1','armor-ammo-v1','survival-v1'].every(f=>features.includes(f))?'survival-v1':undefined);
   } finally {CMain.mSaveData=previous;launch.mockRestore();}
  });
  it('a restarted client without history rejects in-place recovery',()=>{

@@ -31,7 +31,7 @@ it('keeps early unlocks quick and spreads later weapon improvements across many 
  expect(balancedXpRequired(1)).toBe(5);expect(balancedXpRequired(125)).toBe(65);
 });
 it.each([0,1,2,3] as const)('applies difficulty %i to actual local worlds without inflating enemy health or damage',(difficulty)=>{
- const g=createHeadlessGame({mode:'Single',difficulty,room:1}),w=g.world(),u=w.mUpgrades,t=balancedWave(u.mLevelIndex,difficulty);
+ const g=createHeadlessGame({classicGrowth:true,mode:'Single',difficulty,room:1}),w=g.world(),u=w.mUpgrades,t=balancedWave(u.mLevelIndex,difficulty);
  expect(balancedWorld(w)).toBe(true);expect(u.Level.Zombie_SpawnRate).toBe(t.Zombie_SpawnRate);expect(u.Level.Zombie_TotalCount).toBe(t.Zombie_TotalCount);
  const p=g.players()[0],z=new Thing.Creature.CThing_Creature_Zombie(p.mPosition.Clone(),p.mAngle.Clone()),d=new Thing.Creature.CThing_Creature_Devil(p.mPosition.Clone(),p.mAngle.Clone());
  for(const enemy of [z,d]){w.mThing_Collection.AddThing(enemy);enemy.Process_Init();}
