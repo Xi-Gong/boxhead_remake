@@ -61,6 +61,7 @@ try{
   });
   assert.equal(geo.left,geo.stage-geo.right-210);assert(geo.center>=geo.left+222);
   assert(geo.right>=geo.center+124);assert(geo.fields.every(f=>f.textWidth<=f.width));
+  assert(geo.head.every(p=>p.level==null),'levels belong only in the top HUD');
   report.geometry.push({width,height,...geo});await shot(`max-${width}x${height}`);
   if(width===640&&height===480){
    const png=PNG.sync.read(readFileSync(`${out}/max-640x480.png`));

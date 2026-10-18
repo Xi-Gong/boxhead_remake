@@ -6,7 +6,7 @@ import { BODY_FONT, MENU_FONT, INK, RED, text, capsule } from '../UiStyle.ts';
 import { growthOf, MAX_LEVEL, XP_PER_LEVEL, type GrowthState } from './Growth.ts';
 import { netSession } from './NetSession.ts';
 
-export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 112, top: 4, headTop: -94 } as const;
+export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 112, top: 4 } as const;
 export function growthLayout(width: number): { left: number; right: number; center: number; bottom: number } {
   return { left: GROWTH_HUD.margin, right: width - GROWTH_HUD.margin - GROWTH_HUD.width,
     center: (width - GROWTH_HUD.centerWidth) / 2, bottom: GROWTH_HUD.top + GROWTH_HUD.height };
@@ -14,7 +14,6 @@ export function growthLayout(width: number): { left: number; right: number; cent
 interface Side { clip: any; score: any; level: any; xp: any; fill: any; lastScore: number; lastLevel: number; lastXp: number; pulseUntil: number; pulse: boolean }
 interface HudView { clip: any; sides: [Side, Side]; center: any; wave: any; lastWave: number }
 const views = new WeakMap<object, HudView>();
-const heads = new WeakMap<object, any>();
 const outlined = (): any[] => [new flash.filters.GlowFilter(0x000000, 1, 2, 2, 10, 1)];
 
 function backing(clip: any, width: number, height: number): void {
@@ -134,15 +133,16 @@ export function installGrowthHud(): void {
     return result;
   };
   proto.UpdatePlayer=function(this:any,player:any,position:any,...args:any[]):any{
-    const result=updatePlayer.call(this,player,position,...args),session=netSession();
-    if(!growthOf(this.mWorld)||!session?.confirmedGrowth)return result;
-    const clip=this.mcPlayers[player.mPlayerIndex];if(!clip)return result;
-    let label=heads.get(clip);
-    if(!label){label=text(clip,'_PersonalLevel',-30,GROWTH_HUD.headTop,60,17,BODY_FONT,11,0xffffff,true,'center','');label.filters=outlined();heads.set(clip,label);}
-    const value='LV '+session.confirmedGrowth.players[player.mPlayerIndex]!.level;
-    if(label.text!==value)label.text=value;
-    clip._x=Math.max(48,Math.min(this.mWorld.mScreenSize.x-48,clip._x));
-    clip._y=Math.max(growthLayout(this.mWorld.mScreenSize.x).bottom-GROWTH_HUD.headTop+3,clip._y);
+    const result=updatePlayer.call(this,player,position,...args);
+    if(growthOf(this.mWorld)){
+      const clip=this.mcPlayers[player.mPlayerIndex];
+      if(clip){
+        // Keep the original ammo/weapon and life display clear of the new top strip. No extra head label.
+        const top=clip.mcAmmo.getBounds(clip).yMin;
+        clip._x=Math.max(48,Math.min(this.mWorld.mScreenSize.x-48,clip._x));
+        clip._y=Math.max(growthLayout(this.mWorld.mScreenSize.x).bottom+3-top,clip._y);
+      }
+    }
     return result;
   };
   proto.Pause=function(this:any,on:any):any{

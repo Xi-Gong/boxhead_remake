@@ -16,7 +16,7 @@ it('keeps balanced HUD geometry at standard, wide and tall logical stage widths'
     expect(g.bottom).toBe(50);
   }
 });
-it('renders only confirmed personal values, keeps head labels clear, and never changes gameplay',()=>{
+it('renders confirmed personal values only at the top, preserves original head UI, and never changes gameplay',()=>{
   const game=createHeadlessGame({menuOnly:'Main'}),session=new NetSession(0,{send(){}});
   session.startLocalGame({mode:'Coop',roomLink:'ROOM_Single_0001',seed:4242,netcode:'rollback-v2',
     cfg:{progression:'personal-growth-v1',difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,
@@ -38,9 +38,8 @@ it('renders only confirmed personal values, keeps head labels clear, and never c
   expect(World.CHud.mcScoreTotal._visible).toBe(false);
   const p=game.players()[0]; w.mHud.UpdatePlayer(p,{x:1,y:1});
   const head=w.mHud.mcPlayers[0];
-  expect(head._PersonalLevel.text).toBe('LV 17');
-  expect(head._y+head._PersonalLevel._y).toBeGreaterThanOrEqual(53);
-  expect(head._PersonalLevel._y+17+3).toBeLessThanOrEqual(head.mcAmmo._y-7.95);
+  expect(head._PersonalLevel).toBeUndefined();
+  expect(head._y+head.mcAmmo.getBounds(head).yMin).toBeGreaterThanOrEqual(53);
   expect(simulationDigest(captureWorldSnap(w,ctx,false))).toEqual(before);
   w.mHud.Pause(true);
   expect(ui._visible).toBe(false);
