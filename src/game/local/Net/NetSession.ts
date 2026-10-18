@@ -725,6 +725,14 @@ export class NetSession {
     }
     this.events.presentLocal(this.role);
   }
+  truncateFuture(head: number): void {
+    for (const tick of this.tickMeta.keys()) if (tick >= head) this.tickMeta.delete(tick);
+    for (const tick of this.pendingSounds.keys()) if (tick >= head) this.pendingSounds.delete(tick);
+    for (const tick of this.ourSums.keys()) if (tick > head) this.ourSums.delete(tick);
+    this.pendingSumSends = this.pendingSumSends.filter(sum => sum.tick <= head);
+    this.events.discardFrom(head);
+    this.decals.discardFrom(head);
+  }
 
   private submitLocalInput(tick: number): void {
     if (this.localFrames.has(tick)) return;

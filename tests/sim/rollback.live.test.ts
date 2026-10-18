@@ -63,6 +63,28 @@ function run(delay: number, modern = false) {
 }
 
 describe('actual rollback prediction', () => {
+  it('a corrected terminal tick truncates the speculative future', () => {
+    const game = createHeadlessGame({ menuOnly: 'Main' });
+    const s = new NetSession(0, { send() {} });
+    s.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242, netcode: 'rollback-v2' }, game.main());
+    expect(game.waitRunning(3000)).toBe(true);
+    const world = game.world(), process = world.Process;
+    // A deterministic terminal trigger controlled by the delayed remote bitmap.
+    world.Process = function() { process.call(this); if(s.slot(1,'FIRE').mDown)this.mCompleteState='player dead'; };
+    s.onNetMessage({ t: 'in', tick: 0, bits: 0 });
+    game.tick(5);
+    expect(s.tickIndex(world)).toBe(5);
+    s.onNetMessage({ t: 'in', tick: 1, bits: 16 });
+    applyCorrections(s,world);
+    expect(s.tickIndex(world)).toBe(2);
+    expect(s.virtualNow()).toBe(80);
+    expect([...s.tickMeta.keys()].every(t=>t<2)).toBe(true);
+    s.commitConfirmed(world);
+    expect(s.confirmedThrough).toBe(1);
+    expect(s.events.retainedEvents).toBe(0);
+    expect(s.decals.retainedEvents).toBe(0);
+    game.quit();
+  });
   it('input starvation requests repair without claiming a checksum desync', () => {
     const game = createHeadlessGame({ menuOnly: 'Main' });
     const sent: any[] = [];

@@ -161,13 +161,17 @@ export function applyCorrections(session: any, world: any): number {
   for (let u = slot.tRel; u < head; u++) {
     replayTick(session, world, u);
     replayed++;
+    if (session.rollbackV2 && world.mCompleteState) {
+      session.truncateFuture(session.tickIndex(world));
+      break;
+    }
   }
   stats.replayedTicks += replayed;
   const depth = head - slot.tRel;
   if (depth > stats.maxDepth) stats.maxDepth = depth;
   // The head tick's beginTick must see the virtual clock exactly as the original timeline would have:
   // head ticks executed => virtualTimeMs = head * tickMs (afterTick-equivalent advance).
-  session.virtualTimeMs = head * (1000 / CMain.mFPS);
+  session.virtualTimeMs = session.tickIndex(world) * (1000 / CMain.mFPS);
   if (session.rollbackV2) session.presentation.corrected(session, world);
   return replayed;
 }

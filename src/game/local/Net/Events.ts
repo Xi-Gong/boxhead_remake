@@ -12,6 +12,9 @@ export class EventJournal {
     if (tick <= this.confirmedTick) throw new Error('Cannot rewrite confirmed events');
     this.pending.set(tick, []);
   }
+  discardFrom(tick: number): void {
+    for (const at of this.pending.keys()) if (at >= tick) this.pending.delete(at);
+  }
 
   record(tick: number, owner: number, kind: string, play: () => void): void {
     const events = this.pending.get(tick);
