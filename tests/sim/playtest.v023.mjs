@@ -185,14 +185,20 @@ try {
   // The shared-screen anchor would sit at the MIDPOINT: a 40+ cell separation drags each player ~20 cells
   // off-center; the independent camera keeps each within a few cells.
   if (camH.dist < 15) throw new Error(`players only ${camH.dist.toFixed(1)} cells apart - walk not far enough to discriminate`);
-  // The clamp-independent ground truth: each peer's TRACKING ANCHOR (lTrackPosition, the smoothed camera
-  // target) must sit on ITS OWN player (dead zone 0.16 cells). A shared-screen anchor would sit at the
-  // MIDPOINT of both players - several cells away from either once they are 15+ cells apart. (The raw view
-  // offset cannot be asserted: a player at a map edge pins the camera by the map clamp.)
+  // Modern presentation temporarily supplies its camera and restores simulation fields after drawing.
+  // Check the actual drawn camera against the LOCAL player's expected map-clamped viewport instead of
+  // reading that transient anchor between frames. Keep the original one-cell tolerance and legacy check.
   const anchors = async (page) => page.evaluate(() => {
     const w = window.__game.main().mcWorld;
     const ps = Object.values(w.mThing_Collection.mPlayerThings).sort((a, b) => a.mPlayerIndex - b.mPlayerIndex);
     const me = ps[window.__game.lan().isHost ? 0 : 1];
+    if(window.__game.lan().netcode==='rollback-v2'){
+      const position=me.mPosition.ConvertCellToScreen(),size=w.mScreenSize,draw=w.mDrawPosition;
+      const x=Math.max(32,Math.min(w.mArea.width-size.x-32,Math.round(position.x-size.x/2)));
+      const y=Math.max(32,Math.min(w.mArea.height-size.y-32,Math.round(position.y-size.y/2)));
+      return draw&&Number.isFinite(draw.x)&&Number.isFinite(draw.y)
+        ?{dOwn:Math.hypot(draw.x-x,draw.y-y)/32,kind:'drawn-camera',expected:{x,y},actual:{x:draw.x,y:draw.y}}:null;
+    }
     const l = w.lTrackPosition;
     return l ? { dOwn: Math.hypot(l.mX - me.mPosition.mX, l.mY - me.mPosition.mY) } : null;
   });
