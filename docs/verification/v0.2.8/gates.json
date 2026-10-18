@@ -1,0 +1,176 @@
+{
+  "sourceSha256": "c447ab2d887ef3951ef481f107131d8f307be258c3e589e773b7faad841abec5",
+  "asarSha256": "08d0c020f540ca30a5e9e462d7377ffcfe56c61ab031e5e3f87eec2ae5a4fb27",
+  "version": "0.2.8",
+  "cases": [
+    {
+      "name": "vitest",
+      "code": 0,
+      "started": "2026-10-18T10:25:05.599Z",
+      "finished": "2026-10-18T10:26:30.079Z"
+    },
+    {
+      "name": "bitmap-blit",
+      "code": 0,
+      "started": "2026-10-18T10:26:30.080Z",
+      "finished": "2026-10-18T10:26:50.519Z"
+    },
+    {
+      "name": "masked-copy",
+      "code": 0,
+      "started": "2026-10-18T10:26:50.519Z",
+      "finished": "2026-10-18T10:27:17.498Z"
+    },
+    {
+      "name": "engine-browser",
+      "code": 0,
+      "started": "2026-10-18T10:27:17.498Z",
+      "finished": "2026-10-18T10:27:24.596Z"
+    },
+    {
+      "name": "ui",
+      "code": 0,
+      "started": "2026-10-18T10:27:24.597Z",
+      "finished": "2026-10-18T10:31:57.815Z"
+    },
+    {
+      "name": "audio",
+      "code": 0,
+      "started": "2026-10-18T10:31:57.815Z",
+      "finished": "2026-10-18T10:32:18.417Z"
+    },
+    {
+      "name": "growth-ui",
+      "code": 0,
+      "started": "2026-10-18T10:32:18.417Z",
+      "finished": "2026-10-18T10:32:43.846Z"
+    },
+    {
+      "name": "balance-ui",
+      "code": 0,
+      "started": "2026-10-18T10:32:43.847Z",
+      "finished": "2026-10-18T10:33:09.366Z"
+    },
+    {
+      "name": "supplies-ui",
+      "code": 0,
+      "started": "2026-10-18T10:33:09.366Z",
+      "finished": "2026-10-18T10:33:35.971Z"
+    },
+    {
+      "name": "added-ui",
+      "code": 0,
+      "started": "2026-10-18T10:33:35.972Z",
+      "finished": "2026-10-18T10:34:43.571Z"
+    },
+    {
+      "name": "input-badge",
+      "code": 0,
+      "started": "2026-10-18T10:34:43.571Z",
+      "finished": "2026-10-18T10:35:02.038Z"
+    },
+    {
+      "name": "viewport-pause",
+      "code": 0,
+      "started": "2026-10-18T10:35:02.038Z",
+      "finished": "2026-10-18T10:35:25.958Z"
+    },
+    {
+      "name": "browser",
+      "code": 0,
+      "started": "2026-10-18T10:35:25.958Z",
+      "finished": "2026-10-18T10:37:43.565Z"
+    },
+    {
+      "name": "electron-play",
+      "code": 0,
+      "started": "2026-10-18T10:37:43.565Z",
+      "finished": "2026-10-18T10:40:04.145Z"
+    },
+    {
+      "name": "packaged-play",
+      "code": 0,
+      "started": "2026-10-18T10:40:04.145Z",
+      "finished": "2026-10-18T10:42:26.156Z"
+    },
+    {
+      "name": "v012",
+      "code": 0,
+      "started": "2026-10-18T10:42:26.156Z",
+      "finished": "2026-10-18T10:43:11.967Z"
+    },
+    {
+      "name": "v019",
+      "code": 0,
+      "started": "2026-10-18T10:43:11.967Z",
+      "finished": "2026-10-18T10:43:54.106Z"
+    },
+    {
+      "name": "v020",
+      "code": 0,
+      "started": "2026-10-18T10:43:54.106Z",
+      "finished": "2026-10-18T10:44:40.399Z"
+    },
+    {
+      "name": "v023",
+      "code": 0,
+      "started": "2026-10-18T10:44:40.399Z",
+      "finished": "2026-10-18T10:45:17.044Z"
+    },
+    {
+      "name": "v024",
+      "code": 0,
+      "started": "2026-10-18T10:45:17.045Z",
+      "finished": "2026-10-18T10:46:30.582Z"
+    },
+    {
+      "name": "typing",
+      "code": 0,
+      "started": "2026-10-18T10:46:30.582Z",
+      "finished": "2026-10-18T10:46:55.014Z"
+    },
+    {
+      "name": "lanui",
+      "code": 0,
+      "started": "2026-10-18T10:46:55.014Z",
+      "finished": "2026-10-18T10:47:20.147Z"
+    },
+    {
+      "name": "netretry",
+      "code": 0,
+      "started": "2026-10-18T10:47:20.148Z",
+      "finished": "2026-10-18T10:47:57.651Z"
+    },
+    {
+      "name": "net",
+      "code": 0,
+      "started": "2026-10-18T10:47:57.651Z",
+      "finished": "2026-10-18T10:49:45.438Z"
+    },
+    {
+      "name": "electron-smoke",
+      "code": 0,
+      "started": "2026-10-18T10:49:45.438Z",
+      "finished": "2026-10-18T10:50:01.384Z"
+    },
+    {
+      "name": "packaged-smoke",
+      "code": 0,
+      "started": "2026-10-18T10:50:01.384Z",
+      "finished": "2026-10-18T10:50:04.211Z"
+    },
+    {
+      "name": "old-save",
+      "code": 0,
+      "started": "2026-10-18T10:50:04.211Z",
+      "finished": "2026-10-18T10:50:40.108Z"
+    }
+  ],
+  "logsLocalUnder": "generated/reports/v028/gates",
+  "vitest": {
+    "passed": 1389,
+    "preExistingSkipped": 71,
+    "passedFiles": 107,
+    "skippedFiles": 2
+  }
+}

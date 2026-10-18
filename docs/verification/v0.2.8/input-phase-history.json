@@ -1,0 +1,327 @@
+{
+  "note": "One supplemental unprofiled pair. Preserve original 60ms failures; not counted as three matched performance rounds. Final user-approved stress limit is 100ms.",
+  "phases": [
+    {
+      "kind": "baseline",
+      "okUnderOriginal60ms": false,
+      "errors": [
+        "host probe: display took 76 ms to react (> one tick + a frame = not local-feeling)"
+      ],
+      "probes": {
+        "host": {
+          "before": {
+            "sim": 8.47,
+            "disp": 8.47,
+            "bits": 0
+          },
+          "frames": 1,
+          "dispAtMs": 76,
+          "simAtMs": 76,
+          "positionAtMs": 76.20000004768372,
+          "samples": [
+            {
+              "before": {
+                "sim": 8.47,
+                "disp": 8.47,
+                "bits": 0
+              },
+              "frames": 1,
+              "dispAtMs": 76,
+              "simAtMs": 76,
+              "positionAtMs": 76.20000004768372
+            },
+            {
+              "before": {
+                "sim": 8.63,
+                "disp": 8.63,
+                "bits": 0
+              },
+              "frames": 2,
+              "dispAtMs": 29,
+              "simAtMs": 29,
+              "positionAtMs": 28.69999998807907,
+              "phase": 0,
+              "observedTickElapsedMs": 0
+            },
+            {
+              "before": {
+                "sim": 8.790000000000001,
+                "disp": 8.790000000000001,
+                "bits": 0
+              },
+              "frames": 4,
+              "dispAtMs": 31,
+              "simAtMs": 31,
+              "positionAtMs": 31.19999998807907,
+              "phase": 10,
+              "observedTickElapsedMs": 10.5
+            },
+            {
+              "before": {
+                "sim": 8.950000000000001,
+                "disp": 8.950000000000001,
+                "bits": 0
+              },
+              "frames": 3,
+              "dispAtMs": 21,
+              "simAtMs": 21,
+              "positionAtMs": 21.400000035762787,
+              "phase": 20,
+              "observedTickElapsedMs": 20.80000001192093
+            },
+            {
+              "before": {
+                "sim": 9.110000000000001,
+                "disp": 9.110000000000001,
+                "bits": 0
+              },
+              "frames": 2,
+              "dispAtMs": 10,
+              "simAtMs": 10,
+              "positionAtMs": 10.399999976158142,
+              "phase": 30,
+              "observedTickElapsedMs": 31.5
+            }
+          ]
+        },
+        "client": {
+          "before": {
+            "sim": 14.780000000000001,
+            "disp": 14.780000000000001,
+            "bits": 0
+          },
+          "frames": 3,
+          "dispAtMs": 139,
+          "simAtMs": 139,
+          "positionAtMs": 31.700000047683716,
+          "samples": [
+            {
+              "before": {
+                "sim": 14.780000000000001,
+                "disp": 14.780000000000001,
+                "bits": 0
+              },
+              "frames": 3,
+              "dispAtMs": 32,
+              "simAtMs": 32,
+              "positionAtMs": 31.700000047683716
+            },
+            {
+              "before": {
+                "sim": 14.940000000000001,
+                "disp": 14.940000000000001,
+                "bits": 0
+              },
+              "frames": 5,
+              "dispAtMs": 42,
+              "simAtMs": 42,
+              "positionAtMs": 41.60000002384186,
+              "phase": 0,
+              "observedTickElapsedMs": 0
+            },
+            {
+              "before": {
+                "sim": 15.100000000000001,
+                "disp": 15.100000000000001,
+                "bits": 0
+              },
+              "frames": 1,
+              "dispAtMs": 139,
+              "simAtMs": 139,
+              "positionAtMs": 139.10000002384186,
+              "phase": 10,
+              "observedTickElapsedMs": 12.400000035762787
+            },
+            {
+              "before": {
+                "sim": 15.260000000000002,
+                "disp": 15.260000000000002,
+                "bits": 0
+              },
+              "frames": 2,
+              "dispAtMs": 43,
+              "simAtMs": 43,
+              "positionAtMs": 42.89999997615814,
+              "phase": 20,
+              "observedTickElapsedMs": 20.30000001192093
+            },
+            {
+              "before": {
+                "sim": 15.420000000000002,
+                "disp": 15.420000000000002,
+                "bits": 0
+              },
+              "frames": 3,
+              "dispAtMs": 36,
+              "simAtMs": 36,
+              "positionAtMs": 35.60000002384186,
+              "phase": 30,
+              "observedTickElapsedMs": 31.399999976158142
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "candidate",
+      "okUnderOriginal60ms": false,
+      "errors": [
+        "client probe: display took 65 ms to react (> one tick + a frame = not local-feeling)"
+      ],
+      "probes": {
+        "host": {
+          "before": {
+            "sim": 10.37,
+            "disp": 10.37,
+            "bits": 0
+          },
+          "frames": 2,
+          "dispAtMs": 42,
+          "simAtMs": 42,
+          "positionAtMs": 25.599999964237213,
+          "samples": [
+            {
+              "before": {
+                "sim": 10.37,
+                "disp": 10.37,
+                "bits": 0
+              },
+              "frames": 2,
+              "dispAtMs": 26,
+              "simAtMs": 26,
+              "positionAtMs": 25.599999964237213
+            },
+            {
+              "before": {
+                "sim": 10.53,
+                "disp": 10.53,
+                "bits": 0
+              },
+              "frames": 5,
+              "dispAtMs": 42,
+              "simAtMs": 42,
+              "positionAtMs": 42.10000002384186,
+              "phase": 0,
+              "observedTickElapsedMs": 0
+            },
+            {
+              "before": {
+                "sim": 10.69,
+                "disp": 10.69,
+                "bits": 0
+              },
+              "frames": 4,
+              "dispAtMs": 31,
+              "simAtMs": 31,
+              "positionAtMs": 30.5,
+              "phase": 10,
+              "observedTickElapsedMs": 11.099999964237213
+            },
+            {
+              "before": {
+                "sim": 10.85,
+                "disp": 10.85,
+                "bits": 0
+              },
+              "frames": 3,
+              "dispAtMs": 21,
+              "simAtMs": 21,
+              "positionAtMs": 20.5,
+              "phase": 20,
+              "observedTickElapsedMs": 20.899999976158142
+            },
+            {
+              "before": {
+                "sim": 11.01,
+                "disp": 11.01,
+                "bits": 0
+              },
+              "frames": 2,
+              "dispAtMs": 14,
+              "simAtMs": 14,
+              "positionAtMs": 14.399999976158142,
+              "phase": 30,
+              "observedTickElapsedMs": 30.799999952316284
+            }
+          ]
+        },
+        "client": {
+          "before": {
+            "sim": 15.33,
+            "disp": 15.33,
+            "bits": 0
+          },
+          "frames": 5,
+          "dispAtMs": 65,
+          "simAtMs": 65,
+          "positionAtMs": 37.60000002384186,
+          "samples": [
+            {
+              "before": {
+                "sim": 15.33,
+                "disp": 15.33,
+                "bits": 0
+              },
+              "frames": 5,
+              "dispAtMs": 38,
+              "simAtMs": 38,
+              "positionAtMs": 37.60000002384186
+            },
+            {
+              "before": {
+                "sim": 15.49,
+                "disp": 15.49,
+                "bits": 0
+              },
+              "frames": 1,
+              "dispAtMs": 18,
+              "simAtMs": 18,
+              "positionAtMs": 17.599999964237213,
+              "phase": 0,
+              "observedTickElapsedMs": 0
+            },
+            {
+              "before": {
+                "sim": 15.65,
+                "disp": 15.65,
+                "bits": 0
+              },
+              "frames": 2,
+              "dispAtMs": 65,
+              "simAtMs": 65,
+              "positionAtMs": 64.89999997615814,
+              "phase": 10,
+              "observedTickElapsedMs": 10.200000047683716
+            },
+            {
+              "before": {
+                "sim": 15.81,
+                "disp": 15.81,
+                "bits": 0
+              },
+              "frames": 3,
+              "dispAtMs": 21,
+              "simAtMs": 21,
+              "positionAtMs": 21.100000023841858,
+              "phase": 20,
+              "observedTickElapsedMs": 20.5
+            },
+            {
+              "before": {
+                "sim": 15.97,
+                "disp": 15.97,
+                "bits": 0
+              },
+              "frames": 1,
+              "dispAtMs": 9,
+              "simAtMs": 9,
+              "positionAtMs": 9.400000035762787,
+              "phase": 30,
+              "observedTickElapsedMs": 32.5
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

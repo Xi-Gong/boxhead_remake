@@ -1,0 +1,707 @@
+{
+  "artifactUnchangedAcrossFinalRebuild": true,
+  "records": [
+    {
+      "name": "normal-60",
+      "ok": true,
+      "asarSha256": "08d0c020f540ca30a5e9e462d7377ffcfe56c61ab031e5e3f87eec2ae5a4fb27",
+      "delayOneWayMs": 60,
+      "explosiveRoots": 0,
+      "sampledDurationMs": 20270,
+      "samples": 38,
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.2.8 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+        "dpr": 1.25,
+        "width": 1299,
+        "height": 1006,
+        "canvas": [
+          1624,
+          1258
+        ],
+        "selection": {
+          "mode": "Coop",
+          "charP1": 3,
+          "charP2": 0,
+          "levelIdx": 0,
+          "difficulty": 0,
+          "gameAmount": 1,
+          "wave": 1,
+          "maxWave": 1
+        }
+      },
+      "responseLimitAtRunMs": 60,
+      "responseMs": {
+        "host": 14,
+        "client": 29
+      },
+      "lateHalfStalls": {
+        "host": 0,
+        "client": 0
+      },
+      "totalStalls": {
+        "host": 1,
+        "client": 0
+      },
+      "realRecovery": [
+        {
+          "sameWorld": true,
+          "historyRecovered": true
+        },
+        {
+          "sameWorld": true,
+          "historyRecovered": true
+        }
+      ],
+      "confirmed": [
+        {
+          "digest": {
+            "tick": 628,
+            "full": {
+              "things": "8d474dbe1bf59e62",
+              "cells": "782c115a7f50d99e",
+              "collection": "6e24cea5a2a30449",
+              "navigation": "ac38869aa9444496",
+              "upgrades": "deb6d43484d68f78",
+              "slots": "ee40322f89b019b3",
+              "random": "b2a4046055b24c54",
+              "outcome": "f54ac2a72f3c6feb"
+            },
+            "score": 100,
+            "things": 25,
+            "zombies": 9,
+            "q": [
+              124,
+              137,
+              3200,
+              208,
+              135,
+              3200
+            ]
+          },
+          "events": [
+            135,
+            1325198147
+          ]
+        },
+        {
+          "digest": {
+            "tick": 628,
+            "full": {
+              "things": "8d474dbe1bf59e62",
+              "cells": "782c115a7f50d99e",
+              "collection": "6e24cea5a2a30449",
+              "navigation": "ac38869aa9444496",
+              "upgrades": "deb6d43484d68f78",
+              "slots": "ee40322f89b019b3",
+              "random": "b2a4046055b24c54",
+              "outcome": "f54ac2a72f3c6feb"
+            },
+            "score": 100,
+            "things": 25,
+            "zombies": 9,
+            "q": [
+              124,
+              137,
+              3200,
+              208,
+              135,
+              3200
+            ]
+          },
+          "events": [
+            135,
+            1325198147
+          ]
+        }
+      ],
+      "performance": {
+        "host": {
+          "frameP50": 1.5999999642372131,
+          "frameP95": 3.699999988079071,
+          "objects": 180,
+          "filterCaches": 10,
+          "filterPixels": 2321557,
+          "fontEntries": 19,
+          "disposedBitmapRefs": 0,
+          "domInputs": 0,
+          "elapsedMs": 20270,
+          "samplingInterval": 4194304,
+          "estimatedAllocatedBytes": 579023424,
+          "allocationSamples": 138,
+          "sampleEndedAt": 1792318988220,
+          "collectionStartedAt": 1792318988220,
+          "heapAfterGC": 32489332,
+          "taskMs": 6016.116,
+          "scriptMs": 4557.634,
+          "heapBefore": 30963304,
+          "heapAfter": 57322760,
+          "nodesBefore": 40,
+          "nodesAfter": 42,
+          "frameCount": 2433,
+          "maxWork": 18.100000023841858,
+          "maxInterval": 25.69999998807907
+        },
+        "client": {
+          "frameP50": 1.5999999642372131,
+          "frameP95": 3.599999964237213,
+          "objects": 180,
+          "filterCaches": 10,
+          "filterPixels": 2321557,
+          "fontEntries": 19,
+          "disposedBitmapRefs": 0,
+          "domInputs": 0,
+          "elapsedMs": 20226,
+          "samplingInterval": 4194304,
+          "estimatedAllocatedBytes": 650212724,
+          "allocationSamples": 155,
+          "sampleEndedAt": 1792318988148,
+          "collectionStartedAt": 1792318988259,
+          "heapAfterGC": 32605684,
+          "taskMs": 6030.0869999999995,
+          "scriptMs": 4525.912,
+          "heapBefore": 30992936,
+          "heapAfter": 48221944,
+          "nodesBefore": 40,
+          "nodesAfter": 41,
+          "frameCount": 2428,
+          "maxWork": 16.099999964237213,
+          "maxInterval": 23.900000035762787
+        }
+      }
+    },
+    {
+      "name": "delay-30",
+      "ok": true,
+      "asarSha256": "08d0c020f540ca30a5e9e462d7377ffcfe56c61ab031e5e3f87eec2ae5a4fb27",
+      "delayOneWayMs": 30,
+      "explosiveRoots": 256,
+      "sampledDurationMs": 20236,
+      "samples": 37,
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.2.8 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+        "dpr": 1.25,
+        "width": 1299,
+        "height": 1006,
+        "canvas": [
+          1624,
+          1258
+        ],
+        "selection": {
+          "mode": "Coop",
+          "charP1": 3,
+          "charP2": 0,
+          "levelIdx": 0,
+          "difficulty": 0,
+          "gameAmount": 1,
+          "wave": 1,
+          "maxWave": 1
+        }
+      },
+      "responseLimitAtRunMs": 100,
+      "responseMs": {
+        "host": 9,
+        "client": 29
+      },
+      "lateHalfStalls": {
+        "host": 0,
+        "client": 0
+      },
+      "totalStalls": {
+        "host": 0,
+        "client": 0
+      },
+      "realRecovery": [
+        {
+          "sameWorld": true,
+          "historyRecovered": true
+        },
+        {
+          "sameWorld": true,
+          "historyRecovered": true
+        }
+      ],
+      "explosionStress": [
+        {
+          "bursts": 5,
+          "peak": 1072
+        },
+        {
+          "bursts": 4,
+          "peak": 1072
+        }
+      ],
+      "confirmed": [
+        {
+          "digest": {
+            "tick": 623,
+            "full": {
+              "things": "4d6c5fe6f6884eba",
+              "cells": "aa5ab0213a124025",
+              "collection": "fccef689006c8a95",
+              "navigation": "4fc4089a47a7e4a6",
+              "upgrades": "cddc06fc4cef6820",
+              "slots": "b8c4c1e6b7d54b82",
+              "random": "9c16ec39326fa77d",
+              "outcome": "eed28917c724110b"
+            },
+            "score": 175000,
+            "things": 9,
+            "zombies": 5,
+            "q": [
+              165,
+              136,
+              3200,
+              249,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            13293,
+            4237257156
+          ]
+        },
+        {
+          "digest": {
+            "tick": 623,
+            "full": {
+              "things": "4d6c5fe6f6884eba",
+              "cells": "aa5ab0213a124025",
+              "collection": "fccef689006c8a95",
+              "navigation": "4fc4089a47a7e4a6",
+              "upgrades": "cddc06fc4cef6820",
+              "slots": "b8c4c1e6b7d54b82",
+              "random": "9c16ec39326fa77d",
+              "outcome": "eed28917c724110b"
+            },
+            "score": 175000,
+            "things": 9,
+            "zombies": 5,
+            "q": [
+              165,
+              136,
+              3200,
+              249,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            13293,
+            4237257156
+          ]
+        }
+      ],
+      "performance": {
+        "host": {
+          "frameP50": 1.899999976158142,
+          "frameP95": 9.899999976158142,
+          "objects": 180,
+          "filterCaches": 11,
+          "filterPixels": 2355669,
+          "fontEntries": 20,
+          "disposedBitmapRefs": 0,
+          "domInputs": 0,
+          "elapsedMs": 20236,
+          "samplingInterval": 4194304,
+          "estimatedAllocatedBytes": 1905383792,
+          "allocationSamples": 454,
+          "sampleEndedAt": 1792319042326,
+          "collectionStartedAt": 1792319042326,
+          "heapAfterGC": 33168624,
+          "taskMs": 8303.061000000002,
+          "scriptMs": 6955.3,
+          "heapBefore": 30787960,
+          "heapAfter": 196803904,
+          "nodesBefore": 40,
+          "nodesAfter": 51,
+          "frameCount": 2171,
+          "maxWork": 84.89999997615814,
+          "maxInterval": 87
+        },
+        "client": {
+          "frameP50": 1.899999976158142,
+          "frameP95": 9.300000011920929,
+          "objects": 180,
+          "filterCaches": 11,
+          "filterPixels": 2355669,
+          "fontEntries": 20,
+          "disposedBitmapRefs": 0,
+          "domInputs": 0,
+          "elapsedMs": 20190,
+          "samplingInterval": 4194304,
+          "estimatedAllocatedBytes": 1729313168,
+          "allocationSamples": 412,
+          "sampleEndedAt": 1792319042256,
+          "collectionStartedAt": 1792319042383,
+          "heapAfterGC": 32892180,
+          "taskMs": 8108.401000000001,
+          "scriptMs": 6737.4349999999995,
+          "heapBefore": 31378088,
+          "heapAfter": 130590548,
+          "nodesBefore": 40,
+          "nodesAfter": 47,
+          "frameCount": 2176,
+          "maxWork": 79.10000002384186,
+          "maxInterval": 82.30000001192093
+        }
+      }
+    },
+    {
+      "name": "delay-100",
+      "ok": true,
+      "asarSha256": "08d0c020f540ca30a5e9e462d7377ffcfe56c61ab031e5e3f87eec2ae5a4fb27",
+      "delayOneWayMs": 100,
+      "explosiveRoots": 256,
+      "sampledDurationMs": 20517,
+      "samples": 37,
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.2.8 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+        "dpr": 1.25,
+        "width": 1299,
+        "height": 1006,
+        "canvas": [
+          1624,
+          1258
+        ],
+        "selection": {
+          "mode": "Coop",
+          "charP1": 3,
+          "charP2": 0,
+          "levelIdx": 0,
+          "difficulty": 0,
+          "gameAmount": 1,
+          "wave": 1,
+          "maxWave": 1
+        }
+      },
+      "responseLimitAtRunMs": 100,
+      "responseMs": {
+        "host": 6,
+        "client": 21
+      },
+      "lateHalfStalls": {
+        "host": 3,
+        "client": 0
+      },
+      "totalStalls": {
+        "host": 4,
+        "client": 0
+      },
+      "realRecovery": [
+        {
+          "sameWorld": true,
+          "historyRecovered": true
+        },
+        {
+          "sameWorld": true,
+          "historyRecovered": true
+        }
+      ],
+      "explosionStress": [
+        {
+          "bursts": 7,
+          "peak": 1072
+        },
+        {
+          "bursts": 6,
+          "peak": 1072
+        }
+      ],
+      "confirmed": [
+        {
+          "digest": {
+            "tick": 624,
+            "full": {
+              "things": "ffe558e8d940fdf4",
+              "cells": "2cf085c1d5a777a5",
+              "collection": "c72f65b2c9437416",
+              "navigation": "f05ed7c76a194213",
+              "upgrades": "ad52869299ea3b3e",
+              "slots": "83e766cda82d7d01",
+              "random": "7cdbe3e7506e79db",
+              "outcome": "240f1db28a4f6ad6"
+            },
+            "score": 200000,
+            "things": 10,
+            "zombies": 6,
+            "q": [
+              176,
+              136,
+              3200,
+              240,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            13442,
+            201324720
+          ]
+        },
+        {
+          "digest": {
+            "tick": 624,
+            "full": {
+              "things": "ffe558e8d940fdf4",
+              "cells": "2cf085c1d5a777a5",
+              "collection": "c72f65b2c9437416",
+              "navigation": "f05ed7c76a194213",
+              "upgrades": "ad52869299ea3b3e",
+              "slots": "83e766cda82d7d01",
+              "random": "7cdbe3e7506e79db",
+              "outcome": "240f1db28a4f6ad6"
+            },
+            "score": 200000,
+            "things": 10,
+            "zombies": 6,
+            "q": [
+              176,
+              136,
+              3200,
+              240,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            13442,
+            201324720
+          ]
+        }
+      ],
+      "performance": {
+        "host": {
+          "frameP50": 1.899999976158142,
+          "frameP95": 10.900000035762787,
+          "objects": 180,
+          "filterCaches": 10,
+          "filterPixels": 2341285,
+          "fontEntries": 20,
+          "disposedBitmapRefs": 0,
+          "domInputs": 0,
+          "elapsedMs": 20517,
+          "samplingInterval": 4194304,
+          "estimatedAllocatedBytes": 1985126524,
+          "allocationSamples": 473,
+          "sampleEndedAt": 1792319096748,
+          "collectionStartedAt": 1792319096748,
+          "heapAfterGC": 33250124,
+          "taskMs": 9002.386999999999,
+          "scriptMs": 7601.899,
+          "heapBefore": 30929752,
+          "heapAfter": 227859172,
+          "nodesBefore": 41,
+          "nodesAfter": 58,
+          "frameCount": 2136,
+          "maxWork": 90.19999998807907,
+          "maxInterval": 96.09999996423721
+        },
+        "client": {
+          "frameP50": 1.800000011920929,
+          "frameP95": 10.700000047683716,
+          "objects": 180,
+          "filterCaches": 11,
+          "filterPixels": 2355669,
+          "fontEntries": 20,
+          "disposedBitmapRefs": 0,
+          "domInputs": 0,
+          "elapsedMs": 20471,
+          "samplingInterval": 4194304,
+          "estimatedAllocatedBytes": 2216501460,
+          "allocationSamples": 528,
+          "sampleEndedAt": 1792319096666,
+          "collectionStartedAt": 1792319096819,
+          "heapAfterGC": 33365000,
+          "taskMs": 8936.188,
+          "scriptMs": 7474.085,
+          "heapBefore": 31001244,
+          "heapAfter": 102062860,
+          "nodesBefore": 40,
+          "nodesAfter": 43,
+          "frameCount": 2132,
+          "maxWork": 124.40000003576279,
+          "maxInterval": 129.5
+        }
+      }
+    },
+    {
+      "name": "soak-60-10min",
+      "ok": true,
+      "asarSha256": "08d0c020f540ca30a5e9e462d7377ffcfe56c61ab031e5e3f87eec2ae5a4fb27",
+      "delayOneWayMs": 60,
+      "explosiveRoots": 256,
+      "sampledDurationMs": 600306,
+      "samples": 1056,
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.2.8 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+        "dpr": 1.25,
+        "width": 1299,
+        "height": 1006,
+        "canvas": [
+          1624,
+          1258
+        ],
+        "selection": {
+          "mode": "Coop",
+          "charP1": 3,
+          "charP2": 0,
+          "levelIdx": 0,
+          "difficulty": 0,
+          "gameAmount": 1,
+          "wave": 1,
+          "maxWave": 1
+        }
+      },
+      "responseLimitAtRunMs": 60,
+      "responseMs": {
+        "host": 22,
+        "client": 20
+      },
+      "lateHalfStalls": {
+        "host": 1,
+        "client": 0
+      },
+      "totalStalls": {
+        "host": 2,
+        "client": 1
+      },
+      "realRecovery": [
+        {
+          "sameWorld": true,
+          "historyRecovered": true
+        },
+        {
+          "sameWorld": true,
+          "historyRecovered": true
+        }
+      ],
+      "explosionStress": [
+        {
+          "bursts": 196,
+          "peak": 1072
+        },
+        {
+          "bursts": 174,
+          "peak": 1072
+        }
+      ],
+      "confirmed": [
+        {
+          "digest": {
+            "tick": 14963,
+            "full": {
+              "things": "062b2cfee3589fc2",
+              "cells": "b9003dcb1c9ef99f",
+              "collection": "f296314a556771be",
+              "navigation": "48eabac93e009095",
+              "upgrades": "4ae64d6dda8e9759",
+              "slots": "dd6a8ac1415186f5",
+              "random": "2feed75af7b7390e",
+              "outcome": "5dac44e6d12f6502"
+            },
+            "score": 10862500,
+            "things": 13,
+            "zombies": 9,
+            "q": [
+              186,
+              136,
+              3200,
+              248,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            408192,
+            3203884748
+          ]
+        },
+        {
+          "digest": {
+            "tick": 14963,
+            "full": {
+              "things": "062b2cfee3589fc2",
+              "cells": "b9003dcb1c9ef99f",
+              "collection": "f296314a556771be",
+              "navigation": "48eabac93e009095",
+              "upgrades": "4ae64d6dda8e9759",
+              "slots": "dd6a8ac1415186f5",
+              "random": "2feed75af7b7390e",
+              "outcome": "5dac44e6d12f6502"
+            },
+            "score": 10862500,
+            "things": 13,
+            "zombies": 9,
+            "q": [
+              186,
+              136,
+              3200,
+              248,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            408192,
+            3203884748
+          ]
+        }
+      ],
+      "performance": {
+        "host": {
+          "frameP50": 2.100000023841858,
+          "frameP95": 14.300000011920929,
+          "objects": 180,
+          "filterCaches": 11,
+          "filterPixels": 2355669,
+          "fontEntries": 20,
+          "disposedBitmapRefs": 0,
+          "domInputs": 0,
+          "elapsedMs": 600306,
+          "samplingInterval": 4194304,
+          "estimatedAllocatedBytes": 61347049480,
+          "allocationSamples": 14617,
+          "sampleEndedAt": 1792317723371,
+          "collectionStartedAt": 1792317723371,
+          "heapAfterGC": 55614152,
+          "taskMs": 291282.058,
+          "scriptMs": 250846.16400000002,
+          "heapBefore": 30809788,
+          "heapAfter": 259129608,
+          "nodesBefore": 40,
+          "nodesAfter": 56,
+          "frameCount": 61040,
+          "maxWork": 191.10000002384186,
+          "maxInterval": 197.4000000357628
+        },
+        "client": {
+          "frameP50": 2.099999964237213,
+          "frameP95": 15,
+          "objects": 180,
+          "filterCaches": 10,
+          "filterPixels": 2321557,
+          "fontEntries": 20,
+          "disposedBitmapRefs": 0,
+          "domInputs": 0,
+          "elapsedMs": 600264,
+          "samplingInterval": 4194304,
+          "estimatedAllocatedBytes": 59874713144,
+          "allocationSamples": 14266,
+          "sampleEndedAt": 1792317721076,
+          "collectionStartedAt": 1792317723524,
+          "heapAfterGC": 52379856,
+          "taskMs": 290822.956,
+          "scriptMs": 248649.291,
+          "heapBefore": 30885628,
+          "heapAfter": 180750080,
+          "nodesBefore": 41,
+          "nodesAfter": 47,
+          "frameCount": 60933,
+          "maxWork": 142.80000001192093,
+          "maxInterval": 155.5999999642372
+        }
+      }
+    }
+  ]
+}
