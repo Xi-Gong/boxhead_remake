@@ -129,6 +129,7 @@ export interface LanChecksum {
 }
 
 export type LanMessage =
+  | { t: 'input-path'; version: 1; port: number; token: string }
   // client -> host, first frame on the wire (transport-level handshake; main process replies `welcome`).
   | { t: 'hello'; proto: number; app: string; name: string; sid?: string; char: number; capTick?: number }
   // host -> client handshake reply. `ok:false` + reason closes the connection (version mismatch, busy).
@@ -148,7 +149,7 @@ export type LanMessage =
   // computeInputDelay; default LAN_INPUT_DELAY when absent). `rollback` (v0.2.3) = prediction+rollback mode:
   // the peer may execute a tick with a PREDICTED remote bitmap and re-simulate when the true frame lands (see
   // Rollback.ts); with it set the host pins inputDelay 1 (LAN_INPUT_DELAY).
-  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; wave?: number; snap?: unknown; rollback?: boolean; netcode?: 'rollback-v2' }
+  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; wave?: number; snap?: unknown; rollback?: boolean; netcode?: 'rollback-v2'; epoch?: string }
   // both -> both: this peer's player input bitmap for `tick` (bit order = NetSlot.SLOT_ORDER: UP, DOWN, LEFT,
   // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
   | { t: 'in'; tick: number; bits: number; sum?: LanChecksum }

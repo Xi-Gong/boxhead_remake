@@ -15,6 +15,7 @@ import { createSocket, type Socket as UdpSocket } from 'node:dgram';
 import { connect as tcpConnect, createServer, type Server, type Socket as TcpSocket } from 'node:net';
 import { randomUUID } from 'node:crypto';
 import * as os from 'node:os';
+import { FastInputPath } from './fastInput.ts';
 import {
   decodeBeacon, encodeBeacon, encodeFrame, FrameDecoder, LinkWatchdog,
   LAN_DISCOVERY_PORT, LAN_HEARTBEAT_MS, LAN_HOST_STALE_MS, LAN_LINK_DEAD_MS, LAN_PROTOCOL_VERSION, LAN_TCP_PORT_FIRST, LAN_TCP_PORT_LAST,
@@ -42,6 +43,7 @@ interface Peer {
   socket: TcpSocket;
   decoder: FrameDecoder;
   watchdog: LinkWatchdog;
+  fast?: FastInputPath;
 }
 
 // --boxhead-net-delay=<ms> (v0.2.1 smoothness QA): delay every TCP send by N ms (one way) so localhost
@@ -342,6 +344,8 @@ export class LanTransport {
     for (const m of msgs) {
       if (this.peer !== peer) return;
       const msg = m as LanMessage;
+      if (msg?.t === 'input-path') { peer.fast?.accept(msg); continue; }
+      if (msg?.t === 'start') peer.fast?.begin(msg.netcode === 'rollback-v2' ? msg.epoch : undefined);
       if (msg?.t === 'hb') {
         // Echo the peer's probe; our own returning echo is surfaced so the renderer can compute RTT (now - ts).
         if (!msg.echo) this.rawSend(peer.socket, { ...msg, echo: true });
@@ -356,6 +360,9 @@ export class LanTransport {
   private attachPeer(socket: TcpSocket, decoder: FrameDecoder): void {
     const peer: Peer = { socket, decoder, watchdog: new LinkWatchdog(undefined, this.linkDeadMs) };
     this.peer = peer;
+    if (socket.remoteAddress) peer.fast = new FastInputPath(socket.remoteAddress,
+      message => { if (this.peer === peer) this.rawSend(socket, message); },
+      message => { if (this.peer === peer) { peer.watchdog.heard(); this.fire(message); } }, NET_DELAY_MS);
     socket.setTimeout(0);
     // The pre-handshake handlers of the connecting side are spent; only their side effects remain (guarded no-ops).
     socket.removeAllListeners('data');
@@ -384,6 +391,7 @@ export class LanTransport {
     this.peer = undefined;
     if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = undefined; }
     peer.socket.destroy();
+    peer.fast?.close();
     this.emit({ kind: 'peer', connected: false, reason });
   }
 
@@ -395,7 +403,14 @@ export class LanTransport {
   }
 
   send(msg: LanMessage): void {
-    if (this.peer) this.rawSend(this.peer.socket, msg);
+    const peer = this.peer;
+    if (!peer) return;
+    if (msg.t === 'start') {
+      msg = { ...msg, epoch: msg.netcode === 'rollback-v2' ? randomUUID() : undefined };
+      peer.fast?.begin(msg.epoch);
+    }
+    if (msg.t === 'in') peer.fast?.send(msg);
+    this.rawSend(peer.socket, msg);
   }
 
   /** Drop the peer link but keep hosting (between games / while waiting for a reconnect). */

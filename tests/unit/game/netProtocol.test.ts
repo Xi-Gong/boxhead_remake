@@ -98,6 +98,25 @@ function pair(opts?: { identity?: string; linkDeadMs?: number }): { host: LanTra
 }
 
 describe('LanTransport over localhost', () => {
+  it('delivers modern input over UDP when TCP input writes are withheld, with TCP fallback when UDP closes', async () => {
+    const { host, client } = pair();
+    const port = await host.startHost();
+    const received: any[] = [];
+    client.onMessage(m => received.push(m));
+    expect((await client.connect('127.0.0.1', { name: 'c', char: 0 }, port)).ok).toBe(true);
+    host.send({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: {} as any, seed: 42, netcode: 'rollback-v2' });
+    await waitUntil(() => received.some(m => m.t === 'start'));
+    const rawSend = (host as any).rawSend;
+    (host as any).rawSend = function(socket: any, message: any) { if (message.t !== 'in') rawSend.call(this, socket, message); };
+    host.send({ t: 'in', tick: 0, bits: 16 });
+    await waitUntil(() => received.some(m => m.t === 'in' && m.tick === 0));
+    expect((client as any).peer.fast.stats.received).toBeGreaterThan(0);
+    (host as any).rawSend = rawSend;
+    (host as any).peer.fast.close();
+    host.send({ t: 'in', tick: 1, bits: 8 });
+    await waitUntil(() => received.some(m => m.t === 'in' && m.tick === 1));
+    host.shutdown(); client.shutdown();
+  });
   it('ignores late close, error and data callbacks from a replaced connection', () => {
     const transport = new LanTransport({ identity: ID });
     const oldSocket = new Socket();
