@@ -614,7 +614,9 @@ await runGroup('viewport', async () => {
   await g.page.waitForTimeout(400);
   const rw = await g.expr('({ v: [m.mcWorld.mScreenSize.x, m.mcWorld.mScreenSize.y], bm: [m.mcWorld.bmDraw.width, m.mcWorld.bmDraw.height], x: m.mcWorld._x, y: m.mcWorld._y })');
   check('resize while playing -> 640x889 stage, bmDraw follows, content offset re-centred', eq(rw.v, [640, 889]) && eq(rw.bm, [640, 889]) && Math.round(rw.x) === 0 && Math.abs(rw.y + 204.5) < 1, rw);
-  check('portrait void is black above and below the 544-tall map', eq(await px(360, 10), [0, 0, 0, 255]) && eq(await px(360, 990), [0, 0, 0, 255]));
+  // Personal progression places the wave/enemy HUD in the top letterbox. Sample the actual empty
+  // bands below that panel and above the input badge, still outside the centred 544-tall map.
+  check('portrait void is black above and below the 544-tall map', eq(await px(360, 100), [0, 0, 0, 255]) && eq(await px(360, 900), [0, 0, 0, 255]));
   await shot(g, 'viewport_world_portrait_640x889');
   // DeathMatch after the resize (stage 640x889): the split geometry self-adapts (scale stageW/2/480, views stay 480x480)
   await g.expr('(m.mcWorld.mCompleteState = "quit", true)');

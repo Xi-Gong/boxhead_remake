@@ -1,0 +1,230 @@
+{
+  "before": {
+    "checks": 188,
+    "failed": [
+      {
+        "group": "viewport",
+        "name": "portrait void is black above and below the 544-tall map",
+        "ok": false
+      }
+    ]
+  },
+  "oldSample": {
+    "at": [
+      360,
+      10
+    ],
+    "rgba": [
+      201,
+      201,
+      199,
+      255
+    ]
+  },
+  "newSamples": [
+    {
+      "at": [
+        360,
+        100
+      ],
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "at": [
+        360,
+        900
+      ],
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ]
+    }
+  ],
+  "after": {
+    "checks": [
+      {
+        "group": "viewport",
+        "name": "1280x720: stage 853x480, authored content centred at +106.5",
+        "ok": true,
+        "detail": {
+          "w": 853,
+          "h": 480,
+          "ox": 106.5,
+          "oy": 0
+        }
+      },
+      {
+        "group": "viewport",
+        "name": "menu side bands are stage black",
+        "ok": true
+      },
+      {
+        "group": "viewport",
+        "name": "menu content is drawn centred",
+        "ok": true,
+        "detail": [
+          242,
+          241,
+          241,
+          255
+        ]
+      },
+      {
+        "group": "viewport",
+        "name": "menu click maps through the content offset",
+        "ok": true
+      },
+      {
+        "group": "viewport",
+        "name": "cycled the selection to level 1",
+        "ok": true
+      },
+      {
+        "group": "viewport",
+        "name": "room 1 starts on the wide stage",
+        "ok": true
+      },
+      {
+        "group": "viewport",
+        "name": "world adopts the live stage (view size, bmDraw, counter-offset)",
+        "ok": true,
+        "detail": {
+          "v": [
+            853,
+            480
+          ],
+          "bm": [
+            853,
+            480
+          ],
+          "x": -106.5,
+          "y": 0,
+          "cam": [
+            -74.5,
+            32
+          ]
+        }
+      },
+      {
+        "group": "viewport",
+        "name": "camera centred on the smaller map (room 1 is 704 wide -> x=(704-853)/2)",
+        "ok": true,
+        "detail": {
+          "v": [
+            853,
+            480
+          ],
+          "bm": [
+            853,
+            480
+          ],
+          "x": -106.5,
+          "y": 0,
+          "cam": [
+            -74.5,
+            32
+          ]
+        }
+      },
+      {
+        "group": "viewport",
+        "name": "beyond-map void is black (both edges)",
+        "ok": true
+      },
+      {
+        "group": "viewport",
+        "name": "map floor shows at the centre",
+        "ok": true,
+        "detail": [
+          216,
+          204,
+          204,
+          255
+        ]
+      },
+      {
+        "group": "viewport",
+        "name": "pause art centred on the wide stage + band overlay present",
+        "ok": true,
+        "detail": [
+          106.5,
+          true
+        ]
+      },
+      {
+        "group": "viewport",
+        "name": "unpause removes the bands",
+        "ok": true
+      },
+      {
+        "group": "viewport",
+        "name": "resize while playing -> 640x889 stage, bmDraw follows, content offset re-centred",
+        "ok": true,
+        "detail": {
+          "v": [
+            640,
+            889
+          ],
+          "bm": [
+            640,
+            889
+          ],
+          "x": 0,
+          "y": -204.5
+        }
+      },
+      {
+        "group": "viewport",
+        "name": "portrait void is black above and below the 544-tall map",
+        "ok": true
+      },
+      {
+        "group": "viewport",
+        "name": "DM room starts",
+        "ok": true
+      },
+      {
+        "group": "viewport",
+        "name": "DM split self-adapts: 480x480 views scaled to half the 640 stage",
+        "ok": true,
+        "detail": {
+          "scalar": 0.6666666666666666,
+          "views": [
+            480,
+            480
+          ],
+          "off": [
+            0,
+            320
+          ]
+        }
+      },
+      {
+        "group": "viewport",
+        "name": "no engine script errors",
+        "ok": true,
+        "detail": []
+      },
+      {
+        "group": "viewport",
+        "name": "no console errors",
+        "ok": true,
+        "detail": []
+      }
+    ],
+    "failed": 0,
+    "groups": {
+      "viewport": {
+        "ms": 25919
+      }
+    }
+  },
+  "explanation": "The new local growth HUD covers the former top sample. Both replacement samples remain outside the centered map and outside UI overlays; black void assertions remain exact."
+}
