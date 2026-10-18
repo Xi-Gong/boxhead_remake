@@ -44,6 +44,7 @@ function applyToWorld(world: any): void {
   world._x = -off.x;
   world._y = -off.y;
   if (world.mScreenSize != undefined) world.mScreenSize = new flash.geom.Point(presenter.stageW, presenter.stageH);
+  layoutPause(world, off);
 }
 
 /** Late presenter wiring (main.ts, after startPlatform - the lanBridge().setPresenter pattern). */
@@ -96,13 +97,8 @@ export function installViewport(): void {
   const pausePrev = hudProto.Pause;
   hudProto.Pause = function (this: any, tState: any): void {
     pausePrev.call(this, tState);
-    const off = contentOffset();
     if (tState === true) {
-      if (this.mcScreenPause && (off.x !== 0 || off.y !== 0)) {
-        this.mcScreenPause._x += off.x;
-        this.mcScreenPause._y += off.y;
-        attachPauseBands(this.mWorld, off);
-      }
+      layoutPause(this.mWorld, contentOffset());
     } else {
       removePauseBands(this.mWorld);
     }
@@ -144,6 +140,16 @@ const BAND_COLOR = 0x000000;
 const BAND_ALPHA = 85;   // 85% = 217/255, as the pause art's own shape
 const BANDS_NAME = '_WidePauseBands';
 
+/** Reconcile pause chrome on entry AND resize, without advancing the frozen simulation. */
+function layoutPause(world: any, off: { x: number; y: number }): void {
+  const pause = world?.mHud?.mcScreenPause;
+  if (!pause) return;
+  pause._x = off.x;
+  pause._y = off.y;
+  if (off.x || off.y) attachPauseBands(world, off);
+  else removePauseBands(world);
+}
+
 /** Dim everything on the stage outside the centred 640x480 pause art (called after Pause(true)). */
 function attachPauseBands(world: any, off: { x: number; y: number }): void {
   removePauseBands(world);
@@ -160,8 +166,11 @@ function attachPauseBands(world: any, off: { x: number; y: number }): void {
     mc.endFill();
   };
   const bandRect = (x: number, y: number, w: number, h: number): void => {
-    if (y < BAND_TOP_Y) rect(x, y, w, Math.min(h, BAND_TOP_Y - y), BAND_TOP_COLOR, BAND_TOP_ALPHA);
-    if (y + h > BAND_TOP_Y) rect(x, Math.max(y, BAND_TOP_Y), w, y + h - Math.max(y, BAND_TOP_Y), BAND_COLOR, BAND_ALPHA);
+    const top = off.y, bottom = top + BAND_TOP_Y, end = y + h;
+    if (y < top) rect(x, y, w, Math.min(end, top) - y, BAND_COLOR, BAND_ALPHA);
+    const a = Math.max(y, top), b = Math.min(end, bottom);
+    if (b > a) rect(x, a, w, b - a, BAND_TOP_COLOR, BAND_TOP_ALPHA);
+    if (end > bottom) rect(x, Math.max(y, bottom), w, end - Math.max(y, bottom), BAND_COLOR, BAND_ALPHA);
   };
   if (off.x > 0) { bandRect(0, 0, off.x, vh); bandRect(640 + off.x, 0, vw - 640 - off.x, vh); }
   if (off.y > 0) { bandRect(off.x, 0, 640, off.y); bandRect(off.x, 480 + off.y, 640, vh - 480 - off.y); }
@@ -176,22 +185,25 @@ function ensureView(world: any): void {
   if (!presenter || !world || world.mScreenSize == undefined) return;
   const w = presenter.stageW, h = presenter.stageH;
   if (world.mScreenSize.x !== w || world.mScreenSize.y !== h) world.mScreenSize = new flash.geom.Point(w, h);
-  const bm = world.bmDraw;
-  if (bm != undefined && !world.mPaused && (bm.width !== w || bm.height !== h)) {
+  let bm = world.bmDraw;
+  if (bm != undefined && (bm.width !== w || bm.height !== h)) {
     // Resize while playing: swap the attached Bitmap's data in place (same depth, same child), dispose the old.
     const attached = (world.$list ?? []).find((c: any) => c.$bmd === bm);
     const fresh = new flash.display.BitmapData(w, h, World.CWorld.mGameMode !== 'DeathMatch', 0xff000000);
+    if (world.mPaused) fresh.copyPixels(bm, bm.rectangle, new flash.geom.Point((w - bm.width) / 2, (h - bm.height) / 2));
     if (attached) attached.$bmd = fresh;
     bm.dispose();
     world.bmDraw = fresh;
+    bm = fresh;
     if (attached) attached.$inv?.();
   }
   if (world.mSplitScreen != undefined && !world.mPaused) {
     // Mirror CWorld.InitDrawPlanes' split geometry for the new view (the 480x480 per-view bitmap stays).
     const sp = world.mSplitScreen;
-    if (sp.mScalar !== w / 2 / sp.mScreenSize.x) {
+    const scalar = (w / 2) / sp.mScreenSize.x;
+    const top = (h - sp.mScreenSize.y * scalar) / 2;
+    if (sp.mScalar !== scalar || sp.mOffsets[0].y !== top) {
       sp.mScalar = (w / 2) / sp.mScreenSize.x;
-      const top = (h - sp.mScreenSize.y * sp.mScalar) / 2;
       sp.mOffsets = [new flash.geom.Point(0, top), new flash.geom.Point(sp.mScreenSize.x * sp.mScalar, top)];
       sp.mMatrix.a = sp.mScalar;
       sp.mMatrix.d = sp.mScalar;
