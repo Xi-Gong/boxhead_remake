@@ -10,6 +10,20 @@ import { captureWorldSnap, restoreWorldSnap, makeSnapCtx, type RingSlot } from '
 
 const TOTAL = 60;
 
+it('invalidates cached function names after prototype method replacement or renaming',()=>{
+  const game=createHeadlessGame({mode:'Coop',room:1}),w=game.world(),p=game.players()[0],ctx=makeSnapCtx(w);
+  const prototype=Object.getPrototypeOf(p),fn=function snapshotMethod(){};
+  try{
+    prototype.SnapshotTestMethod=fn;p.snapshotMethod=fn;
+    const token=()=>captureWorldSnap(w,ctx,false).things[p.sUniqueID].props.find(([key])=>key==='snapshotMethod')![1];
+    expect(token()).toEqual(['fn','SnapshotTestMethod']);expect(token()).toEqual(['fn','SnapshotTestMethod']);
+    prototype.SnapshotTestMethod=function replaced(){};prototype.SnapshotRenamed=fn;
+    expect(token()).toEqual(['fn','SnapshotRenamed']);
+    delete prototype.SnapshotRenamed;prototype.SnapshotFinal=fn;
+    expect(token()).toEqual(['fn','SnapshotFinal']);
+  }finally{delete prototype.SnapshotTestMethod;delete prototype.SnapshotRenamed;delete prototype.SnapshotFinal;game.quit();}
+});
+
 it('keeps older primitive snapshots immutable across changes, deletions and reinsertion',()=>{
   const game=createHeadlessGame({mode:'Coop',room:1}),world=game.world(),p=game.players()[0],ctx=makeSnapCtx(world);
   p.mLife=137;p.snapshotProbe=undefined;

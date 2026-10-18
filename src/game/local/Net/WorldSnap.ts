@@ -146,11 +146,25 @@ function sharedIdx(ctx: SnapCtx, o: any): number {
   return i;
 }
 
+const methodNames = new WeakMap<object, WeakMap<Function, string>>();
 function methodNameOf(fn: any, owner: any, path: string): string {
-  let p = Object.getPrototypeOf(owner);
+  const prototype = Object.getPrototypeOf(owner);
+  let names = methodNames.get(prototype);
+  const cached = names?.get(fn);
+  // Wrapper installation precedes live worlds. Still invalidate a renamed/replaced method rather
+  // than restoring a function that no longer matches the prototype's descriptor lookup.
+  if (cached) {
+    try { if (resolveFn(cached, owner) === fn) return cached; }
+    catch { names!.delete(fn); } // The old method may have been removed and registered under a new name.
+  }
+  let p = prototype;
   while (p) {
     for (const k of Object.getOwnPropertyNames(p)) {
-      if (k !== 'constructor' && (p as any)[k] === fn) return k;
+      if (k !== 'constructor' && (p as any)[k] === fn) {
+        if (!names) methodNames.set(prototype, names = new WeakMap());
+        names.set(fn, k);
+        return k;
+      }
     }
     p = Object.getPrototypeOf(p);
   }
