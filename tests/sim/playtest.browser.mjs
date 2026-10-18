@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '../../generated/reports/qa');
 mkdirSync(OUT, { recursive: true });
 const URL = process.env.GAME_URL ?? 'http://localhost:5198/';
-// --electron: the same playtest in the Electron shell (unpackaged, serving BOXHEAD_DIST_DIR = generated/qa-dist through
+// --electron: the same playtest in the Electron shell (unpackaged, serving BOXHEAD_DIST_DIR = dist through
 // app://game/, portable save dir under generated/reports/qa/electron-portable). Build dist-electron first if needed:
 // node tools/build-electron.ts
 // --packaged: same as --electron but drives the PACKAGED app (release/win-unpacked, built by `npm run dist` / dist:dir —
@@ -31,13 +31,13 @@ const PLAY_MS = Number(process.env.PLAY_MS ?? 20000);
 const MENU_Y = { Single: 226, Coop: 256, DeathMatch: 286 };
 
 const browser = ELECTRON ? undefined : await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
-const report = { url: PACKAGED ? 'packaged release/win-unpacked app://game/index.html' : ELECTRON ? 'electron app://game/index.html (generated/qa-dist)' : URL, modes: {} };
+const report = { url: PACKAGED ? 'packaged release/win-unpacked app://game/index.html' : ELECTRON ? 'electron app://game/index.html (dist)' : URL, modes: {} };
 async function openPage() {
   if (!ELECTRON) {
     const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
     return { page, close: () => page.close(), minimized: async () => false };
   }
-  const noThrottle = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
+  const noThrottle = ['--boxhead-hidden', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
   const app = PACKAGED ? await _electron.launch({
     executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'), cwd: ROOT, timeout: 60000,
     args: noThrottle,
@@ -47,8 +47,8 @@ async function openPage() {
     // keep rAF running when the window is covered by other windows: Chromium's native Windows occlusion tracking
     // otherwise drops the requestAnimationFrame rate to ~1 Hz for an occluded window (observed: 1 EF/s, 50 EF/s once
     // in front) — a desktop/test-environment effect, the game's own frame cost is < 1 ms
-    args: ['.', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'],
-    env: { ...process.env, BOXHEAD_DIST_DIR: join(ROOT, 'generated/qa-dist'), BOXHEAD_USER_DATA: join(OUT, 'electron-portable') },
+    args: ['.', ...noThrottle],
+    env: { ...process.env, BOXHEAD_DIST_DIR: join(ROOT, 'dist'), BOXHEAD_USER_DATA: join(OUT, 'electron-portable') },
   });
   const page = await app.firstWindow();
   // a minimized window gets no requestAnimationFrame (the game loop stalls): such a run is inconclusive, not a failure
