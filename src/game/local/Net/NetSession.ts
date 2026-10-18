@@ -428,7 +428,7 @@ export class NetSession {
     }
     this.applyPlayer(this.role, mine, t);
     this.applyPlayer((1 - this.role) as LanRole, remoteBits, t);
-    this.tickMeta.set(t, { remoteBits, predicted });
+    if (this.rollback) this.tickMeta.set(t, { remoteBits, predicted });
     this.stall(undefined);
     return predicted ? 'predicted' : 'confirmed';
   }
@@ -531,6 +531,11 @@ export class NetSession {
     const prune = t - (this.rollback ? ROLLBACK_WINDOW_TICKS + this.inputDelay + 3 : this.inputDelay + 3);
     for (const k of this.localFrames.keys()) if (k < prune) this.localFrames.delete(k);
     for (const k of this.remoteFrames.keys()) if (k < prune) this.remoteFrames.delete(k);
+    // TCP input lockstep bounds peer skew by D. Retain two checksum intervals (and the rollback window)
+    // for late comparisons, rather than retaining every checksum for the lifetime of a long session.
+    const sumPrune = t - Math.max(2 * LAN_CHECKSUM_EVERY, ROLLBACK_WINDOW_TICKS + this.inputDelay + 3);
+    for (const k of this.ourSums.keys()) if (k < sumPrune) this.ourSums.delete(k);
+    for (const k of this.remoteSums.keys()) if (k < sumPrune) this.remoteSums.delete(k);
     if (this.rollback) {
       const metaPrune = this.confirmTick - (ROLLBACK_WINDOW_TICKS + 2);
       for (const k of this.tickMeta.keys()) if (k < metaPrune) this.tickMeta.delete(k);
@@ -678,6 +683,12 @@ export class NetSession {
     if (active === this) active = null;
     this.phase = 'ended';
     this.world = undefined;
+    this.localFrames.clear();
+    this.remoteFrames.clear();
+    this.ourSums.clear();
+    this.remoteSums.clear();
+    resetRollback(this);
+    this.snapCtx = undefined;
     if (this.savedCfg) {
       const C = World.Map.CMap_Cell as any;
       C.mNavBudgetMode = this.prevNavBudget;

@@ -590,6 +590,27 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     B.session.dispose();
   });
 
+  it('long lockstep sessions keep bounded checksums and release transient bookkeeping', () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    const w = B.game.world();
+    for (let n = 0; n < 600; n++) {
+      const t = B.session.tickIndex(w);
+      B.session.onNetMessage({ t: 'in', tick: t, bits: 0 });
+      expect(B.session.beginTick(w)).toBe('confirmed');
+      w.mTick++;
+      B.session.afterTick(w);
+      const msg = B.sent.at(-1);
+      if (msg?.sum) B.session.onNetMessage({ t: 'in', tick: msg.tick, bits: 0, sum: msg.sum });
+    }
+    expect(B.session.tickMeta.size).toBe(0); // rollback is disabled for this session
+    expect((B.session as any).ourSums.size).toBeLessThanOrEqual(3);
+    expect((B.session as any).remoteSums.size).toBeLessThanOrEqual(3);
+    B.session.dispose();
+    expect((B.session as any).localFrames.size).toBe(0);
+    expect((B.session as any).remoteFrames.size).toBe(0);
+    expect(B.session.snapCtx).toBeUndefined();
+  });
+
   it('sampling both keyboard layouts consumes both press latches', () => {
     const B = bootNetPeer('Coop', 'ROOM_Single_0001');
     const input = CMain.mInput;
