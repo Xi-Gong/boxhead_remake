@@ -122,7 +122,14 @@ try {
   await C.page.locator('input[type=text]').click();await C.page.keyboard.type('127.0.0.1');
   await c.click(...JOIN_BTN);
   if (!(await h.waitFor(() => !!window.__game?.lan?.()?.peerName, null, 20000))) throw new Error('host never saw the client join');
+  // With delayed handshakes the host can observe JOIN before the client's room controls are visible.
+  if (!(await c.waitFor(() => window.__game?.lan?.()?.bridge==='lobby'&&window.__game.main().mcScreen?.readyBtn?._visible===true, null, 20000))) throw new Error('client READY control never became visible');
   await c.click(...READY_BTN);
+  if (!(await c.waitFor(() => window.__game?.lan?.()?.ready===true, null, 1500))) {
+    step('offscreen READY click did not toggle; retrying once');
+    await c.click(...READY_BTN);
+    if (!(await c.waitFor(() => window.__game?.lan?.()?.ready===true, null, 1500))) throw new Error('client READY click did not toggle');
+  }
   if (!(await h.waitFor(() => window.__game?.lan?.()?.ready === true, null, 20000))) throw new Error('host never saw READY');
   // Let the heartbeat measure the delayed link for a few seconds before START (computeInputDelay samples it).
   await H.page.waitForTimeout(4000);
