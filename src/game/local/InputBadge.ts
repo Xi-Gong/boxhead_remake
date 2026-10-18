@@ -6,12 +6,10 @@
 // visual baselines, and only the pad chips catch clicks - the strip itself is pointer-transparent.
 import type { GamepadHandle } from './Gamepad.ts';
 
-const CHIP = 'padding:3px 9px;border:1px solid #9c9c9c;border-radius:3px;background:#181818;color:#fff;'
-  + 'font:inherit;white-space:nowrap';
-const CHIP_OFF = 'padding:3px 9px;border:1px solid #3a3a3a;border-radius:3px;background:#141414;color:#6e6e6e;'
-  + 'font:inherit;white-space:nowrap';
-const CHIP_ACTIVE = 'padding:3px 9px;border:1px solid #00e000;border-radius:3px;background:#181818;color:#fff;'
-  + 'box-shadow:0 0 6px rgba(0,224,0,0.8);font:inherit;white-space:nowrap';
+const CHIP = 'padding:2px 6px;border:1px solid #aaa;border-radius:8px;background:var(--badge-bg);color:var(--badge-ink);'
+  + 'font:inherit;line-height:12px;white-space:nowrap';
+const CHIP_OFF = CHIP + ';opacity:.45';
+const CHIP_ACTIVE = CHIP + ';border-color:#ef1304';
 /** How long a device stays "active" after its last event, and how long the strip stays fully opaque. */
 const ACTIVE_MS = 1500;
 const VISIBLE_MS = 4000;
@@ -22,6 +20,7 @@ let chips: HTMLButtonElement[] = [];
 let hintEl: HTMLDivElement | undefined;
 let timer: number | undefined;
 let lastKey = '';
+let inGame = false;
 
 export function installInputBadge(h: GamepadHandle): void {
   disposeInputBadge();
@@ -29,8 +28,9 @@ export function installInputBadge(h: GamepadHandle): void {
   if (typeof document === 'undefined') return;
   const stage = document.getElementById('stage') ?? document.body;
   el = document.createElement('div');
-  el.style.cssText = 'position:absolute;left:10px;bottom:10px;z-index:8;display:flex;gap:6px;align-items:center;'
-    + 'font:bold 11px Calibri,sans-serif;user-select:none;pointer-events:none;transition:opacity .4s';
+  el.style.cssText = 'position:absolute;left:10px;bottom:4px;z-index:8;display:flex;gap:6px;align-items:center;'
+    + 'font:bold 10px Calibri,sans-serif;user-select:none;pointer-events:none;transition:opacity .4s;'
+    + '--badge-bg:rgba(245,245,243,.92);--badge-ink:#333';
   stage.appendChild(el);
   chips = [];
   const mk = (label: string, click?: () => void): void => {
@@ -65,7 +65,7 @@ function draw(): void {
   const latest = Math.max(s.keyboardActive, s.pads[0].lastActive, s.pads[1].lastActive);
   // Only touch the DOM when something actually changed (key = the whole visible state).
   const key = JSON.stringify([s.pads.map((p) => [p.present, p.id, p.player, now - p.lastActive < ACTIVE_MS]),
-    now - s.keyboardActive < ACTIVE_MS, now - latest < VISIBLE_MS, s.assign]);
+    now - s.keyboardActive < ACTIVE_MS, now - latest < VISIBLE_MS, s.assign, inGame]);
   if (key === lastKey) return;
   lastKey = key;
   el.style.opacity = now - latest < VISIBLE_MS || latest === 0 ? '1' : '0.35';
@@ -79,7 +79,15 @@ function draw(): void {
     chip.style.cssText = p.present && now - p.lastActive < ACTIVE_MS ? CHIP_ACTIVE : p.present ? CHIP : CHIP_OFF;
     chip.style.pointerEvents = 'auto'; // cssText replaces every inline property, including the click opt-in.
   }
-  if (hintEl) hintEl.textContent = s.pads[0].present || s.pads[1].present ? '' : 'press any button on your gamepad to connect it';
+  if (hintEl) hintEl.textContent = inGame || s.pads[0].present || s.pads[1].present ? '' : 'press any button on your gamepad to connect it';
+}
+
+/** Small neutral menu pills become translucent dark chips over the playing field. */
+export function setBadgeInGame(playing: boolean): void {
+  inGame = playing;
+  el?.style.setProperty('--badge-bg', playing ? 'rgba(0,0,0,.65)' : 'rgba(245,245,243,.92)');
+  el?.style.setProperty('--badge-ink', playing ? '#fff' : '#333');
+  draw();
 }
 
 /** The LAN room view shows this line so both players can confirm their controllers before starting. */
@@ -104,4 +112,5 @@ export function disposeInputBadge(): void {
   hintEl = undefined;
   handle = undefined;
   lastKey = '';
+  inGame = false;
 }

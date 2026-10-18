@@ -24,7 +24,7 @@ import { CThing_Object_WeaponCrate, captureCratePayload, crateDropPosition } fro
 import { armStartWave, consumeArmedWaveOn, getRunStartWave, getSelectedStartWave, recordRunStartWave, resetSelectedStartWave } from './local/StartWave.ts';
 import { recordWaveReached } from './local/WaveUnlock.ts';
 import { buildStartWaveCycler } from './local/StartWaveUi.ts';
-import { setBadgeHidden } from './local/InputBadge.ts';
+import { setBadgeHidden, setBadgeInGame } from './local/InputBadge.ts';
 import { menuTextItem, text } from './local/UiStyle.ts';
 import { installViewport } from './local/Viewport.ts';
 import { desktop } from '../engine/platform/desktop.ts';
@@ -363,6 +363,7 @@ export function applyScope(): void {
     // v0.2.5: the instructions page's footer owns the bottom strip - hide the input badge there (reading page; the
     // badge comes back on every other screen).
     setBadgeHidden(nState === 'State_Instructions');
+    setBadgeInGame(nState === 'State_RunWorld');
     setStatePrev.call(this, nState);
   };
 

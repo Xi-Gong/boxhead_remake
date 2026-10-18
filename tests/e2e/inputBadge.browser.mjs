@@ -15,11 +15,10 @@ try {
   const before = await pad.textContent();
   await pad.click();
   await g.page.waitForTimeout(500);
-  console.log('badge', await pad.textContent(), await g.expr('P.World.CWorld.mGameMode'));
+  assert.ok((await pad.boundingBox()).height <= 18,'compact chips clear the setup footer');
   await g.page.waitForFunction(before => [...document.querySelectorAll('button')].some(b => b.textContent.startsWith('PAD 1') && b.textContent !== before), before);
   await pad.click();
   await g.page.waitForTimeout(500);
-  console.log('badge', await pad.textContent(), await g.expr('P.World.CWorld.mGameMode'));
   await g.page.waitForFunction(before => [...document.querySelectorAll('button')].some(b => b.textContent === before), before);
   assert.deepEqual(await g.scriptErrors(), []);
   await g.close();

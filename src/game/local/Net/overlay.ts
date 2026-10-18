@@ -20,12 +20,12 @@ export function stallStripDue(stallSince: number | undefined, now: number): bool
   return stallSince !== undefined && now - stallSince >= STALL_GRACE_MS;
 }
 
-const STYLE_NORMAL = 'position:absolute;left:50%;top:8px;transform:translateX(-50%);padding:6px 18px;'
-  + 'background:rgba(0,0,0,0.72);border:1px solid #9c9c9c;color:#fff;font:bold 15px Calibri,sans-serif;'
-  + 'text-align:center;pointer-events:none;z-index:8;display:none;white-space:pre';
-const STYLE_PROMINENT = 'position:absolute;left:50%;top:10%;transform:translateX(-50%);padding:12px 34px;'
-  + 'background:rgba(64,0,0,0.85);border:2px solid #ef1304;color:#fff;font:bold 22px Calibri,sans-serif;'
-  + 'text-align:center;pointer-events:none;z-index:8;display:none;white-space:pre';
+const STYLE_NORMAL = 'position:absolute;left:50%;top:max(76px,14%);transform:translateX(-50%);padding:6px 18px;'
+  + 'background:rgba(0,0,0,0.72);border:1px solid #aaa;border-radius:12px;color:#fff;font:bold 15px Calibri,sans-serif;'
+  + 'max-width:85%;box-sizing:border-box;text-align:center;pointer-events:none;z-index:8;display:none;white-space:pre-wrap';
+const STYLE_PROMINENT = 'position:absolute;left:50%;top:max(90px,16%);transform:translateX(-50%);padding:10px 22px;'
+  + 'background:rgba(40,0,0,0.85);border:1px solid #ef1304;border-radius:12px;color:#fff;font:bold 22px Calibri,sans-serif;'
+  + 'max-width:85%;box-sizing:border-box;text-align:center;pointer-events:none;z-index:8;display:none;white-space:pre-wrap';
 
 function ensure(): boolean {
   if (typeof document === 'undefined') return false;
@@ -35,7 +35,7 @@ function ensure(): boolean {
     (document.getElementById('stage') ?? document.body).appendChild(statusEl);
     pingEl = document.createElement('div');
     pingEl.style.cssText = 'position:absolute;right:10px;top:8px;padding:2px 10px;background:rgba(0,0,0,0.55);'
-      + 'color:#9f9;font:12px Consolas,monospace;pointer-events:none;z-index:8;display:none';
+      + 'border-radius:8px;color:#fff;font:12px Calibri,sans-serif;pointer-events:none;z-index:8;display:none';
     (document.getElementById('stage') ?? document.body).appendChild(pingEl);
   }
   return true;
