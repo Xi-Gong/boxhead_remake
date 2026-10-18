@@ -495,6 +495,9 @@ function coverageSegments(t: number, size: number): CoverageSeg[] {
 let nextId = 1;
 // Repeated immutable sprites often have transparent padding. Keep only eligibility, never pixel copies.
 const clearBorders = new WeakMap<BitmapData, {version: number; uses: number; clear?: boolean}>();
+// Full palette operations on alpha-only masks already visit their pixels during loading. Keep a
+// conservative 16-device-pixel opacity grid, without an extra GPU readback during explosion commits.
+const opaqueMasks = new WeakMap<BitmapData, {version: number; columns: number; opaque: Uint8Array}>();
 
 export class BitmapData {
   /** Global render scale for newly created bitmaps (1 or 2). Set once at boot from settings. */
@@ -669,6 +672,16 @@ export class BitmapData {
     const w = x1 - x0, h = y1 - y0;
     const sx = sr.x + (x0 - dx), sy = sr.y + (y0 - dy);
     const mx = ax + (x0 - dx), my = ay + (y0 - dy);
+    const opacity = opaqueMasks.get(mask);
+    if (src !== this && mask !== this && opacity?.version === mask.version && (src.scale === 1 || src.scale === 2)
+      && (this.scale === 1 || this.scale === 2) && (mask.scale === 1 || mask.scale === 2)) {
+      const area = mask.devRect(mx, my, w, h);
+      let full = true;
+      for (let y = Math.floor(area.y / 16); full && y <= Math.floor((area.y + area.h - 1) / 16); y++)
+        for (let x = Math.floor(area.x / 16); x <= Math.floor((area.x + area.w - 1) / 16); x++)
+          if (!opacity.opaque[y * opacity.columns + x]) { full = false; break; }
+      if (full) { this.copyPlain(src, {x: sx, y: sy, w, h}, x0, y0, merge); return; }
+    }
     const d = this.devRect(x0, y0, w, h);
     const blend = merge || !this.transparent;
     // Compose source × mask alpha in a scratch at destination resolution.
@@ -956,7 +969,7 @@ export class BitmapData {
 
   /** Process a device-space region in chunks: read (with padding), transform, then write all results. */
   private processRegion(src: BitmapData, srcDev: DRect, destDev: DRect, pad: { left: number; top: number; right: number; bottom: number },
-    fn: (px: Pixels) => Pixels): void {
+    fn: (px: Pixels) => Pixels, observe?: (img:ImageData,x:number,y:number)=>void): void {
     const CH = 2048;
     const results: { img: ImageData; x: number; y: number }[] = [];
     for (let oy = 0; oy < destDev.h; oy += CH) {
@@ -985,6 +998,7 @@ export class BitmapData {
         }
         unpremultiplyInPlace(img.data);
         if (!this.transparent) for (let i = 3; i < img.data.length; i += 4) img.data[i] = 255;
+        observe?.(img,destDev.x+ox,destDev.y+oy);
         results.push({ img, x: destDev.x + ox, y: destDev.y + oy });
       }
     }
@@ -1210,8 +1224,21 @@ export class BitmapData {
       tmp.dispose();
       return;
     }
-    this.processRegion(sourceBitmap, srcDev, this.devRect(c.dx, c.dy, c.w, c.h), { left: 0, top: 0, right: 0, bottom: 0 }, map);
+    const grid=this.alphaOnly&&c.dx===0&&c.dy===0&&c.w===this._w&&c.h===this._h
+      ?{version:0,columns:Math.ceil(this.deviceWidth/16),opaque:new Uint8Array(Math.ceil(this.deviceWidth/16)*Math.ceil(this.deviceHeight/16)).fill(1)}:undefined;
+    const observe=grid?(img:ImageData,x:number,y:number):void=>{
+      // processRegion's 2048px chunks align to the 16px blocks; edge blocks cover only live pixels.
+      for(let by=0;by<img.height;by+=16)for(let bx=0;bx<img.width;bx+=16){
+        const index=Math.floor((y+by)/16)*grid.columns+Math.floor((x+bx)/16);
+        let full=true;
+        for(let py=by;full&&py<Math.min(by+16,img.height);py++)for(let px=bx;px<Math.min(bx+16,img.width);px++)
+          if(img.data[(py*img.width+px)*4+3]!==255){full=false;break;}
+        if(!full)grid.opaque[index]=0;
+      }
+    }:undefined;
+    this.processRegion(sourceBitmap, srcDev, this.devRect(c.dx, c.dy, c.w, c.h), { left: 0, top: 0, right: 0, bottom: 0 }, map,observe);
     this.touch();
+    if(grid){grid.version=this.version;opaqueMasks.set(this,grid);}
   }
 
   // ------------------------------------------------------------------------------------------------ colorTransform
