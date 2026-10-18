@@ -12,6 +12,7 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
+import { startMetrics } from '../e2e/perf-metrics.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = join(ROOT, 'generated/reports/qa');
@@ -31,13 +32,15 @@ const shot = async (name, page) => { const p = join(OUT, `net_${name}.png`); awa
 
 async function launchApp(dirName) {
   const app = await electron.launch({
-    executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
+    executablePath: process.env.BOXHEAD_QA_EXE ?? join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
     args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
   const page = await app.firstWindow();
+  await page.addInitScript(() => { Math.random = () => 0.424242; });
+  await page.reload();
   await app.evaluate(({ BrowserWindow }, [x, y]) => {
     const w = BrowserWindow.getAllWindows()[0];
     w.setPosition(x, y);
@@ -108,15 +111,16 @@ function helpers(page) {
   return { state, waitFor, waitScreen, click, worldInfo, overlayText, pingText };
 }
 
-const LAN_BTN = [320, 346];
+const legacy = process.env.BOXHEAD_QA_LEGACY_UI === '1';
+const LAN_BTN = [320, legacy ? 392.4 : 346];
 // v0.2.2 lobby (the options-window panel, centred on 320/240) and setup screen button centres (640x480 coords).
 const CREATE_ROOM_BTN = [320 - 117, 240 - 6];
-const JOIN_BTN = [520, 350];
-const READY_BTN = [210, 330]; // client, room view
-const START_ROOM_BTN = [210, 330]; // host, room view (gated on player 2 being ready)
+const JOIN_BTN = legacy ? [303, 330] : [520, 350];
+const READY_BTN = [210, legacy ? 340 : 330]; // client, room view
+const START_ROOM_BTN = READY_BTN; // host, gated on player 2 being ready
 const RESUME_BTN = [320, 240 + 36]; // host, room view (after a finished game with a checkpoint)
 const P2_CHAR_RIGHT = [160, 276]; // the P2 character card's > arrow on the setup screen
-const START_GAME_BTN = [320, 444]; // setup screen
+const START_GAME_BTN = [320, legacy ? 452 : 444]; // setup screen
 
 const lanState = async (name, page) => step(`[lan ${name}] ${JSON.stringify(await page.evaluate(() => window.__game?.lan?.()))}`);
 
@@ -209,6 +213,7 @@ try {
   }
 
   // ---- lockstep play: 12 s of keys on both machines --------------------------------------
+  const steadyHost = await startMetrics(H.page),steadyClient = await startMetrics(C.page);
   const t0 = Date.now();
   let toggle = false;
   while (Date.now() - t0 < 12000) {
@@ -226,6 +231,7 @@ try {
   await C.page.keyboard.up('Space');
   const wi1 = await h.worldInfo();
   const wc1 = await c.worldInfo();
+  report.performance = { steady:{host:await steadyHost(),client:await steadyClient()} };
   step(`after play: host=${JSON.stringify(wi1)} client=${JSON.stringify(wc1)}`);
   if (wi1.tick <= wi0.tick) {
     await lanState('host', H.page);
@@ -261,6 +267,7 @@ try {
   step(`forced checkpoint at wave ${wi2.level}, host tick ${wi2.tick} (client keeps wave 1 until the resume)`);
 
   // ---- kill the client: the host must freeze with a TICKING countdown ----------------------
+  const reconnectHost = await startMetrics(H.page);
   step('killing the client process');
   await C.app.close();
   // Boot the replacement client IN THE BACKGROUND right away: the reconnect window is 30 s and the packaged exe
@@ -334,6 +341,7 @@ try {
   if (wi4.score !== wc4.score) throw new Error(`post-resume score mismatch ${wi4.score} vs ${wc4.score}`);
   if (wi4.score !== wc4.score) throw new Error(`post-resume score mismatch ${wi4.score} vs ${wc4.score}`);
   step(`post-resume lockstep ok: host tick ${wi4.tick} = client tick ${wc4.tick}, score ${wi4.score}`);
+  report.performance.reconnect = { host:await reconnectHost() };
 
   // ---- concede: host pause + QUIT ends the run on both peers (regular end screens) --------
   await H.page.keyboard.press('KeyP');

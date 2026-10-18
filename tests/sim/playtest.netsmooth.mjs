@@ -17,6 +17,7 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
+import { startMetrics } from '../e2e/perf-metrics.mjs';
 
 const DELAY_MS = Number(process.argv[2] ?? 30);
 if (!Number.isFinite(DELAY_MS) || DELAY_MS <= 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>0]');
@@ -38,13 +39,15 @@ const shot = async (name, page) => { const p = join(OUT, `net_smooth_${name}.png
 
 async function launchApp(dirName) {
   const app = await electron.launch({
-    executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
+    executablePath: process.env.BOXHEAD_QA_EXE ?? join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
     args: [...NO_THROTTLE, '--boxhead-multi', `--boxhead-net-delay=${DELAY_MS}`, `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
   const page = await app.firstWindow();
+  await page.addInitScript(() => { Math.random = () => 0.424242; });
+  await page.reload();
   await app.evaluate(({ BrowserWindow }, [x, y]) => {
     const w = BrowserWindow.getAllWindows()[0];
     w.setPosition(x, y);
@@ -89,12 +92,13 @@ function helpers(page) {
   return { waitFor, waitScreen, click, worldInfo, lan };
 }
 
-const LAN_BTN = [320, 346];
+const legacy = process.env.BOXHEAD_QA_LEGACY_UI === '1';
+const LAN_BTN = [320, legacy ? 392.4 : 346];
 const CREATE_ROOM_BTN = [320 - 117, 240 - 6]; // v0.2.2 panel layout
-const JOIN_BTN = [520, 350];
-const READY_BTN = [210, 330];
-const START_ROOM_BTN = [210, 330];
-const START_GAME_BTN = [320, 444];
+const JOIN_BTN = legacy ? [303, 330] : [520, 350];
+const READY_BTN = [210, legacy ? 340 : 330];
+const START_ROOM_BTN = READY_BTN;
+const START_GAME_BTN = [320, legacy ? 452 : 444];
 
 let H, C;
 try {
@@ -111,7 +115,7 @@ try {
   }
   await h.click(...CREATE_ROOM_BTN);
   if (!(await h.waitFor(() => window.__game?.lan?.()?.bridge === 'hosting', null, 20000))) throw new Error('host: CREATE ROOM did not host');
-  await C.page.fill('input[type=text]', '127.0.0.1');
+  await C.page.locator('input[type=text]').click();await C.page.keyboard.type('127.0.0.1');
   await c.click(...JOIN_BTN);
   if (!(await h.waitFor(() => !!window.__game?.lan?.()?.peerName, null, 20000))) throw new Error('host never saw the client join');
   await c.click(...READY_BTN);
@@ -143,6 +147,7 @@ try {
 
   // (2) the smoothness window: constant steering on both machines; sample the observability fields.
   const WINDOW_MS = 20000;
+  const finishHost = await startMetrics(H.page),finishClient = await startMetrics(C.page);
   const t0 = Date.now();
   let toggle = false;
   const samples = [];
@@ -166,6 +171,8 @@ try {
     await C.page.keyboard.up('Space');
   }
   const last = samples[samples.length - 1];
+  report.performance = { host:await finishHost(),client:await finishClient() };
+  report.samples = samples;
   const mid = samples[Math.floor(samples.length / 2)];
   const stallsH = last.host.stallCount, stallsC = last.client.stallCount;
   const lateStallsH = stallsH - mid.host.stallCount, lateStallsC = stallsC - mid.client.stallCount;

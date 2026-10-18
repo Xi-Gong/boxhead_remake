@@ -25,12 +25,16 @@ const scale = Number(arg('scale', '2'));
 const profilePhase = arg('profile', '');
 const headed = process.argv.includes('--headed');
 const useElectron = process.argv.includes('--electron');
+const releaseProbe = process.argv.includes('--release');
+const seed = Number(arg('seed', '182026')) >>> 0;
 
 interface Ev { t: number; d: number; s?: string; k?: string }
 interface PerfLog { ef: Ev[]; render: Ev[]; xsi: Ev[]; draw: Ev[]; applyFilter: Ev[]; marks: Ev[] }
 
 /** Installed before any page script: times Player.enterFrame/render and a few engine/game entry points. */
-function instrument(): void {
+function instrument(seed: number): void {
+  // The engine's initial RNG state is derived once from Math.random; use the same state in both builds.
+  Math.random = () => seed / 0xffffffff;
   const w = window as unknown as { __perf: PerfLog; __game?: any };
   const log: PerfLog = { ef: [], render: [], xsi: [], draw: [], applyFilter: [], marks: [] };
   w.__perf = log;
@@ -84,7 +88,10 @@ const now = (page: Page): Promise<number> => page.evaluate(() => performance.now
 
 interface PhaseStat {
   phase: string; frames: number; efMax: number; efMean: number; renderMax: number; renderMean: number;
-  frameMax: number; frameP95: number; efPerSec: number; xsiMs: number; xsiCalls: number; maxEfState?: string;
+  frameMax: number; frameP50: number; frameP95: number; efPerSec: number; xsiMs: number; xsiCalls: number; maxEfState?: string;
+  taskMs?: number; scriptMs?: number; heapBefore?: number; heapAfter?: number; nodes?: number;
+  world?: { tick: number; loaded: boolean; paused: boolean; things: number; zombies: number };
+  resources?: { objects: number; filterCaches: number; filterPixels: number; fontEntries: number; disposedBitmapRefs: number; domInputs: number };
 }
 
 function stats(log: PerfLog, phase: string, t0: number, t1: number): PhaseStat {
@@ -106,7 +113,8 @@ function stats(log: PerfLog, phase: string, t0: number, t1: number): PhaseStat {
   const worst = ef.reduce<Ev | null>((m, e) => (!m || e.d > m.d ? e : m), null);
   return {
     phase, frames: rd.length, efMax: max(efD), efMean: mean(efD), renderMax: max(rd.map((r) => r.d)), renderMean: mean(rd.map((r) => r.d)),
-    frameMax: max(frames), frameP95: sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]! : 0,
+    frameMax: max(frames), frameP50: sorted.length ? sorted[Math.floor(sorted.length * 0.5)]! : 0,
+    frameP95: sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]! : 0,
     efPerSec: t1 > t0 ? (ef.length * 1000) / (t1 - t0) : 0,
     xsiMs: xs.reduce((s, e) => s + e.d, 0), xsiCalls: xs.length, maxEfState: worst?.s,
   };
@@ -119,36 +127,50 @@ async function main(): Promise<void> {
   const query = `?scale=${scale}${backend !== 'default' ? `&filterBackend=${backend}` : ''}`;
   if (useElectron) {
     const electronPath = createRequire(import.meta.url)('electron') as string;
-    const app = await _electron.launch({ executablePath: electronPath, args: ['.'], cwd: root, timeout: 30_000,
-      env: { ...process.env, BOXHEAD_START_PAGE: `index.html${query}` } as Record<string, string> });
+    const app = await _electron.launch({ executablePath: electronPath, args: ['.', '--boxhead-hidden', '--disable-features=CalculateNativeWinOcclusion'], cwd: root, timeout: 30_000,
+      env: { ...process.env, BOXHEAD_USER_DATA: resolve(root, 'generated/reports/perf/user-data'), BOXHEAD_START_PAGE: `index.html${query}` } as Record<string, string> });
     page = await app.firstWindow();
-    await page.addInitScript(instrument);
+    await page.addInitScript(instrument, seed);
     await page.reload();
     close = async () => { await app.close(); };
   } else {
+    if (!process.env.GAME_URL) {
     server = await createServer({ root, configFile: resolve(root, 'vite.config.ts'), logLevel: 'warn',
       server: { port: 5198, strictPort: false, host: '127.0.0.1' } });
     await server.listen();
-    const base = server.resolvedUrls?.local[0] ?? 'http://127.0.0.1:5198/';
+    }
+    const base = process.env.GAME_URL ?? server?.resolvedUrls?.local[0] ?? 'http://127.0.0.1:5198/';
     const browser = await chromium.launch({ channel: 'chrome', headless: !headed,
       args: ['--autoplay-policy=no-user-gesture-required', '--enable-gpu', '--ignore-gpu-blocklist'] });
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 960 }, deviceScaleFactor: 1 });
     page = await ctx.newPage();
-    await page.addInitScript(instrument);
+    await page.addInitScript(instrument, seed);
     await page.goto(`${base}index.html${query}`);
-    close = async () => { await browser.close(); await server!.close(); };
+    close = async () => { await browser.close(); await server?.close(); };
   }
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   const cdp = useElectron ? null : await page.context().newCDPSession(page);
   const phases: PhaseStat[] = [];
+  const gc: { name: string; dur?: number }[] = [];
+  if (cdp) {
+    await cdp.send('Performance.enable');
+    if (releaseProbe) {
+      cdp.on('Tracing.dataCollected', ({ value }) => { for (const e of value) if (e.ph === 'X' && (e.name === 'MinorGC' || e.name === 'MajorGC')) gc.push({ name: e.name, dur: Number(e.dur) }); });
+      await cdp.send('Tracing.start', { categories: 'devtools.timeline,v8', transferMode: 'ReportEvents' });
+      await cdp.send('HeapProfiler.startSampling', { samplingInterval: 32768, includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true });
+    }
+  }
+  const metrics = async (): Promise<Record<string, number>> => cdp
+    ? Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map((m) => [m.name, m.value])) : {};
   let profileOut: string | null = null;
 
   const phase = async (name: string, run: () => Promise<void>): Promise<void> => {
     const prof = profilePhase === name && cdp;
     if (prof) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 200 }); await cdp.send('Profiler.start'); }
     const t0 = await now(page);
+    const before = await metrics();
     await run();
     const t1 = await now(page);
     if (prof) {
@@ -157,6 +179,27 @@ async function main(): Promise<void> {
     }
     const log = await page.evaluate(() => (window as unknown as { __perf: PerfLog }).__perf);
     const s = stats(log, name, t0, t1);
+    const after = await metrics();
+    s.taskMs = ((after.TaskDuration ?? 0) - (before.TaskDuration ?? 0)) * 1000;
+    s.scriptMs = ((after.ScriptDuration ?? 0) - (before.ScriptDuration ?? 0)) * 1000;
+    s.heapBefore = before.JSHeapUsedSize; s.heapAfter = after.JSHeapUsedSize; s.nodes = after.Nodes;
+    s.world = await page.evaluate(() => {
+      const w = (window as any).__game?.main?.()?.mcWorld;
+      if (!w?.mThing_Collection) return undefined;
+      const things = Object.values(w.mThing_Collection.mThings) as any[];
+      return { tick:w.mTick,loaded:w.mLoaded,paused:w.mPaused,things:things.length,zombies:things.filter(t=>t?._CLASSID_==='CThing_Creature_Zombie').length };
+    });
+    s.resources = await page.evaluate(() => {
+      const stack = [(window as any).__game.player.root];
+      let objects=0,filterCaches=0,filterPixels=0,fontEntries=0,disposedBitmapRefs=0;
+      while(stack.length) {
+        const o=stack.pop();objects++;if(o.$list)stack.push(...o.$list);
+        const c=o.$fcache;if(c?.valid && c.canvas){filterCaches++;filterPixels+=c.canvas.width*c.canvas.height;}
+        fontEntries+=o.$fontCache?.size??0;if(o.$bmd?.disposed)disposedBitmapRefs++;
+      }
+      return {objects,filterCaches,filterPixels,fontEntries,disposedBitmapRefs,domInputs:document.querySelectorAll('input').length};
+    });
+    if (s.resources.disposedBitmapRefs) throw new Error(`disposed BitmapData still attached during ${name}`);
     phases.push(s);
     console.log(`${name.padEnd(22)} frames ${String(s.frames).padStart(4)}  EF max ${s.efMax.toFixed(1).padStart(7)} (${s.maxEfState ?? ''}) mean ${s.efMean.toFixed(2).padStart(6)}  render max ${s.renderMax.toFixed(1).padStart(6)} mean ${s.renderMean.toFixed(2).padStart(5)}  frame p95 ${s.frameP95.toFixed(1).padStart(6)} max ${s.frameMax.toFixed(1).padStart(7)}  EF/s ${s.efPerSec.toFixed(1)}  xsi ${s.xsiMs.toFixed(0)}ms/${s.xsiCalls}`);
   };
@@ -222,9 +265,19 @@ async function main(): Promise<void> {
     await phase('main->select2', () => go('State_SelectWorld_Single'));
     await phase('room load', async () => {
       await page.evaluate(() => { (window as any).__game.main().mcScreen.LoadLevel(0); });
-      await waitFor(page, "window.__game?.state?.() === 'State_RunWorld'", 120_000);
+      await waitFor(page, "window.__game?.state?.() === 'State_RunWorld' && window.__game.main().mcWorld.mLoaded", 120_000);
     });
     await phase('in game', () => sleep(3000));
+    if (releaseProbe) {
+      const spawned = await page.evaluate(() => { const g = (window as any).__game;g.__setInfiniteLife(true);let count=0;for(let n=0;n<60;n++)if(g.main().mcWorld.Spawn_Zombie())count++;return count; });
+      if (spawned !== 60) throw new Error(`high-load fixture spawned only ${spawned}/60 zombies`);
+      await page.keyboard.down('Space');await sleep(1000);
+      await phase('high load (60 spawns)', () => sleep(4000));
+      await page.keyboard.up('Space');await page.keyboard.press('p');
+      await waitFor(page, 'window.__game.main().mcWorld.mPaused === true');await sleep(500);
+      await phase('paused', () => sleep(2000));
+      await page.keyboard.press('p');await waitFor(page, 'window.__game.main().mcWorld.mPaused === false');
+    }
     const log = await page.evaluate(() => (window as unknown as { __perf: PerfLog }).__perf);
     const xsiTotal = log.xsi.reduce((s, e) => s + e.d, 0);
     const xsiApply = log.applyFilter.filter((e) => e.k?.endsWith(':glow')).reduce((s, e) => s + e.d, 0);
@@ -234,8 +287,8 @@ async function main(): Promise<void> {
     if (xs.length) console.log(`XSI per call: median ${pct(0.5).toFixed(2)} p90 ${pct(0.9).toFixed(2)} max ${pct(1).toFixed(1)} ms; span ${(log.xsi[log.xsi.length - 1]!.t - log.xsi[0]!.t).toFixed(0)} ms from first to last call`);
     const xsiDraw = log.draw.filter((d) => d.k?.includes('XSI_DI')).reduce((t, d) => t + d.d, 0);
     console.log(`XSI container BitmapData.draw total ${xsiDraw.toFixed(0)} ms`);
-    const fst = await page.evaluate(async () => (await import('/src/engine/swf/render/renderer.ts' as string)).filterStats).catch(() => null);
-    const gst = await page.evaluate(async () => (await import('/src/engine/flash/filters/gl.ts' as string)).glFilterStats).catch(() => null);
+    const fst = process.env.GAME_URL ? null : await page.evaluate(async () => (await import('/src/engine/swf/render/renderer.ts' as string)).filterStats).catch(() => null);
+    const gst = process.env.GAME_URL ? null : await page.evaluate(async () => (await import('/src/engine/flash/filters/gl.ts' as string)).glFilterStats).catch(() => null);
     console.log('renderer filterStats', JSON.stringify(fst), 'gl', JSON.stringify(gst));
     const draws = [...log.draw].sort((a, b) => b.d - a.d).slice(0, 8);
     console.log('slowest BitmapData.draw:', draws.map((d) => `${d.k} ${d.d.toFixed(1)}ms`).join(', '));
@@ -243,9 +296,20 @@ async function main(): Promise<void> {
     if (errors.length) console.log(`page errors (${errors.length}):\n  ${errors.slice(0, 10).join('\n  ')}`);
     const outDir = resolve(root, 'generated/reports/perf');
     mkdirSync(outDir, { recursive: true });
-    const file = resolve(outDir, `${backend}-${scale}x${useElectron ? '-electron' : ''}.json`);
-    writeFileSync(file, JSON.stringify({ backend, scale, electron: useElectron, gpu, phases, xsiTotal, xsiCalls: log.xsi.length, errors }, null, 2));
+    const file = resolve(process.env.PERF_OUT ?? resolve(outDir, `${backend}-${scale}x${useElectron ? '-electron' : ''}.json`));
+    let allocatedSampleBytes: number | undefined;
+    if (cdp && releaseProbe) {
+      const { profile } = await cdp.send('HeapProfiler.stopSampling');
+      const sum = (n: any): number => n.selfSize + n.children.reduce((s: number, c: any) => s + sum(c), 0);
+      allocatedSampleBytes = sum(profile.head);
+      const done = new Promise<void>((r) => cdp.once('Tracing.tracingComplete', () => r()));
+      await cdp.send('Tracing.end');await done;
+    }
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify({ backend, scale, seed, electron: useElectron, gpu, phases, xsiTotal, xsiCalls: log.xsi.length,
+      allocatedSampleBytes, gc: { count: gc.length, ms: gc.reduce((s,e)=>s+(e.dur ?? 0)/1000,0), events: gc }, errors }, null, 2));
     console.log(`report: ${file}  final state: ${await state()}`);
+    if (errors.length) throw new Error('performance probe reported page errors');
   } finally {
     await close();
   }
