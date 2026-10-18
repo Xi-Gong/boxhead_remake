@@ -53,6 +53,21 @@ try{
  });
  const shot=async name=>{const file=`${out}/${name}.png`;await g.shot(file,false);report.shots.push(file);};
  await g.page.waitForTimeout(750);await shot('initial-640x480');
+ // Geometry alone does not prove initial, identical score fields and their neighbours were painted.
+ const initial=PNG.sync.read(readFileSync(`${out}/initial-640x480.png`));
+ const darkPixels=(x,y,w,h)=>{
+  let count=0;
+  for(let py=y;py<y+h;py++)for(let px=x;px<x+w;px++){
+   const i=(py*initial.width+px)*4;
+   if(Math.max(initial.data[i],initial.data[i+1],initial.data[i+2])<100)count++;
+  }
+  return count;
+ };
+ report.initialTextPixels={};
+ for(const [name,x,y,w,h,min]of[['identity',425,7,34,19,20],['score',456,4,164,26,200],['level',425,28,78,16,20],['xp',507,28,113,16,20]]){
+  const count=darkPixels(x,y,w,h);report.initialTextPixels[name]=count;
+  assert(count>=min,`initial P2 ${name} must contain rendered text with both scores equal`);
+ }
  assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Wave._Zombies.text'),'10');
  assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Wave._Devils.text'),'0');
  await g.eval(()=>{window.__growthQA.action='kill';});
