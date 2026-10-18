@@ -66,6 +66,11 @@ npm run dev         # http://localhost:5173/
   original retry).
 - **Coop death weapon crate** — a fallen player drops their whole arsenal with live ammo; pickup restores the
   owner exactly and gives the teammate the best of both.
+- **Devil supplies** — in single-player and co-op, devils can drop blue armor crates (20%) or olive ammunition
+  crates (20%). Armor fills to 100 and absorbs damage before health; its blue fill overlays the original life
+  bar, exposing actual health as armor shrinks. Armor pickups never heal, and normal health regeneration
+  continues. Ammunition refills every owned weapon to that player's upgraded capacity, including empty weapons.
+  LAN peers negotiate support before enabling these drops.
 - **Start-wave selector with progression** — the level-select `START WAVE` cycler lets you jump straight back to
   the best wave you have fought up to (shown as `BEST` beside it), with the loadout the original's difficulty
   curve would have granted by then. A fresh save can only start at wave 1 — the historical best persists in the
