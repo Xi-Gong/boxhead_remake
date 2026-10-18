@@ -54,6 +54,9 @@ class LanBridge {
   /** Set by main.ts: lets DOM overlays (the IP input) track the letterboxed canvas. */
   presenter: PresenterLike | undefined;
   peerName = '';
+  /** Staged rollout: QA can opt in; production default changes after release gates. */
+  useRollbackV2 = false;
+  private peerRollbackV2 = false;
   session: NetSession | null = null;
   sid: string | undefined;
   /** Client: the host ip it joined (reconnects go there). */
@@ -250,8 +253,8 @@ class LanBridge {
       if (this.phase !== 'lobby' || !this.session?.startOpts || !this.session.netCheckpoint) return;
       const opts = this.session.startOpts;
       const resumeTick = this.session.netCheckpoint.tick;
-      this.send({ t: 'start', mode: opts.mode, roomLink: opts.roomLink, cfg: opts.cfg, seed: opts.seed, inputDelay: opts.inputDelay, resumeTick, wave: opts.wave, rollback: true });
-      this.launch(opts.mode, opts.roomLink, opts.cfg, opts.seed, opts.inputDelay, resumeTick, 0, opts.wave);
+      this.send({ t: 'start', mode: opts.mode, roomLink: opts.roomLink, cfg: opts.cfg, seed: opts.seed, inputDelay: opts.inputDelay, resumeTick, wave: opts.wave, rollback: true, netcode: opts.netcode });
+      this.launch(opts.mode, opts.roomLink, opts.cfg, opts.seed, opts.inputDelay, resumeTick, 0, opts.wave, opts.netcode);
       return;
     }
     if (this.phase !== 'setup') return;
@@ -270,7 +273,8 @@ class LanBridge {
     // v0.2.3: the adaptive p90 delay carries the steady latency (one tick better than v0.1.7 at every
     // class), prediction (depth 1) absorbs jitter spikes, and a stall never costs a cadence slot. Depth-2
     // prediction measured unstable on real links (PARITY R10+) - D carries what it can.
-    const inputDelay = Math.max(2, computeInputDelay(this.rttSamples, cfg.gameSpeed));
+    const netcode = this.useRollbackV2 && this.peerRollbackV2 ? 'rollback-v2' : undefined;
+    const inputDelay = netcode ? 0 : Math.max(2, computeInputDelay(this.rttSamples, cfg.gameSpeed));
     const roomLink = 'ROOM_Single_' + PAD4(sel.levelIdx + 1);
     const seed = (Math.random() * 2 ** 32) >>> 0;
     // Persist the choices on the host like the local SelectWorld screen does.
@@ -279,12 +283,12 @@ class LanBridge {
     sd.mPlayer2_CharacterIndex = sel.charP2;
     sd.mDifficulty = sel.difficulty;
     sd.mGameAmount = sel.gameAmount;
-    this.send({ t: 'start', mode: sel.mode, roomLink, cfg, seed, inputDelay, wave: sel.wave ?? 1, rollback: true });
-    this.launch(sel.mode, roomLink, cfg, seed, inputDelay, undefined, 0, sel.wave ?? 1);
+    this.send({ t: 'start', mode: sel.mode, roomLink, cfg, seed, inputDelay, wave: sel.wave ?? 1, rollback: true, netcode });
+    this.launch(sel.mode, roomLink, cfg, seed, inputDelay, undefined, 0, sel.wave ?? 1, netcode);
   }
 
   /** Build the local session and drive the game start through the shared NetSession path. */
-  private launch(mode: 'Coop' | 'DeathMatch', roomLink: string, cfg: GameConfig, seed: number, inputDelay: number | undefined, resumeTick: number | undefined, role: 0 | 1, wave: number | undefined): void {
+  private launch(mode: 'Coop' | 'DeathMatch', roomLink: string, cfg: GameConfig, seed: number, inputDelay: number | undefined, resumeTick: number | undefined, role: 0 | 1, wave: number | undefined, netcode?: 'rollback-v2'): void {
     if (!this.session) this.session = new NetSession(role, { send: (m) => this.send(m) });
     this.session.onStateChange = () => {
       const s = this.session;
@@ -306,7 +310,7 @@ class LanBridge {
     this.phase = 'playing';
     this.started = true;
     this.notify();
-    this.session.startLocalGame({ mode, roomLink, cfg, seed, inputDelay, resumeTick, wave, rollback: true }, CMain._this);
+    this.session.startLocalGame({ mode, roomLink, cfg, seed, inputDelay, resumeTick, wave, rollback: true, netcode }, CMain._this);
     netOverlaySync(this.session);
   }
 
@@ -324,8 +328,8 @@ class LanBridge {
   startRetry(): void {
     if (!this.isHost || !this.session || this.session.phase !== 'ended' || !this.session.startOpts) return;
     const m = this.session.retryStart();
-    this.send({ t: 'start', mode: m.mode, roomLink: m.roomLink, cfg: m.cfg, seed: m.seed, inputDelay: m.inputDelay, resumeTick: m.resumeTick, wave: m.wave, rollback: true });
-    this.launch(m.mode, m.roomLink, m.cfg, m.seed, m.inputDelay, m.resumeTick, 0, m.wave);
+    this.send({ t: 'start', mode: m.mode, roomLink: m.roomLink, cfg: m.cfg, seed: m.seed, inputDelay: m.inputDelay, resumeTick: m.resumeTick, wave: m.wave, rollback: true, netcode: m.netcode });
+    this.launch(m.mode, m.roomLink, m.cfg, m.seed, m.inputDelay, m.resumeTick, 0, m.wave, m.netcode);
   }
 
   // ---------------------------------------------------------------------------------------------- transport events
@@ -334,6 +338,7 @@ class LanBridge {
 
   private onMessage(msg: any): void {
     if (msg.t === 'hello') {
+      this.peerRollbackV2 = Array.isArray(msg.netcodes) && msg.netcodes.includes('rollback-v2');
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.
       this.sid = this.sid ?? msg.sid;
       this.peerName = String(msg.name ?? 'player 2');
@@ -355,7 +360,7 @@ class LanBridge {
       const session = new NetSession(1, { send: (m) => this.send(m) });
       if (msg.resumeTick !== undefined && msg.snap) session.netCheckpoint = { tick: msg.resumeTick, snap: msg.snap, digest: '' };
       this.session = session;
-      this.launch(msg.mode, msg.roomLink, msg.cfg, msg.seed, msg.inputDelay, msg.resumeTick, 1, msg.wave);
+      this.launch(msg.mode, msg.roomLink, msg.cfg, msg.seed, msg.inputDelay, msg.resumeTick, 1, msg.wave, msg.netcode);
       return;
     }
     if (msg.t === 'setup') {

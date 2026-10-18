@@ -286,7 +286,7 @@ export class NetSession {
       const start: NetStart = { ...this.startOpts!, resumeTick: this.netCheckpoint.tick };
       // A client that restarted (no checkpoint of its own, capTick absent) receives the snapshot itself.
       const snap = hello.capTick == null || hello.capTick < this.netCheckpoint.tick ? this.netCheckpoint.snap : undefined;
-      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, inputDelay: start.inputDelay, resumeTick: start.resumeTick, wave: start.wave, snap, rollback: true });
+      this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, inputDelay: start.inputDelay, resumeTick: start.resumeTick, wave: start.wave, snap, rollback: true, netcode: start.netcode });
       this.startLocalGame(start, CMain._this); // the host rebuilds through the same path
     }
   }

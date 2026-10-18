@@ -131,7 +131,7 @@ export interface LanChecksum {
 export type LanMessage =
   | { t: 'input-path'; version: 1; port: number; token: string }
   // client -> host, first frame on the wire (transport-level handshake; main process replies `welcome`).
-  | { t: 'hello'; proto: number; app: string; name: string; sid?: string; char: number; capTick?: number }
+  | { t: 'hello'; proto: number; app: string; name: string; sid?: string; char: number; capTick?: number; netcodes?: string[] }
   // host -> client handshake reply. `ok:false` + reason closes the connection (version mismatch, busy).
   | { t: 'welcome'; ok: boolean; reason?: string; proto: number; app: string; name: string; sid: string }
   // host -> client: (back) in the room view (also right after a successful connect; sent after backing out of
