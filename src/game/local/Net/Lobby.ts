@@ -360,6 +360,7 @@ export class CScreen_LanLobby extends CScreen {
 
   private statusFor(b: ReturnType<typeof lanBridge>): string {
     if (b.phase === 'hosting') return 'waiting for player 2 to join...';
+    if (b.phase === 'lobby' && b.isHost) return b.ready ? 'both players ready - choose game settings' : 'waiting for player 2 to get ready';
     if (b.phase === 'lobby' && !b.isHost) return b.ready ? 'READY - waiting for the host to start' : 'press READY when you are set';
     if (b.phase === 'playing' && b.session?.phase === 'reconnecting') return `RECONNECTING... ${b.session.reconnectSecondsLeft()}s`;
     return '';

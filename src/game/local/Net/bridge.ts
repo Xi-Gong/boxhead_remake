@@ -338,6 +338,7 @@ class LanBridge {
       this.peerName = String(msg.name ?? 'player 2');
       const backFromEnd = this.session != null && this.session.phase === 'ended';
       if (this.phase === 'hosting' || this.phase === 'lobby' || backFromEnd) {
+        if (this.phase === 'hosting') this.message = '';
         this.phase = 'lobby';
         this.ready = false; // a fresh hello = a fresh room member (mid-game reconnects go through session.onHello)
         this.send({ t: 'lobby' }); // (back) in the room view

@@ -566,3 +566,7 @@ START WAVE 与 OPTIONS/CONTROLS 在同一基线；BEST 移到数值下方，方�
 ### 18.17 LAN 传输待完成资源取消
 
 真实socket回归复现shutdown后待完成bind/handshake重新建立监听与peer，以及未发hello的入站连接残留。主进程增加host代次、共享并发建房promise、连接取消/扫描代次及待握手socket所有权；握手限时1500ms，成功后仍按原样关闭超时。发现bind期间停止会结束等待promise且不再启动清理定时器。16项真实协议/连接/重连/释放回归及类型检查通过，wire格式不变。
+
+### 18.18 房间就绪提示修正
+
+截图发现客机已经加入时主机顶部仍显示HOSTING/waiting to join。hello进入房间时清除旧建房文案，由房间状态生成未就绪/双方就绪提示。新增回归旧版失败，11项桥接/大厅回归及类型检查通过。

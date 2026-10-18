@@ -6,6 +6,11 @@ function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
  beforeEach(()=>{vi.resetAllMocks();});afterEach(()=>{_resetBridgeForTests();});
+ it('a joined guest clears the stale HOSTING banner',()=>{
+  const b=lanBridge();b.phase='hosting';b.message='HOSTING - waiting for player 2...';
+  lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',sid:'qa',char:0});
+  expect(b.phase).toBe('lobby');expect(b.message).toBe('');
+ });
  it.each([true,false])('late join result (%s) cannot resurrect a departed room',async(ok)=>{
   const d=deferred<{ok:boolean;reason?:string}>();lan.connect.mockReturnValue(d.promise);
   const b=lanBridge();b.join('127.0.0.1');b.leaveLobby();d.resolve({ok,reason:'late failure'});await settle();
