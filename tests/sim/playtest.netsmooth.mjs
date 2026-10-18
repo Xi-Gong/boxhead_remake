@@ -20,6 +20,8 @@ import { startMetrics } from '../e2e/perf-metrics.mjs';
 
 const DELAY_MS = Number(process.argv[2] ?? 30);
 const MODERN = process.env.BOXHEAD_NETCODE === 'rollback-v2';
+const COMBAT = process.env.BOXHEAD_NET_COMBAT === '1';
+const RECOVERY = process.env.BOXHEAD_NET_RECOVERY === '1';
 if (!Number.isFinite(DELAY_MS) || DELAY_MS <= 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>0]');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -33,7 +35,7 @@ const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-rend
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
 const OFFSCREEN = ['-32000', '0'];
 
-const report = { ok: false, delayMs: DELAY_MS, netcode: MODERN ? 'rollback-v2' : 'legacy', steps: [], errors: [], shots: [] };
+const report = { ok: false, delayMs: DELAY_MS, netcode: MODERN ? 'rollback-v2' : 'legacy', combat: COMBAT, recovery: RECOVERY, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
 const shot = async (name, page) => { const p = join(OUT, `net_smooth_${name}.png`); await page.screenshot({ path: p }); report.shots.push(p); step(`shot ${p}`); };
 
@@ -156,8 +158,11 @@ try {
   const WINDOW_MS = Number(process.env.BOXHEAD_NET_WINDOW_MS ?? 20000);
   if(!Number.isFinite(WINDOW_MS)||WINDOW_MS<20000||WINDOW_MS>1800000)throw new Error('invalid sample duration');
   await H.page.waitForTimeout(3000);
-  const finishHost = await startMetrics(H.page),finishClient = await startMetrics(C.page);
+  // Long stability gates use sparse allocation sampling; matched short comparisons retain 32 KiB.
+  const metricOptions = {samplingInterval: WINDOW_MS > 60000 ? 4194304 : 32768};
+  const finishHost = await startMetrics(H.page,metricOptions),finishClient = await startMetrics(C.page,metricOptions);
   const t0 = Date.now();
+  let nextProgress = t0 + 60000;
   let toggle = false;
   const samples = [];
   // Hold FIRE throughout (both steer AND shoot - two unarmed players would just die inside the window,
@@ -167,13 +172,18 @@ try {
   try {
     while (Date.now() - t0 < WINDOW_MS) {
       toggle = !toggle;
+      if(COMBAT){await H.page.keyboard.down('Slash');await C.page.keyboard.down('Space');}
       await H.page.keyboard.down(toggle ? 'ArrowRight' : 'ArrowLeft');
       await C.page.keyboard.down(toggle ? 'KeyD' : 'KeyA');
       await H.page.waitForTimeout(400);
       await H.page.keyboard.up(toggle ? 'ArrowRight' : 'ArrowLeft');
       await C.page.keyboard.up(toggle ? 'KeyD' : 'KeyA');
+      if(COMBAT){await H.page.keyboard.up('Slash');await C.page.keyboard.up('Space');}
       await H.page.waitForTimeout(100);
       samples.push({ host: await h.lan(), client: await c.lan() });
+      const sample=samples.at(-1);
+      if(sample.host.session!=='playing'||sample.client.session!=='playing')throw new Error(`session interrupted: ${JSON.stringify(sample)}`);
+      if(Date.now()>=nextProgress){step(`soak ${Math.round((Date.now()-t0)/1000)}s: ticks ${sample.host.tick}/${sample.client.tick}, stalls ${sample.host.stallCount}/${sample.client.stallCount}`);nextProgress+=60000;}
     }
   } finally {
     await H.page.keyboard.up('Slash');
@@ -198,7 +208,8 @@ try {
     throw new Error(`sustained stall rate ${lateStallsH}/${lateStallsC} in the late half (peer beyond the 8-tick prediction window?)`);
   }
   if (Math.abs(wiH.tick - wiC.tick) > 10) throw new Error(`tick drift ${wiH.tick} vs ${wiC.tick} beyond the prediction window (frames stopped crossing?)`);
-  if (wiH.score !== wiC.score) throw new Error(`score mismatch ${wiH.score} vs ${wiC.score}`);
+  // Predicted heads may differ; modern equality is asserted at the common confirmed pause below.
+  if (!MODERN && wiH.score !== wiC.score) throw new Error(`score mismatch ${wiH.score} vs ${wiC.score}`);
   if (last.host.session !== 'playing' || last.client.session !== 'playing') {
     const details = await Promise.all([H.page.evaluate(() => window.__game?.lan?.()), C.page.evaluate(() => window.__game?.lan?.())]);
     const brief = details.map((d) => ({ isHost: d?.isHost, endReason: d?.endReason ?? null, det: d?.desyncDetail ?? null }));
@@ -216,6 +227,16 @@ try {
     if (!a || a.state !== 'running' || a.decoded !== 31 || a.failed.length !== 0) throw new Error(`${n} audio gate failed: ${JSON.stringify(a)}`);
   }
   step('smoothness window clean: stalls bounded, lockstep intact, audio healthy on both');
+  if(RECOVERY){
+    if(!MODERN)throw new Error('history recovery gate requires modern mode');
+    for(const P of [H,C])await P.page.evaluate(()=>{window.__recoveryWorld=window.__game.main().mcWorld;});
+    await C.page.evaluate(()=>window.boxheadDesktop.lan.closePeer());
+    for(const x of [h,c])if(!await x.waitFor(()=>window.__game.lan().diagnostics.some(d=>d.event==='history-recovered')&&window.__game.lan().session==='playing',null,20000))throw new Error('same-history recovery did not complete');
+    report.recovered=await Promise.all([H,C].map(P=>P.page.evaluate(()=>({sameWorld:window.__recoveryWorld===window.__game.main().mcWorld,diagnostics:window.__game.lan().diagnostics}))));
+    if(report.recovered.some(r=>!r.sameWorld))throw new Error('short disconnect rebuilt the world');
+    step('real TCP disconnect recovered both original worlds through input history');
+    await H.page.waitForTimeout(1000);
+  }
   if(MODERN){
     await H.page.keyboard.press('KeyP');
     for(const x of [h,c])if(!await x.waitFor(()=>window.__game.lan().paused,null,10000))throw new Error('pause did not settle');
