@@ -1,22 +1,21 @@
 # Remake conventions (read before changing anything)
 
 1:1 remake of **Boxhead: 2Play Rooms** (Sean Cooper, 2007, Flash 8 / AS2) in TypeScript + Canvas2D + Electron.
-Approved plan (Chinese): `C:\Users\royxg\.claude\plans\shiny-nibbling-river.md` — read its 附录 (appendices) for the
-verified game facts.
+Shared working instructions: `AGENTS.md`. Verified facts and deviations live in `PARITY.md`.
 
 ## Sources of truth
 | What | Where |
 |---|---|
-| Original SWF (input of the extractor; the ultimate oracle) | `../boxhead_2play_rooms.swf` (sha256 `34ff145d…`, see `tools/paths.ts`) |
-| Extracted assets (committed since v0.2.0 — builds never touch the SWF) | `../../public/assets/**` (manifest-gated; `npm run extract` regenerates from the SWF) |
+| Original SWF (input of the extractor; the ultimate oracle) | `assets/boxhead_2play_rooms.swf` (sha256 `34ff145d…`, see `tools/paths.ts`) |
+| Extracted assets (committed since v0.2.0 — builds never touch the SWF) | `public/assets/**` (manifest-gated; `npm run extract` regenerates from the SWF) |
 | Decompiled AS2 classes — **deleted v0.2.0** (regenerable via ffdec, see `assets/README.md`) | was `../../projects/boxhead4/**/*.as`; the TS port (`src/game/**`) is the living source of truth |
 | FLA export (frame scripts, symbol XML) — **deleted v0.2.0** (regenerable via ffdec) | was `../../projects/boxhead4/boxhead2play.fla`; cross-check tests skip while absent |
 | Reference audio — **deleted v0.2.0** (regenerable via ffdec) | was `../../ClassicResources/Audios/boxhead4/` |
-| Real Flash Player (oracle) | `../../flash_player/flashplayer_32_sa_debug.exe` (probes), `FlashPlayer28.exe` (visual goldens), `FlashPlayer8.exe` |
+| Real Flash Player (oracle) | `assets/flash_player/` (FP28/8 visual references; FP32 debug synchronous probes) |
 
-## Layout & lane ownership
-Each lane only writes inside its own paths. Shared contract files are owned by the coordinator; if you need a change
-there, make the smallest additive change and list it in your final report.
+## Layout & historical lane ownership
+These are the original porting lanes. Current cross-cutting work follows the user's task and `AGENTS.md`;
+historical assignments do not prohibit required fixes or the authorized commit/push workflow.
 
 | Lane | Owns |
 |---|---|
@@ -37,9 +36,9 @@ there, make the smallest additive change and list it in your final report.
 - Tests: vitest, `tests/unit/<area>/*.test.ts`, run `npx vitest run tests/unit/<area>`. Node environment (no DOM/canvas);
   keep pixel maths testable on raw buffers. Browser checks: `playwright-core` is installed (use the installed Chrome:
   `chromium.launch({ channel: 'chrome' })`) — do not download browsers.
-- Do not add npm dependencies or edit package.json; ask the coordinator in your report. No git commits.
+- Avoid new npm dependencies. Package/version updates and commits follow the current task and `AGENTS.md`.
 - Downloads from Node need `NODE_USE_ENV_PROXY=1` on this machine.
-- Generated files go to `public/assets/` (shipped) or `generated/` (reports, disasm). Both are gitignored.
+- Reports/disassembly go to ignored `generated/`. Shipped `public/assets/` extraction outputs are committed.
 
 ## AS2 → TypeScript porting rules (src/game)
 1. **One `.ts` per `.as`**, same relative path under `src/game/` (e.g. `Thing/Creature/CThing_Creature_Player.as` →
