@@ -5,6 +5,7 @@ import { expect, it } from 'vitest';
 
 const scenarios = [
   { name: 'asymmetric jitter' }, { name: 'shared pause', pause: true }, { name: 'history recovery', reconnect: true },
+  { name: 'renderer gap catches up', rtt: 60, renderGap: true },
   ...[0,30,60,100,200].map(rtt => ({ name: `RTT ${rtt}ms`, rtt })),
   { name: '20ms jitter, 1% primary loss', rtt: 60, jitter: 20, loss: 1 },
   { name: '50ms jitter, 3% primary loss, 500ms outage', rtt: 100, jitter: 50, loss: 3, outage: 500 },
@@ -37,6 +38,7 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
         const due = queues[i]!.filter(x => x.at <= limit);
         queues[i] = queues[i]!.filter(x => x.at > limit);
         return ask(i, { step: true, total, extraDraws: i * 2, messages: due.map(x => x.message),
+          renderGap: scenario.renderGap && i === 1 && frame >= 80 && frame < 90,
           disconnect: reconnect && frame === 80, reconnect: reconnect && frame === 130,
           ...(pause && frame === 80 && i === 0 ? { pause: true } : {}),
           ...(pause && frame === 140 && i === 1 ? { pause: false } : {}) });
@@ -67,6 +69,7 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
         expect(responses.map(r => r.paused)).toEqual([true, true]);
         expect(responses[0].tick).toBe(responses[1].tick);
       }
+      if(scenario.renderGap && frame===220)expect(Math.abs(responses[0].tick-responses[1].tick)).toBeLessThanOrEqual(2);
       if (responses.every(r => r.tick >= total || r.phase === 'ended')) break;
     }
     if (responses.some(r => r.phase === 'ended')) {

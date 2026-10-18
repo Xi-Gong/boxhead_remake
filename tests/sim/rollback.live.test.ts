@@ -63,6 +63,19 @@ function run(delay: number, modern = false) {
 }
 
 describe('actual rollback prediction', () => {
+  it('a peer with confirmed future inputs catches up at a bounded rate', () => {
+    const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: true } });
+    const s = new NetSession(1, { send() {} });
+    s.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242, netcode: 'rollback-v2' }, game.main());
+    expect(game.waitRunning(3000)).toBe(true);
+    // Even an exaggerated peer lead may recover only the bounded schedule credit, not fast-forward arbitrarily.
+    for(let tick=0;tick<100;tick++)s.onNetMessage({t:'in',tick,bits:0});
+    game.step(50);
+    expect(s.tickIndex(game.world())).toBeGreaterThan(25);
+    expect(s.tickIndex(game.world())).toBeLessThanOrEqual(30);
+    expect(game.errors).toEqual([]);
+    game.quit();
+  });
   it('a corrected terminal tick truncates the speculative future', () => {
     const game = createHeadlessGame({ menuOnly: 'Main' });
     const s = new NetSession(0, { send() {} });

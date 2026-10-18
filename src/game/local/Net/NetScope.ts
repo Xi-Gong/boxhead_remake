@@ -115,6 +115,15 @@ export function installNetScope(): void {
     if (session.rollbackV2) {
       session.executeWorldStep(w, session.tickIndex(w));
       session.afterTick(w);
+      // A renderer gap drops scheduler time. Without recovery the slower peer permanently trails,
+      // so the other peer consumes most of its prediction window even on a healthy link.
+      // Only reclaim time when received input proves the peer already reached our next tick.
+      const tickMs = 1000 / CMain.mFPS;
+      if (!w.mCompleteState && !session.pauseBarrier.pending && session.confirmTick >= session.tickIndex(w) &&
+          session.spendCatchupCredit(getTimer(), tickMs)) {
+        this.mTimeSlice = netStallRewind(this.mTimeSlice, frameTime(), tickMs, MAX_NET_CATCHUP_TICKS);
+        this.mFrameCap = 2;
+      } else if (frameTime() - this.mTimeSlice < 2 * tickMs) this.mFrameCap = 1;
       if (flagDraw && !session.presentation.external) w.Draw();
       return;
     }
