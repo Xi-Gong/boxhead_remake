@@ -181,6 +181,11 @@ try {
   if (!Number.isInteger(samplingInterval) || samplingInterval < 32768) throw new Error('invalid allocation sampling interval');
   const metricOptions = {samplingInterval};
   const finishHost = await startMetrics(H.page,metricOptions),finishClient = await startMetrics(C.page,metricOptions);
+  const cpuProfiles=[];
+  if(process.env.BOXHEAD_NET_CPU_PROFILE==='1')for(const [role,P]of [['host',H],['client',C]]){
+    const cdp=await P.page.context().newCDPSession(P.page);
+    await cdp.send('Profiler.enable');await cdp.send('Profiler.start');cpuProfiles.push({role,cdp});
+  }
   const t0 = Date.now();
   let nextProgress = t0 + 60000;
   let toggle = false;
@@ -340,6 +345,10 @@ try {
   const probeH = await probeWithRetry(H.page, 'ArrowRight');
   const probeC = await probeWithRetry(C.page, 'KeyD');
   report.probes = { host: probeH, client: probeC };
+  for(const {role,cdp}of cpuProfiles){
+    writeFileSync(join(OUT,`net_smooth_cpu_${role}.json`),JSON.stringify((await cdp.send('Profiler.stop')).profile));
+    await cdp.detach();
+  }
   step(`latency probe host=${JSON.stringify(probeH)}`);
   step(`latency probe client=${JSON.stringify(probeC)}`);
   for (const [n, p] of [['host', probeH], ['client', probeC]]) {

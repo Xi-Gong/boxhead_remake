@@ -493,6 +493,8 @@ function coverageSegments(t: number, size: number): CoverageSeg[] {
 // ==================================================================================================== BitmapData
 
 let nextId = 1;
+// Repeated immutable sprites often have transparent padding. Keep only eligibility, never pixel copies.
+const clearBorders = new WeakMap<BitmapData, {version: number; uses: number; clear?: boolean}>();
 
 export class BitmapData {
   /** Global render scale for newly created bitmaps (1 or 2). Set once at boot from settings. */
@@ -802,6 +804,17 @@ export class BitmapData {
       const k = 1 / src.scale;
       const single = staged ? staged.canvas : src.backing.singleCanvas();
       if (translationOnly && src.scale === s && single && (!Number.isInteger(s * tx) || !Number.isInteger(s * ty))) {
+        if (!staged && alpha === 1 && blend === 'normal' && src.hasClearBorder()) {
+          // Coverage segments only differ from nearest placement on the outermost source pixels.
+          // With a verified transparent border those segments paint nothing. Preserve Flash's
+          // half-pixel tie direction, and submit the identical interior in one blit instead of nine.
+          this.backing.paint(R, (ctx, ox, oy) => {
+            ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.imageSmoothingEnabled = false;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.drawImage(single, Math.ceil(s * tx - 0.5) - ox, Math.ceil(s * ty - 0.5) - oy);
+          }, userClip);
+          return;
+        }
         // Flash: nearest-sampled interior, anti-aliased edges with coverage floor(c·255)/255 (oracle P3 drawBD)
         const px = coverageSegments(s * tx, src.deviceWidth), py = coverageSegments(s * ty, src.deviceHeight);
         this.backing.paint(R, (ctx, ox, oy) => {
@@ -837,6 +850,26 @@ export class BitmapData {
     } finally {
       if (staged) gpuScratch.release(staged);
     }
+  }
+
+  private hasClearBorder(): boolean {
+    if (!this.transparent || this.backing.kind !== 'canvas' || this.deviceWidth * this.deviceHeight > 262144) return false;
+    let entry = clearBorders.get(this);
+    if (!entry || entry.version !== this.version) {
+      entry = {version: this.version, uses: 0}; clearBorders.set(this, entry);
+    }
+    if (entry.clear !== undefined) return entry.clear;
+    // Avoid readback for mutable render targets and one-off draws. Static animation frames qualify quickly.
+    if (++entry.uses < 8) return false;
+    entry.clear = false;
+    const w = this.deviceWidth, h = this.deviceHeight;
+    try {
+      const pixels = this.backing.read({x: 0, y: 0, w, h}).data, stride = w * 4;
+      for (let x = 3; x < stride; x += 4) if (pixels[x] || pixels[(h - 1) * stride + x]) return false;
+      for (let y = 1; y < h - 1; y++) if (pixels[y * stride + 3] || pixels[(y + 1) * stride - 1]) return false;
+      entry.clear = true;
+    } catch { /* A tainted canvas keeps the original draw-only path. */ }
+    return entry.clear;
   }
 
   /** A scratch canvas holding this bitmap's pixels with a color transform applied (CPU). Caller releases it. */
