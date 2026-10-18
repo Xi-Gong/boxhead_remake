@@ -69,7 +69,11 @@ export function installArmorScope():void{
         // at every ratio, while the original outline, mask, animation geometry and alpha are unchanged.
         const fill=bar.getInstanceAtDepth(3);
         if(fill&&fills.get(bar)!==fill){
-          fill.transform.colorTransform=new flash.geom.ColorTransform(0,0,0,1,54,173,235,0);
+          // A scripted colorTransform also takes ownership of timeline transforms in Flash.
+          // Use a fill-only filter so authored frame scaling keeps tracking armor within each color band.
+          fill.filters=[new flash.filters.ColorMatrixFilter([
+            0,0,0,0,54, 0,0,0,0,173, 0,0,0,0,235, 0,0,0,1,0,
+          ])];
           fills.set(bar,fill);
         }
       }

@@ -50,6 +50,10 @@ it('picks armor up once without changing health and overlays the original life b
   w.mHud.UpdatePlayer(p,{x:320,y:240});const head=w.mHud.mcPlayers[0];
   expect(head.mcLife._visible).toBe(true);expect(head._ArmorBar._visible).toBe(true);
   expect(head._ArmorBar.getBounds(head)).toEqual(head.mcLife.getBounds(head));
+  p.mArmor=100;w.mHud.UpdatePlayer(p,{x:320,y:240});
+  const width=()=>{const b=head._ArmorBar.getInstanceAtDepth(3).getBounds(head._ArmorBar);return b.xMax-b.xMin;};
+  const full=width();p.mArmor=60;w.mHud.UpdatePlayer(p,{x:320,y:240});expect(width()).toBeLessThan(full*.65);
+  p.mArmor=45;w.mHud.UpdatePlayer(p,{x:320,y:240});expect(width()).toBeLessThan(full*.5);
   p.mArmor=0;w.mHud.UpdatePlayer(p,{x:320,y:240});expect(head.mcLife._visible).toBe(true);expect(head._ArmorBar._visible).toBe(false);g.quit();
 });
 

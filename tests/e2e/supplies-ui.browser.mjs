@@ -59,7 +59,15 @@ try{
  }
  assert(blue>20&&green===0,'armor uses blue only, without revealing the green health fill');report.pixels={blue,green};
  await g.eval(()=>{window.__supplyQA.damage=40;});assert(await g.waitExpr('window.__supplyQA.result?.armor===60'));
- assert.deepEqual(await g.eval(()=>window.__supplyQA.result),{life:137,armor:60});await shot('armor-partial-640x480');
+ assert.deepEqual(await g.eval(()=>window.__supplyQA.result),{life:137,armor:60});
+ const partial=PNG.sync.read(readFileSync(await shot('armor-partial-640x480')));current=await state();
+ assert.equal(current.armor,60);let partialBlue=0,partialGreen=0;
+ for(let y=Math.floor(current.bounds.yMin);y<=Math.ceil(current.bounds.yMax);y++)for(let x=Math.floor(current.bounds.xMin);x<=Math.ceil(current.bounds.xMax);x++){
+  const i=(y*partial.width+x)*4,r=partial.data[i],a=partial.data[i+1],b=partial.data[i+2];
+  if(b>r+50&&b>a+20)partialBlue++;if(a>r+50&&a>b+50)partialGreen++;
+ }
+ assert(partialBlue>0&&partialBlue<blue*.75&&partialGreen>0,'60% armor must shrink within the same authored green color band');
+ report.sixtyPercentPixels={blue:partialBlue,green:partialGreen};
  for(const [width,height]of[[960,720],[1280,720],[640,889]]){
   await g.page.setViewportSize({width,height});await shot(`armor-partial-${width}x${height}`);
   current=await state();assert(current.bar&&current.lifeBar);report.geometry.push({width,height,bounds:current.bounds});
