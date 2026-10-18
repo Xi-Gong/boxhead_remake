@@ -284,7 +284,7 @@ try {
 
   // ---- relaunch the client and rejoin: both resume from the checkpoint --------------------
   step('relaunching the client (fresh process, no local checkpoint)');
-  const C2 = await relaunch;
+  C2 = await relaunch;
   const c2 = helpers(C2.page);
   if (!(await c2.waitFor(() => window.__game?.ready, null, 120000))) throw new Error('client relaunch failed');
   if (!(await c2.waitScreen('State_Main', 'Screen_Main', 60000))) throw new Error('client relaunch: no main menu');
