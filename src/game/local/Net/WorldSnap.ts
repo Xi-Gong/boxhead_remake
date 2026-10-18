@@ -473,12 +473,16 @@ function resolveFn(name: string, owner: any): any {
 }
 
 function restoreOwnProps(o: any, props: [string, SV][], r: RestoreCtx): void {
-  const captured = new Set(props.map((p) => p[0]));
-  for (const k of Object.keys(o)) if (!captured.has(k)) delete (o as any)[k];
+  const keys = Object.keys(o);
+  const reordered = keys.length !== props.length || keys.some((key, i) => key !== props[i]?.[0]);
+  const old = reordered ? new Map(Object.entries(o)) : undefined;
+  // Reassignment alone cannot restore insertion order after a predicted delete/re-add.
+  // Preserve reusable draw instances, then recreate enumerable properties in snapshot order.
+  if (reordered) for (const key of keys) delete o[key];
   for (const [k, sv] of props) {
     (o as any)[k] = Array.isArray(sv) && sv[0] === 'fn'
       ? resolveFn(sv[1] as string, o)
-      : restoreValueOn(sv, (o as any)[k], r);
+      : restoreValueOn(sv, old ? old.get(k) : o[k], r);
   }
 }
 

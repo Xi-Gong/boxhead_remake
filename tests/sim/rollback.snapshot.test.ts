@@ -10,6 +10,20 @@ import { captureWorldSnap, restoreWorldSnap, makeSnapCtx, type RingSlot } from '
 
 const TOTAL = 60;
 
+it('restores enumerable insertion order after a predicted delete and re-add', () => {
+  const game = createHeadlessGame({ mode: 'Coop', room: 1 });
+  const world = game.world(), player = game.players()[0];
+  const ctx = makeSnapCtx(world, undefined);
+  const data = captureWorldSnap(world, ctx, false);
+  const slot: RingSlot = { tRel: 0, data, instances: ctx.instances, sharedObjs: ctx.sharedObjs };
+  const keys = Object.keys(player), position = player.mPosition;
+  delete player.mPosition; player.mPosition = position;
+  expect(Object.keys(player)).not.toEqual(keys);
+  restoreWorldSnap(world, slot, ctx);
+  expect(Object.keys(player)).toEqual(keys);
+  game.quit();
+});
+
 /**
  * Deterministic chaos input. Offline T1 must hold every key CONSTANTLY: the engine's CInput slots are live
  * input state OUTSIDE the world snapshot, so an edge inside a replay window is unrestorable offline (the
