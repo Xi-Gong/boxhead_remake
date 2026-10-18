@@ -78,6 +78,14 @@ export function expectUpgradeOrder(r: SoakReport): void {
   const where = `${r.end.mode} room ${r.end.room}`;
   const u = r.game.world()?.mUpgrades;
   if (!u) return;
+  if (u.lanGrowth) {
+    for (const p of r.end.players) {
+      const level = u.lanGrowth.players[p.index].level;
+      const want = ['pistol', ...WEAPON_UNLOCKS.filter(([, n]) => n <= level).map(([w]) => w)];
+      expect(p.weapons, `${where}: player ${p.index + 1} personal level ${level}`).toEqual(want);
+    }
+    return;
+  }
   const table: any[] = u.mMultiplierList;
   const peak = r.peakMultiplier;
   const expected = table.filter((e) => e.mIndex <= peak).map((e) => e.mIndex);

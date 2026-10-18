@@ -44,7 +44,7 @@ describe('start wave (deviation START_WAVE_SELECTOR, core)', () => {
 
   it('wave 1 (nothing armed) starts exactly like before: level 1, multiplier 1, pistol only', () => {
     resetStartWaveForTests();
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 5, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 5, menuOnly: 'Select' });
     startSelectedRoom(g, 5);
     const s = g.snapshot();
     expect(s.level).toBe(1);
@@ -54,7 +54,7 @@ describe('start wave (deviation START_WAVE_SELECTOR, core)', () => {
 
   it('wave 20 starts at LEVEL 20 with multiplier 30 and the tiers up to x30 already unlocked', () => {
     resetStartWaveForTests();
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 6, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 6, menuOnly: 'Select' });
     seedUnlock(100); // v0.2.4: a player who fought up to the final wave
     setSelectedStartWave(20); // the production path: the screen value, armed by LoadLevel
     startSelectedRoom(g, 6);
@@ -71,7 +71,7 @@ describe('start wave (deviation START_WAVE_SELECTOR, core)', () => {
 
   it('difficulty 3 + wave 10: level steps DOWN to 10 but the multiplier never drops below the difficulty grant', () => {
     resetStartWaveForTests();
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 7, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 7, menuOnly: 'Select' });
     seedUnlock(10); // v0.2.4: cap exactly at the wave under test
     (CMain as any).mSaveData.mDifficulty = 3; // difficulty 3 alone would be wave 35 / multiplier 50
     setSelectedStartWave(10);
@@ -83,7 +83,7 @@ describe('start wave (deviation START_WAVE_SELECTOR, core)', () => {
 
   it('Death Match is immune (no waves; the original multiplier-200 full loadout stands)', () => {
     resetStartWaveForTests();
-    const g = createHeadlessGame({ mode: 'DeathMatch', room: 1, seed: 8, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'DeathMatch', room: 1, seed: 8, menuOnly: 'Select' });
     seedUnlock(100); // v0.2.4: cap does not bite the DM immunity path
     setSelectedStartWave(20);
     startSelectedRoom(g, 8);
@@ -94,12 +94,12 @@ describe('start wave (deviation START_WAVE_SELECTOR, core)', () => {
 
   it('a later fresh run without arming is back to level 1 (no leakage between games)', () => {
     resetStartWaveForTests();
-    const g1 = createHeadlessGame({ mode: 'Single', room: 1, seed: 9, menuOnly: 'Select' });
+    const g1 = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 9, menuOnly: 'Select' });
     seedUnlock(100);
     setSelectedStartWave(20);
     startSelectedRoom(g1, 9);
     expect(g1.snapshot().level).toBe(20);
-    const g2 = createHeadlessGame({ mode: 'Single', room: 1, seed: 9, menuOnly: 'Select' });
+    const g2 = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 9, menuOnly: 'Select' });
     startSelectedRoom(g2, 9);
     expect(g2.snapshot().level).toBe(1);
     expect(g2.snapshot().multiplier).toBe(1);
@@ -112,7 +112,7 @@ describe('start wave + death RETRY fallback (v0.2.0: no checkpoint -> restart at
   // back to the wave the run actually started at instead, via the same START_WAVE head-start mechanism.
   it('T1: start wave 20, die on 20 before any advance -> RETRY restarts at LEVEL 20 (not 1)', () => {
     resetStartWaveForTests();
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 61, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 61, menuOnly: 'Select' });
     seedUnlock(100);
     setSelectedStartWave(20);
     startSelectedRoom(g, 61);
@@ -136,7 +136,7 @@ describe('start wave + death RETRY fallback (v0.2.0: no checkpoint -> restart at
 
   it('T2: difficulty 1 + start wave 5 -> RETRY steps the level DOWN to 5, multiplier never drops below the grant', () => {
     resetStartWaveForTests();
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 62, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 62, menuOnly: 'Select' });
     seedUnlock(5);
     (CMain as any).mSaveData.mDifficulty = 1; // base would be wave 10 / multiplier 10
     setSelectedStartWave(5);
@@ -157,7 +157,7 @@ describe('start wave + death RETRY fallback (v0.2.0: no checkpoint -> restart at
 
   it('T3: after a fallback RETRY, a later untouched run is back to level 1 (no leakage through the real menus)', () => {
     resetStartWaveForTests();
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 63, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 63, menuOnly: 'Select' });
     seedUnlock(100);
     setSelectedStartWave(20);
     startSelectedRoom(g, 63);
@@ -183,7 +183,7 @@ describe('start wave + death RETRY fallback (v0.2.0: no checkpoint -> restart at
 
 describe('start wave cycler UI (Single/Coop level selection)', () => {
   it('is visible on Single and Coop, hidden on Death Match, and cycles 1..best with wraparound', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 41, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 41, menuOnly: 'Select' });
     seedUnlock(100);
     // The BEST copy is authored at cycler build; the seeded save is read on the next screen entry (the production
     // "next session" path) - re-enter through the real route.
@@ -208,15 +208,15 @@ describe('start wave cycler UI (Single/Coop level selection)', () => {
     mc.bRight.onRelease.call(mc.bRight); // wraps 100 -> 1
     expect(mc.mcValue.text).toBe('1');
 
-    const gc = createHeadlessGame({ mode: 'Coop', room: 1, seed: 41, menuOnly: 'Select' });
+    const gc = createHeadlessGame({ classicGrowth: true, mode: 'Coop', room: 1, seed: 41, menuOnly: 'Select' });
     expect(gc.main().mcScreen.mcStartWave?._visible).toBe(true);
 
-    const gd = createHeadlessGame({ mode: 'DeathMatch', room: 1, seed: 41, menuOnly: 'Select' });
+    const gd = createHeadlessGame({ classicGrowth: true, mode: 'DeathMatch', room: 1, seed: 41, menuOnly: 'Select' });
     expect(gd.main().mcScreen.mcStartWave).toBeUndefined(); // not even built for Death Match
   });
 
   it('cycling never writes the save (only the unlock record does) and resets to 1 on every screen entry', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 42, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 42, menuOnly: 'Select' });
     seedUnlock(100); // the ONE write: the unlock record itself
     const before = JSON.stringify(CSaveData.mSharedObject.data);
     const mc = g.main().mcScreen.mcStartWave;
@@ -233,7 +233,7 @@ describe('start wave cycler UI (Single/Coop level selection)', () => {
   });
 
   it('a wave chosen through the real UI arms the run: level 20, multiplier 30, tiers unlocked', () => {
-    const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 43, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Coop', room: 1, seed: 43, menuOnly: 'Select' });
     seedUnlock(100);
     const mc = g.main().mcScreen.mcStartWave;
     for (let i = 0; i < 19; i++) mc.bRight.onRelease.call(mc.bRight);
@@ -250,7 +250,7 @@ describe('start wave cycler UI (Single/Coop level selection)', () => {
 describe('start wave unlock cap (v0.2.4: WaveUnlock, persisted best wave)', () => {
   it('a fresh save pins the cycler at 1; setSelectedStartWave clamps to the cap; armStartWave still allows 1..100', () => {
     resetStartWaveForTests();
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 44, menuOnly: 'Select' }); // fresh save per boot
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 44, menuOnly: 'Select' }); // fresh save per boot
     expect(maxUnlockedWave()).toBe(1);
     setSelectedStartWave(50);
     expect(getSelectedStartWave()).toBe(1); // clamped to the cap
@@ -264,7 +264,7 @@ describe('start wave unlock cap (v0.2.4: WaveUnlock, persisted best wave)', () =
   });
 
   it('the cycler wraps WITHIN the unlocked range (seed 3: 1->2->3->1; left from 1 wraps to 3)', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 44, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 44, menuOnly: 'Select' });
     seedUnlock(3);
     g.main().SetState('State_Main'); // read the seeded cap on the next screen entry (production path)
     expect(g.waitScreen('State_Main', 'Screen_Main')).toBe(true);
@@ -284,7 +284,7 @@ describe('start wave unlock cap (v0.2.4: WaveUnlock, persisted best wave)', () =
   });
 
   it('starting AT wave N records N; a mid-run advance records the new wave - grow-only', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 45, menuOnly: 'Select' });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 45, menuOnly: 'Select' });
     seedUnlock(25);
     setSelectedStartWave(25);
     startSelectedRoom(g, 45);
@@ -301,7 +301,7 @@ describe('start wave unlock cap (v0.2.4: WaveUnlock, persisted best wave)', () =
   });
 
   it('maxUnlockedWave reads the save live (no module cache: wiping the member drops it back to 1)', () => {
-    createHeadlessGame({ mode: 'Single', room: 1, seed: 46, menuOnly: 'Select' });
+    createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 46, menuOnly: 'Select' });
     seedUnlock(7);
     delete CSaveData.mSharedObject.data[MAXWAVE_MEMBER]; // what resetProcessState's storage wipe leaves behind
     expect(maxUnlockedWave()).toBe(1); // no invalidation needed

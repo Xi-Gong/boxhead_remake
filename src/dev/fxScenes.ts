@@ -10,6 +10,7 @@ import * as P from '../game/packages.ts';
 import { PROLOGUE } from './sceneList.ts';
 import { getFxScene, type FxSceneDef, type FxStep, type FxValue } from './fxSceneList.ts';
 import type { VisState } from './scenes.ts';
+import { setClassicGrowthFixture } from '../game/local/LocalGrowth.ts';
 
 const { CMain, World, Thing, DrawPrimitive } = P;
 
@@ -88,7 +89,9 @@ class FxDriver {
       case 'room': {
         // phases: 0 noSpawn + SetState, 1 wait for the screen, 2..3 two frames, 4 LoadLevel, 5 wait RunWorld, 6 wait tick
         switch (this.roomPhase) {
+          // Original Flash visual oracle scenes explicitly exercise multiplier upgrades.
           case 0: {
+            setClassicGrowthFixture(M);
             const p = World.CWorld.prototype as any;
             p.Spawn_Zombie = noSpawn;
             p.Spawn_Devil = noSpawn;

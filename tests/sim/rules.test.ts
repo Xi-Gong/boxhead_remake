@@ -14,7 +14,7 @@ describe('difficulty -> start level / multiplier', () => {
   for (const d of [0, 1, 2, 3] as const) {
     const [level, mult] = DIFFICULTY_START[d]!;
     it(`difficulty ${d}: level ${level}, x${mult}, upgrades and weapons up to x${mult}`, () => {
-      const g = createHeadlessGame({ classicWaves:true, mode: d === 2 ? 'Coop' : 'Single', room: 1 + d, seed: d, difficulty: d as 0 | 1 | 2 | 3 });
+      const g = createHeadlessGame({ classicWaves:true, classicGrowth:true, mode: d === 2 ? 'Coop' : 'Single', room: 1 + d, seed: d, difficulty: d as 0 | 1 | 2 | 3 });
       const s = g.snapshot();
       expect([s.level, s.multiplier]).toEqual([level, mult]);
       const u = g.world().mUpgrades;
@@ -65,7 +65,7 @@ describe('Death Match start', () => {
 describe('zombie spawn cap = min(Zombie_Count, 60), 40 on LOW quality', () => {
   for (const detail of [true, false]) {
     it(`${detail ? 'HIGH' : 'LOW'}: level 35 fills up to ${detail ? 60 : 40} zombies and never more`, () => {
-      const g = createHeadlessGame({ classicWaves:true, mode: 'Single', room: 18, seed: 9, difficulty: 3, options: { detail, infiniteLife: true } });
+      const g = createHeadlessGame({ classicWaves:true, classicGrowth:true, mode: 'Single', room: 18, seed: 9, difficulty: 3, options: { detail, infiniteLife: true } });
       expect(CMain.mSaveData.mDetail).toBe(detail);
       const cap = detail ? 60 : 40;
       let max = 0;
@@ -85,7 +85,7 @@ describe('zombie spawn cap = min(Zombie_Count, 60), 40 on LOW quality', () => {
 describe('level progression and scoring (Single BOXY, Beginner)', () => {
   it('waves advance one level at a time when every zombie of the wave is dead; score = 100 x multiplier per kill', () => {
     const kills: number[] = [];
-    const r = soak({ mode: 'Single', room: 1, seed: 11, ticks: 1500, options: { infiniteLife: true } });
+    const r = soak({ classicGrowth:true, mode: 'Single', room: 1, seed: 11, ticks: 1500, options: { infiniteLife: true } });
     expectHealthySoak(r, { running: true, minLevel: 3 });
     expect(r.levelUps.map(([, l]) => l)).toEqual(Array.from({ length: r.levelUps.length }, (_, i) => i + 2));
     // every score step is a multiple of 100 (zombie 100 / devil 1000 times the multiplier)
@@ -145,7 +145,7 @@ describe('devils option', () => {
 describe('input bindings in the world', () => {
   const bullets = (g: any): number => thingList(g.world()).filter((t) => t._CLASSID_ === 'CThing_Shot_Bullet' || t._CLASSID_ === 'CThing_Effect_MuzzleFlash').length;
   it("Single: Space fires too and digit keys select weapons (x10: '2' UZI, '3' shotgun)", () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 2, difficulty: 1 });
+    const g = createHeadlessGame({ classicGrowth:true, mode: 'Single', room: 1, seed: 2, difficulty: 1 });
     g.keyDown(KEYS.SPACE); g.tick(1); g.keyUp(KEYS.SPACE);
     expect(bullets(g)).toBeGreaterThan(0);
     g.keyDown(KEYS.DIGIT[3]); g.tick(1); g.keyUp(KEYS.DIGIT[3]); g.tick(1);

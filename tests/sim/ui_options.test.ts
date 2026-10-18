@@ -119,7 +119,7 @@ describe('detail (right-click "Quality: LOW") -> _root._quality', () => {
 
   for (const detail of [true, false]) {
     it(`${detail ? 'HIGH' : 'LOW'}: score pop-ups ${detail ? 'shown' : 'skipped'}, corpses ${detail ? 'fade' : 'do not fade'}`, () => {
-      const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 6, difficulty: 1, options: { detail, devils: 0 } });
+      const g = createHeadlessGame({ classicGrowth:true, mode: 'Single', room: 1, seed: 6, difficulty: 1, options: { detail, devils: 0 } });
       const w = g.world();
       const hud = w.mHud;
       // wait for a zombie, kill it with a lethal hit and let it rot

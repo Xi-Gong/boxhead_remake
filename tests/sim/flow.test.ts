@@ -25,7 +25,7 @@ describe('boot through the real menus', () => {
 
 describe('Single: death -> debrief -> retry / exit', () => {
   it('a passive player dies, Screen_Debrief shows the HUD score; RETRY restarts the room, EXIT returns to the selection', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 2, seed: 21, difficulty: 2 });
+    const g = createHeadlessGame({ classicGrowth:true, mode: 'Single', room: 2, seed: 21, difficulty: 2 });
     const world1 = g.world();
     const ticks = runBots(g, [new Bot(0, { passive: true })], 3000);
     expect(ticks).toBeLessThan(3000);
@@ -100,7 +100,7 @@ describe('Coop: the game ends only when both players are down', () => {
 
 describe('pause', () => {
   it('P freezes the world and shows HUD.Paused with every multiplier upgrade; P again resumes', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 5, difficulty: 1 });
+    const g = createHeadlessGame({ classicGrowth:true, mode: 'Single', room: 1, seed: 5, difficulty: 1 });
     g.step(50);
     const w = g.world();
     g.keyDown(KEYS.PAUSE);

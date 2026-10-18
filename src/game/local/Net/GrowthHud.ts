@@ -5,7 +5,7 @@ import { World } from '../../packages.ts';
 import { BODY_FONT, MENU_FONT, INK, RED, text, capsule } from '../UiStyle.ts';
 import { growthOf, MAX_LEVEL, xpRequired, type GrowthState } from './Growth.ts';
 import { netSession } from './NetSession.ts';
-import type { EnemyCounts } from './EnemyCounts.ts';
+import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
 
 export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 172, top: 4 } as const;
 export function growthLayout(width: number): { left: number; right: number; center: number; bottom: number } {
@@ -13,7 +13,7 @@ export function growthLayout(width: number): { left: number; right: number; cent
     center: (width - GROWTH_HUD.centerWidth) / 2, bottom: GROWTH_HUD.top + GROWTH_HUD.height };
 }
 interface Side { clip: any; score: any; level: any; xp: any; fill: any; lastScore: number; lastLevel: number; lastXp: number; pulseUntil: number; pulse: boolean }
-interface HudView { clip: any; sides: [Side, Side]; center: any; wave: any; zombies: any; devils: any; lastWave: number; lastWidth: number }
+interface HudView { clip: any; sides: Side[]; center: any; wave: any; zombies: any; devils: any; lastWave: number; lastWidth: number }
 const views = new WeakMap<object, HudView>();
 /** World-local bounds match the bitmap draw plane, including wide/tall viewport layout. */
 export function growthScoreTarget(hud: any, owner: number): { x: number; y: number } | undefined {
@@ -60,7 +60,9 @@ function create(hud: any): HudView {
   const devils=text(center,'_Devils',118,18,54,26,MENU_FONT,18,0xa60000,false,'center','');
   center.lineStyle(.5,0x777777,22);
   for(const x of [54,118]){center.moveTo(x,10);center.lineTo(x,36);}center.lineStyle();
-  const result:HudView={clip,sides:[side(clip,0),side(clip,1)],center,wave,zombies,devils,lastWave:-1,lastWidth:-1};
+  const sides = [side(clip,0)];
+  if (World.CWorld.mGameMode !== 'Single') sides.push(side(clip,1));
+  const result:HudView={clip,sides,center,wave,zombies,devils,lastWave:-1,lastWidth:-1};
   clip.onUnload=():void=>{views.delete(hud);};
   views.set(hud,result); return result;
 }
@@ -69,13 +71,15 @@ function update(hud: any, state: GrowthState, wave: number, enemies: EnemyCounts
   view.clip._visible=!hud.mcScreenPause;
   if(view.lastWidth!==width){
     const layout=growthLayout(width);
-    view.sides[0].clip._x=layout.left; view.sides[1].clip._x=layout.right; view.center._x=layout.center;
+    view.sides[0]!.clip._x=layout.left;
+    if (view.sides[1]) view.sides[1].clip._x=layout.right;
+    view.center._x=layout.center;
     view.lastWidth=width;
   }
   if(view.lastWave!==wave){view.wave.text=String(wave);view.lastWave=wave;}
   if(view.zombies.text!==String(enemies.zombies))view.zombies.text=String(enemies.zombies);
   if(view.devils.text!==String(enemies.devils))view.devils.text=String(enemies.devils);
-  for(let index=0;index<2;index++){
+  for(let index=0;index<view.sides.length;index++){
     const p=state.players[index]!, ui=view.sides[index]!;
     const progressChanged=ui.lastXp!==p.xp||ui.lastLevel!==p.level;
     if(ui.lastScore!==p.score){
@@ -109,8 +113,9 @@ function pauseGrowth(hud: any, state: GrowthState): void {
   for(let n=0;n<100;n++)if(pause['upgrade_'+n])pause['upgrade_'+n]._visible=false;
   const layer=pause.createEmptyMovieClip('_PersonalUpgrades',pause.getNextHighestDepth());
   text(layer,'_Title',0,73,640,20,BODY_FONT,13,0xffffff,true,'center','PERSONAL UPGRADES');
-  for(let i=0;i<2;i++){
-    const x=28+i*304,p=state.players[i]!;
+  const count=World.CWorld.mGameMode==='Single'?1:2;
+  for(let i=0;i<count;i++){
+    const x=count===1?180:28+i*304,p=state.players[i]!;
     text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${p.level===MAX_LEVEL?'MAX':p.xp+'/'+xpRequired(p)+' XP'}`);
     const groups:Record<string,Record<string,boolean>>={pistol:{}};
     for(let n=1;n<=p.level;n++)for(const item of hud.mWorld.mUpgrades.mMultipliers[n]??[]){
@@ -149,9 +154,11 @@ export function installGrowthHud(): void {
   const proto=World.CHud.prototype as any,draw=proto.Draw,updatePlayer=proto.UpdatePlayer,pause=proto.Pause;
   proto.Draw=function(this:any,...args:any[]):any{
     const result=draw.apply(this,args),session=netSession();
-    if(growthOf(this.mWorld)&&session?.confirmedGrowth){
+    const state = session ? session.confirmedGrowth : growthOf(this.mWorld);
+    if(growthOf(this.mWorld)&&state){
       if(World.CHud.mcScoreTotal)World.CHud.mcScoreTotal._visible=false;
-      update(this,session.confirmedGrowth,session.confirmedWave,session.confirmedEnemies);
+      update(this,state,session?session.confirmedWave:this.mWorld.mUpgrades.mLevelIndex,
+        session?session.confirmedEnemies:remainingEnemies(this.mWorld));
     }
     return result;
   };
@@ -171,7 +178,7 @@ export function installGrowthHud(): void {
     return result;
   };
   proto.Pause=function(this:any,on:any):any{
-    const result=pause.call(this,on),state=netSession()?.confirmedGrowth;
+    const result=pause.call(this,on),session=netSession(),state=session?session.confirmedGrowth:growthOf(this.mWorld);
     if(on&&growthOf(this.mWorld)&&state)pauseGrowth(this,state);
     const view=views.get(this);if(view)view.clip._visible=!on;
     return result;

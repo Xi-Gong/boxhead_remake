@@ -162,7 +162,7 @@ export function select(g: HeadlessGame, name: string, index = 0): any {
 
 /** A Single game in BOXY with no random spawns, the player at (6.5, 8.5) facing east (open floor ahead). */
 export function openFloorGame(opts: HeadlessGameOptions = {}): HeadlessGame {
-  const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 1, ...opts });
+  const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 1, ...opts });
   noSpawn(g);
   placePlayer(g, 3.5, 8.5, 0);
   g.tick(1);

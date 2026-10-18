@@ -1,0 +1,578 @@
+{
+  "ok": true,
+  "cases": [
+    {
+      "mode": "Single",
+      "width": 640,
+      "height": 480,
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 6800,
+            "level": 68,
+            "xp": 1,
+            "curve": "pve-balance-v1"
+          },
+          {
+            "score": 0,
+            "level": 68,
+            "xp": 0,
+            "curve": "pve-balance-v1"
+          }
+        ]
+      },
+      "wave": 20,
+      "players": 1,
+      "geometry": {
+        "scorePanels": [
+          {
+            "bounds": {
+              "xMin": 12,
+              "xMax": 222,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 50,
+              "xMax": 214,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000006800",
+            "level": "LV 68"
+          }
+        ],
+        "scale": 1,
+        "left": 0,
+        "top": 0,
+        "stageWidth": 640
+      },
+      "flightSamples": 23,
+      "pause": [
+        "P1  /  LV 68  /  1/35 XP",
+        null
+      ]
+    },
+    {
+      "mode": "Single",
+      "width": 960,
+      "height": 720,
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 13600,
+            "level": 68,
+            "xp": 2,
+            "curve": "pve-balance-v1"
+          },
+          {
+            "score": 0,
+            "level": 68,
+            "xp": 0,
+            "curve": "pve-balance-v1"
+          }
+        ]
+      },
+      "wave": 20,
+      "players": 1,
+      "geometry": {
+        "scorePanels": [
+          {
+            "bounds": {
+              "xMin": 12,
+              "xMax": 222,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 50,
+              "xMax": 214,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000013600",
+            "level": "LV 68"
+          }
+        ],
+        "scale": 1.5,
+        "left": 0,
+        "top": 0,
+        "stageWidth": 640
+      },
+      "flightSamples": 23,
+      "pause": [
+        "P1  /  LV 68  /  2/35 XP",
+        null
+      ]
+    },
+    {
+      "mode": "Single",
+      "width": 1280,
+      "height": 720,
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 20400,
+            "level": 68,
+            "xp": 3,
+            "curve": "pve-balance-v1"
+          },
+          {
+            "score": 0,
+            "level": 68,
+            "xp": 0,
+            "curve": "pve-balance-v1"
+          }
+        ]
+      },
+      "wave": 20,
+      "players": 1,
+      "geometry": {
+        "scorePanels": [
+          {
+            "bounds": {
+              "xMin": 12,
+              "xMax": 222,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 50,
+              "xMax": 214,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000020400",
+            "level": "LV 68"
+          }
+        ],
+        "scale": 1.5005861664712778,
+        "left": 0,
+        "top": 0,
+        "stageWidth": 853
+      },
+      "flightSamples": 23,
+      "pause": [
+        "P1  /  LV 68  /  3/35 XP",
+        null
+      ]
+    },
+    {
+      "mode": "Single",
+      "width": 640,
+      "height": 889,
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 27200,
+            "level": 68,
+            "xp": 4,
+            "curve": "pve-balance-v1"
+          },
+          {
+            "score": 0,
+            "level": 68,
+            "xp": 0,
+            "curve": "pve-balance-v1"
+          }
+        ]
+      },
+      "wave": 20,
+      "players": 1,
+      "geometry": {
+        "scorePanels": [
+          {
+            "bounds": {
+              "xMin": 12,
+              "xMax": 222,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 50,
+              "xMax": 214,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000027200",
+            "level": "LV 68"
+          }
+        ],
+        "scale": 1,
+        "left": 0,
+        "top": 0,
+        "stageWidth": 640
+      },
+      "flightSamples": 23,
+      "pause": [
+        "P1  /  LV 68  /  4/35 XP",
+        null
+      ]
+    },
+    {
+      "mode": "Coop",
+      "width": 640,
+      "height": 480,
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 4600,
+            "level": 46,
+            "xp": 1,
+            "curve": "pve-balance-v1"
+          },
+          {
+            "score": 4600,
+            "level": 46,
+            "xp": 1,
+            "curve": "pve-balance-v1"
+          }
+        ]
+      },
+      "wave": 20,
+      "players": 2,
+      "geometry": {
+        "scorePanels": [
+          {
+            "bounds": {
+              "xMin": 12,
+              "xMax": 222,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 50,
+              "xMax": 214,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000004600",
+            "level": "LV 46"
+          },
+          {
+            "bounds": {
+              "xMin": 418,
+              "xMax": 628,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 456,
+              "xMax": 620,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000004600",
+            "level": "LV 46"
+          }
+        ],
+        "scale": 1,
+        "left": 0,
+        "top": 0,
+        "stageWidth": 640
+      },
+      "flightSamples": 46,
+      "pause": [
+        "P1  /  LV 46  /  1/25 XP",
+        "P2  /  LV 46  /  1/25 XP"
+      ]
+    },
+    {
+      "mode": "Coop",
+      "width": 960,
+      "height": 720,
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 9200,
+            "level": 46,
+            "xp": 2,
+            "curve": "pve-balance-v1"
+          },
+          {
+            "score": 9200,
+            "level": 46,
+            "xp": 2,
+            "curve": "pve-balance-v1"
+          }
+        ]
+      },
+      "wave": 20,
+      "players": 2,
+      "geometry": {
+        "scorePanels": [
+          {
+            "bounds": {
+              "xMin": 12,
+              "xMax": 222,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 50,
+              "xMax": 214,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000009200",
+            "level": "LV 46"
+          },
+          {
+            "bounds": {
+              "xMin": 418,
+              "xMax": 628,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 456,
+              "xMax": 620,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000009200",
+            "level": "LV 46"
+          }
+        ],
+        "scale": 1.5,
+        "left": 0,
+        "top": 0,
+        "stageWidth": 640
+      },
+      "flightSamples": 46,
+      "pause": [
+        "P1  /  LV 46  /  2/25 XP",
+        "P2  /  LV 46  /  2/25 XP"
+      ]
+    },
+    {
+      "mode": "Coop",
+      "width": 1280,
+      "height": 720,
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 13800,
+            "level": 46,
+            "xp": 3,
+            "curve": "pve-balance-v1"
+          },
+          {
+            "score": 13800,
+            "level": 46,
+            "xp": 3,
+            "curve": "pve-balance-v1"
+          }
+        ]
+      },
+      "wave": 20,
+      "players": 2,
+      "geometry": {
+        "scorePanels": [
+          {
+            "bounds": {
+              "xMin": 12,
+              "xMax": 222,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 50,
+              "xMax": 214,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000013800",
+            "level": "LV 46"
+          },
+          {
+            "bounds": {
+              "xMin": 631,
+              "xMax": 841,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 669,
+              "xMax": 833,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000013800",
+            "level": "LV 46"
+          }
+        ],
+        "scale": 1.5005861664712778,
+        "left": 0,
+        "top": 0,
+        "stageWidth": 853
+      },
+      "flightSamples": 46,
+      "pause": [
+        "P1  /  LV 46  /  3/25 XP",
+        "P2  /  LV 46  /  3/25 XP"
+      ]
+    },
+    {
+      "mode": "Coop",
+      "width": 640,
+      "height": 889,
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 18400,
+            "level": 46,
+            "xp": 4,
+            "curve": "pve-balance-v1"
+          },
+          {
+            "score": 18400,
+            "level": 46,
+            "xp": 4,
+            "curve": "pve-balance-v1"
+          }
+        ]
+      },
+      "wave": 20,
+      "players": 2,
+      "geometry": {
+        "scorePanels": [
+          {
+            "bounds": {
+              "xMin": 12,
+              "xMax": 222,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 50,
+              "xMax": 214,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000018400",
+            "level": "LV 46"
+          },
+          {
+            "bounds": {
+              "xMin": 418,
+              "xMax": 628,
+              "yMin": 4,
+              "yMax": 50
+            },
+            "score": {
+              "xMin": 456,
+              "xMax": 620,
+              "yMin": 4,
+              "yMax": 30
+            },
+            "text": "000000018400",
+            "level": "LV 46"
+          }
+        ],
+        "scale": 1,
+        "left": 0,
+        "top": 0,
+        "stageWidth": 640
+      },
+      "flightSamples": 46,
+      "pause": [
+        "P1  /  LV 46  /  4/25 XP",
+        "P2  /  LV 46  /  4/25 XP"
+      ]
+    }
+  ],
+  "shots": [
+    "generated/reports/v029/local-growth/Single-640x480.png",
+    "generated/reports/v029/local-growth/Single-pause-640x480.png",
+    "generated/reports/v029/local-growth/Single-960x720.png",
+    "generated/reports/v029/local-growth/Single-pause-960x720.png",
+    "generated/reports/v029/local-growth/Single-1280x720.png",
+    "generated/reports/v029/local-growth/Single-pause-1280x720.png",
+    "generated/reports/v029/local-growth/Single-640x889.png",
+    "generated/reports/v029/local-growth/Single-pause-640x889.png",
+    "generated/reports/v029/local-growth/Coop-640x480.png",
+    "generated/reports/v029/local-growth/Coop-pause-640x480.png",
+    "generated/reports/v029/local-growth/Coop-960x720.png",
+    "generated/reports/v029/local-growth/Coop-pause-960x720.png",
+    "generated/reports/v029/local-growth/Coop-1280x720.png",
+    "generated/reports/v029/local-growth/Coop-pause-1280x720.png",
+    "generated/reports/v029/local-growth/Coop-640x889.png",
+    "generated/reports/v029/local-growth/Coop-pause-640x889.png"
+  ],
+  "review": "Direct screenshot review plus real mouse/keyboard, pixel and geometry assertions; zai unavailable. Headless installed Chrome; controlled kill fixtures, actual Save & Quit and Continue.",
+  "imageHashes": [
+    {
+      "sha256": "dfc9becf2ff7eb23aa882ba6c16282aa914894d3ce1cf60a72d31ae43385c5ab",
+      "path": "generated/reports/v029/local-growth/Single-640x480.png"
+    },
+    {
+      "sha256": "860be442a6a9b45f1eddb4434bcb804d90703d0ad770d1f14ebc376711c306d1",
+      "path": "generated/reports/v029/local-growth/Single-pause-640x480.png"
+    },
+    {
+      "sha256": "563af4bb34a52e35aa901ea60967c50e3fb57f566b46db101e98f4f78e04696e",
+      "path": "generated/reports/v029/local-growth/Single-960x720.png"
+    },
+    {
+      "sha256": "4c7675462eb3cf48a2c87ea478199227c567a86d5aa837b0204c0264561a3df7",
+      "path": "generated/reports/v029/local-growth/Single-pause-960x720.png"
+    },
+    {
+      "sha256": "3f8a1b3ed35969148d444aeea7960822af037200cf88164de9de240ec120e269",
+      "path": "generated/reports/v029/local-growth/Single-1280x720.png"
+    },
+    {
+      "sha256": "d7663056dfc76dc2fd5d62aad9d3e4c4ecb990bb95b5d4d22e0f1ddbe67d1bc5",
+      "path": "generated/reports/v029/local-growth/Single-pause-1280x720.png"
+    },
+    {
+      "sha256": "587a5989bec58c1461ab011ffee472c35e10e32737c7f0e97670d054c9481b24",
+      "path": "generated/reports/v029/local-growth/Single-640x889.png"
+    },
+    {
+      "sha256": "28d58e59df1760ca3b8b168d77d5bfa086bcc33fbc88de8bc262df8ee6098d87",
+      "path": "generated/reports/v029/local-growth/Single-pause-640x889.png"
+    },
+    {
+      "sha256": "ad7eb77a3e492d46175de241207eb8c4a6efc55ae6bffef185023d576c225181",
+      "path": "generated/reports/v029/local-growth/Coop-640x480.png"
+    },
+    {
+      "sha256": "de8e6761dd38bc7e22a7ef27806a1c4090a5a217dbba6956d1e5152ef56dfaef",
+      "path": "generated/reports/v029/local-growth/Coop-pause-640x480.png"
+    },
+    {
+      "sha256": "e19bc2ee19747b66c1af3ab0ce01c066610aab29f3e7e1781e4af5a15208fca5",
+      "path": "generated/reports/v029/local-growth/Coop-960x720.png"
+    },
+    {
+      "sha256": "785d6207b98fd3717a4b107daf9d78d71593b75d7cf0acae35327fad72f32cd2",
+      "path": "generated/reports/v029/local-growth/Coop-pause-960x720.png"
+    },
+    {
+      "sha256": "20f3bcec9fcadf5a9e8222fccb8c59b0562de87796274e6cfd284b360b676323",
+      "path": "generated/reports/v029/local-growth/Coop-1280x720.png"
+    },
+    {
+      "sha256": "ffc4369f573f4a75e916339f5257e8b61bf6d731c3e4f95d30a4e0bce3490e3f",
+      "path": "generated/reports/v029/local-growth/Coop-pause-1280x720.png"
+    },
+    {
+      "sha256": "6eae83bc806f5348326ca73c4f5cc893b76e4dbebbf6eeffa5c708d1cc39944e",
+      "path": "generated/reports/v029/local-growth/Coop-640x889.png"
+    },
+    {
+      "sha256": "b23b356f033f0ab5a6a6451fb4d200628ddb823530f13ea0c2f15224419df4ae",
+      "path": "generated/reports/v029/local-growth/Coop-pause-640x889.png"
+    }
+  ]
+}

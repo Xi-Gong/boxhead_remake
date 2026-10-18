@@ -15,7 +15,7 @@ const markers = (g: HeadlessGame, cls: string) =>
 
 describe('resume: capture -> RETRY (fresh world) -> apply', () => {
   it('restores wave / multiplier / combo / score / players / weapons / objects / rng', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 2, seed: 11, difficulty: 0 });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 2, seed: 11, difficulty: 0 });
     // Play: the bot clears wave 1 (10 zombies) -> level 2, kills climb the multiplier (uzi at x5, shotgun at x10).
     const bot = new Bot(0);
     let ok = false;
@@ -155,7 +155,7 @@ describe('resume: capture -> RETRY (fresh world) -> apply', () => {
   });
 
   it('rejects version / room mismatches without touching the world', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 2, seed: 12, difficulty: 0 });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 2, seed: 12, difficulty: 0 });
     g.step(20);
     const snap = capture(g.world());
     g.quit();
@@ -176,7 +176,7 @@ describe('resume: capture -> RETRY (fresh world) -> apply', () => {
 
 describe('resume: death -> RETRY uses the wave checkpoint (scope wiring)', () => {
   it('restores the wave-start state and the checkpoint survives the restore', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 51, difficulty: 0 });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 51, difficulty: 0 });
     // Earn a checkpoint: the bot clears wave 1 -> the __set__mLevel wrapper captures the wave-start state.
     const bot = new Bot(0);
     for (let i = 0; i < 8000 && !hasCheckpoint(); i++) runBots(g, [bot], 1);
@@ -230,7 +230,7 @@ describe('resume: SAVE & QUIT -> restart -> CONTINUE (scope wiring)', () => {
     SharedObject._setStorage(store);
     try {
       // Session 1: clear wave 1, then SAVE & QUIT from the pause screen.
-      const g1 = createHeadlessGame({ mode: 'Single', room: 2, seed: 61, difficulty: 0 });
+      const g1 = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 2, seed: 61, difficulty: 0 });
       const bot = new Bot(0);
       for (let i = 0; i < 8000 && g1.world().mUpgrades.mLevelIndex < 2; i++) runBots(g1, [bot], 1);
       expect(g1.world().mUpgrades.mLevelIndex).toBe(2);
@@ -245,7 +245,7 @@ describe('resume: SAVE & QUIT -> restart -> CONTINUE (scope wiring)', () => {
       expect(store.json().mResumeData.roomLibLink).toBe('ROOM_Single_0002');
 
       // Session 2 (a restarted app: same storage, everything else rebuilt): the menu offers CONTINUE.
-      const g2 = createHeadlessGame({ mode: 'Single', room: 2, seed: 61, menuOnly: 'Main' });
+      const g2 = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 2, seed: 61, menuOnly: 'Main' });
       const cont = g2.main().mcScreen.mcContinue;
       expect(cont).toBeDefined();
       cont.onRelease.call(cont);
@@ -269,7 +269,7 @@ describe('resume: SAVE & QUIT -> restart -> CONTINUE (scope wiring)', () => {
       expect(g2.hasStoredResume()).toBe(false);
       g2.exit();
       expect(g2.waitScreen('State_SelectWorld_Single', 'Screen_SelectWorld')).toBe(true);
-      const g3 = createHeadlessGame({ mode: 'Single', room: 2, seed: 61, menuOnly: 'Main' });
+      const g3 = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 2, seed: 61, menuOnly: 'Main' });
       expect(g3.main().mcScreen.mcContinue).toBeUndefined();
       expect(g1.errors).toEqual([]);
       expect(g2.errors).toEqual([]);
@@ -287,7 +287,7 @@ describe('resume: SAVE & QUIT -> restart -> CONTINUE (scope wiring)', () => {
     SharedObject._setStorage(store);
     try {
       // Session 1: clear wave 1, then SAVE & QUIT (stored wave 2).
-      const g1 = createHeadlessGame({ mode: 'Single', room: 2, seed: 64, difficulty: 0 });
+      const g1 = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 2, seed: 64, difficulty: 0 });
       const bot = new Bot(0);
       for (let i = 0; i < 8000 && g1.world().mUpgrades.mLevelIndex < 2; i++) runBots(g1, [bot], 1);
       expect(g1.world().mUpgrades.mLevelIndex).toBe(2);
@@ -295,7 +295,7 @@ describe('resume: SAVE & QUIT -> restart -> CONTINUE (scope wiring)', () => {
       expect(g1.waitScreen('State_Main', 'Screen_Main')).toBe(true);
 
       // Session 2: CONTINUE -> restored at wave 2 -> die passively before any advance.
-      const g2 = createHeadlessGame({ mode: 'Single', room: 2, seed: 64, menuOnly: 'Main' });
+      const g2 = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 2, seed: 64, menuOnly: 'Main' });
       g2.main().mcScreen.mcContinue.onRelease.call(g2.main().mcScreen.mcContinue);
       expect(g2.waitRunning()).toBe(true);
       expect(g2.world().mUpgrades.mLevelIndex).toBe(2);
@@ -331,7 +331,7 @@ describe('resume: rng continuity', () => {
     return g.things().every((t) => (OBJECTS.has(t._CLASSID_) ? !t.mDeleteOnPickup : t._CLASSID_ === 'CThing_Creature_Player'));
   };
   const runToQuietBoundary = (seed: number): { g: HeadlessGame; snap: RunSnapshot } => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed, difficulty: 0 });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed, difficulty: 0 });
     const bot = new Bot(0);
     for (let i = 0; i < 8000 && !quiet(g); i++) runBots(g, [bot], 1);
     expect(quiet(g)).toBe(true);

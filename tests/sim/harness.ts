@@ -36,6 +36,7 @@ import { _resetForTests as resetStartWaveForTests } from '../../src/game/local/S
 import { _resetNetForTests } from '../../src/game/local/Net/NetSession.ts';
 import { _resetBridgeForTests } from '../../src/game/local/Net/bridge.ts';
 import {setClassicWaveFixture} from '../../src/game/local/Balance.ts';
+import {setClassicGrowthFixture} from '../../src/game/local/LocalGrowth.ts';
 import { CMain, Screen, Thing, World } from '../../src/game/packages.ts';
 
 export type GameMode = 'Single' | 'Coop' | 'DeathMatch';
@@ -74,6 +75,8 @@ export interface HeadlessGameOptions {
   difficulty?: 0 | 1 | 2 | 3;
   /** Original wave tables for legacy LAN/reference and mechanical-port contract fixtures. */
   classicWaves?: boolean;
+  /** Original multiplier progression for explicit mechanical-port and legacy save fixtures. */
+  classicGrowth?: boolean;
   seed?: number;
   options?: GameOptions;
   /** Cells per Nav_Update call (deviation NAV_BUDGET_TEST_HOOK); null = original getTimer budget. Default 300. */
@@ -425,6 +428,7 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   }
   const m = main();
   if(opts.classicWaves)setClassicWaveFixture(m);
+  if(opts.classicGrowth)setClassicGrowthFixture(m);
   const sd = m.constructor.mSaveData ?? (CMain as any).mSaveData;
   const o = opts.options ?? {};
   // options window fields (CScreen_SelectWorld.RegisterButton_Option writes CMain.mSaveData[field] = value)

@@ -32,6 +32,7 @@ import { installArmorScope } from './local/Armor.ts';
 import { installExplosionFlash } from './local/ExplosionFlash.ts';
 import {installBalanceScope} from './local/Balance.ts';
 import { installFriendlyFire } from './local/FriendlyFire.ts';
+import { initializeLocalGrowth, localGrowthEnabled } from './local/LocalGrowth.ts';
 
 /**
  * CrazyMonkeyGames sponsor / cross-promotion links, hidden on every screen they appear on (Screen_Main,
@@ -274,7 +275,9 @@ export function applyScope(): void {
   const initFinished = worldProto.InitFinished;
   worldProto.InitFinished = function (this: any): void {
     initFinished.call(this);
-    consumePending(this);
+    const restored = consumePending(this);
+    initializeLocalGrowth(this, restored);
+    if (localGrowthEnabled()) recordCheckpoint(this);
     recordRunStartWave(this.mUpgrades.mLevelIndex);
     recordWaveReached(this.mUpgrades.mLevelIndex); // v0.2.4: starting AT wave N counts as entering it
   };

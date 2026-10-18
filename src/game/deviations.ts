@@ -14,6 +14,17 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'LOCAL_PERSONAL_GROWTH',
+    file: 'local/LocalGrowth.ts, Resume.ts; local/Net/GrowthHud.ts; scope.ts',
+    description: 'v0.2.9 extends permanent LAN personal kill ownership, score, balanced XP and weapon upgrades '+
+      'to Single/Coop. Single uses all previous-wave XP; Coop uses the equal-share start model, both retaining '+
+      'the difficulty floor. Local HUD reads simulation directly, LAN HUD still reads confirmed state. '+
+      'Old v2 saves restore first, then convert once using wave/difficulty/multiplier/owned-weapon level bounds, '+
+      'preserving score (Coop odd remainder to P1), health, armor, inventory and ammo. Existing growth restores '+
+      'directly. Initial and restored local worlds establish retry checkpoints. Death Match is unchanged; '+
+      'explicit classicGrowth fixtures retain original multiplier/visual-oracle assertions.',
+  },
+  {
     id: 'SOFT_EXPLOSION_FLASH',
     file: 'local/ExplosionFlash.ts; scope.ts (CWorld.Process_Brightness wrapper)',
     description: 'Reduce the positive full-screen brightness wash to 8% of its authored strength: '+

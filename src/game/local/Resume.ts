@@ -22,6 +22,7 @@ import { CSaveData, Thing, World } from '../packages.ts';
 import { CThing_Object_WeaponCrate, type CrateWeapon } from './WeaponCrate.ts';
 import { copyGrowth, type GrowthState } from './Net/Growth.ts';
 import { armorValue, suppliesEnabled } from './Supplies.ts';
+import { initializeLocalGrowth, localGrowthEnabled } from './LocalGrowth.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -72,7 +73,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
-  /** LAN-only optional extension; local version2 saves retain their existing shape. */
+  /** Optional v2 extension shared by local and LAN permanent progression. */
   growth?: GrowthState;
   version: number;
   gameMode: string;
@@ -280,6 +281,10 @@ function applyPlayer(world: any, s: PlayerState): void {
     const entry = p.mWeapons?.[name];
     if (!entry) continue;
     if (ws.active && !entry.mActive) p.NewWeapon(name);
+    if ((world.mUpgrades.lanGrowth || localGrowthEnabled()) && !ws.active) {
+      entry.mActive = false;
+      if (ws.ammo === undefined) entry.mThing = undefined;
+    }
     // Apply personal stats before restoring ammo; the first Update must not refill a restored magazine.
     if (world.mUpgrades.lanGrowth && entry.mThing) world.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
     if (ws.ammo != undefined && entry.mThing != undefined) entry.mThing.mAmmo = ws.ammo;
@@ -362,6 +367,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   const u = world.mUpgrades;
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);
+  else delete u.lanGrowth; // Old saves must replay their original multiplier before one-time conversion.
   hud.mSilentMessages = true;
   suppress = true;
   try {
@@ -370,8 +376,11 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     while (u.mLevelIndex < snap.wave) u.__set__mLevel(u.mLevelIndex + 1);
     // Multiplier: climb step by step so tier upgrades activate at every crossed index (the LogKills path); a single
     // call would only activate the tiers of the final index. Decay below the built value is a plain set.
-    while (u.mMultiplierIndex < snap.multiplierIndex) u.__set__mMultiplier(u.mMultiplierIndex + 1);
-    if (u.mMultiplierIndex > snap.multiplierIndex) u.__set__mMultiplier(snap.multiplierIndex);
+    if (snap.growth) u.mMultiplierIndex = snap.multiplierIndex;
+    else {
+      while (u.mMultiplierIndex < snap.multiplierIndex) u.__set__mMultiplier(u.mMultiplierIndex + 1);
+      if (u.mMultiplierIndex > snap.multiplierIndex) u.__set__mMultiplier(snap.multiplierIndex);
+    }
     u.mMultiplierTick = snap.multiplierTick;
     u.mMultiplierTickTotal = snap.multiplierTickTotal;
     // Multiple kills: pure counters (the multiple-kills table is never populated in the original).
@@ -398,6 +407,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
       hud.mPlayer1_Deaths = snap.deaths[0];
       hud.mPlayer2_Deaths = snap.deaths[1];
     }
+    initializeLocalGrowth(world, true);
     setRandomState(snap.rngState);
     world.mTick = snap.tick;
   } finally {
