@@ -135,6 +135,28 @@ export function installNetScope(): void {
   // CMain ctor in every entrypoint). While a predicted/replayed tick records, sounds queue; the flush and the
   // replay re-emit them through this same choke point, so the ordered audio canary stays exact.
   const csoundProto = (CSound as any).prototype;
+  // Intercept before a sample can stop/re-pan its live channel, not just at Sound.start.
+  for (const name of ['PlaySound_Normal', 'PlaySound_Positional', 'PlaySound_Velocity', 'PlaySound_Loop', 'PlaySound_VolumeAndLoop', 'PlaySound_FadeInAndLoop']) {
+    const previous = csoundProto[name];
+    csoundProto[name] = function (this: any, ...args: any[]): any {
+      const s = netSession();
+      if (!s?.rollbackV2 || !s.shouldQueueSound()) return previous.apply(this, args);
+      const values = args.map(arg => arg?.clone ? arg.clone() : arg);
+      s.events.record(s.soundRecordingTick!, s.soundOwner, `${name}:${this.mLinkID}`, () => {
+        s.presentingSound = true;
+        try { previous.apply(this, values); } finally { s.presentingSound = false; }
+      });
+    };
+  }
+  const weaponProto = (Thing.Weapon as any).CThing_Weapon.prototype;
+  const updateWeapon = weaponProto.Update;
+  weaponProto.Update = function (this: any, ...args: any[]): any {
+    const s = netSession();
+    if (!s?.rollbackV2) return updateWeapon.apply(this, args);
+    const owner = s.soundOwner;
+    s.soundOwner = this.mParent?.mPlayerIndex ?? -1;
+    try { return updateWeapon.apply(this, args); } finally { s.soundOwner = owner; }
+  };
   const origPlaySound = csoundProto.PlaySound;
   if (origPlaySound) {
     const wrapped = function (this: any, item: any, secOffset?: any, nLoop?: any): any {

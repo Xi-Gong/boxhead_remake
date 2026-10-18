@@ -40,6 +40,7 @@ import {
 import { mayPredict, onRemoteFrame as rollbackOnRemoteFrame, predictedRemoteBits, pushSlot as rollbackPushSlot, resetRollback } from './Rollback.ts';
 import { makeSnapCtx } from './WorldSnap.ts';
 import { recordWaveReached } from '../WaveUnlock.ts';
+import { EventJournal } from './Events.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -148,6 +149,9 @@ export class NetSession {
   /** Prediction+rollback enabled for this game (start.rollback from the host). */
   rollback = false;
   confirmedThrough = -1;
+  events = new EventJournal();
+  soundOwner = -1;
+  presentingSound = false;
   get rollbackV2(): boolean { return this.startOpts?.netcode === 'rollback-v2'; }
   get predictionLimit(): number { return this.rollbackV2 ? Math.ceil(240 * CMain.mFPS / 1000) : PREDICT_MAX_LAG_TICKS; }
   /** Per executed tick: remote bits used / predicted / checksum / latched end state (Rollback.TickMeta). */
@@ -330,6 +334,7 @@ export class NetSession {
     this.desynced = false; // a new game clears the lobby banner cause (v0.2.3)
     resetRollback(this); // fresh ring / meta / sound queue for the new game
     this.confirmedThrough = -1;
+    this.events = new EventJournal();
     if (start.resumeTick !== undefined && this.netCheckpoint) {
       // Resume: rebuild deterministically from the same seed, then re-apply OUR checkpoint (both peers hold a
       // state-identical copy even though their absolute mTick values may differ by the build-time warm-up ticks).
@@ -567,6 +572,7 @@ export class NetSession {
     const meta = this.tickMeta.get(tick);
     delete meta.checkpoint;
     this.pendingSounds.delete(tick);
+    this.events.begin(tick);
     this.soundRecordingTick = tick;
     try { world.Process(); } finally { this.soundRecordingTick = undefined; }
     meta.endState = world.mCompleteState;
@@ -583,12 +589,12 @@ export class NetSession {
         this.netCheckpoint = meta.checkpoint;
         if (this.mode !== 'DeathMatch') recordWaveReached(meta.checkpoint.snap.wave);
       }
-      const snd = (CMain as any).mSound;
-      for (const call of this.pendingSounds.get(t) ?? []) snd?.PlaySound(call.item, call.secOffset, call.nLoop);
+      this.events.confirm(t);
       this.pendingSounds.delete(t);
       this.confirmedThrough = t;
       this.compareSum(t + 1);
     }
+    this.events.presentLocal(this.role);
   }
 
   private submitLocalInput(tick: number): void {
@@ -625,7 +631,7 @@ export class NetSession {
 
   /** v0.2.3 rollback: true while a predicted/replayed tick records - the CSound choke point queues its starts. */
   shouldQueueSound(): boolean {
-    return this.rollback && this.phase === 'playing' && this.soundRecordingTick !== undefined;
+    return this.rollback && !this.presentingSound && this.phase === 'playing' && this.soundRecordingTick !== undefined;
   }
 
   /**
@@ -740,6 +746,7 @@ export class NetSession {
     this.remoteSums.clear();
     resetRollback(this);
     this.snapCtx = undefined;
+    this.events = new EventJournal();
     if (this.savedCfg) {
       const C = World.Map.CMap_Cell as any;
       C.mNavBudgetMode = this.prevNavBudget;

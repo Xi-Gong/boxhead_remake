@@ -7,7 +7,7 @@ import { createHeadlessGame, KEYS } from './harness.ts';
 import { NetSession } from '../../src/game/local/Net/NetSession.ts';
 import { applyCorrections } from '../../src/game/local/Net/Rollback.ts';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
-import { World } from '../../src/game/packages.ts';
+import { CSound, World } from '../../src/game/packages.ts';
 import type { GameConfig } from '../../src/game/local/Net/protocol.ts';
 
 const cfg: GameConfig = { difficulty: 0, gameSpeed: 1, devils: true, collisions: true,
@@ -37,6 +37,8 @@ function run(delay: number, modern = false) {
   expect(session.tickIndex(w)).toBe(total);
   for (let t = 0; t < total; t++) deliver(t);
   applyCorrections(session, w);
+  if (modern) session.commitConfirmed(w);
+  if (modern) expect(session.events.confirmedCount).toBeGreaterThan(10);
   const rows = game.things().map(t => ({
     cls: t._CLASSID_, p: t.mPosition && [t.mPosition.mX, t.mPosition.mY, t.mPosition.mZ],
     // Bit 8 is only written by CMap.Draw and never read by simulation; replay intentionally does not draw.
@@ -46,6 +48,7 @@ function run(delay: number, modern = false) {
   })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   const nav = World.Map.CMap_Cell;
   const result = { rows, rng: getRandomState(), score: w.mHud.nTotalScore,
+    events: modern ? [session.events.confirmedCount, session.events.confirmedHash] : undefined,
     navigationClock: [nav.nSTimer, nav.nSID, nav.nState, nav.nSDist] };
   const stats = { ...session.rollbackStats };
   expect(game.errors).toEqual([]);
@@ -66,12 +69,13 @@ describe('actual rollback prediction', () => {
     game.tick(1);
     const tick = s.tickIndex(game.world());
     const before = game.players()[role].mPosition.mX;
-    game.setKeys([KEYS.P1.RIGHT]);
+    game.setKeys([KEYS.P1.RIGHT, KEYS.P1.FIRE]);
     game.tick(1);
     expect(s.inputDelay).toBe(0);
     expect(sent.some(m => m.t === 'in' && m.tick === tick && (m.bits & 8))).toBe(true);
     expect(game.players()[role].mPosition.mX).toBeGreaterThan(before);
     expect(s.rollbackStats.predictions).toBeGreaterThan(0);
+    expect(CSound.mSamples.Weapon_Pistol_Fire_wav.mPlaying).toBe(true);
     expect(game.errors).toEqual([]);
     game.quit();
   });
