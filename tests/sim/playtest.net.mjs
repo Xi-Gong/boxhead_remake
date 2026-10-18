@@ -231,6 +231,7 @@ try {
   await C.page.keyboard.up('Space');
   const wi1 = await h.worldInfo();
   const wc1 = await c.worldInfo();
+  await Promise.all([steadyHost.freeze(),steadyClient.freeze()]);
   report.performance = { steady:{host:await steadyHost(),client:await steadyClient()} };
   step(`after play: host=${JSON.stringify(wi1)} client=${JSON.stringify(wc1)}`);
   if (wi1.tick <= wi0.tick) {

@@ -21,7 +21,8 @@ export async function startMetrics(page, {samplingInterval = 32768} = {}) {
    if(state.lastFrame)state.intervals.push(t-state.lastFrame);state.lastFrame=t;
   }};
  });
- return async()=>{
+ let frozenPromise,finishedPromise;
+ const freeze=()=>frozenPromise??=(async()=>{
   const after=await metrics();const elapsedMs=Date.now()-started;
   const allocation=await cdp.send('HeapProfiler.stopSampling');
   let estimatedAllocatedBytes=0;const pending=[allocation.profile.head];
@@ -39,9 +40,15 @@ export async function startMetrics(page, {samplingInterval = 32768} = {}) {
    return {frames:s.frames,details:s.details,intervals:s.intervals,frameP50:percent(.5),frameP95:percent(.95),objects,filterCaches,filterPixels,fontEntries,disposedBitmapRefs,domInputs:document.querySelectorAll('input').length};
   });
   if (!result.frames.length || result.disposedBitmapRefs) throw new Error('invalid LAN frame/resource sample');
-  await cdp.send('HeapProfiler.collectGarbage');const collected=await metrics();
-  await cdp.detach();return {...result,elapsedMs,samplingInterval,estimatedAllocatedBytes,allocationSamples:allocation.profile.samples.length,heapAfterGC:collected.JSHeapUsedSize,
+  return {result,after,elapsedMs,estimatedAllocatedBytes,allocationSamples:allocation.profile.samples.length,sampleEndedAt:Date.now()};
+ })();
+ const finish=()=>finishedPromise??=(async()=>{
+  const {result,after,elapsedMs,estimatedAllocatedBytes,allocationSamples,sampleEndedAt}=await freeze();
+  const collectionStartedAt=Date.now();await cdp.send('HeapProfiler.collectGarbage');const collected=await metrics();
+  await cdp.detach();return {...result,elapsedMs,samplingInterval,estimatedAllocatedBytes,allocationSamples,sampleEndedAt,collectionStartedAt,heapAfterGC:collected.JSHeapUsedSize,
    taskMs:(after.TaskDuration-before.TaskDuration)*1000,scriptMs:(after.ScriptDuration-before.ScriptDuration)*1000,
    heapBefore:before.JSHeapUsedSize,heapAfter:after.JSHeapUsedSize,nodesBefore:before.Nodes,nodesAfter:after.Nodes};
- };
+ })();
+ // Multi-peer callers freeze BOTH samples before either peer performs post-window forced collection.
+ finish.freeze=freeze;return finish;
 }

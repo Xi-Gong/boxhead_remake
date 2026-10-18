@@ -215,7 +215,9 @@ try {
     await C.page.keyboard.up('Space');
   }
   const last = samples[samples.length - 1];
+  await Promise.all([finishHost.freeze(),finishClient.freeze()]);
   report.performance = { host:await finishHost(),client:await finishClient() };
+  if(Math.max(...Object.values(report.performance).map(p=>p.sampleEndedAt))>Math.min(...Object.values(report.performance).map(p=>p.collectionStartedAt)))throw new Error('forced GC overlapped a measured peer window');
   if(EXPLOSIONS){
     report.explosionStress=await Promise.all([H,C].map(P=>P.page.evaluate(()=>window.__explosionStress)));
     if(report.explosionStress.some(s=>s.peak<EXPLOSIONS||s.bursts<1))throw new Error('explosion fixture did not execute');
