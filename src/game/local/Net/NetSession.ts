@@ -171,6 +171,7 @@ export class NetSession {
   confirmedEnemies: EnemyCounts = {zombies:0,devils:0};
   events = new EventJournal();
   decals = new EventJournal();
+  scores = new EventJournal();
   presentation = new NetPresentation();
   soundOwner = -1;
   presentingSound = false;
@@ -429,6 +430,7 @@ export class NetSession {
     this.confirmedThrough = -1;
     this.events = new EventJournal();
     this.decals = new EventJournal();
+    this.scores = new EventJournal();
     if (start.resumeTick !== undefined && this.netCheckpoint) {
       // Resume: rebuild deterministically from the same seed, then re-apply OUR checkpoint (both peers hold a
       // state-identical copy even though their absolute mTick values may differ by the build-time warm-up ticks).
@@ -728,6 +730,7 @@ export class NetSession {
     this.pendingSounds.delete(tick);
     this.events.begin(tick);
     this.decals.begin(tick);
+    this.scores.begin(tick);
     this.soundRecordingTick = tick;
     try { world.Process(); } finally { this.soundRecordingTick = undefined; }
     meta.endState = world.mCompleteState;
@@ -756,6 +759,7 @@ export class NetSession {
       if (meta.growth) { this.confirmedGrowth = meta.growth; this.confirmedWave = meta.wave; this.confirmedEnemies = meta.enemies; }
       this.events.confirm(t);
       this.decals.confirm(t);
+      this.scores.confirm(t);
       this.pendingSounds.delete(t);
       this.confirmedThrough = t;
       this.compareSum(t + 1);
@@ -769,6 +773,7 @@ export class NetSession {
     this.pendingSumSends = this.pendingSumSends.filter(sum => sum.tick <= head);
     this.events.discardFrom(head);
     this.decals.discardFrom(head);
+    this.scores.discardFrom(head);
   }
 
   private submitLocalInput(tick: number): void {
@@ -934,6 +939,7 @@ export class NetSession {
     this.snapCtx = undefined;
     this.events = new EventJournal();
     this.decals = new EventJournal();
+    this.scores = new EventJournal();
     if (this.savedCfg) {
       const C = World.Map.CMap_Cell as any;
       C.mNavBudgetMode = this.prevNavBudget;

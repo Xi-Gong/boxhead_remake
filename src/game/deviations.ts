@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'CONFIRMED_SCORE_FLIGHTS',
+    file: 'local/Net/FloatingScores.ts, Growth.ts, GrowthHud.ts, NetScope.ts, NetSession.ts',
+    description: 'Personal-growth score flights use confirmed per-kill event identities and a separate '+
+      'world-owned display cache, not rollback snapshot mScores. Authored score glyphs travel for 900ms '+
+      'of display time to the killer\'s actual score-field bounds, adapt to resize, freeze on pause and '+
+      'release bitmaps on completion/world disposal. Simulation totals remain immediate and deterministic; '+
+      'legacy LAN and LOW-detail conventions are retained.',
+  },
+  {
     id: 'LAN_RESPONSE_DIAGNOSTICS',
     file: 'local/Net/ResponseTrace.ts, NetSession.ts, NetScope.ts, Presentation.ts, Rollback.ts; main.ts',
     description: 'Optional bounded session diagnostics timestamp keyboard events, sampling, NetSlot application, '+

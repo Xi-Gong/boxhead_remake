@@ -15,6 +15,13 @@ export function growthLayout(width: number): { left: number; right: number; cent
 interface Side { clip: any; score: any; level: any; xp: any; fill: any; lastScore: number; lastLevel: number; lastXp: number; pulseUntil: number; pulse: boolean }
 interface HudView { clip: any; sides: [Side, Side]; center: any; wave: any; zombies: any; devils: any; lastWave: number; lastWidth: number }
 const views = new WeakMap<object, HudView>();
+/** World-local bounds match the bitmap draw plane, including wide/tall viewport layout. */
+export function growthScoreTarget(hud: any, owner: number): { x: number; y: number } | undefined {
+  const score = views.get(hud)?.sides[owner]?.score;
+  if (!score) return undefined;
+  const bounds = score.getBounds(hud.mWorld);
+  return { x: (bounds.xMin + bounds.xMax) / 2, y: (bounds.yMin + bounds.yMax) / 2 };
+}
 const outlined = (): any[] => [new flash.filters.GlowFilter(0x000000, 1, 2, 2, 10, 1)];
 
 function backing(clip: any, width: number, height: number): void {

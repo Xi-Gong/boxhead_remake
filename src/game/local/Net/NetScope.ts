@@ -24,10 +24,12 @@ import { applyCorrections, queueSound } from './Rollback.ts';
 import { shadowDrawOverride } from './Predict.ts';
 import { installGrowthScope } from './Growth.ts';
 import { installGrowthHud } from './GrowthHud.ts';
+import { installFloatingScores } from './FloatingScores.ts';
 
 export function installNetScope(): void {
   installGrowthScope();
   installGrowthHud();
+  installFloatingScores();
   // Random decal choices still happen inside simulation; persistent pixels commit only once confirmed.
   const decalProto = DrawPrimitive.MovieClip.CDrawPrimitive_MovieClip_Directional.prototype;
   const stampDecal = decalProto.QRender_Mask;

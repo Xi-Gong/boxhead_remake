@@ -3,6 +3,7 @@
 import { forIn } from '../../../engine/runtime.ts';
 import { Thing, World } from '../../packages.ts';
 import {BALANCE_RULE,balancedXpRequired} from '../BalanceRules.ts';
+import { recordGrowthScore } from './FloatingScores.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
 export const MAX_LEVEL = 125;
@@ -141,8 +142,13 @@ export function installGrowthScope(): void {
     const before = personal?.level;
     const amount = personal ? awardKill(personal, victim.mScore, victim._CLASSID_ === 'CThing_Creature_Devil' ? 5 : 1) : 0;
     const hud = this.mHud, add = hud.AddScore, own = Object.getOwnPropertyDescriptor(hud, 'AddScore');
-    // Keep original wave counts, drop cadence, RNG and floating-score behavior in their authored order.
-    hud.AddScore = function (this: any, position: any): void { if (amount) add.call(this, position, amount); };
+    // Keep score timing, original wave counts, drop cadence and RNG; flights live outside rollback state.
+    const source = this;
+    hud.AddScore = function (this: any, position: any): void {
+      if (!amount) return;
+      if (recordGrowthScore(source, victim.mPosition, amount, slot, victim.sUniqueID)) this.nTotalScore += amount;
+      else add.call(this, position, amount);
+    };
     try { logKill.call(this, victim); }
     finally { if (own) Object.defineProperty(hud, 'AddScore', own); else delete hud.AddScore; }
     if (personal && personal.level !== before) {
