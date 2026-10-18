@@ -1,6 +1,6 @@
 // Added-UI production visual/interaction gate, with a controlled discovery transport.
 import assert from 'node:assert/strict';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { launch, openGame, toMainMenu } from './lib.mjs';
 const out='generated/reports/v026/ui';mkdirSync(out,{recursive:true});
 const browser=await launch();
@@ -13,7 +13,10 @@ async function surface(g,name){
  await cdp.send('Emulation.setDeviceMetricsOverride',{width:960,height:720,deviceScaleFactor:2,mobile:false});
  await g.page.waitForTimeout(750);
  assert.equal(await g.page.evaluate(()=>document.querySelector('canvas.game-canvas').width),1920,'DPR2 backing store');
- await g.shot(`${out}/${name}-960x720-dpr2.png`,false);
+ // Playwright's screenshot helper restores context device metrics; capture the overridden DPR directly.
+ const shot=Buffer.from((await cdp.send('Page.captureScreenshot',{fromSurface:true,captureBeyondViewport:false})).data,'base64');
+ assert.equal(shot.readUInt32BE(16),1920);assert.equal(shot.readUInt32BE(20),1440);
+ writeFileSync(`${out}/${name}-960x720-dpr2.png`,shot);
  await cdp.send('Emulation.clearDeviceMetricsOverride');await cdp.detach();
  await g.page.setViewportSize({width:1280,height:720});await g.page.waitForTimeout(300);
 }
