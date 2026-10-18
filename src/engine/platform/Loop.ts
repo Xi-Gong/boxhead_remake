@@ -31,6 +31,8 @@ export class FrameScheduler {
   nextEF = Number.NaN;
   private lastNow = Number.NaN;
   private deltas: number[] = [];
+  private sortedDeltas: number[] = [];
+  private sampleIndex = 0;
   readonly efMs: number;
 
   constructor(efMs = EF_MS) { this.efMs = efMs; }
@@ -38,8 +40,7 @@ export class FrameScheduler {
   /** Robust estimate of the rAF interval (median of recent deltas). */
   get rafInterval(): number {
     if (this.deltas.length === 0) return DEFAULT_INTERVAL;
-    const s = [...this.deltas].sort((a, b) => a - b);
-    return s[(s.length - 1) >> 1]!;
+    return this.sortedDeltas[(this.sortedDeltas.length - 1) >> 1]!;
   }
 
   /** EFs allowed per rAF for the current refresh rate. */
@@ -55,8 +56,24 @@ export class FrameScheduler {
     if (Number.isFinite(this.lastNow)) {
       const dt = now - this.lastNow;
       if (dt > 0 && dt <= MAX_SAMPLE_MS) {
-        this.deltas.push(dt);
-        if (this.deltas.length > SAMPLES) this.deltas.shift();
+        // Maintain the tiny median window in place. The previous getter copied/sorted it every rAF,
+        // including reads where no sample changed; this produces the identical median without transient arrays.
+        const count = this.deltas.length;
+        let size = count;
+        if (count === SAMPLES) {
+          const old = this.deltas[this.sampleIndex]!;
+          const at = this.sortedDeltas.indexOf(old);
+          for (let i = at; i < count - 1; i++) this.sortedDeltas[i] = this.sortedDeltas[i + 1]!;
+          size--;
+        }
+        this.deltas[this.sampleIndex] = dt;
+        this.sampleIndex = (this.sampleIndex + 1) % SAMPLES;
+        let at = size;
+        while (at > 0 && this.sortedDeltas[at - 1]! > dt) {
+          this.sortedDeltas[at] = this.sortedDeltas[at - 1]!;
+          at--;
+        }
+        this.sortedDeltas[at] = dt;
       }
     }
     this.lastNow = now;
