@@ -12,6 +12,7 @@ import type { GameConfig } from '../../src/game/local/Net/protocol.ts';
 import { captureWorldSnap, makeSnapCtx } from '../../src/game/local/Net/WorldSnap.ts';
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 import { NetSlot, SLOT_ORDER } from '../../src/game/local/Net/NetSlot.ts';
+import { frameTime } from '../../src/engine/flash/clock.ts';
 
 const cfg: GameConfig = { difficulty: 0, gameSpeed: 1, devils: true, collisions: true,
   damage: true, gameAmount: 0, detail: true, charP1: 0, charP2: 0 };
@@ -64,6 +65,30 @@ function run(delay: number, modern = false) {
 }
 
 describe('actual rollback prediction', () => {
+  it('renderer debt is capped at three slots and excluded while paused or ending', () => {
+    const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: true } });
+    const s = new NetSession(0, { send() {} });
+    s.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242, netcode: 'rollback-v2' }, game.main());
+    expect(game.waitRunning(3000)).toBe(true);
+    for (let tick = 0; tick < 100; tick++) s.onNetMessage({ t: 'in', tick, bits: 0 });
+    const main = game.main();
+    const gap = () => { main.mFrameCap = 1; main.mTimeSlice = frameTime() - 4000; };
+    gap();
+    expect(main.ProcessFrames(25)).toBe(1);
+    expect(frameTime() - main.mTimeSlice).toBe(120);
+    expect(main.ProcessFrames(25)).toBe(2);
+    expect(frameTime() - main.mTimeSlice).toBe(40);
+    s.setPaused(true);
+    gap();
+    expect(main.ProcessFrames(25)).toBe(1);
+    expect(main.mTimeSlice).toBe(frameTime());
+    s.markEnded();
+    gap();
+    expect(main.ProcessFrames(25)).toBe(1);
+    expect(main.mTimeSlice).toBe(frameTime());
+    expect(game.errors).toEqual([]);
+    game.quit();
+  });
   it.each(['markEnded','forfeit','dispose'] as const)('%s restores the ordinary scheduler cap', action => {
     const game = createHeadlessGame({menuOnly:'Main'});
     const s = new NetSession(0,{send(){}});

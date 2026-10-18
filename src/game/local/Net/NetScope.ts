@@ -47,6 +47,28 @@ export function installNetScope(): void {
   };
   // ---- State_RunWorld: lockstep gate + net-owned pause ----------------------------------------
   const mainProto = CMain.prototype as any;
+  const processFrames = mainProto.ProcessFrames;
+  mainProto.ProcessFrames = function (this: any, rate: number): number {
+    const slice = this.mTimeSlice;
+    const count = processFrames.call(this, rate);
+    const session = netSession();
+    const w = this.mcWorld;
+    // The original scheduler consumes every elapsed slot before applying its frame cap.
+    // Keep at most three discarded slots when received inputs prove this live peer is behind.
+    // This repays actual renderer gaps; it does not create extra ticks from a remote lead.
+    if (count > 0 && slice !== undefined && !this.mSingleFrame && session?.rollbackV2 &&
+        session.phase === 'playing' && !session.netPaused && !session.pauseBarrier.pending &&
+        w && session.holdsWorld(w) && !w.mCompleteState &&
+        session.confirmTick >= session.tickIndex(w) + count) {
+      const tickMs = 1000 / rate;
+      const dropped = Math.floor((frameTime() - slice) / tickMs) - count;
+      if (dropped > 0) {
+        this.mTimeSlice -= Math.min(dropped, MAX_NET_CATCHUP_TICKS) * tickMs;
+        this.mFrameCap = 2;
+      }
+    }
+    return count;
+  };
   const stateRunWorld = mainProto.State_RunWorld;
   mainProto.State_RunWorld = function (this: any, flagDraw?: any): void {
     const session = netSession();
