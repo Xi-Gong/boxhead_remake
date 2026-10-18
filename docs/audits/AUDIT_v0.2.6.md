@@ -1,10 +1,10 @@
 # v0.2.6 审计与验收记录
 
-基线：v0.2.5（7ce3aef）。本次范围包括引擎、原版移植、扩展、Electron、资源工具、测试与发布配置。已完成下列审计、修复和门禁；未发现阻止发布的功能回归、确定性变化、音画损失或稳定性能退化。每个独立修复/功能均先验证、单独提交并立即推送 main，完整记录见[分步提交](docs/verification/v0.2.6/commits.md)。
+基线：v0.2.5（7ce3aef）。本次范围包括引擎、原版移植、扩展、Electron、资源工具、测试与发布配置。已完成下列审计、修复和门禁；未发现阻止发布的功能回归、确定性变化、音画损失或稳定性能退化。每个独立修复/功能均先验证、单独提交并立即推送 main，完整记录见[分步提交](../verification/v0.2.6/commits.md)。
 
 ## 范围与安全删除依据
 
-`node tools/audit-code.mjs` 生成逐模块台账，最终[413模块清单](docs/verification/v0.2.6/code-inventory.json)记录路径、导入、动态访问、注册与生命周期标记。首轮404模块，最终src194、Electron5、工具72、测试142；新增项主要为回归/验收工具。这是依赖清单与边界检查，结合下列人工审阅、失败复现和运行证据使用，不能单独证明代码无用，也不是全程序形式化证明。
+`node tools/audit-code.mjs` 生成逐模块台账，最终[413模块清单](../verification/v0.2.6/code-inventory.json)记录路径、导入、动态访问、注册与生命周期标记。首轮404模块，最终src194、Electron5、工具72、测试142；新增项主要为回归/验收工具。这是依赖清单与边界检查，结合下列人工审阅、失败复现和运行证据使用，不能单独证明代码无用，也不是全程序形式化证明。
 
 117个 `// Port of` 文件相对v0.2.5零改动。保留全部原版类、字符串linkage、packages/allClasses注册、事件与原型包装、资源和预测深度为0的回滚设施。删除旧buildMenuButton前核实新menuTextItem已替代、全库无静态/字符串/注册/回调访问；删除的5个样式token及导入也逐个核对全库引用。原版unused参数/局部变量继续保留机械对应；引擎/共享合约及Node工具现在强制检查未使用变量和参数。
 
@@ -84,7 +84,7 @@ LAN三轮中位数（真实localhost TCP，固定初始随机源0.424242/host se
 
 LAN分布相交，不宣称整体加速。重连阶段时长中位约21.8→21.9秒，包含断开等待/恢复，不能把CPU总量当相同持续时间的独立模拟成本。所有采样挂接的已释放位图数0；稳态滤镜缓存双端均6、重连host均7。三组重连全部完成检查点、分数、输入延迟、判负、续局及30秒超时验证。额外60/100ms单向延迟档位通过；100ms显示反馈25/6ms、模拟跟进183/165ms，不宣称模拟立即响应。
 
-可复核原始数据与方法：[docs/verification/v0.2.6](docs/verification/v0.2.6/README.md)。LAN采集帧/CPU/heap/缓存与资源状态，分配/GC由统一生产浏览器探针测量。
+可复核原始数据与方法：[docs/verification/v0.2.6](../verification/v0.2.6/README.md)。LAN采集帧/CPU/heap/缓存与资源状态，分配/GC由统一生产浏览器探针测量。
 
 ## 视觉与环境边界
 
@@ -107,9 +107,9 @@ LAN分布相交，不宣称整体加速。重连阶段时长中位约21.8→21.9
 | LAN稳态、重连、延迟 | 基线/候选各3轮稳态与3轮完整重连；候选另60/100ms通过 | v026/{baseline,candidate}/{steady,reconnect}-*.json、candidate/delay-*.json |
 | Electron窗口/输入/全屏/协议 | 开发46/46、打包6/6 | v026/electron-smoke-final.log、packaged-smoke-final.log |
 | 最终单文件便携exe | 实际启动器→解包版本→玩法/保存继续/31声音通过 | v026/portable-final.log、portable/launch-0.2.6.json |
-| 真实旧存档 | v0.2.5生成→v0.2.6继续；房间/1234分/137血/17弹药/最高波次7/改键70通过 | [持久结果](docs/verification/v0.2.6/save-compatibility.json) |
-| 包内代码与版本 | 应用/锁文件根/asar均0.2.6，renderer和Electron包内字节与最终构建一致 | [哈希清单](docs/verification/v0.2.6/artifact.json) |
+| 真实旧存档 | v0.2.5生成→v0.2.6继续；房间/1234分/137血/17弹药/最高波次7/改键70通过 | [持久结果](../verification/v0.2.6/save-compatibility.json) |
+| 包内代码与版本 | 应用/锁文件根/asar均0.2.6，renderer和Electron包内字节与最终构建一致 | [哈希清单](../verification/v0.2.6/artifact.json) |
 
 最终构建先完成renderer与Electron，再在 `C:/Users/royxg/boxhead-build` 打包并暂存release；便携exe为 `Boxhead 2Play Rooms-0.2.6-portable.exe`，101612312字节，SHA256 `e501c19a41f5e9010fa63c7675f1a998370ce56105980cb8dc7768e6083a0680`。另归档于 `C:/Users/royxg/boxhead-exe-archive/`，不纳入Git。
 
-正式发布对象：[v0.2.6](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.2.6)，使用annotated tag、英文Release Notes与exe附件。[中文变更记录](PARITY.md)及[分步提交](docs/verification/v0.2.6/commits.md)可逐项追溯；完整日志/截图保留本机generated，公开数值证据随tag保存。保存格式与wire消息未改；LAN仍沿用原有同构建身份校验，不承诺跨版本联机。
+正式发布对象：[v0.2.6](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.2.6)，使用annotated tag、英文Release Notes与exe附件。[中文变更记录](../../PARITY.md)及[分步提交](../verification/v0.2.6/commits.md)可逐项追溯；完整日志/截图保留本机generated，公开数值证据随tag保存。保存格式与wire消息未改；LAN仍沿用原有同构建身份校验，不承诺跨版本联机。

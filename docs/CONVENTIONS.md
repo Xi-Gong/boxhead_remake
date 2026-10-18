@@ -19,7 +19,7 @@ historical assignments do not prohibit required fixes or the authorized commit/p
 
 | Lane | Owns |
 |---|---|
-| coordinator | `package.json`, tsconfigs, `src/shared/assetSchema.ts`, `src/engine/runtime.ts`, `CONVENTIONS.md`, `tools/paths.ts`, `tools/swf/ByteReader.ts`, `tools/swf/SwfFile.ts` |
+| coordinator | `package.json`, tsconfigs, `src/shared/assetSchema.ts`, `src/engine/runtime.ts`, `docs/CONVENTIONS.md`, `tools/paths.ts`, `tools/swf/ByteReader.ts`, `tools/swf/SwfFile.ts` |
 | A extractor | `tools/swf/**` (other files), `tools/extract.ts`, `tools/rooms/**`, `tests/unit/swf/**`, output `public/assets/**`, `generated/reports/{inventory,rooms,actions}*` |
 | B avm1/xsi | `tools/avm1/**`, `tools/xsi/**`, `tools/disasm.ts`, `tests/unit/avm1/**`, output `generated/disasm/**`, `generated/reports/hotspots.md`, `public/assets/xsi.json` |
 | C engine core | `src/engine/flash/**` except `input.ts`, `Sound.ts`, `SharedObject.ts`; `tests/unit/engine/**` |
@@ -29,9 +29,9 @@ historical assignments do not prohibit required fixes or the authorized commit/p
 
 ## Tooling rules
 - Node 24 runs `tools/*.ts` directly (type stripping): **erasable TS only** (no `enum`, `namespace`, parameter
-  properties), import with explicit `.ts` extensions, `import type` for types. Check with `npx tsc -p tsconfig.tools.json`.
+  properties), import with explicit `.ts` extensions, `import type` for types. Check with `npx tsc -p config/tsconfig.tools.json`.
 - App code (`src/`) is bundled by Vite; also import with `.ts` extensions for consistency.
-- `src/engine/**` and `src/shared/**` must pass `tsconfig.strict.json`; everything passes `tsconfig.json` (loose for the
+- `src/engine/**` and `src/shared/**` must pass `config/tsconfig.strict.json`; everything passes `tsconfig.json` (loose for the
   AS2 port). Run `npm run typecheck` (whole project) — at minimum your own files must be clean.
 - Tests: vitest, `tests/unit/<area>/*.test.ts`, run `npx vitest run tests/unit/<area>`. Node environment (no DOM/canvas);
   keep pixel maths testable on raw buffers. Browser checks: `playwright-core` is installed (use the installed Chrome:

@@ -1,6 +1,6 @@
 # Shared project instructions
 
-Boxhead: 2Play Rooms is a faithful TypeScript + Canvas2D + Electron remake of the 2007 Flash game. Read CONVENTIONS.md for the AS2 port contract and relevant PARITY.md sections before changing behavior. README.md / README_zh_cn.md describe supported features. Codex and Claude Code share these instructions; keep durable discoveries here and release history in PARITY.md.
+Boxhead: 2Play Rooms is a faithful TypeScript + Canvas2D + Electron remake of the 2007 Flash game. Read docs/CONVENTIONS.md for the AS2 port contract and relevant PARITY.md sections before changing behavior. README.md / README_zh_cn.md describe supported features. Codex and Claude Code share these instructions; keep durable discoveries here and release history in PARITY.md.
 
 ## Behavior and architecture
 

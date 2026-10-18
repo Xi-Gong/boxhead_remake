@@ -2,5 +2,5 @@
   "//": "Engine + shared contracts are checked strictly (they never import src/game).",
   "extends": "./tsconfig.base.json",
   "compilerOptions": { "strict": true, "noUnusedLocals": true, "noUnusedParameters": true },
-  "include": ["src/engine/**/*.ts", "src/shared/**/*.ts"]
+  "include": ["../src/engine/**/*.ts", "../src/shared/**/*.ts"]
 }

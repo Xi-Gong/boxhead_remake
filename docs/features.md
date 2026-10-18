@@ -1,0 +1,47 @@
+[Back to README](../README.md)
+
+## Beyond the original
+
+<p align="center"><img src="../assets/readme/coop-crate.png" alt="Coop death weapon crate" width="640"></p>
+
+- **Save & resume** — pause-menu **SAVE & QUIT**, main-menu **CONTINUE**; death **RETRY** restarts at the failed
+  wave (wave-start checkpoint, or the run's starting wave when none exists yet — score/weapons reset as in the
+  original retry).
+- **Coop death weapon crate** — a fallen player drops their whole arsenal with live ammo; pickup restores the
+  owner exactly and gives the teammate the best of both.
+- **Devil supplies** — in single-player and co-op, devils can drop blue armor crates (20%) or olive ammunition
+  crates (20%). Armor fills to 100 and absorbs damage before health; its blue fill overlays the original life
+  bar, exposing actual health as armor shrinks. Armor pickups never heal, and normal health regeneration
+  continues. Ammunition refills every owned weapon to that player's upgraded capacity, including empty weapons.
+  LAN peers negotiate support before enabling these drops.
+- **Start-wave selector with progression** — the level-select `START WAVE` cycler lets you jump straight back to
+  the best wave you have fought up to (shown as `BEST` beside it), with the loadout the original's difficulty
+  curve would have granted by then. A fresh save can only start at wave 1 — the historical best persists in the
+  save and caps the cycler; in LAN the host's best is the cap.
+- **Personal LAN co-op progression** — separate last-hit scores, permanent levels and original weapon upgrades
+  for each player. Zombies award 1 XP and devils 5 XP; level requirements begin at 5 XP and rise by 5 every ten
+  levels, up to level 125. Top corner
+  score/level/XP panels flank the current wave and its remaining zombie/devil totals (including pending spawns),
+  with individual upgrade summaries while paused. Retry restores the current wave's starting growth and
+  inventory; a fresh selected-wave run grants its baseline level from the same earned-wave curve, respecting
+  the difficulty head start. Local co-op retains original kill-multiplier growth; death match retains its rules.
+- **Four PvE difficulty curves** — Single and co-op tune spawn pacing, active enemy caps and speed ceilings for
+  Beginner, Intermediate, Expert and Nightmare. Per-wave kill budgets, enemy health/damage and weapon upgrades
+  stay intact, so stronger weapons keep their impact. LAN enables the tuning only after capability negotiation.
+  See the [balance audit and explosion measurements](verification/v0.2.8/README.md).
+- **LAN multiplayer** (portable build) — host & auto-discover or join by IP for co-op and death match.
+  Rollback applies local input on the next simulation tick without waiting for the peer, with immediate local
+  weapon audio and display interpolation at the monitor's refresh rate. Redundant UDP inputs use TCP as a
+  reliable fallback. Short disconnects recover from input history; a restarted peer resumes from a checkpoint
+  within the 30 s reconnect window. Either player can RETRY from the debrief. Confirmed gameplay remains
+  deterministic; prediction may visibly correct under poor links. See the [measurements and tradeoffs](verification/v0.2.7/README.md).
+- **One data folder** — every build (the portable exe included) keeps all user game data — saves and settings —
+  in `%USERPROFILE%\.boxhead`, migrated there automatically on first run: one folder to manage and back up.
+
+<p align="center"><img src="../assets/readme/lan-growth.png" alt="Personal LAN co-op progression" width="640"></p>
+
+<p align="center"><img src="../assets/readme/devil-supplies.png" alt="Blue armor and olive ammunition supplies" width="640"></p>
+
+Intentional deviations are registered in [`src/game/deviations.ts`](../src/game/deviations.ts) and audited in
+[`PARITY.md`](../PARITY.md): sponsor content (CMG logo, online scores, external links) is replaced by local
+highscores; timing stays at the original 50 fps logic on any refresh rate.

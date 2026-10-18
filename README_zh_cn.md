@@ -8,36 +8,28 @@
 
 ## 简介
 
-把 2007 年的 Flash 经典 **Boxhead: 2Play Rooms**（作者 Sean Cooper）从原始 SWF 逆向后用
-**TypeScript + Canvas2D + Electron** 一比一复刻：数值、状态机、时序、画面布局乃至原版的小怪癖都完全保留，
-同时带来 2 倍分辨率光栅化、本地存档、手柄和局域网联机。
+把 Sean Cooper 的 2007 年 Flash 经典 **Boxhead: 2Play Rooms** 用 **TypeScript + Canvas2D + Electron**
+重新带到现代平台。逐类移植 AS2，保留原版美术、声音与游戏逻辑，加入 2 倍光栅化、存档、手柄和局域网联机。
+有意调整的内容见 [PARITY.md](PARITY.md)。
 
-![主菜单](assets/readme/menu.png)
-
-- **逐类移植**：原版 114 个 ActionScript 2 类逐文件移植为 TypeScript（`src/game/`），源码里的 `[BC]` 注释可回溯到 SWF 字节码偏移。
-- **自写反混淆器**：原 SWF 做过控制流平坦化混淆，ffdec 反编译结果错误百出——本项目自写 AVM1 反汇编器，所有可疑代码按真实字节码还原。
-- **原汁原味**：美术、字体、音效由本项目自研提取器直接从原版 SWF 提取（无需 Java / ffdec），并且**已提交进仓库**——标准构建完全不碰 SWF。仓库内真 Flash Player 跑注入探针实测 for..in 顺序、滤镜像素等细节，作为测试金标准。
-
-![对局](assets/readme/gameplay.png)
+<p align="center"><img src="assets/readme/menu.png" alt="主菜单" width="640"></p>
 
 ## 快速开始
 
-**Windows 便携版（推荐）**
+**Windows 便携版：** 在 [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest) 下载单文件 exe，双击即可游玩。
+存档与设置统一保存在 `%USERPROFILE%\.boxhead`。
+
+**从源码运行：**
 
 ```bash
 npm install
-npm run dist        # 生成 release/Boxhead 2Play Rooms-<版本>-portable.exe
+npm run dev         # 浏览器：http://localhost:5173/
+npm run dist        # Windows 便携版：release/Boxhead 2Play Rooms-<版本>-portable.exe
 ```
 
-双击单文件 exe 即可游玩（存档统一保存在 `%USERPROFILE%\.boxhead`）。首次打包需联网下载工具链，
-失败时在命令前加 `NODE_USE_ENV_PROXY=1`；未签名 exe 首跑的 SmartScreen 提示选"仍要运行"。
+首次打包会下载工具链；需要代理时设置 `NODE_USE_ENV_PROXY=1`。
 
-**浏览器**
-
-```bash
-npm install
-npm run dev         # http://localhost:5173/
-```
+<p align="center"><img src="assets/readme/gameplay.png" alt="对局" width="640"></p>
 
 ## 操作
 
@@ -48,48 +40,42 @@ npm run dev         # http://localhost:5173/
 | 换武器 | `.` / `,` | E / Q |
 | 选武器（仅单人） | 数字键 1–0 | — |
 
-`P` 暂停，`F11` 全屏，右键菜单可调声音 / 画质 / 渲染清晰度。全程支持手柄（摇杆移动、RT/A 射击、START 暂停），
-键位可在选关界面改。
+`P` 暂停，`F11` 全屏，右键调整声音、画质和渲染清晰度。
+全程支持手柄（摇杆移动、RT/A 射击、START 暂停），选关界面可以改键。
 
 ## 超越原版的功能
 
-![协作死亡武器箱](assets/readme/coop-crate.png)
+- **存档、续玩与重试**：继续已存对局、从失败波次重试，也可选择历史到达过的起始波次。
+- **局域网合作与对战**：桌面版支持发现房间、输入 IP 加入、回滚预测和断线恢复。
+- **联机合作独立成长**：两人各自计分、永久升级与强化武器；顶部两侧显示等级和经验，中间显示波次及剩余敌人数。
+- **恶魔补给**：蓝色护甲箱与军绿弹药箱各有辨识。护甲叠在绿色血条上，先承伤，减少后露出血量；拾取不补血，也不影响正常回血。弹药箱补满所有已有武器。
+- **四档生存难度**：调整刷怪节奏与敌人速度上限，保留原版敌人血量、伤害和每波总量，让成长与推进更有反馈。
+- **合作武器箱**：阵亡玩家掉落武器与剩余弹药，可拾取恢复。
 
-- **存档与重试**：暂停界面 **SAVE & QUIT** 随时存档退出，主菜单 **CONTINUE** 从存档波次续玩；死亡后 **RETRY** 从失败波次重开（有检查点用波次开局检查点，没有则回到本局起始波；分数/武器按原版重试语义重置）。
-- **协作死亡武器箱**：Coop 里玩家死亡时原地掉落红箱，内含其背包全部武器与实际剩余弹药；本人拾取精确还原，队友拾取取两者较优。
-- **恶魔补给**：单人及合作模式下，恶魔有20%概率掉落蓝色护甲箱、20%概率掉落军绿弹药箱。护甲拾取补满至100，受伤先扣护甲、再扣生命；蓝色护甲叠在原血条上，减少时露出实际血量。拾取护甲不补血，原版自动回血照常进行。弹药箱按玩家自己的强化容量补满背包全部已有武器，包括空弹药武器。局域网双方协商支持后启用。
-- **起始波次选择（进度解锁）**：选关界面 `START WAVE` 循环器开局波次上限为历史最高打到过的波次（旁有 `BEST` 标注），按原版难度锚点配给"打到该波次应有的"武器与升级。新存档只能从第 1 波打起；历史最高持久保存在存档里并作为上限，联机以房主的上限为准。
-- **联机合作独立成长**：两人各自累计最后一击分数、永久等级及原版武器强化。僵尸1经验、恶魔5经验，升级需求从5经验起、每10级增加5经验，125级封顶；击杀分数乘本次升级前个人等级。顶部两侧显示个人分数、等级和经验，中间显示关卡和普通/红色僵尸剩余总数（含尚未刷出的敌人），击杀分别扣减；暂停可分别查看强化。失败重试恢复本关开始时的成长与库存；选关新开按同一成长曲线获得基础等级，保留难度起步下限。本地合作保留原版连杀成长，死亡竞赛保持原规则。
-- **四档生存难度曲线**：单人及合作分别调整Beginner、Intermediate、Expert、Nightmare的刷怪节奏、同时在场上限和速度上限。保留每波击杀总量、敌人血量/伤害及武器强化表，让武器变强后的击杀效率有实际提升；联机双方协商支持后才启用。
-- **局域网联机**（仅便携版）：建房、自动发现或输 IP 加入合作与对战。本机输入在下一模拟 tick 执行，不再等待对端；回滚纠正迟到输入，本机枪声即时反馈，画面按显示器刷新率插值。UDP 冗余输入配合 TCP 可靠回退；短时断线从输入历史恢复，对端重启则在 30 秒重连窗口内从检查点续局。任一玩家可在结算界 Retry。确认后的玩法保持一致，较差链路下预测画面可能回正；[实测收益与成本](docs/verification/v0.2.7/README.md)有完整记录。
-- **用户数据统一存放**：所有版本（含便携版）的存档与设置都保存在 `%USERPROFILE%\.boxhead` 一个文件夹里，首次运行自动迁移旧数据，便于管理与备份。
+[完整功能说明](docs/features_zh_cn.md) · [平衡与性能验收](docs/verification/v0.2.8/README.md)
 
-全部偏差登记在 [`src/game/deviations.ts`](src/game/deviations.ts) 并收录于 [`PARITY.md`](PARITY.md)：
-赞助商内容（CMG Logo、在线排行榜、外链）改为本地高分；任意刷新率下保持原版 50fps 逻辑。
+<p align="center"><img src="assets/readme/coop-crate.png" alt="合作武器回收" width="640"></p>
 
-![联机合作独立成长](assets/readme/lan-growth.png)
+<p align="center"><img src="assets/readme/lan-growth.png" alt="联机合作独立成长" width="640"></p>
 
-![蓝色护甲箱与军绿弹药箱](assets/readme/devil-supplies.png)
+<p align="center"><img src="assets/readme/devil-supplies.png" alt="蓝色护甲箱与军绿弹药箱" width="640"></p>
 
 ## 开发
 
 ```bash
-npm test             # 单元 + 无头模拟（含 Flash 实测金标准对比）
+npm test
 npm run typecheck
-npm run build        # 渲染器构建（素材提取在有效时自动跳过）
-npm run extract      # 从 assets/boxhead_2play_rooms.swf 重新生成 public/assets
+npm run build
+npm run extract      # 从原始 SWF 重新生成仓库中的素材
 ```
 
-布局：`src/engine/` Flash API 子集 + 显示列表播放器 + 平台层；`src/game/` 原版类移植；`tools/` SWF 提取与
-AVM1 工具链；`tests/` 单元 / 模拟 / 真机 playtest；`assets/` 原版 SWF 与参考 Flash Player。工程规则见
-`CONVENTIONS.md`；`gallery.html`（`npm run dev` 后访问）可浏览原版 SWF 的任意元件。
+`src/engine/` 实现 Flash API，`src/game/` 保存原版移植，`tools/` 提供素材提取与 AVM1 工具。
+标准构建直接使用仓库素材；开发服务器中的 `gallery.html` 可以浏览原版元件。
+参见[工程约定](docs/CONVENTIONS.md)和[文档目录](docs/README.md)。
 
 ## 资产声明
 
-***原版 Boxhead: 2Play Rooms © Sean Cooper（2007），Crazy Monkey Games 赞助。仓库内素材由原版 SWF 提取，
-仅供学习研究，请勿商用。本复刻为爱好者项目，与原作者无隶属关系。***
+***原版 Boxhead: 2Play Rooms © Sean Cooper（2007），Crazy Monkey Games 赞助。提取素材仅供学习研究，
+请勿商用。本复刻为爱好者项目，与原作者无隶属关系。***
 
-## 联系
-
-- 原作者：[seantcooper.com](https://www.seantcooper.com/)
-- 问题与 PR：[github.com/Xi-Gong/boxhead_remake](https://github.com/Xi-Gong/boxhead_remake)
+[原作者](https://www.seantcooper.com/) · [问题与 PR](https://github.com/Xi-Gong/boxhead_remake)

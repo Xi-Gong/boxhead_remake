@@ -13,7 +13,7 @@
  *   - AS2 object LITERALS enumerate in SOURCE order (`{a:1, b:2, c:3}` -> a,b,c: InitObject creates the pairs
  *     last-to-first; `{a:1, b:2, a:3}` -> b,a with a = 1). A TS port of an AS2 literal that is enumerated (directly, or
  *     as an attachMovie/duplicateMovieClip initObject, which the engine copies with forIn) must therefore be written
- *     with its keys REVERSED — CONVENTIONS.md porting rule 6, tagged `// [ORACLE P1]` (CHud, CScreen_Debrief,
+ *     with its keys REVERSED — docs/CONVENTIONS.md porting rule 6, tagged `// [ORACLE P1]` (CHud, CScreen_Debrief,
  *     CScreen_Debrief_Winner initObjects; the oracle-fix audit found no other enumerated literal in src/game).
  *   - arrays: Flash enumerates array elements in reverse CREATION order too (`a[5]; a[2]; a[0]` -> 0,2,5) with named
  *     properties interleaved by creation. A JS array cannot record creation order, so forIn() models arrays as

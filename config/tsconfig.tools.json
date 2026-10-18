@@ -12,5 +12,5 @@
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["tools/**/*.ts", "src/shared/**/*.ts"]
+  "include": ["../tools/**/*.ts", "../src/shared/**/*.ts"]
 }

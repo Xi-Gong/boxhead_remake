@@ -1,7 +1,7 @@
 {
   "name": "boxhead-2play-rooms-remake",
   "productName": "Boxhead 2Play Rooms",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "private": true,
   "description": "1:1 remake of Boxhead: 2Play Rooms (Sean Cooper, 2007) in TypeScript + Canvas2D + Electron",
   "type": "module",
@@ -10,7 +10,7 @@
     "extract": "node tools/extract.ts",
     "disasm": "node tools/disasm.ts",
     "dev": "npm run extract -- --if-stale && vite",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.strict.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p config/tsconfig.strict.json --noEmit && tsc -p config/tsconfig.tools.json --noEmit",
     "test": "vitest run",
     "build": "npm run extract -- --if-stale && node tools/make-icon.ts && npm run typecheck && vite build && node tools/build-electron.ts",
     "dist": "npm run build && electron-builder --win portable --x64",
