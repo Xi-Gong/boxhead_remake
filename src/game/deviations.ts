@@ -21,7 +21,7 @@ export const DEVIATIONS: Deviation[] = [
       'pre-kill level. Current-wave retry restores its starting checkpoint, including personal growth; fresh ' +
       'selected waves use the existing difficulty/head-start curve. Optional snapshot/config fields preserve ' +
       'local version2 saves and the legacy cooperative rules when the capability is absent. Confirmed personal ' +
-      'scores/XP flank a centered wave HUD; overhead levels and a two-player pause upgrade summary use original ' +
+      'scores/levels/XP flank a centered wave HUD with confirmed remaining zombie/devil totals; a two-player pause upgrade summary uses original ' +
       'embedded fonts and display-only clips. Level feedback is bounded to 700 ms without timers.',
   },
   {

@@ -32,20 +32,31 @@ try{
     for(let n=0;n<5;n++){
      const victim=new P.Thing.Creature.CThing_Creature_Zombie(owner.mPosition.Clone(),owner.mAngle.Clone());
      this.mThing_Collection.AddThing(victim);victim.Process_Init();victim.mLife=1;
+     this.mUpgrades.__set__mZombieCount(this.mUpgrades.__get__mZombieCount()+1);
      new P.Thing.Affect.CThing_Affect_Bullet(owner,owner,1,owner.mAngle).AffectThing(victim);victim.SetState('State_Dying');
     }
+   }else if(a==='red-kill'){
+    const P=window.__game.pkg,owner=Object.values(this.mThing_Collection.mPlayerThings).find(p=>p.mPlayerIndex===0);
+    const victim=new P.Thing.Creature.CThing_Creature_Devil(owner.mPosition.Clone(),owner.mAngle.Clone());
+    this.mThing_Collection.AddThing(victim);victim.Process_Init();victim.mLife=1;
+    this.mUpgrades.__set__mDevilCount(this.mUpgrades.__get__mDevilCount()+1);
+    new P.Thing.Affect.CThing_Affect_Bullet(owner,owner,1,owner.mAngle).AffectThing(victim);victim.SetState('State_Dying');
    }else if(a==='max'){
     Object.assign(this.mUpgrades.lanGrowth.players[0],{score:999999999999999,level:125,xp:0});
     Object.assign(this.mUpgrades.lanGrowth.players[1],{score:12345,level:17,xp:3});
     this.mUpgrades.mLevelIndex=103;
+    Object.assign(this.mUpgrades.Level,{Zombie_TotalCount:505,Devil_TotalCount:25});
    }
   }return original.call(this);};
  });
  const shot=async name=>{const file=`${out}/${name}.png`;await g.shot(file,false);report.shots.push(file);};
  await g.page.waitForTimeout(750);await shot('initial-640x480');
+ assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Wave._Zombies.text'),'10');
+ assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Wave._Devils.text'),'0');
  await g.eval(()=>{window.__growthQA.action='kill';});
  assert(await g.waitExpr('m.mcWorld._LanGrowthHud._Player0._Level.text==="LV 2"'));
  assert.equal(await g.expr('m.mcWorld.mUpgrades.lanGrowth.players[0].score'),500);
+ assert(await g.waitExpr('m.mcWorld._LanGrowthHud._Wave._Zombies.text==="5"'));
  await shot('level-up-640x480');
  await g.page.waitForTimeout(800);
  assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Player0._Experience.text'),'0 / 5 XP');
@@ -57,10 +68,12 @@ try{
    const w=window.__game.main().mcWorld,h=w._LanGrowthHud;
    return {stage:w.mScreenSize.x,left:h._Player0._x,right:h._Player1._x,center:h._Wave._x,
     score:h._Player0._Score.text,head:Object.values(w.mHud.mcPlayers).filter(Boolean).map(p=>({x:p._x,y:p._y,level:p._PersonalLevel?.text,visible:p._visible})),
-    fields:[h._Player0._Score,h._Player1._Score].map(t=>({width:t._width,textWidth:t.textWidth}))};
+    counts:{zombies:h._Wave._Zombies.text,devils:h._Wave._Devils.text},
+    fields:[h._Player0._Score,h._Player1._Score,h._Wave._Zombies,h._Wave._Devils,h._Wave._Number].map(t=>({width:t._width,textWidth:t.textWidth}))};
   });
   assert.equal(geo.left,geo.stage-geo.right-210);assert(geo.center>=geo.left+222);
-  assert(geo.right>=geo.center+124);assert(geo.fields.every(f=>f.textWidth<=f.width));
+  assert(geo.right>=geo.center+184);assert(geo.fields.every(f=>f.textWidth<=f.width));
+  assert.deepEqual(geo.counts,{zombies:'505',devils:'25'});
   assert(geo.head.every(p=>p.level==null),'levels belong only in the top HUD');
   report.geometry.push({width,height,...geo});await shot(`max-${width}x${height}`);
   if(width===640&&height===480){
@@ -77,6 +90,10 @@ try{
   }
  }
  await g.page.setViewportSize({width:960,height:720});await g.page.waitForTimeout(750);
+ await g.eval(()=>{window.__growthQA.action='red-kill';});
+ assert(await g.waitExpr('m.mcWorld._LanGrowthHud._Wave._Devils.text==="24"'));
+ assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Wave._Zombies.text'),'505');
+ await shot('red-kill-960x720');
  await g.eval(()=>window.__game.main().mcWorld.mHud.Pause(true));
  await g.page.waitForTimeout(750);await shot('personal-upgrades');
  report.errors=await g.expr('g.errors');assert.deepEqual(report.errors,[]);

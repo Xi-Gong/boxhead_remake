@@ -27,6 +27,7 @@ it('renders confirmed personal values only at the top, preserves original head U
   session.confirmedGrowth.players[0]={score:12345,level:17,xp:3};
   session.confirmedGrowth.players[1]={score:999999999999999,level:125,xp:0};
   session.confirmedWave=103;
+  session.confirmedEnemies={zombies:505,devils:25};
   const before=simulationDigest(captureWorldSnap(w,ctx,false));
   w.Draw(); w.Draw();
   const ui=w._LanGrowthHud;
@@ -35,6 +36,7 @@ it('renders confirmed personal values only at the top, preserves original head U
   expect(ui._Player0._Level.text).toBe('LV 17');
   expect(ui._Player1._Experience.text).toBe('MAX');
   expect(ui._Wave._Number.text).toBe('103');
+  expect(ui._Wave._Zombies.text).toBe('505');expect(ui._Wave._Devils.text).toBe('25');
   expect(World.CHud.mcScoreTotal._visible).toBe(false);
   const p=game.players()[0]; w.mHud.UpdatePlayer(p,{x:1,y:1});
   const head=w.mHud.mcPlayers[0];

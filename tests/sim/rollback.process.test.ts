@@ -85,6 +85,7 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
     expect(final[0].decals).toEqual(final[1].decals);
     if (scenario.growth) {
       expect(final[0].growth).toEqual(final[1].growth);
+      expect(final[0].confirmedEnemies).toEqual(final[1].confirmedEnemies);
       expect(final[0].growth.players.some((p:any)=>p.level>1)).toBe(true);
     }
     if (scenario.explosions) for (const peer of final) expect(peer.peakExplosions).toBeGreaterThanOrEqual(scenario.explosions);

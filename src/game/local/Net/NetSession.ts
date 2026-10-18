@@ -45,6 +45,7 @@ import { EventJournal } from './Events.ts';
 import { NetPresentation } from './Presentation.ts';
 import { PauseBarrier } from './PauseBarrier.ts';
 import { GROWTH_RULE, newGrowth, copyGrowth, growthOf, type GrowthState } from './Growth.ts';
+import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -164,6 +165,7 @@ export class NetSession {
   /** Presentation-only confirmed values; authoritative state is included in WorldSnap.upgrades. */
   confirmedGrowth: GrowthState | undefined;
   confirmedWave = 1;
+  confirmedEnemies: EnemyCounts = {zombies:0,devils:0};
   events = new EventJournal();
   decals = new EventJournal();
   presentation = new NetPresentation();
@@ -471,6 +473,7 @@ export class NetSession {
       world.mUpgrades.lanGrowth ??= newGrowth(world.mUpgrades.mMultiplierIndex);
       this.confirmedGrowth = copyGrowth(world.mUpgrades.lanGrowth);
       this.confirmedWave = world.mUpgrades.mLevelIndex;
+      this.confirmedEnemies = remainingEnemies(world);
       if (this.startOpts.resumeTick === undefined) this.captureCheckpoint(world);
     } else this.confirmedGrowth = undefined;
     this.phase = 'playing';
@@ -650,6 +653,7 @@ export class NetSession {
     if (!this.rollbackV2 && growthOf(world)) {
       this.confirmedGrowth = copyGrowth(growthOf(world)!);
       this.confirmedWave = world.mUpgrades.mLevelIndex;
+      this.confirmedEnemies = remainingEnemies(world);
     }
     const t = world.mTick - this.startTick;
     this.virtualTimeMs += 1000 / CMain.mFPS;
@@ -720,6 +724,7 @@ export class NetSession {
     if (growthOf(world)) {
       meta.growth = copyGrowth(growthOf(world)!);
       meta.wave = world.mUpgrades.mLevelIndex;
+      meta.enemies = remainingEnemies(world);
     }
     if (this.mode === 'DeathMatch' && (tick + 1) % DM_CHECKPOINT_EVERY === 0) {
       const snap = capture(world);
@@ -738,7 +743,7 @@ export class NetSession {
         this.netCheckpoint = meta.checkpoint;
         if (this.mode !== 'DeathMatch') recordWaveReached(meta.checkpoint.snap.wave);
       }
-      if (meta.growth) { this.confirmedGrowth = meta.growth; this.confirmedWave = meta.wave; }
+      if (meta.growth) { this.confirmedGrowth = meta.growth; this.confirmedWave = meta.wave; this.confirmedEnemies = meta.enemies; }
       this.events.confirm(t);
       this.decals.confirm(t);
       this.pendingSounds.delete(t);

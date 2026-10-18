@@ -5,14 +5,15 @@ import { World } from '../../packages.ts';
 import { BODY_FONT, MENU_FONT, INK, RED, text, capsule } from '../UiStyle.ts';
 import { growthOf, MAX_LEVEL, XP_PER_LEVEL, type GrowthState } from './Growth.ts';
 import { netSession } from './NetSession.ts';
+import type { EnemyCounts } from './EnemyCounts.ts';
 
-export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 112, top: 4 } as const;
+export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 172, top: 4 } as const;
 export function growthLayout(width: number): { left: number; right: number; center: number; bottom: number } {
   return { left: GROWTH_HUD.margin, right: width - GROWTH_HUD.margin - GROWTH_HUD.width,
     center: (width - GROWTH_HUD.centerWidth) / 2, bottom: GROWTH_HUD.top + GROWTH_HUD.height };
 }
 interface Side { clip: any; score: any; level: any; xp: any; fill: any; lastScore: number; lastLevel: number; lastXp: number; pulseUntil: number; pulse: boolean }
-interface HudView { clip: any; sides: [Side, Side]; center: any; wave: any; lastWave: number; lastWidth: number }
+interface HudView { clip: any; sides: [Side, Side]; center: any; wave: any; zombies: any; devils: any; lastWave: number; lastWidth: number }
 const views = new WeakMap<object, HudView>();
 const outlined = (): any[] => [new flash.filters.GlowFilter(0x000000, 1, 2, 2, 10, 1)];
 
@@ -43,14 +44,20 @@ function create(hud: any): HudView {
   const world=hud.mWorld;
   const clip=world.createEmptyMovieClip('_LanGrowthHud',world.getNextHighestDepth());
   clip._y=GROWTH_HUD.top;
-  const center=clip.createEmptyMovieClip('_Wave',clip.getNextHighestDepth()); backing(center,112,46);
-  text(center,'_Caption',0,0,112,17,BODY_FONT,10,INK,true,'center','WAVE');
-  const wave=text(center,'_Number',0,14,112,30,MENU_FONT,22,0xffffff,false,'center',''); wave.filters=outlined();
-  const result:HudView={clip,sides:[side(clip,0),side(clip,1)],center,wave,lastWave:-1,lastWidth:-1};
+  const center=clip.createEmptyMovieClip('_Wave',clip.getNextHighestDepth()); backing(center,GROWTH_HUD.centerWidth,46);
+  text(center,'_Caption',54,0,64,17,BODY_FONT,10,INK,true,'center','WAVE');
+  const wave=text(center,'_Number',54,14,64,30,MENU_FONT,22,0xffffff,false,'center',''); wave.filters=outlined();
+  text(center,'_ZombieCaption',0,0,54,17,BODY_FONT,10,0x49554a,true,'center','ZOMBIE');
+  text(center,'_DevilCaption',118,0,54,17,BODY_FONT,10,RED,true,'center','DEVIL');
+  const zombies=text(center,'_Zombies',0,18,54,26,MENU_FONT,18,INK,false,'center','');
+  const devils=text(center,'_Devils',118,18,54,26,MENU_FONT,18,0xa60000,false,'center','');
+  center.lineStyle(.5,0x777777,22);
+  for(const x of [54,118]){center.moveTo(x,10);center.lineTo(x,36);}center.lineStyle();
+  const result:HudView={clip,sides:[side(clip,0),side(clip,1)],center,wave,zombies,devils,lastWave:-1,lastWidth:-1};
   clip.onUnload=():void=>{views.delete(hud);};
   views.set(hud,result); return result;
 }
-function update(hud: any, state: GrowthState, wave: number): void {
+function update(hud: any, state: GrowthState, wave: number, enemies: EnemyCounts): void {
   const view=views.get(hud)??create(hud), width=hud.mWorld.mScreenSize.x, time=nowMs();
   view.clip._visible=!hud.mcScreenPause;
   if(view.lastWidth!==width){
@@ -59,6 +66,8 @@ function update(hud: any, state: GrowthState, wave: number): void {
     view.lastWidth=width;
   }
   if(view.lastWave!==wave){view.wave.text=String(wave);view.lastWave=wave;}
+  if(view.zombies.text!==String(enemies.zombies))view.zombies.text=String(enemies.zombies);
+  if(view.devils.text!==String(enemies.devils))view.devils.text=String(enemies.devils);
   for(let index=0;index<2;index++){
     const p=state.players[index]!, ui=view.sides[index]!;
     const progressChanged=ui.lastXp!==p.xp||ui.lastLevel!==p.level;
@@ -135,7 +144,7 @@ export function installGrowthHud(): void {
     const result=draw.apply(this,args),session=netSession();
     if(growthOf(this.mWorld)&&session?.confirmedGrowth){
       if(World.CHud.mcScoreTotal)World.CHud.mcScoreTotal._visible=false;
-      update(this,session.confirmedGrowth,session.confirmedWave);
+      update(this,session.confirmedGrowth,session.confirmedWave,session.confirmedEnemies);
     }
     return result;
   };

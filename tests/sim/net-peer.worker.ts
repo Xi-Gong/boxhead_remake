@@ -61,6 +61,7 @@ process.on('message', (m: any) => {
       errors: game.errors, stats: session.rollbackStats, weapons: [...weapons],
       checkpoint: session.netCheckpoint?.tick, startTick: world.mTick - session.tickIndex(world),
       growth: world.mUpgrades.lanGrowth,
+      confirmedEnemies: session.confirmedEnemies,
       peakExplosions,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash],
