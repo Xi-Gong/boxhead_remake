@@ -1,7 +1,7 @@
 // Packaged LAN smoothness playtest: two real exes over a REAL localhost TCP link
 // with --boxhead-net-delay=<ms> one-way latency injected in the transport (the UDP beacons are untouched).
-// Rollback coordination is enabled, but PREDICT_MAX_LAG_TICKS ships at 0. D adapts to link latency;
-// the render-only shadow supplies immediate display feedback while the simulation waits for inputs.
+// BOXHEAD_NETCODE=rollback-v2 exercises zero-delay rollback and high-refresh presentation;
+// otherwise this explicitly selects the retained legacy input-delay/display-shadow path.
 //
 // Asserted (smoothness itself is PROGRAMMATIC - a screenshot cannot show cadence; the zai vision gate uses the
 // screenshots to verify the scenes render correctly):
@@ -183,7 +183,7 @@ try {
       samples.push({ host: await h.lan(), client: await c.lan() });
       const sample=samples.at(-1);
       if(sample.host.session!=='playing'||sample.client.session!=='playing')throw new Error(`session interrupted: ${JSON.stringify(sample)}`);
-      if(Date.now()>=nextProgress){step(`soak ${Math.round((Date.now()-t0)/1000)}s: ticks ${sample.host.tick}/${sample.client.tick}, stalls ${sample.host.stallCount}/${sample.client.stallCount}`);nextProgress+=60000;}
+      if(Date.now()>=nextProgress){step(`soak ${Math.round((Date.now()-t0)/1000)}s: ticks ${sample.host.worldTick}/${sample.client.worldTick}, stalls ${sample.host.stallCount}/${sample.client.stallCount}`);nextProgress+=60000;}
     }
   } finally {
     await H.page.keyboard.up('Slash');

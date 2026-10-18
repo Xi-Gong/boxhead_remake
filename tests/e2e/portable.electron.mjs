@@ -2,16 +2,16 @@
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
-import { mkdirSync, copyFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, copyFileSync, writeFileSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import asar from '@electron/asar';
 import { chromium } from 'playwright-core';
 import { Game, toMainMenu } from './lib.mjs';
 
-const root=process.cwd(),out=resolve('generated/reports/v026/portable');
+const expected=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
+const root=process.cwd(),out=resolve(`generated/reports/v${expected.replaceAll('.','')}/portable`);
 mkdirSync(out,{recursive:true});
-const exe=process.env.BOXHEAD_QA_EXE??resolve('release/Boxhead 2Play Rooms-0.2.6-portable.exe');
-const expected=process.env.BOXHEAD_QA_VERSION??'0.2.6';
+const exe=process.env.BOXHEAD_QA_EXE??resolve(`release/Boxhead 2Play Rooms-${expected}-portable.exe`);
 const port=await new Promise((resolvePort,reject)=>{const s=createServer();s.once('error',reject);s.listen(0,'127.0.0.1',()=>{const p=s.address().port;s.close(()=>resolvePort(p));});});
 const child=spawn(exe,['--boxhead-multi','--boxhead-hidden','--window-position=-32000,0',`--remote-debugging-port=${port}`,
  '--disable-features=CalculateNativeWinOcclusion','--disable-backgrounding-occluded-windows','--disable-background-timer-throttling'],
