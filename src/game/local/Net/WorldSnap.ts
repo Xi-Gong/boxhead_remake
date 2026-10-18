@@ -258,10 +258,7 @@ function captureValue(v: any, ctx: SnapCtx, owner: any, path: string): SV {
   if (v instanceof flash.display.BitmapData) return ['shared', sharedIdx(ctx, v)];
   // Plain object (dict / literal container).
   if (Object.getPrototypeOf(v) === Object.prototype) {
-    const token: any = ['dict', []];
-    m.set(v, token);
-    for (const k of Object.keys(v)) token[1].push([k, captureValue(v[k], ctx, owner, `${path}.${k}`)]);
-    return token;
+    return captureDict(v,ctx,owner,path);
   }
   throw new Error(`WorldSnap: unknown value at ${path}: ${v._CLASSID_ ?? v.constructor?.name} (${String(v).slice(0, 60)})`);
 }
@@ -291,6 +288,34 @@ function captureOwnProps(o: any, ctx: SnapCtx, path: string): [string, SV][] {
     }
   }
   return out;
+}
+
+// Versionless plain-data leaves (not objects with slot-specific references). Validate key order and
+// every primitive before reuse; a changed leaf always gets a new token, leaving older slots immutable.
+const primitiveDicts=new WeakMap<object,{keys:string[];values:any[];token:SV}>();
+function captureDict(o:any,ctx:SnapCtx,owner:any,path:string):SV{
+  const keys=Object.keys(o),cached=primitiveDicts.get(o);
+  let prefix=0,failedValue:any,failedValueRead=false;
+  if(cached&&keys.length===cached.keys.length){
+    for(;prefix<keys.length;prefix++){
+      if(keys[prefix]!==cached.keys[prefix])break;
+      const value=o[keys[prefix]];
+      if(!Object.is(value,cached.values[prefix])){failedValue=value;failedValueRead=true;break;}
+    }
+    if(prefix===keys.length){ctx.privateMemo!.set(o,cached.token);return cached.token;}
+  }
+  const props:[string,SV][]=[],token:SV=['dict',props];ctx.privateMemo!.set(o,token);
+  let values:any[]|undefined=[];
+  for(let i=0;i<keys.length;i++){
+    const key=keys[i],value=i<prefix?cached!.values[i]:i===prefix&&failedValueRead?failedValue:o[key],type=typeof value;
+    if(values){
+      if(value===null||type==='undefined'||type==='number'||type==='string'||type==='boolean')values.push(value);
+      else values=undefined;
+    }
+    props.push([key,captureValue(value,ctx,owner,`${path}.${key}`)]);
+  }
+  if(values)primitiveDicts.set(o,{keys,values,token});else primitiveDicts.delete(o);
+  return token;
 }
 
 export function captureWorldSnap(world: any, ctx: SnapCtx, copyFloor = true): WorldSnap {

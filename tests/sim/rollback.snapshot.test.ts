@@ -10,6 +10,26 @@ import { captureWorldSnap, restoreWorldSnap, makeSnapCtx, type RingSlot } from '
 
 const TOTAL = 60;
 
+it('reuses only unchanged primitive dictionaries, preserving getter reads, key order, aliases and old slots',()=>{
+  const g=createHeadlessGame({mode:'Coop',room:1}),w=g.world(),p=g.players()[0],ctx=makeSnapCtx(w),reads:string[]=[];
+  let a=1,b:any=undefined;const leaf:any={};
+  Object.defineProperty(leaf,'a',{enumerable:true,configurable:true,get(){reads.push('a');return a;}});
+  Object.defineProperty(leaf,'b',{enumerable:true,configurable:true,get(){reads.push('b');return b;}});
+  p.snapshotLeaf=leaf;p.snapshotAlias=leaf;
+  const get=()=>captureWorldSnap(w,ctx,false),token=(s:any)=>s.things[p.sUniqueID].props.find(([k]:any)=>k==='snapshotLeaf')[1];
+  const first=get(),saved=JSON.stringify(first);expect(reads.splice(0)).toEqual(['a','b']);
+  const second=get();expect(token(second)).toBe(token(first));expect(reads.splice(0)).toEqual(['a','b']);
+  a=2;const changed=get();expect(token(changed)).not.toBe(token(first));expect(reads.splice(0)).toEqual(['a','b']);
+  b={mControls:{value:9}};const nested=get();expect(reads.splice(0)).toEqual(['a','b']);
+  expect(JSON.stringify(token(nested))).toContain('mControls');expect(JSON.stringify(token(nested))).not.toContain('shared');
+  delete leaf.a;Object.defineProperty(leaf,'a',{enumerable:true,configurable:true,get(){reads.push('a');return a;}});
+  get();expect(reads.splice(0)).toEqual(['b','a']);expect(JSON.stringify(first)).toBe(saved);
+  const slot:RingSlot={tRel:0,data:first,instances:ctx.instances,sharedObjs:ctx.sharedObjs};
+  // Restore onto an ordinary mutable dictionary, as actual game state uses data properties.
+  p.snapshotLeaf={};p.snapshotAlias={};restoreWorldSnap(w,slot,ctx);
+  expect(p.snapshotLeaf).toBe(p.snapshotAlias);expect(p.snapshotLeaf.a).toBe(1);expect(p.snapshotLeaf.b).toBeUndefined();g.quit();
+});
+
 it('invalidates cached function names after prototype method replacement or renaming',()=>{
   const game=createHeadlessGame({mode:'Coop',room:1}),w=game.world(),p=game.players()[0],ctx=makeSnapCtx(w);
   const prototype=Object.getPrototypeOf(p),fn=function snapshotMethod(){};
