@@ -239,7 +239,17 @@ export const DEVIATIONS: Deviation[] = [
       'offline Draw is always paired 1:1 with a tick (zero audible change), but during a net stall / net pause the ' +
       'frozen world kept Drawing every flagDraw and the ambience ticker fired zombie moans over a world that did ' +
       'not move (and inflated the drawn-zombie accumulator for the first post-stall bucket); the gate keeps both ' +
-      'peers\' ambience in lockstep with the simulation.',
+      'peers\' ambience in lockstep with the simulation. v0.2.7: capable peers negotiate rollback-v2, local input ' +
+      'runs on the next simulation tick with no remote-input delay, and a speed-scaled ~240ms prediction window ' +
+      'is corrected from pre-input snapshots preserving property order and navigation. Simulation time is tick-based. ' +
+      'Full confirmed gameplay digests and ordered confirmed sound/decal identities must agree. Local weapon audio ' +
+      'plays speculatively once; permanent decals, checkpoints, unlocks and terminal routing wait for confirmation. ' +
+      'Render-only interpolation/extrapolation and camera smoothing run at display refresh without changing the ' +
+      'original simulation cadence. Optional authenticated redundant UDP inputs retain reliable TCP copies/control; ' +
+      'short disconnects exchange input history without rebuilding the world, with checkpoint fallback for restarted ' +
+      'peers. Pause coordinates a common confirmed boundary. Input starvation requests repair instead of claiming ' +
+      'checksum desync; connection timers use monotonic time and stale socket callbacks cannot close a new peer. ' +
+      'Legacy lockstep remains available for capability fallback and regression coverage.',
   },
   // ---------------------------------------------------------------------------------------------- v0.1.7 additions
   {

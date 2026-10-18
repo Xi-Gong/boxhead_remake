@@ -17,7 +17,7 @@ describe('LAN bridge operation lifetime',()=>{
   CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
   try {
-   b.useRollbackV2=true;
+   expect(b.useRollbackV2).toBe(true);
    lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',sid:'qa',char:0,netcodes});
    b.phase='setup';b.startGame(false);
    const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');

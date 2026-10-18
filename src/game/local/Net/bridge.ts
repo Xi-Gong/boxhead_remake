@@ -54,8 +54,8 @@ class LanBridge {
   /** Set by main.ts: lets DOM overlays (the IP input) track the letterboxed canvas. */
   presenter: PresenterLike | undefined;
   peerName = '';
-  /** Staged rollout: QA can opt in; production default changes after release gates. */
-  useRollbackV2 = false;
+  /** Negotiate rollback for capable peers; QA can still exercise the retained legacy path. */
+  useRollbackV2 = true;
   private peerRollbackV2 = false;
   session: NetSession | null = null;
   sid: string | undefined;

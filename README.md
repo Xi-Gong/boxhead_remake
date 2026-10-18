@@ -70,10 +70,12 @@ npm run dev         # http://localhost:5173/
   the best wave you have fought up to (shown as `BEST` beside it), with the loadout the original's difficulty
   curve would have granted by then. A fresh save can only start at wave 1 — the historical best persists in the
   save and caps the cycler; in LAN the host's best is the cap.
-- **LAN multiplayer** (portable build) — host & auto-discover or join by IP, lockstep-verified co-op and death
-  match with 30 s reconnect + checkpoint resume (~2–4 KB/s each way). After a finished match either player
-  can RETRY straight from the debrief (checkpoint first, else a fresh run at the failed wave), and local-player
-  display prediction keeps control feeling like single-player even on 60 ms-class links.
+- **LAN multiplayer** (portable build) — host & auto-discover or join by IP for co-op and death match.
+  Rollback applies local input on the next simulation tick without waiting for the peer, with immediate local
+  weapon audio and display interpolation at the monitor's refresh rate. Redundant UDP inputs use TCP as a
+  reliable fallback. Short disconnects recover from input history; a restarted peer resumes from a checkpoint
+  within the 30 s reconnect window. Either player can RETRY from the debrief. Confirmed gameplay remains
+  deterministic; prediction may visibly correct under poor links. See the [measurements and tradeoffs](docs/verification/v0.2.7/README.md).
 - **One data folder** — every build (the portable exe included) keeps all user game data — saves and settings —
   in `%USERPROFILE%\.boxhead`, migrated there automatically on first run: one folder to manage and back up.
 
