@@ -2,6 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { ArrayFlags, AsDict, as2Config, forIn, int, numberToString, sortOn, toAS2String, toNumber } from '../../../src/engine/flash/as2.ts';
 
 describe('forIn (AVM1 enumeration order: reverse creation order)', () => {
+  it('preserves dense, sparse, named, non-enumerable and inherited array slots',()=>{
+    const reference=(a:any[])=>{
+      const keys:string[]=[];
+      for(let n=0;n<a.length;n++)if(n in a)keys.push(String(n));
+      for(const key of Object.keys(a))if(!/^(0|[1-9]\d*)$/.test(key))keys.push(key);
+      return as2Config.forInOrder==='insertion'?keys:keys.reverse();
+    };
+    const dense=[1,2,3],sparse:any[]=[];sparse[5]=1;
+    const named:any=[1,2];named.label='x';named['01']='y';
+    const hidden=[1,2];Object.defineProperty(hidden,'0',{enumerable:false,value:1});
+    const inherited:any[]=[];inherited.length=3;
+    const prototype=Object.create(Array.prototype);prototype[1]='inherited';Object.setPrototypeOf(inherited,prototype);
+    try{
+      for(const order of ['insertion','reverse-insertion'] as const){
+        as2Config.forInOrder=order;
+        for(const array of [[],dense,sparse,named,hidden,inherited])expect(forIn(array)).toEqual(reference(array));
+      }
+    }finally{as2Config.forInOrder='reverse-insertion';}
+  });
   it('objects: object initialisers create properties last-to-first, so {abc, def} enumerates abc, def', () => {
     // AVM1 InitObject pops the last pair first -> creation order def, abc -> enumeration abc, def.
     // In TS the literal creates abc first, so a plain object enumerates in reverse literal order:

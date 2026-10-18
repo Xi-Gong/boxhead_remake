@@ -55,9 +55,16 @@ export function forIn(o: unknown): string[] {
   let keys: string[];
   if (o instanceof AsDict) keys = o.keys();
   else if (Array.isArray(o)) {
-    keys = [];
-    for (let i = 0; i < o.length; i++) if (i in o) keys.push(String(i));
-    for (const k of Object.keys(o)) if (!/^(0|[1-9]\d*)$/.test(k)) keys.push(k);
+    const own = Object.keys(o);
+    // Dense own-index arrays already have precisely the ascending index list. Checking the last
+    // key also excludes named/noncanonical properties (which JS orders after the array indices).
+    // Avoid a second key array, per-index strings and regex scans in area/affector hot loops.
+    if (own.length === o.length && (own.length === 0 || own[own.length - 1] === String(o.length - 1))) keys = own;
+    else {
+      keys = [];
+      for (let i = 0; i < o.length; i++) if (i in o) keys.push(String(i));
+      for (const k of own) if (!/^(0|[1-9]\d*)$/.test(k)) keys.push(k);
+    }
   } else if (typeof o === 'object' || typeof o === 'function') {
     // NOTE: JS orders integer-like keys first (ascending). Objects with such keys whose enumeration order matters
     // must be AsDict instead.
