@@ -47,7 +47,9 @@ const smoke = (p: Page): Promise<Smoke> => p.evaluate(() => (window as unknown a
 async function launch(env: Record<string, string>, exe?: string): Promise<{ app: ElectronApplication; page: Page; consoleErrors: string[] }> {
   const app = await _electron.launch({
     executablePath: exe ?? electronPath,
-    args: exe ? [] : ['.'],
+    args: [...(exe ? [] : ['.']), '--boxhead-hidden', '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion',
+      '--force-device-scale-factor=1'],
     cwd: root,
     env: { ...process.env, ...env } as Record<string, string>,
     timeout: 30000,
@@ -57,6 +59,14 @@ async function launch(env: Record<string, string>, exe?: string): Promise<{ app:
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
   page.on('pageerror', (e) => consoleErrors.push(String(e)));
   return { app, page, consoleErrors };
+}
+
+async function screenshot(app: ElectronApplication, name: string): Promise<void> {
+  const bytes = await app.evaluate(async ({ BrowserWindow }) => {
+    const image = await BrowserWindow.getAllWindows()[0]!.webContents.capturePage(undefined, { stayHidden: true, stayAwake: true });
+    return image.toPNG().toJSON().data;
+  });
+  writeFileSync(path.join(outDir, name), Buffer.from(bytes));
 }
 
 async function smokeRun(): Promise<void> {
@@ -140,7 +150,7 @@ async function smokeRun(): Promise<void> {
   check('mouse click reaches player', s.mouse.clicks === 1, s.mouse);
   await page.mouse.move(...toClient(200, 300));
   await sleep(200);
-  await page.screenshot({ path: path.join(outDir, 'electron-smoke.png') });
+  await screenshot(app, 'electron-smoke.png');
 
   // Context menu: shows items, pauses the loop, Render item toggles the stored setting.
   await page.mouse.click(...toClient(300, 200), { button: 'right' });
@@ -151,7 +161,7 @@ async function smokeRun(): Promise<void> {
   await sleep(500);
   const efB = (await smoke(page)).efCount;
   check('loop frozen while menu open (Flash behaviour)', efB === efA, { efA, efB });
-  await page.screenshot({ path: path.join(outDir, 'electron-smoke-menu.png') });
+  await screenshot(app, 'electron-smoke-menu.png');
   await page.click('.bx-ctxmenu-item:has-text("Render: 2x")');
   await sleep(300);
   s = await smoke(page);
@@ -166,13 +176,15 @@ async function smokeRun(): Promise<void> {
     wc.sendInputEvent({ type: 'keyDown', keyCode: a.keyCode, modifiers: a.modifiers as never });
     wc.sendInputEvent({ type: 'keyUp', keyCode: a.keyCode, modifiers: a.modifiers as never });
   }, { keyCode, modifiers });
+  // The QA window is transparent and non-focusable from birth, including during native fullscreen.
   const keysBefore = (await smoke(page)).lastKeyCode;
   await sendKey('F11');
   await sleep(1200);
   const fsAfterF11 = await isFs();
   const fsSize = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
   s = await smoke(page);
-  await page.screenshot({ path: path.join(outDir, 'electron-smoke-fullscreen.png') });
+  // Native fullscreen compositor capture is not reliable for a transparent window. Verify the real window
+  // flag, canvas dimensions and shortcuts here; browser viewport gates cover renderer pixels separately.
   await page.evaluate(() => (window as unknown as { boxheadDesktop: { toggleFullscreen(): void } }).boxheadDesktop.toggleFullscreen());
   await sleep(1200);
   const fsAfterIpc = await isFs();
@@ -186,6 +198,9 @@ async function smokeRun(): Promise<void> {
   check('Alt+Enter toggles fullscreen on and off', fsAltEnter && !fsAltEnter2, { fsAltEnter, fsAltEnter2 });
   const sizeBack = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
   check('window size restored after fullscreen', sizeBack.w === 1280 && sizeBack.h === 960, sizeBack);
+  check('native QA window stays transparent and cannot take focus', await app.evaluate(({ BrowserWindow }) => {
+    const w = BrowserWindow.getAllWindows()[0]!;return w.getOpacity() === 0 && !w.isFocused() && !w.isFocusable();
+  }));
   check('F11 never reached the game as a key event', (await smoke(page)).lastKeyCode === keysBefore, { keysBefore });
 
   // Persistence across restart (SharedObject + settings) in the portable data dir.
@@ -255,7 +270,7 @@ async function productionRun(exe?: string): Promise<void> {
   check(`${tag}app:// serves MP3 with MIME`, probe.mp3[0] === 200 && probe.mp3[1] === 'audio/mpeg', probe.mp3);
   check(`${tag}app:// 404 for missing files`, probe.missing[0] === 404, probe.missing);
   check(`${tag}app:// blocks path traversal`, probe.traversal[0] !== 200 && probe.traversal2[0] !== 200, { a: probe.traversal, b: probe.traversal2 });
-  await page.screenshot({ path: path.join(outDir, exe ? 'electron-packaged-index.png' : 'electron-prod-index.png') });
+  await screenshot(app, exe ? 'electron-packaged-index.png' : 'electron-prod-index.png');
   await app.close();
 }
 

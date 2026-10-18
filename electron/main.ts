@@ -75,6 +75,9 @@ const gotLock = multiInstance || app.requestSingleInstanceLock();
 // show(), so a test run neither flashes over the player's screen nor steals the foreground from their real work
 // (test input is CDP-injected and needs no OS focus; without the flag the behaviour is exactly as before).
 const windowPosition = /^--window-position=(-?\d+),(-?\d+)$/.exec(process.argv.find((a) => a.startsWith('--window-position=')) ?? '');
+// Native-window QA: keep the window hidden on its normal display so Windows can measure its frame correctly.
+// Far-offscreen Windows windows can report their entire outer frame as content, especially across DPI scales.
+const hiddenWindow = process.argv.includes('--boxhead-hidden');
 
 // ---------------------------------------------------------------------------------------------- static server
 
@@ -176,6 +179,9 @@ function createWindow(): void {
     backgroundColor: '#000000',
     title: TITLE,
     show: false,
+    // Windows may show a hidden window when entering native fullscreen. Keep QA windows transparent and
+    // non-focusable as well, so testing those real shortcuts cannot cover the desktop or activate the app.
+    ...(hiddenWindow ? { opacity: 0, focusable: false } : {}),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -213,7 +219,7 @@ function createWindow(): void {
     if (!url.startsWith(`${APP_SCHEME}://${APP_HOST}/`) && !(process.env.VITE_DEV_SERVER_URL && url.startsWith(process.env.VITE_DEV_SERVER_URL))) e.preventDefault();
   });
   win.on('page-title-updated', (e) => e.preventDefault());
-  win.once('ready-to-show', () => (windowPosition ? win?.showInactive() : win?.show()));
+  win.once('ready-to-show', () => ((hiddenWindow || windowPosition) ? win?.showInactive() : win?.show()));
   // v0.1.10: the audio watchdog self-heals within ~5 s on its own; a nudge shaves that latency after the events
   // where Chromium may park the AudioContext (minimized/hidden window, OS suspend/resume, another instance
   // refocusing this window whose audio had wedged - the "restart didn't help" scenario).
