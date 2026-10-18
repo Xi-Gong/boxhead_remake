@@ -17,9 +17,7 @@ import { TextFormat, flash } from '../../engine/runtime.ts';
 
 export const INK = 0x333333;            // menu text / body copy on light surfaces
 export const RED = 0xef1304;            // the game's signature red (section headings, accents)
-export const WHITE = 0xffffff;
 export const GREY = 0x888888;           // secondary copy
-export const GREY_LIGHT = 0xb0b0b0;     // empty/disabled rows
 export const GREEN = 0x007000;          // status-ok copy (ready states, ping) on light surfaces
 /** The options-window selected marker's wash (sprite 358: #e60000 at 35% alpha). */
 export const WASH_COLOR = 0xe60000;
@@ -28,10 +26,6 @@ export const WASH_ALPHA = 35;               // AS2 drawing-API alpha: percent (0
 export const PILL_FILL = 0xf5f5f3;
 export const PILL_SHADE = 0xd8d8d8;     // the soft bottom/right shade of the raised pill
 export const PILL_LABEL = 0x1f1f1f;
-/** Spacing grid (logical px): rows, gaps and menu rhythm taken from the original screens. */
-export const GAP = 8;
-export const ROW_H = 30;
-export const MENU_STEP = 33;            // main-menu item rhythm: y 226/259/292/325
 export const MENU_FONT = 'Arial Rounded MT Bold';
 export const BODY_FONT = 'Calibri';
 

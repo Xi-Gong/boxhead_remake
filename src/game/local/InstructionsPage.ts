@@ -4,10 +4,11 @@
 // with the original cross-fade transition, and its "Back to menu" icon (_Icon_Back, wired by CScreen) returns to the
 // main menu. The frame is assembled from original characters (localSymbols.ts); text uses the embedded fonts with
 // the menus' styles (Arial Rounded MT Bold headings with the menu drop shadow, Calibri body, white glow).
-import { TextFormat, flash, proto, registerClass } from '../../engine/runtime.ts';
+import { TextFormat, proto, registerClass } from '../../engine/runtime.ts';
 import { CInput, CMain } from '../packages.ts';
 import { CScreen } from '../Screen/CScreen.ts';
 import { SCREEN_INSTRUCTIONS_LINKAGE } from './localSymbols.ts';
+import { glow, menuShadow as sharedMenuShadow } from './UiStyle.ts';
 
 const INK = 0x333333;
 const ACCENT = 0xcc0000;
@@ -91,13 +92,9 @@ export function playerKeyRows(p: 1 | 2): (readonly [string, string])[] {
   ];
 }
 
-function glow(): any[] {
-  return [new flash.filters.GlowFilter(0xffffff, 1, 6, 6, 6, 2)];
-}
-
 function menuShadow(): any[] {
   // the main menu items' drop shadow (Screen_Main placements: distance 5, blur 5, strength 0.18)
-  return [new flash.filters.GlowFilter(0xffffff, 1, 6, 6, 6, 2), new flash.filters.DropShadowFilter(5, 45, 0x000000, 1, 5, 5, 0.18, 1)];
+  return [...glow(), ...sharedMenuShadow()];
 }
 
 export class CScreen_Instructions extends CScreen {

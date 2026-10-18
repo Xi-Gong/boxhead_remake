@@ -106,7 +106,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   const padIds: [string | undefined, string | undefined] = [undefined, undefined];
   const padActive: [number, number] = [0, 0];
   let keyboardActive = 0;
-  const onKeydown = (e: Event): void => { keyboardActive = Date.now(); };
+  const onKeydown = (): void => { keyboardActive = Date.now(); };
   if (typeof window !== 'undefined') window.addEventListener('keydown', onKeydown, true);
 
   /** v0.1.8 (DEBRIEF_NAME_IME_INPUT): DOM text widgets under the pad cursor (debrief name field, LAN IP box) cannot
