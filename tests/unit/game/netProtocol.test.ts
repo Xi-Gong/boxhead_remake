@@ -98,6 +98,36 @@ function pair(opts?: { identity?: string; linkDeadMs?: number }): { host: LanTra
 }
 
 describe('LanTransport over localhost', () => {
+  it('shutdown closes accepted sockets that have not sent a hello', async () => {
+    const { host } = pair();const port = await host.startHost();
+    const raw = tcpConnect({ host:'127.0.0.1',port });cleanups.push(()=>raw.destroy());
+    await new Promise<void>(r=>raw.once('connect',r));await new Promise(r=>setTimeout(r,30));
+    host.shutdown();await waitUntil(()=>raw.destroyed,1000);
+  });
+  it('concurrent host requests share one listening server', async () => {
+    const host = new LanTransport({ identity: ID });cleanups.push(() => host.shutdown());
+    const [a,b] = await Promise.all([host.startHost(),host.startHost()]);expect(a).toBe(b);
+  });
+
+  it('stopping discovery during bind does not leave its prune timer running', async () => {
+    const client = new LanTransport({ identity: ID });cleanups.push(() => client.shutdown());
+    const pending = client.startDiscovery();client.stopDiscovery();await pending;
+    expect((client as any).pruneTimer).toBeUndefined();
+  });
+  it('shutdown cancels an in-flight host bind before it can revive the listener', async () => {
+    const host = new LanTransport({ identity: ID });cleanups.push(() => host.shutdown());
+    const pending = host.startHost();host.shutdown();
+    await expect(pending).rejects.toThrow('cancelled');
+    expect(host.hosting).toBe(false);
+  });
+
+  it('shutdown cancels a pending handshake instead of attaching a late peer', async () => {
+    const { host, client } = pair();const port = await host.startHost();
+    const pending = client.connect('127.0.0.1', { name: 'cancelled', char: 0 }, port);
+    client.shutdown();
+    expect(await pending).toEqual({ ok: false, reason: 'cancelled' });
+    expect(client.hasPeer).toBe(false);
+  });
   it('hosts, handshakes, relays messages both ways and echoes heartbeats', { timeout: 20000 }, async () => {
     const { host, client } = pair();
     const port = await host.startHost();

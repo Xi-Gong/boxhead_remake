@@ -64,6 +64,7 @@ export class LanTransport {
   private discoverSock: UdpSocket | undefined;
   private hosts = new Map<string, HostInfo>();
   private pruneTimer: NodeJS.Timeout | undefined;
+  private cancelDiscovery: (() => void) | undefined;
 
   // hosting
   private server: Server | undefined;
@@ -71,11 +72,16 @@ export class LanTransport {
   private beaconSock: UdpSocket | undefined;
   private beaconTimer: NodeJS.Timeout | undefined;
   private beaconStatus: 'lobby' | 'playing' = 'lobby';
+  private hostGeneration = 0;
+  private startingHost: Promise<number> | undefined;
+  private readonly handshakes = new Set<TcpSocket>();
 
   // peer link (either side)
   private peer: Peer | undefined;
   private heartbeatTimer: NodeJS.Timeout | undefined;
   private readonly linkDeadMs: number;
+  private connectGeneration = 0;
+  private cancelConnect: (() => void) | undefined;
 
   constructor(opts: { identity: string; hostName?: string; linkDeadMs?: number }) {
     this.identity = opts.identity;
@@ -99,10 +105,16 @@ export class LanTransport {
     const sock = createSocket({ type: 'udp4', reuseAddr: false });
     this.discoverSock = sock;
     await new Promise<void>((resolve, reject) => {
-      const fail = (err: Error): void => { this.discoverSock = undefined; reject(err); };
+      this.cancelDiscovery = resolve;
+      const fail = (err: Error): void => {
+        if (this.discoverSock === sock) { this.discoverSock = undefined; this.cancelDiscovery = undefined; }
+        reject(err);
+      };
       sock.once('error', fail);
       sock.bind(LAN_DISCOVERY_PORT, () => {
         sock.off('error', fail);
+        if (this.discoverSock !== sock) { resolve();return; }
+        this.cancelDiscovery = undefined;
         sock.on('error', () => {}); // a later error must not crash the process
         sock.on('message', (data, rinfo) => {
           const b = decodeBeacon(data.toString('utf8'));
@@ -115,6 +127,7 @@ export class LanTransport {
         resolve();
       });
     });
+    if (this.discoverSock !== sock) return; // stopped while bind was pending
     this.pruneTimer = setInterval(() => {
       const now = Date.now();
       let changed = false;
@@ -125,6 +138,7 @@ export class LanTransport {
   }
 
   stopDiscovery(): void {
+    this.cancelDiscovery?.();this.cancelDiscovery = undefined;
     if (this.pruneTimer) { clearInterval(this.pruneTimer); this.pruneTimer = undefined; }
     if (this.discoverSock) { this.discoverSock.close(); this.discoverSock = undefined; }
     this.hosts.clear();
@@ -139,8 +153,18 @@ export class LanTransport {
   /** Start the TCP server (first free port) and announce ourselves via UDP beacons. Resolves with the port. */
   async startHost(status: 'lobby' | 'playing' = 'lobby'): Promise<number> {
     if (this.server) return this.serverPort;
+    if (this.startingHost) return this.startingHost;
+    const pending = this.listenHost(status, this.hostGeneration);
+    this.startingHost = pending;
+    try { return await pending; }
+    finally { if (this.startingHost === pending) this.startingHost = undefined; }
+  }
+
+  private async listenHost(status: 'lobby' | 'playing', generation: number): Promise<number> {
     this.beaconStatus = status;
-    const server = createServer((socket) => this.onServerConnection(socket));
+    const server = createServer((socket) => {
+      if (generation !== this.hostGeneration) socket.destroy();else this.onServerConnection(socket);
+    });
     let port = LAN_TCP_PORT_FIRST;
     for (;; port++) {
       if (port > LAN_TCP_PORT_LAST) throw new Error('no free LAN port (47631-47640 all in use)');
@@ -150,6 +174,10 @@ export class LanTransport {
         server.once('error', onErr);
         server.listen({ port, host: '0.0.0.0' }, () => { server.off('error', onErr); resolve(true); });
       });
+      if (generation !== this.hostGeneration) {
+        if (server.listening) server.close();
+        throw new Error('hosting cancelled');
+      }
       if (ok) break;
     }
     this.server = server;
@@ -197,7 +225,11 @@ export class LanTransport {
   }
 
   stopHost(): void {
+    ++this.hostGeneration;
+    this.startingHost = undefined;
     this.closePeer();
+    for (const socket of this.handshakes) socket.destroy();
+    this.handshakes.clear();
     if (this.beaconTimer) { clearInterval(this.beaconTimer); this.beaconTimer = undefined; }
     if (this.beaconSock) { this.beaconSock.close(); this.beaconSock = undefined; }
     if (this.server) {
@@ -210,6 +242,9 @@ export class LanTransport {
   private onServerConnection(socket: TcpSocket): void {
     // Exactly one peer. A second connection is answered with welcome ok:false 'busy' after its hello.
     socket.setNoDelay(true);
+    this.handshakes.add(socket);
+    socket.once('close', () => this.handshakes.delete(socket));
+    socket.setTimeout(1500, () => socket.destroy());
     const decoder = new FrameDecoder();
     let handshaked = false;
     socket.on('data', (chunk: Buffer) => {
@@ -228,6 +263,7 @@ export class LanTransport {
         const sid = hello.sid ?? randomUUID();
         this.rawSend(socket, { t: 'welcome', ok: true, proto: LAN_PROTOCOL_VERSION, app: this.identity, name: this.hostName, sid });
         handshaked = true;
+        this.handshakes.delete(socket);
         this.attachPeer(socket, decoder);
         this.fire({ ...hello, sid }); // the renderer needs char / capTick / sid
         // Frames that arrived in the same TCP segment as the hello belong to the live link, not the handshake.
@@ -245,10 +281,12 @@ export class LanTransport {
    */
   async connect(ip: string, hello: LanHello, port?: number): Promise<{ ok: boolean; reason?: string }> {
     this.closePeer();
+    const generation = this.connectGeneration;
     const ports = port ? [port] : Array.from({ length: LAN_TCP_PORT_LAST - LAN_TCP_PORT_FIRST + 1 }, (_, i) => LAN_TCP_PORT_FIRST + i);
     let lastReason = 'no-answer';
     for (const p of ports) {
       const r = await this.connectOne(ip, p, hello);
+      if (generation !== this.connectGeneration) return { ok: false, reason: 'cancelled' };
       if (r.ok) return r;
       lastReason = r.reason ?? lastReason;
       if (r.reason === 'version' || r.reason === 'busy') return r; // the host is there and refused - stop scanning
@@ -262,10 +300,13 @@ export class LanTransport {
       const done = (r: { ok: boolean; reason?: string }): void => {
         if (settled) return;
         settled = true;
+        if (this.cancelConnect === cancel) this.cancelConnect = undefined;
         socket.destroy();
         resolve(r);
       };
       const socket = tcpConnect({ host: ip, port });
+      const cancel = (): void => done({ ok: false, reason: 'cancelled' });
+      this.cancelConnect = cancel;
       socket.setNoDelay(true);
       socket.setTimeout(1500); // per-port patience; a closed port refuses instantly, a filtered one times out
       const decoder = new FrameDecoder();
@@ -281,6 +322,7 @@ export class LanTransport {
         if (!welcome.ok) { done({ ok: false, reason: welcome.reason ?? 'refused' }); return; }
         if (settled) return;
         settled = true;
+        if (this.cancelConnect === cancel) this.cancelConnect = undefined;
         socket.setTimeout(0);
         this.attachPeer(socket, decoder);
         resolve({ ok: true });
@@ -355,6 +397,8 @@ export class LanTransport {
 
   /** Drop the peer link but keep hosting (between games / while waiting for a reconnect). */
   closePeer(): void {
+    ++this.connectGeneration;
+    this.cancelConnect?.();
     this.endPeer('closed');
   }
 
