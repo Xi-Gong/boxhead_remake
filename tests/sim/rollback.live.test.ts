@@ -7,6 +7,7 @@ import { createHeadlessGame } from './harness.ts';
 import { NetSession } from '../../src/game/local/Net/NetSession.ts';
 import { applyCorrections } from '../../src/game/local/Net/Rollback.ts';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
+import { World } from '../../src/game/packages.ts';
 import type { GameConfig } from '../../src/game/local/Net/protocol.ts';
 
 const cfg: GameConfig = { difficulty: 0, gameSpeed: 1, devils: true, collisions: true,
@@ -42,7 +43,9 @@ function run(delay: number) {
     count: t.mStateCount, delta: t.mDelta && [t.mDelta.mX, t.mDelta.mY, t.mDelta.mZ],
     ammo: t.mAmmo, anim: t.mXSI_Animation?.mCurrentFrameID,
   })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  const result = { rows, rng: getRandomState(), score: w.mHud.nTotalScore };
+  const nav = World.Map.CMap_Cell;
+  const result = { rows, rng: getRandomState(), score: w.mHud.nTotalScore,
+    navigationClock: [nav.nSTimer, nav.nSID, nav.nState, nav.nSDist] };
   const stats = { ...session.rollbackStats };
   expect(game.errors).toEqual([]);
   expect(session.correctionPending).toBeUndefined();

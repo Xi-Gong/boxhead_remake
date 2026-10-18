@@ -20,9 +20,18 @@ export interface Clock {
 const perfNow = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export const clock: Clock = { mode: 'real', origin: perfNow(), virtualNow: 0, efTime: 0 };
+let timerOverride: number | undefined;
+
+/** Synchronous simulation scope: replay reads tick time without moving the platform/enterFrame clock. */
+export function withTimerValue<T>(timeMs: number, run: () => T): T {
+  const previous = timerOverride;
+  timerOverride = timeMs;
+  try { return run(); } finally { timerOverride = previous; }
+}
 
 /** AS2 getTimer(). */
 export function getTimer(): number {
+  if (timerOverride !== undefined) return Math.floor(timerOverride);
   return clock.mode === 'virtual' ? Math.floor(clock.virtualNow) : Math.floor(perfNow() - clock.origin);
 }
 

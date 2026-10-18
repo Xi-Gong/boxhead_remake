@@ -15,11 +15,11 @@
 //                     yields the virtual delta, identical on both peers, with zero reimplementation.
 //   InitFinished    - (stacked outside the v0.1.2 consumePending wrapper) hands the built world to the session.
 import { getTimer } from '../../../engine/runtime.ts';
-import { frameTime } from '../../../engine/flash/clock.ts';
+import { frameTime, withTimerValue } from '../../../engine/flash/clock.ts';
 import { CMain, CSound, Thing, World } from '../../packages.ts';
 import { DESYNC_RETURN_MS, netSession } from './NetSession.ts';
 import { SLOT_ORDER } from './NetSlot.ts';
-import { MAX_NET_CATCHUP_TICKS, netStallRewind } from './protocol.ts';
+import { MAX_NET_CATCHUP_TICKS, netStallRewind, PREDICT_MAX_LAG_TICKS } from './protocol.ts';
 import { applyCorrections, queueSound } from './Rollback.ts';
 import { shadowDrawOverride } from './Predict.ts';
 
@@ -154,6 +154,14 @@ export function installNetScope(): void {
 
   // ---- InitFinished: hand the built world to the session (after consumePending applied a resume).
   const worldProto = (World as any).CWorld.prototype;
+  const processWorld = worldProto.Process;
+  worldProto.Process = function (this: any): any {
+    const session = netSession();
+    if (session?.rollback && PREDICT_MAX_LAG_TICKS > 0 && session.holdsWorld(this)) {
+      return withTimerValue(session.virtualNow(), () => processWorld.call(this));
+    }
+    return processWorld.call(this);
+  };
   const initFinished = worldProto.InitFinished;
   worldProto.InitFinished = function (this: any): void {
     initFinished.call(this);
