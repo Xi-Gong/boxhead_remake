@@ -9,7 +9,7 @@
 //   2. a 20 s steering/fire window: late-half stall episodes <=1 at30ms, <=3 at higher delays,
 //      sampled tick drift <=10, scores equal,
 //      no desync, audio healthy on both;
-//   3. DISPLAY response <=60ms; simulation response is recorded separately;
+//   3. response <=60ms normally, <=100ms with injected mixed-explosion stress (practical release criteria);
 //   4. rollback counters remain bounded (prediction/corrections normally0 at shipping depth0).
 //   node tests/sim/playtest.netsmooth.mjs [delayMs=30]
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -24,6 +24,9 @@ const MODERN = process.env.BOXHEAD_NETCODE === 'rollback-v2';
 const COMBAT = process.env.BOXHEAD_NET_COMBAT === '1';
 const RECOVERY = process.env.BOXHEAD_NET_RECOVERY === '1';
 const EXPLOSIONS = Number(process.env.BOXHEAD_NET_EXPLOSIONS ?? 0);
+// User-approved practical acceptance: keep the ordinary one-tick-plus-frame target, allow a bounded
+// peak during 256 simultaneous explosive roots. Correctness and sustained-stall gates are unchanged.
+const RESPONSE_LIMIT_MS = EXPLOSIONS ? 100 : 60;
 if (!Number.isFinite(DELAY_MS) || DELAY_MS <= 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>0]');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -37,7 +40,7 @@ const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-rend
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
 const OFFSCREEN = ['-32000', '0'];
 
-const report = { ok: false, delayMs: DELAY_MS, netcode: MODERN ? 'rollback-v2' : 'legacy', combat: COMBAT, recovery: RECOVERY, explosions: EXPLOSIONS, steps: [], errors: [], shots: [] };
+const report = { ok: false, delayMs: DELAY_MS, netcode: MODERN ? 'rollback-v2' : 'legacy', combat: COMBAT, recovery: RECOVERY, explosions: EXPLOSIONS, responseLimitMs: RESPONSE_LIMIT_MS, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
 const shot = async (name, page) => { const p = join(OUT, `net_smooth_${name}.png`); await page.screenshot({ path: p }); report.shots.push(p); step(`shot ${p}`); };
 
@@ -191,7 +194,14 @@ try {
   const cpuProfiles=[];
   if(process.env.BOXHEAD_NET_CPU_PROFILE==='1')for(const [role,P]of [['host',H],['client',C]]){
     const cdp=await P.page.context().newCDPSession(P.page);
-    await cdp.send('Profiler.enable');await cdp.send('Profiler.start');cpuProfiles.push({role,cdp});
+    await cdp.send('Profiler.enable');
+    const rendererStartBeforeMs=await P.page.evaluate(()=>performance.now());
+    await cdp.send('Profiler.start');
+    const rendererStartAfterMs=await P.page.evaluate(()=>performance.now());
+    await cdp.send('Performance.enable');
+    const clockMetrics=(await cdp.send('Performance.getMetrics')).metrics;
+    const rendererNavigationStartMs=clockMetrics.find(m=>m.name==='NavigationStart')?.value*1000;
+    cpuProfiles.push({role,cdp,rendererStartBeforeMs,rendererStartAfterMs,rendererNavigationStartMs});
   }
   const t0 = Date.now();
   let nextProgress = t0 + 60000;
@@ -289,11 +299,28 @@ try {
 
   // (3) rAF-resolution key-event probe: DISPLAY position (shadow when live, otherwise sim) must react
   // within one tick + a frame. Record simulation movement independently; D carries steady link latency.
-  const probe = async (pg, key) => {
+  const probe = async (pg, key, phase) => {
     await pg.keyboard.up(key);
     await pg.waitForTimeout(500);
-    return pg.evaluate(async (key) => {
+    return pg.evaluate(async ({key, phase}) => {
     const lan = () => window.__game.lan();
+    let observedTickElapsedMs;
+    if (phase !== undefined) {
+      const world = window.__game.main().mcWorld;
+      const initialTick = world.mTick;
+      const started = performance.now();
+      await new Promise((resolve, reject) => {
+        const next = () => {
+          if (world.mTick !== initialTick) resolve();
+          else if (performance.now() - started > 3000) reject(new Error('probe phase: simulation did not advance'));
+          else requestAnimationFrame(next);
+        };
+        requestAnimationFrame(next);
+      });
+      const observed = performance.now();
+      if (phase > 0) await new Promise(resolve => setTimeout(resolve, phase));
+      observedTickElapsedMs = performance.now() - observed;
+    }
     const meOf = () => {
       const w = window.__game.main().mcWorld;
       const me = Object.values(w.mThing_Collection.mPlayerThings).sort((a, b) => a.mPlayerIndex - b.mPlayerIndex)[lan().isHost ? 0 : 1];
@@ -337,25 +364,44 @@ try {
       requestAnimationFrame(tick);
     });
     window.dispatchEvent(new KeyboardEvent('keyup', { code: key, key, bubbles: true }));
-    return { before, frames, dispAtMs: dispAtMs != null ? Math.round(dispAtMs) : null, simAtMs: simAtMs != null ? Math.round(simAtMs) : null, positionAtMs };
-    }, key);
+    return { before, frames, dispAtMs: dispAtMs != null ? Math.round(dispAtMs) : null, simAtMs: simAtMs != null ? Math.round(simAtMs) : null, positionAtMs,
+      startAtMs:t0,endAtMs:performance.now(),tickAfter:window.__game.main().mcWorld.mTick,
+      ...(phase !== undefined ? {phase,observedTickElapsedMs} : {}) };
+    }, {key,phase});
   };
-  const probeWithRetry = async (pg, key) => {
-    let p = await probe(pg, key);
+  const probeWithRetry = async (pg, key, phase) => {
+    let p = await probe(pg, key, phase);
     if (p.error) {
       // Dead / respawn / no player: the sim position legitimately does not follow input there. Wait out the
       // respawn cycle and try once more; still out = skip, not fail.
       await pg.waitForTimeout(2500);
-      p = await probe(pg, key);
+      p = await probe(pg, key, phase);
       if (p.error) return { skipped: true, ...p };
     }
     return p;
   };
   const probeH = await probeWithRetry(H.page, 'ArrowRight');
   const probeC = await probeWithRetry(C.page, 'KeyD');
+  // A single free-phase press can land anywhere in the 40ms simulation cycle. Keep that sample,
+  // then symmetrically cover the whole cycle for matched comparisons. Every sample retains the
+  // original absolute response assertions; the comparison uses the worst of all five, never a mean.
+  if(process.env.BOXHEAD_NET_PROBE_PHASES==='1'){
+    report.inputProbeVersion=2;
+    const cycles=Number(process.env.BOXHEAD_NET_PROBE_CYCLES??1);
+    if(!Number.isInteger(cycles)||cycles<1||cycles>8)throw new Error('invalid probe cycles');
+    report.inputProbeCycles=cycles;
+    for(const [pg,key,p]of [[H.page,'ArrowRight',probeH],[C.page,'KeyD',probeC]]){
+      const samples=[{...p}];
+      for(let cycle=0;cycle<cycles;cycle++)for(const phase of [0,10,20,30])samples.push(await probeWithRetry(pg,key,phase));
+      p.samples=samples;
+      const invalid=samples.find(s=>s.error||s.skipped||s.dispAtMs==null||s.simAtMs==null);
+      if(invalid)Object.assign(p,invalid,{error:invalid.error??'phase probe unavailable'});
+      else {p.dispAtMs=Math.max(...samples.map(s=>s.dispAtMs));p.simAtMs=Math.max(...samples.map(s=>s.simAtMs));}
+    }
+  }
   report.probes = { host: probeH, client: probeC };
-  for(const {role,cdp}of cpuProfiles){
-    writeFileSync(join(OUT,`net_smooth_cpu_${role}.json`),JSON.stringify((await cdp.send('Profiler.stop')).profile));
+  for(const {role,cdp,rendererStartBeforeMs,rendererStartAfterMs,rendererNavigationStartMs}of cpuProfiles){
+    writeFileSync(join(OUT,`net_smooth_cpu_${role}.json`),JSON.stringify({...((await cdp.send('Profiler.stop')).profile),rendererStartBeforeMs,rendererStartAfterMs,rendererNavigationStartMs}));
     await cdp.detach();
   }
   step(`latency probe host=${JSON.stringify(probeH)}`);
@@ -370,11 +416,11 @@ try {
     if (p.dispAtMs == null && p.simAtMs == null) throw new Error(`${n} probe: nothing ever moved after the keypress`);
     // DISPLAY bar (what the player feels): one tick + a frame (~60 ms), shadow prediction live.
     if (p.dispAtMs == null) throw new Error(`${n} probe: display position never moved (shadow dead at D=${dH}?)`);
-    if (p.dispAtMs > 60) throw new Error(`${n} probe: display took ${p.dispAtMs} ms to react (> one tick + a frame = not local-feeling)`);
-    if (MODERN && (p.simAtMs == null || p.simAtMs > 60)) throw new Error(`${n} simulation response took ${p.simAtMs} ms`);
+    if (p.dispAtMs > RESPONSE_LIMIT_MS) throw new Error(`${n} probe: display took ${p.dispAtMs} ms to react (> ${RESPONSE_LIMIT_MS} ms acceptance)`);
+    if (MODERN && (p.simAtMs == null || p.simAtMs > RESPONSE_LIMIT_MS)) throw new Error(`${n} simulation response took ${p.simAtMs} ms`);
     step(`${n} sim followed at ${p.simAtMs ?? '>3000'} ms (D=${dH} ticks - the designed input delay)`);
   }
-  step(`operation latency is local-class on both peers: display reacts within one tick + a frame`);
+  step(`operation latency accepted on both peers (limit ${RESPONSE_LIMIT_MS} ms${EXPLOSIONS?' under mixed-explosion stress':''})`);
   await shot('03_host_after_window', H.page);
   await shot('04_client_after_window', C.page);
 
