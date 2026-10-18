@@ -19,6 +19,7 @@ import { CMain, CSound, Thing, World } from '../../src/game/packages.ts';
 import { computeInputDelay, MAX_NET_CATCHUP_TICKS, netStallRewind, ROLLBACK_WINDOW_TICKS } from '../../src/game/local/Net/protocol.ts';
 import { frameTime } from '../../src/engine/flash/clock.ts';
 import { stallStripDue } from '../../src/game/local/Net/overlay.ts';
+import { advanceShadow } from '../../src/game/local/Net/Predict.ts';
 import type { GameConfig, LanMode } from '../../src/game/local/Net/protocol.ts';
 
 // --------------------------------------------------------------------------------------------- helpers
@@ -586,6 +587,24 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     (ow as any).mTrackPosition = undefined;
     ow.TrackThing(o1);
     expect((ow as any).mTrackPosition).toBeDefined();         // offline: EITHER player tracks
+    B.session.dispose();
+  });
+
+  it('LAN display prediction keeps moving beyond the offline co-op tether', () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001', 3);
+    const [remote, me] = B.game.players();
+    me.Move(new Thing.Math.CThing_Position(12.5, 8.5, 0));
+    remote.mPosition.mX = me.mPosition.mX - 25;
+    remote.mPosition.mY = me.mPosition.mY - 20;
+    me.mStateID = 'State_PlayerControl';
+    me.mSpeed = 0.2;
+    const t = B.session.tickIndex(B.game.world());
+    for (let n = 1; n < 3; n++) (B.session as any).localFrames.set(t + n, bitsOf([KEYS.P2.RIGHT, KEYS.P2.DOWN], KEYS.P2));
+    const before = [me.mPosition.mX, me.mPosition.mY];
+    advanceShadow(B.session, B.game.world());
+    expect(B.session.shadow.x).toBeGreaterThan(before[0]);
+    expect(B.session.shadow.y).toBeGreaterThan(before[1]);
+    expect([me.mPosition.mX, me.mPosition.mY]).toEqual(before);
     B.session.dispose();
   });
 

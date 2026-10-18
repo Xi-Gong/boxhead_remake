@@ -96,8 +96,6 @@ export function advanceShadow(session: NetSession, world: any): void {
     }
   }
   // Lead: replay the next D-1 ticks with the local input frames that are already sampled.
-  const peer = players[1 - session.role];
-  const coop = World.CWorld.mGameMode === 'Coop';
   let { dx, dy } = s;
   let x = bx;
   let y = by;
@@ -110,18 +108,11 @@ export function advanceShadow(session: NetSession, world: any): void {
     let dX = dirX * me.mSpeed;
     let dY = dirY * me.mSpeed;
     if (dirX || dirY) {
-      dx = dX; // facing follows the raw INPUT delta (the tether below zeroes components only after the angle)
+      dx = dX; // facing follows the raw INPUT delta
       dy = dY;
     }
-    // KeepDistance (coop): the 19/13-cell tether to the live peer, exact thresholds and comparison order.
-    if (coop && peer && !(peer.mFlags & Thing.CThing.mFlag_DEAD)) {
-      const gx = Math.abs(peer.mPosition.mX - x);
-      const g4 = Math.abs(peer.mPosition.mX - (x + dX));
-      const g5 = Math.abs(peer.mPosition.mY - y);
-      const g3 = Math.abs(peer.mPosition.mY - (y + dY));
-      if (g4 > gx && g4 > 19) dX = 0;
-      if (g3 > g5 && g3 > 13) dY = 0;
-    }
+    // LAN removes the shared-screen tether (NetScope KeepDistance wrapper). The display predictor must
+    // follow that same movement contract; retaining the offline clamp caused lag/jitter when peers split up.
     const next = predictCollide(world.mMap.mCollide, x, y, dX, dY, me.mRadius);
     x = next.x;
     y = next.y;
