@@ -41,7 +41,7 @@ export function installNetScope(): void {
       CMain.mInput.KEY_PAUSE.IsPressed(); // consume
       session.setPaused(!session.netPaused);
     }
-    if (session.netPaused) {
+    if (session.netPaused && session.phase !== 'desync') {
       if (flagDraw) w.Draw();
       return;
     }

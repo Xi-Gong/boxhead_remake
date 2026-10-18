@@ -590,6 +590,18 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     B.session.dispose();
   });
 
+  it('a desync while paused still tears down the world and returns to the lobby', () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    B.session.setPaused(true);
+    B.session.onNetMessage({ t: 'desync', tick: 1 });
+    B.session.desyncAt = Date.now() - 1000;
+    B.game.step(40);
+    expect(B.game.state()).toBe('State_LanLobby');
+    expect(B.game.world()).toBeUndefined();
+    expect(B.session.phase).toBe('ended');
+    B.session.dispose();
+  });
+
   it('LAN display prediction keeps moving beyond the offline co-op tether', () => {
     const B = bootNetPeer('Coop', 'ROOM_Single_0001', 3);
     const [remote, me] = B.game.players();
