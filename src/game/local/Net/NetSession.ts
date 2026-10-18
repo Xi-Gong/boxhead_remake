@@ -710,7 +710,9 @@ export class NetSession {
       return slot.mDown === true || latch;
     };
     for (const name of SLOT_ORDER) {
-      held[name] = consume(input['KEY_' + name]) || consume(input['KEY_' + name + '2']);
+      const primary = consume(input['KEY_' + name]);
+      const secondary = consume(input['KEY_' + name + '2']);
+      held[name] = primary || secondary;
     }
     return packBits(held as Record<SlotBitName, boolean>);
   }

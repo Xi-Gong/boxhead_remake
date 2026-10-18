@@ -590,6 +590,20 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     B.session.dispose();
   });
 
+  it('sampling both keyboard layouts consumes both press latches', () => {
+    const B = bootNetPeer('Coop', 'ROOM_Single_0001');
+    const input = CMain.mInput;
+    input.KEY_FIRE.mDown = true;
+    input.KEY_FIRE.mPressed = false;
+    input.KEY_FIRE2.mDown = false;
+    input.KEY_FIRE2.mPressed = true;
+    expect(unpackBit((B.session as any).sampleLocalBits(), 'FIRE')).toBe(true);
+    expect(input.KEY_FIRE2.mPressed).toBe(false);
+    input.KEY_FIRE.mDown = false;
+    expect(unpackBit((B.session as any).sampleLocalBits(), 'FIRE')).toBe(false);
+    B.session.dispose();
+  });
+
   it('a desync while paused still tears down the world and returns to the lobby', () => {
     const B = bootNetPeer('Coop', 'ROOM_Single_0001');
     B.session.setPaused(true);
