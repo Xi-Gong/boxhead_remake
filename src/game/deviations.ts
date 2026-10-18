@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'SOFT_EXPLOSION_FLASH',
+    file: 'local/ExplosionFlash.ts; scope.ts (CWorld.Process_Brightness wrapper)',
+    description: 'Reduce the positive full-screen brightness wash to 8% of its authored strength: '+
+      'peak RGB offset 204 becomes 16.32. Only freshly returned display-filter offsets change; '+
+      'mBrightness, original fade cadence, explosion art, shake, damage, sound, decals, RNG and '+
+      'network state stay intact. Repeated blasts cannot stack a brighter wash. The shared initial '+
+      'world flash is softened too; LOW quality still omits the effect entirely.',
+  },
+  {
     id: 'WAVE_TEXT_INPUT',
     file: 'local/WaveValidation.ts, WaveInput.ts, StartWaveUi.ts; local/Net/Setup.ts, bridge.ts; scope.ts; main.ts',
     description: 'Local Single/Coop and LAN host wave selectors accept full ASCII decimal drafts through '+

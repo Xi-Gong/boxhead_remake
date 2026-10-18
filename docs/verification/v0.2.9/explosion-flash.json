@@ -1,0 +1,107 @@
+{
+  "ok": true,
+  "comparisons": [
+    {
+      "kind": "rocket",
+      "count": 1,
+      "offset": 16.32,
+      "unlit": {
+        "mean": 211.42551942567331,
+        "white": 1105
+      },
+      "original": {
+        "mean": 254.97108248873877,
+        "white": 236215
+      },
+      "reduced": {
+        "mean": 227.32647522522328,
+        "white": 1128
+      }
+    },
+    {
+      "kind": "grenade",
+      "count": 1,
+      "offset": 16.32,
+      "unlit": {
+        "mean": 211.3617792792742,
+        "white": 1105
+      },
+      "original": {
+        "mean": 254.47185810810822,
+        "white": 235112
+      },
+      "reduced": {
+        "mean": 226.89806024774364,
+        "white": 1167
+      }
+    },
+    {
+      "kind": "barrel",
+      "count": 1,
+      "offset": 16.32,
+      "unlit": {
+        "mean": 211.42031813062945,
+        "white": 1144
+      },
+      "original": {
+        "mean": 254.96685388513507,
+        "white": 236143
+      },
+      "reduced": {
+        "mean": 227.64671030405157,
+        "white": 1128
+      }
+    },
+    {
+      "kind": "mine",
+      "count": 1,
+      "offset": 16.32,
+      "unlit": {
+        "mean": 211.0461162725196,
+        "white": 1105
+      },
+      "original": {
+        "mean": 254.4701632882884,
+        "white": 235077
+      },
+      "reduced": {
+        "mean": 226.58274211711415,
+        "white": 1167
+      }
+    },
+    {
+      "kind": "chargepack",
+      "count": 1,
+      "offset": 16.32,
+      "unlit": {
+        "mean": 211.18470298423165,
+        "white": 1144
+      },
+      "original": {
+        "mean": 254.96800957207213,
+        "white": 236133
+      },
+      "reduced": {
+        "mean": 227.41110078828558,
+        "white": 1128
+      }
+    },
+    {
+      "kind": "burst",
+      "count": 12,
+      "offset": 16.32,
+      "unlit": {
+        "mean": 209.84550112612885,
+        "white": 2698
+      },
+      "original": {
+        "mean": 254.38934825450457,
+        "white": 233443
+      },
+      "reduced": {
+        "mean": 225.17430743243392,
+        "white": 2857
+      }
+    }
+  ]
+}

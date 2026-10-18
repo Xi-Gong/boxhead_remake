@@ -29,6 +29,7 @@ import { menuTextItem, text } from './local/UiStyle.ts';
 import { installViewport } from './local/Viewport.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 import { installArmorScope } from './local/Armor.ts';
+import { installExplosionFlash } from './local/ExplosionFlash.ts';
 import {installBalanceScope} from './local/Balance.ts';
 import { installFriendlyFire } from './local/FriendlyFire.ts';
 
@@ -107,6 +108,7 @@ export function applyScope(): void {
   installArmorScope();
   installBalanceScope();
   installFriendlyFire();
+  installExplosionFlash();
   setInstanceHook(scopeInstanceHook);
 
   // Sean Cooper logo: keep, but not clickable.

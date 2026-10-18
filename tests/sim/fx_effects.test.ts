@@ -60,6 +60,23 @@ describe('explosion (CThing_Effect_Explosion.Process_Delay)', () => {
     expect(m.map((v: number) => Math.round(v * 1000) / 1000)).toEqual([1, 0, 0, 0, 204, 0, 1, 0, 0, 204, 0, 0, 1, 0, 204, 0, 0, 0, 1, 0]);
   });
 
+  it('the world display wash is 8% strength with the original fade cadence and state',()=>{
+    const g=openFloorGame(),w=g.world();
+    w.mBrightness=1;
+    const states:number[]=[],offsets:number[]=[];
+    for(let n=0;n<6;n++){
+      const filters=w.Process_Brightness();states.push(Math.round(w.mBrightness*1000)/1000);
+      offsets.push(Math.round((filters[0]?.matrix[4]??0)*100)/100);
+      if(filters.length){
+        expect(filters[0].matrix[9]).toBe(filters[0].matrix[4]);expect(filters[0].matrix[14]).toBe(filters[0].matrix[4]);
+        expect([0,6,12,18].map(i=>filters[0].matrix[i])).toEqual([1,1,1,1]);
+      }
+    }
+    expect(states).toEqual([.8,.6,.4,.2,0,0]);expect(offsets).toEqual([16.32,12.24,8.16,4.08,0,0]);
+    // Repeated explosions reset the authored fade, but cannot stack into a brighter wash.
+    for(let n=0;n<50;n++){w.mBrightness=1;expect(w.Process_Brightness()[0].matrix[4]).toBeCloseTo(16.32);}
+  });
+
   it('animation: Effect.Explosion frames at 2.5 frames per tick, then the effect deletes itself', () => {
     const g = openFloorGame();
     removeMapBarrels(g);
