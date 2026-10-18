@@ -17,6 +17,14 @@ export function simulationDigest(s: WorldSnap): Record<string, string> {
       if (value[0] === 'xsi') return ['xsi', value[9], value[2], value[3], value[5]];
       if (value[0] === 'mcanim') return ['mcanim', value[1], value[2]];
       if (value[0] === 'obj') return ['obj', value[1], encode(value[2], seen)];
+      // Primitive snapshot tuples need no transformed children. Reuse the immutable input tuple,
+      // while still registering its identity above so later aliases keep exactly the legacy ref IDs.
+      let flat=typeof (value as any).toJSON!=='function';
+      for(let i=0;flat&&i<value.length;i++){
+        const item=value[i],type=typeof item;
+        if(!(i in value)||item!==null&&!(type==='string'||type==='boolean'||type==='number'&&Number.isFinite(item)))flat=false;
+      }
+      if(flat)return value;
       return value.map(v => encode(v, seen));
     }
     return Object.entries(value).map(([key, v]) => [key, encode(v, seen)]);
@@ -42,3 +50,4 @@ export function simulationDigest(s: WorldSnap): Record<string, string> {
     outcome: hash([s.world.mCompleteState, s.hud.nTotalScore, s.hud.mPlayer1_Deaths, s.hud.mPlayer2_Deaths]),
   };
 }
+

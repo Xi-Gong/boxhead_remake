@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { simulationDigest } from '../../../src/game/local/Net/StateDigest.ts';
 import type { WorldSnap } from '../../../src/game/local/Net/WorldSnap.ts';
+import {simulationDigest as legacyDigest} from '../../fixtures/net/stateDigestLegacy.ts';
 
 const state = (): WorldSnap => ({
   things: { t1: { cls: 'CThing_Shot_Bullet', props: [['mPosition', ['pos', 1, 2, 0]], ['mFlags', 1]] } },
@@ -29,4 +30,15 @@ it('ignores only the write-only Drawn flag while retaining collision flags and p
   s.things.t1!.props[1]![1] = 1;
   s.things.t1!.props.reverse();
   expect(simulationDigest(s).things).not.toBe(baseline);
+});
+it('retains legacy hash bytes for shared identities, cycles, holes, Unicode, escaping and special tokens',()=>{
+ const snap=state(),shared:any[]=['shared',99],cycle:any={text:'中文 😀 "\\\n\ud800',number:-0};cycle.self=cycle;
+ const holes:any[]=[];holes.length=4;holes[2]=undefined;holes[3]=NaN;
+ const probes:any[]=[undefined,null,true,false,0,-0,NaN,Infinity,-Infinity,'\b\t\r\n"\\中文😀\ud800',
+  shared,[shared,shared],['xsi',9,2,undefined,4,5,6,7,8,'walk'],['mcanim',3,4,5],['obj','Object',[['cycle',cycle]]],holes,
+  {b:2,'1':1,a:undefined},cycle];
+ for(const probe of probes){
+  snap.upgrades=[['probe',probe]] as any;
+  expect(simulationDigest(snap)).toEqual(legacyDigest(snap));
+ }
 });

@@ -12,11 +12,11 @@ const sha=exe=>createHash('sha256').update(readFileSync(path.join(path.dirname(e
 const machine={node:process.version,os:os.version(),cpu:os.cpus()[0]?.model,cpus:os.cpus().length,
  builds:Object.fromEntries(Object.entries(exes).map(([k,e])=>[k,{exe:e,asarSha256:sha(e)}])),
  workload:'3s warmup, 20s steering/fire; 256 mixed explosives at max upgrades every 100 ticks from tick 200; 30ms one-way delay; seed 0.424242',
- samplingInterval:4194304};
+ samplingInterval:4194304,metricsVersion:2};
 const machineFile=path.join(out,'machine.json');
 if(existsSync(machineFile)){
  const old=JSON.parse(readFileSync(machineFile));
- if(old.samplingInterval!==machine.samplingInterval||Object.keys(exes).some(kind=>old.builds[kind].asarSha256!==machine.builds[kind].asarSha256))throw new Error('comparison configuration changed; use a fresh output directory');
+ if(old.metricsVersion!==machine.metricsVersion||old.samplingInterval!==machine.samplingInterval||Object.keys(exes).some(kind=>old.builds[kind].asarSha256!==machine.builds[kind].asarSha256))throw new Error('comparison configuration changed; use a fresh output directory');
 }
 writeFileSync(machineFile,JSON.stringify(machine,null,2));
 const runs=[];
