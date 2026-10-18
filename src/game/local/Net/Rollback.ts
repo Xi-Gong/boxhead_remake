@@ -1,11 +1,8 @@
 // Rollback (v0.2.3 §E): session-side prediction bookkeeping, the correction executor and the sound queue for
 // GGPO-style rollback on top of the WorldSnap engine. The NetSession owns the state; these functions operate
 // on it (kept out of NetSession.ts for clarity). See the rollback design doc for the full flow:
-//   (R10 residual, measured on the netlockstep chaos drive): under OUT-OF-ORDER late arrivals the in-flight
-//   CThing_Shot_/CThing_Effect_ transients of a corrected tick can land on a slightly different (still
-//   self-consistent) trajectory; every persistent field the lockstep checksum covers (score, thing counts,
-//   creature positions/lives) stays exact. The canary asserts persistent-state equality, like the production
-//   checksum does.
+//   Snapshots belong to PRE-tick boundaries. A correction restores the earliest divergent boundary and
+//   replaces every later snapshot. Empty map cells retain navigation state, too (v0.2.7).
 //   beginTick resolves a tick's inputs to 'confirmed' | 'predicted' | 'stall' (NetSession);
 //   predicted ticks run direct world.Process() with the sound choke point QUEUING their samples;
 //   a late remote frame that differs from the prediction sets correctionPending, and the next wrapper tick
@@ -50,7 +47,14 @@ export function onRemoteFrame(session: any, tick: number, bits: number): void {
 
 /** Resolve tick u's remote bits: the true frame if it landed, else the repeat-last prediction. */
 export function predictedRemoteBits(session: any, tick: number): number {
-  return session.remoteFrames.get(tick) ?? session.lastRemoteBits;
+  const exact = session.remoteFrames.get(tick);
+  if (exact !== undefined) return exact;
+  let newest = -1;
+  let bits = 0;
+  for (const [t, value] of session.remoteFrames as Map<number, number>) {
+    if (t < tick && t > newest) { newest = t; bits = value; }
+  }
+  return bits;
 }
 
 /** True when tick u may execute on prediction (not yet confirmed, within the depth bound). */
@@ -85,16 +89,24 @@ function flushConfirmedSounds(session: any): void {
 
 // ------------------------------------------------------------------------------------------- ring + corrections
 
-/** After a tick executed (all bookkeeping done): push the ring slot for this tick-boundary state. */
+/** Capture before this tick's inputs are applied, on both live and replay paths. */
 export function pushSlot(session: any, world: any): void {
   const ctx: SnapCtx = session.snapCtx;
   const tRel = world.mTick - session.startTick;
   const slot: RingSlot = { tRel, data: captureWorldSnap(world, ctx), instances: ctx.instances, sharedObjs: ctx.sharedObjs };
-  session.ring[tRel % (ROLLBACK_WINDOW_TICKS + 1)] = slot;
+  const index = tRel % (ROLLBACK_WINDOW_TICKS + 1);
+  releaseSlot(session.ring[index]);
+  session.ring[index] = slot;
+}
+
+function releaseSlot(slot: RingSlot | undefined): void {
+  const floor = slot?.data.floor;
+  if (floor) slot!.sharedObjs[floor.sharedIdx]?.dispose();
 }
 
 export function resetRollback(session: any): void {
   session.peerReady = false; // per-game: the peer's first frame re-arms it
+  for (const slot of session.ring ?? []) releaseSlot(slot);
   session.ring = [];
   session.tickMeta = new Map();
   session.pendingSounds = new Map();
@@ -128,11 +140,18 @@ export function applyCorrections(session: any, world: any): number {
   if (!slot) {
     // No slot before the divergence (ancient divergence - beyond the window): treat as desync-grade stall;
     // the wrapper's stall path takes over next tick. Should not happen (window guard in beginTick).
+    session.correctionPending = c;
     session.stall('peer');
     return 0;
   }
   for (const t of [...session.pendingSounds.keys()]) if (t >= slot.tRel) session.pendingSounds.delete(t);
   restoreWorldSnap(world, slot, session.snapCtx);
+  for (let i = 0; i < session.ring.length; i++) {
+    if (session.ring[i]?.tRel >= slot.tRel) {
+      releaseSlot(session.ring[i]);
+      session.ring[i] = undefined;
+    }
+  }
   const stats = session.rollbackStats;
   stats.corrections++;
   let replayed = 0;
@@ -153,6 +172,7 @@ export function applyCorrections(session: any, world: any): number {
 
 /** One replayed tick: virtual clock, inputs through the exact applyPlayer path, direct world.Process. */
 function replayTick(session: any, world: any, u: number): void {
+  pushSlot(session, world);
   session.virtualTimeMs = u * (1000 / CMain.mFPS);
   const bits0 = session.localFrames.get(u) ?? 0;
   const bits1 = predictedRemoteBits(session, u);

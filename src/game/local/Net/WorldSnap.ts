@@ -265,6 +265,8 @@ function captureOwnProps(o: any, ctx: SnapCtx, path: string): [string, SV][] {
 
 export function captureWorldSnap(world: any, ctx: SnapCtx): WorldSnap {
   ctx.instances = new Map();
+  // Each ring slot owns its registry. Reusing the growing array retained every expired bitmap/thing.
+  ctx.sharedObjs = [];
   ctx.privateMemo = new Map();
   ctx.privateSharedIdx = new Map();
   ctx.privateThings = {};
@@ -281,9 +283,8 @@ export function captureWorldSnap(world: any, ctx: SnapCtx): WorldSnap {
   for (let y = 0; y < rows.length; y++) {
     for (let x = 0; x < rows[y].length; x++) {
       const c = rows[y][x];
-      if (c.mCollide || c.mChildCount || c.mObjects.length || c.nVD !== undefined || c.mSessionIDCheck !== undefined) {
-        cells.push([x, y, c.mCollide, c.mChildCount, c.nID, c.nDist ?? 0, c.nVD ?? 0, c.mSessionIDCheck ?? 0, Object.keys(c.mObjects)]);
-      }
+      // Empty cells still carry the navigation field. Dropping them changes subsequent AI decisions.
+      cells.push([x, y, c.mCollide, c.mChildCount, c.nID, c.nDist, c.nVD, c.mSessionIDCheck, Object.keys(c.mObjects)]);
     }
   }
   const C = World.Map.CMap_Cell as any;

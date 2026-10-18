@@ -426,6 +426,7 @@ export class NetSession {
       this.stall('local');
       return 'stall';
     }
+    if (this.rollback && PREDICT_MAX_LAG_TICKS > 0) rollbackPushSlot(this, world);
     this.applyPlayer(this.role, mine, t);
     this.applyPlayer((1 - this.role) as LanRole, remoteBits, t);
     if (this.rollback) this.tickMeta.set(t, { remoteBits, predicted });
@@ -539,17 +540,8 @@ export class NetSession {
     if (this.rollback) {
       const metaPrune = this.confirmTick - (ROLLBACK_WINDOW_TICKS + 2);
       for (const k of this.tickMeta.keys()) if (k < metaPrune) this.tickMeta.delete(k);
-      // Ring slots are pushed for CONFIRMED ticks only: a slot captured after a PREDICTED tick holds a
-      // predicted world, and a correction restoring from it would replay from a contaminated start - the
-      // exact one-step permanent divergence the packaged net playtest caught (P1 x off by 1/8 cell at the
-      // checksum tick). Corrections always restore to a confirmed boundary and replay forward from truth.
-      const executed = this.tickMeta.get(t - 1);
-      // Ring capture is pure overhead when prediction is disabled (depth 0: corrections can never trigger).
-      if (PREDICT_MAX_LAG_TICKS > 0 && !executed?.predicted) {
-        const capStart = Date.now();
-        rollbackPushSlot(this, world); // the ring slot at this clean tick boundary
-        this.rollbackStats.captureMs += Date.now() - capStart;
-      }
+      // Snapshots are captured BEFORE input application in beginTick, including predicted branches.
+      // The earliest divergent tick owns a valid pre-tick state; correction rebuilds every later slot.
     }
     // v0.2.1 L3 (kept alongside rollback): the shadow leads the local player's DISPLAY by the already-sampled
     // future input frames - rollback fixes the cadence (stalls/jitter), the shadow hides the D-tick input

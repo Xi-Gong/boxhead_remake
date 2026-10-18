@@ -3,7 +3,7 @@
 // pushSlot) are covered by the netlockstep rollback tests (T2+) with the real session.
 import { describe, expect, it } from 'vitest';
 import '../../src/game/allClasses.ts'; // registers CSound & co (the sound flush goes through the real choke point)
-import { onRemoteFrame, queueSound, type TickMeta } from '../../src/game/local/Net/Rollback.ts';
+import { onRemoteFrame, predictedRemoteBits, queueSound, type TickMeta } from '../../src/game/local/Net/Rollback.ts';
 import { ROLLBACK_WINDOW_TICKS } from '../../src/game/local/Net/protocol.ts';
 
 function fakeSession() {
@@ -24,6 +24,17 @@ const feed = (s: any, tick: number, bits: number): void => {
 };
 
 describe('rollback bookkeeping (fake session)', () => {
+  it('predicts from the latest earlier tick, never arrival order or a future input', () => {
+    const s = fakeSession();
+    feed(s, 8, 8);
+    feed(s, 2, 2);
+    feed(s, 6, 6);
+    expect(predictedRemoteBits(s, 1)).toBe(0);
+    expect(predictedRemoteBits(s, 3)).toBe(2);
+    expect(predictedRemoteBits(s, 7)).toBe(6);
+    expect(predictedRemoteBits(s, 8)).toBe(8);
+    expect(predictedRemoteBits(s, 9)).toBe(8);
+  });
   it('confirm frontier advances over the contiguous run of arrived frames', () => {
     const s = fakeSession();
     feed(s, 0, 1);
