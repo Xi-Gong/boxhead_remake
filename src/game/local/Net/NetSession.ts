@@ -39,6 +39,7 @@ import {
 } from './protocol.ts';
 import { mayPredict, onRemoteFrame as rollbackOnRemoteFrame, predictedRemoteBits, pushSlot as rollbackPushSlot, resetRollback } from './Rollback.ts';
 import { makeSnapCtx } from './WorldSnap.ts';
+import { recordWaveReached } from '../WaveUnlock.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -105,6 +106,7 @@ export interface NetStart {
   wave?: number;
   /** v0.2.3: prediction+rollback mode (see Rollback.ts); pins inputDelay to LAN_INPUT_DELAY. */
   rollback?: boolean;
+  netcode?: 'rollback-v2';
 }
 
 export class NetSession {
@@ -145,6 +147,9 @@ export class NetSession {
   // ---- v0.2.3 rollback state (Rollback.ts owns the algorithms; dark unless this.rollback) ----
   /** Prediction+rollback enabled for this game (start.rollback from the host). */
   rollback = false;
+  confirmedThrough = -1;
+  get rollbackV2(): boolean { return this.startOpts?.netcode === 'rollback-v2'; }
+  get predictionLimit(): number { return this.rollbackV2 ? Math.ceil(240 * CMain.mFPS / 1000) : PREDICT_MAX_LAG_TICKS; }
   /** Per executed tick: remote bits used / predicted / checksum / latched end state (Rollback.TickMeta). */
   tickMeta = new Map<number, any>();
   /** The W+1 ring of per-tick WorldSnap slots (Rollback.pushSlot). */
@@ -218,7 +223,7 @@ export class NetSession {
       // host's inputDelay MUST carry over (v0.1.7 bugfix: dropping it reset a resumed client to D=1 while the
       // host kept its measured D -> the host micro-stalled every tick after any resume).
       this.startLocalGame({
-        mode: msg.mode, roomLink: msg.roomLink, cfg: msg.cfg, seed: msg.seed, inputDelay: msg.inputDelay, resumeTick: msg.resumeTick,
+        mode: msg.mode, roomLink: msg.roomLink, cfg: msg.cfg, seed: msg.seed, inputDelay: msg.inputDelay, resumeTick: msg.resumeTick, netcode: msg.netcode,
         wave: msg.wave,
       }, CMain._this);
       return;
@@ -295,10 +300,10 @@ export class NetSession {
     this.startOpts = start;
     this.mode = start.mode;
     this.endReason = undefined;
-    this.rollback = start.rollback === true;
+    this.rollback = start.rollback === true || this.rollbackV2;
     // v0.2.3: rollback rides ON TOP of the adaptive input delay, not instead of it - D carries the steady
     // network latency (see PREDICT_MAX_LAG_TICKS) so prediction stays a jitter-gap filler, not a lifestyle.
-    this.inputDelay = start.inputDelay ?? LAN_INPUT_DELAY;
+    this.inputDelay = this.rollbackV2 ? 0 : start.inputDelay ?? LAN_INPUT_DELAY;
     (main as any).mFrameCap = 1; // v0.2.1 L1: every game starts with the original single-tick cap
     this.stallCount = 0; // v0.2.1 observability: per-game stall episodes
     this.catchupCreditMs = CATCHUP_CREDIT_MAX_MS; // v0.2.1 L1: a fresh game starts with full catch-up credit
@@ -324,6 +329,7 @@ export class NetSession {
     this.netPaused = false;
     this.desynced = false; // a new game clears the lobby banner cause (v0.2.3)
     resetRollback(this); // fresh ring / meta / sound queue for the new game
+    this.confirmedThrough = -1;
     if (start.resumeTick !== undefined && this.netCheckpoint) {
       // Resume: rebuild deterministically from the same seed, then re-apply OUR checkpoint (both peers hold a
       // state-identical copy even though their absolute mTick values may differ by the build-time warm-up ticks).
@@ -387,6 +393,11 @@ export class NetSession {
     // v0.2.3: the WorldSnap context for the rollback ring (slots captured so NetSlot state round-trips).
     this.snapCtx = makeSnapCtx(world, this.slots);
     resetRollback(this);
+    if (this.rollbackV2) this.submitLocalInput(0);
+    if (this.rollbackV2) {
+      this.peerReady = this.remoteFrames.size > 0;
+      while (this.remoteFrames.has(this.confirmTick + 1)) this.confirmTick++;
+    }
     this.onStateChange?.();
   }
 
@@ -408,6 +419,7 @@ export class NetSession {
       return 'stall';
     }
     const t = world.mTick - this.startTick;
+    if (this.rollbackV2) this.submitLocalInput(t);
     const mine = this.localFrames.get(t);
     const theirs = this.remoteFrames.get(t);
     let remoteBits: number;
@@ -426,7 +438,7 @@ export class NetSession {
       this.stall('local');
       return 'stall';
     }
-    if (this.rollback && PREDICT_MAX_LAG_TICKS > 0) rollbackPushSlot(this, world);
+    if (this.rollback && this.predictionLimit > 0) rollbackPushSlot(this, world);
     this.applyPlayer(this.role, mine, t);
     this.applyPlayer((1 - this.role) as LanRole, remoteBits, t);
     if (this.rollback) this.tickMeta.set(t, { remoteBits, predicted });
@@ -498,9 +510,9 @@ export class NetSession {
     this.virtualTimeMs += 1000 / CMain.mFPS;
     // v0.1.7: the sample taken right after the executed tick (t-1) is the frame for t-1+D - one tick less input
     // latency than v0.1.4's t+D, still D ticks of wire budget for the peer (both peers shift identically).
-    const s = t - 1 + this.inputDelay;
-    const bits = this.sampleLocalBits();
-    this.localFrames.set(s, bits);
+    const s = this.rollbackV2 ? t - 1 : t - 1 + this.inputDelay;
+    const bits = this.rollbackV2 ? this.localFrames.get(s)! : this.sampleLocalBits();
+    if (!this.rollbackV2) this.localFrames.set(s, bits);
     let sum: LanChecksum | undefined;
     if (t > 0 && t % LAN_CHECKSUM_EVERY === 0) {
       sum = this.checksum(world, t);
@@ -546,7 +558,45 @@ export class NetSession {
     // v0.2.1 L3 (kept alongside rollback): the shadow leads the local player's DISPLAY by the already-sampled
     // future input frames - rollback fixes the cadence (stalls/jitter), the shadow hides the D-tick input
     // delay. Frozen during stalls by construction (advanceShadow only runs on executed ticks).
-    advanceShadow(this, world);
+    if (!this.rollbackV2) advanceShadow(this, world);
+    else this.commitConfirmed(world);
+  }
+
+  /** Shared live/replay step. Only the confirmed frontier may commit external side effects. */
+  executeWorldStep(world: any, tick: number): void {
+    const meta = this.tickMeta.get(tick);
+    delete meta.checkpoint;
+    this.pendingSounds.delete(tick);
+    this.soundRecordingTick = tick;
+    try { world.Process(); } finally { this.soundRecordingTick = undefined; }
+    meta.endState = world.mCompleteState;
+    if ((tick + 1) % LAN_CHECKSUM_EVERY === 0) this.computeChecksumString(world, tick + 1);
+  }
+
+  commitConfirmed(world: any): void {
+    if (this.correctionPending !== undefined) return;
+    const frontier = Math.min(this.confirmTick, this.tickIndex(world) - 1);
+    for (let t = this.confirmedThrough + 1; t <= frontier; t++) {
+      const meta = this.tickMeta.get(t);
+      if (!meta) break;
+      if (meta.checkpoint) {
+        this.netCheckpoint = meta.checkpoint;
+        if (this.mode !== 'DeathMatch') recordWaveReached(meta.checkpoint.snap.wave);
+      }
+      const snd = (CMain as any).mSound;
+      for (const call of this.pendingSounds.get(t) ?? []) snd?.PlaySound(call.item, call.secOffset, call.nLoop);
+      this.pendingSounds.delete(t);
+      this.confirmedThrough = t;
+      this.compareSum(t + 1);
+    }
+  }
+
+  private submitLocalInput(tick: number): void {
+    if (this.localFrames.has(tick)) return;
+    CMain.mInput?.ProcessAllKeys();
+    const bits = this.sampleLocalBits();
+    this.localFrames.set(tick, bits);
+    this.link.send({ t: 'in', tick, bits });
   }
 
   /** Store our checksum for tick t (meta + legacy map) and compare against a received counterpart. */
@@ -597,6 +647,14 @@ export class NetSession {
 
   /** The __set__mLevel hook calls this on every wave advance (the field is empty then - a clean checkpoint). */
   onWaveAdvanced(world: any): void {
+    if (this.rollbackV2 && this.holdsWorld(world)) {
+      const meta = this.tickMeta.get(this.tickIndex(world));
+      if (meta) {
+        const snap = capture(world);
+        meta.checkpoint = { tick: world.mTick, snap, digest: fnv(JSON.stringify(snap)) };
+      }
+      return;
+    }
     if (this.holdsWorld(world) && this.mode === 'Coop') this.maybeCheckpoint(world, world.mTick - this.startTick);
   }
 
@@ -605,6 +663,7 @@ export class NetSession {
    * advance at the same tick and captures the identical snapshot through this same hook.
    */
   maybeCheckpoint(world: any, t: number): void {
+    if (this.rollbackV2) return; // v2 checkpoints are staged by the wave hook and committed at the frontier.
     if (this.rollback && this.tickMeta.get(t)?.predicted) return;
     this.captureCheckpoint(world);
   }
@@ -759,6 +818,7 @@ export class NetSession {
   }
 
   private compareSum(tick: number): void {
+    if (this.rollbackV2 && (this.correctionPending !== undefined || tick - 1 > this.confirmedThrough)) return;
     const ours = this.ourSums.get(tick);
     const theirs = this.remoteSums.get(tick);
     if (ours === undefined || theirs === undefined || ours === theirs) return;

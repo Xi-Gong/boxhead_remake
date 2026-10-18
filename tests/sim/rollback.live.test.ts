@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('../../src/game/local/Net/protocol.ts', async importOriginal => ({
   ...await importOriginal<any>(), PREDICT_MAX_LAG_TICKS: 6,
 }));
-import { createHeadlessGame } from './harness.ts';
+import { createHeadlessGame, KEYS } from './harness.ts';
 import { NetSession } from '../../src/game/local/Net/NetSession.ts';
 import { applyCorrections } from '../../src/game/local/Net/Rollback.ts';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
@@ -14,10 +14,11 @@ const cfg: GameConfig = { difficulty: 0, gameSpeed: 1, devils: true, collisions:
   damage: true, gameAmount: 0, detail: true, charP1: 0, charP2: 0 };
 const input = (t: number): number => (t < 2 ? 0 : ((t % 17 < 8 ? 8 : 1) | (t % 7 < 4 ? 16 : 0)));
 
-function run(delay: number) {
+function run(delay: number, modern = false) {
   const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: true } });
   const session = new NetSession(1, { send() {} });
-  session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242, rollback: true }, game.main());
+  session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242, rollback: true,
+    netcode: modern ? 'rollback-v2' : undefined }, game.main());
   expect(game.waitRunning(3000)).toBe(true);
   const w = game.world();
   const delivered = new Set<number>();
@@ -54,6 +55,33 @@ function run(delay: number) {
 }
 
 describe('actual rollback prediction', () => {
+  it.each([0, 1] as const)('player %i applies new input on the next tick without a remote frame', role => {
+    const game = createHeadlessGame({ menuOnly: 'Main' });
+    const sent: any[] = [];
+    const s = new NetSession(role, { send: m => sent.push(m) });
+    s.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242,
+      netcode: 'rollback-v2' }, game.main());
+    expect(game.waitRunning(3000)).toBe(true);
+    s.onNetMessage({ t: 'in', tick: 0, bits: 0 });
+    game.tick(1);
+    const tick = s.tickIndex(game.world());
+    const before = game.players()[role].mPosition.mX;
+    game.setKeys([KEYS.P1.RIGHT]);
+    game.tick(1);
+    expect(s.inputDelay).toBe(0);
+    expect(sent.some(m => m.t === 'in' && m.tick === tick && (m.bits & 8))).toBe(true);
+    expect(game.players()[role].mPosition.mX).toBeGreaterThan(before);
+    expect(s.rollbackStats.predictions).toBeGreaterThan(0);
+    expect(game.errors).toEqual([]);
+    game.quit();
+  });
+  it.each([1, 2, 4])('zero-delay mode with %i ticks late input reproduces the reference', delay => {
+    const reference = run(0, true);
+    const candidate = run(delay, true);
+    expect(candidate.stats.predictions).toBeGreaterThan(0);
+    expect(candidate.stats.corrections).toBeGreaterThan(0);
+    expect(candidate.result).toEqual(reference.result);
+  });
   it.each([1, 2, 4])('repeated corrections with %i ticks late input reproduce all live entities', delay => {
     const reference = run(0);
     const candidate = run(delay);

@@ -210,6 +210,10 @@ export function applyScope(): void {
   upgradesProto.__set__mLevel = function (this: any, a: any): any {
     const r = setMLevel.call(this, a);
     if (this.mWorld?.mLoaded === true && !isSuppressing()) {
+      if (netSession()?.rollbackV2) {
+        netSession()!.onWaveAdvanced(this.mWorld);
+        return r;
+      }
       recordCheckpoint(this.mWorld);
       netSession()?.onWaveAdvanced(this.mWorld); // LAN coop checkpoint at the same clean wave-start moment
       if (World.CWorld.mGameMode !== 'DeathMatch') recordWaveReached(this.mLevelIndex); // entered wave N -> unlock

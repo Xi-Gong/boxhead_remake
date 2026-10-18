@@ -32,6 +32,7 @@ export function onRemoteFrame(session: any, tick: number, bits: number): void {
   const before = session.confirmTick;
   while (session.remoteFrames.has(session.confirmTick + 1)) session.confirmTick++;
   session.lastRemoteBits = bits;
+  if (session.rollbackV2) return; // v2 commits side effects only after correction at a simulation boundary.
   // A predicted game end whose tick just CONFIRMED without divergence was real: re-apply the latch so the
   // next confirmed tick routes it (6.2). A correction pending instead discards the replayed reality anyway.
   if (session.correctionPending === undefined) {
@@ -59,7 +60,7 @@ export function predictedRemoteBits(session: any, tick: number): number {
 
 /** True when tick u may execute on prediction (not yet confirmed, within the depth bound). */
 export function mayPredict(session: any, tick: number): boolean {
-  return tick - session.confirmTick <= PREDICT_MAX_LAG_TICKS;
+  return tick - session.confirmTick <= (session.predictionLimit ?? PREDICT_MAX_LAG_TICKS);
 }
 
 // ------------------------------------------------------------------------------------------- sound queue
@@ -178,6 +179,11 @@ function replayTick(session: any, world: any, u: number): void {
   const bits1 = predictedRemoteBits(session, u);
   session.applyPlayer(session.role, bits0, u);
   session.applyPlayer(1 - session.role, bits1, u);
+  if (session.rollbackV2) {
+    session.tickMeta.set(u, { remoteBits: bits1, predicted: !session.remoteFrames.has(u) });
+    session.executeWorldStep(world, u);
+    return;
+  }
   session.soundRecordingTick = u;
   try {
     world.Process();

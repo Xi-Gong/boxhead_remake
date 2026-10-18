@@ -19,7 +19,7 @@ import { frameTime, withTimerValue } from '../../../engine/flash/clock.ts';
 import { CMain, CSound, Thing, World } from '../../packages.ts';
 import { DESYNC_RETURN_MS, netSession } from './NetSession.ts';
 import { SLOT_ORDER } from './NetSlot.ts';
-import { MAX_NET_CATCHUP_TICKS, netStallRewind, PREDICT_MAX_LAG_TICKS } from './protocol.ts';
+import { MAX_NET_CATCHUP_TICKS, netStallRewind } from './protocol.ts';
 import { applyCorrections, queueSound } from './Rollback.ts';
 import { shadowDrawOverride } from './Predict.ts';
 
@@ -60,6 +60,20 @@ export function installNetScope(): void {
     if (session.rollback && session.correctionPending !== undefined && session.phase === 'playing') {
       applyCorrections(session, w);
     }
+    if (session.rollbackV2) {
+      session.commitConfirmed(w);
+      // A speculative terminal state waits for confirmation; never route away from a rewindable world.
+      if (w.mCompleteState) {
+        if (session.confirmedThrough >= session.tickIndex(w) - 1 || session.endReason) {
+          const ownProcess = Object.getOwnPropertyDescriptor(w, 'Process');
+          w.Process = () => {};
+          try { stateRunWorld.call(this, flagDraw); }
+          finally { if (ownProcess) Object.defineProperty(w, 'Process', ownProcess); else delete w.Process; }
+          session.markEnded();
+        } else if (flagDraw) w.Draw();
+        return;
+      }
+    }
     const mode = session.beginTick(w);
     if (mode === 'stall') {
       // v0.2.1 L1: a late peer frame must not cost a cadence slot - hand the just-consumed time slice back so
@@ -74,6 +88,12 @@ export function installNetScope(): void {
           m.mFrameCap = 2; // bounded catch-up burst while the schedule owes ticks
         }
       }
+      if (flagDraw) w.Draw();
+      return;
+    }
+    if (session.rollbackV2) {
+      session.executeWorldStep(w, session.tickIndex(w));
+      session.afterTick(w);
       if (flagDraw) w.Draw();
       return;
     }
@@ -157,7 +177,7 @@ export function installNetScope(): void {
   const processWorld = worldProto.Process;
   worldProto.Process = function (this: any): any {
     const session = netSession();
-    if (session?.rollback && PREDICT_MAX_LAG_TICKS > 0 && session.holdsWorld(this)) {
+    if (session?.rollback && session.predictionLimit > 0 && session.holdsWorld(this)) {
       return withTimerValue(session.virtualNow(), () => processWorld.call(this));
     }
     return processWorld.call(this);

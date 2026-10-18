@@ -29,7 +29,7 @@ export const LAN_CHECKSUM_EVERY = 50;
 /**
  * v0.2.3 rollback: the RING size (how far back a correction can restore), in ticks (D4; Rollback.ts).
  */
-export const ROLLBACK_WINDOW_TICKS = 8;
+export const ROLLBACK_WINDOW_TICKS = 16;
 /**
  * v0.2.3 rollback: how many ticks ahead of the confirmed frontier PREDICTION may run. SHIPPED AT 0: on
  * real async links every tested depth (1..8) showed a small persistent-state drift between the peers by the
@@ -146,7 +146,7 @@ export type LanMessage =
   // computeInputDelay; default LAN_INPUT_DELAY when absent). `rollback` (v0.2.3) = prediction+rollback mode:
   // the peer may execute a tick with a PREDICTED remote bitmap and re-simulate when the true frame lands (see
   // Rollback.ts); with it set the host pins inputDelay 1 (LAN_INPUT_DELAY).
-  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; wave?: number; snap?: unknown; rollback?: boolean }
+  | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; wave?: number; snap?: unknown; rollback?: boolean; netcode?: 'rollback-v2' }
   // both -> both: this peer's player input bitmap for `tick` (bit order = NetSlot.SLOT_ORDER: UP, DOWN, LEFT,
   // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
   | { t: 'in'; tick: number; bits: number; sum?: LanChecksum }
