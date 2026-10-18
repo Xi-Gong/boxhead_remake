@@ -353,12 +353,19 @@ export function applyScope(): void {
     selectProto[m] = function (this: any): void {
       prev.call(this);
       if (this.mcStartWave) this.mcStartWave._visible = !(this.mcWindow_Options._visible || this.mcWindow_Controls._visible);
+      this.waveInput?.refresh();
     };
   }
   const loadLevelPrev = selectProto.LoadLevel;
   selectProto.LoadLevel = function (this: any, tLevelIndex: any): void {
+    if (this.waveInput && !this.waveInput.commit()) return;
     armStartWave(getSelectedStartWave());
     loadLevelPrev.call(this, tLevelIndex);
+  };
+  const selectProcessPrev = selectProto.Process;
+  selectProto.Process = function(this: any): void {
+    selectProcessPrev.call(this);
+    this.waveInput?.refresh();
   };
 
   // ---- gameplay cursor (deviation GAME_CURSOR_HIDE, v0.1.7) ------------------------------------

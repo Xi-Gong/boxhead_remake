@@ -12,6 +12,7 @@
 import { desktop } from '../../../engine/platform/desktop.ts';
 import { CMain } from '../../packages.ts';
 import { maxUnlockedWave } from '../WaveUnlock.ts';
+import { validWaveNumber } from '../WaveValidation.ts';
 import { NetSession } from './NetSession.ts';
 import { computeInputDelay } from './protocol.ts';
 import { roomSettingsFromSave, savedSwitch } from './RoomSettings.ts';
@@ -238,6 +239,7 @@ class LanBridge {
   /** Host: the setup selection changed -> mirror it to the client. */
   setSel(sel: SetupSelection): void {
     if (!this.isHost || !['hosting','lobby','setup'].includes(this.phase)) return;
+    if (sel.mode === 'Coop' && !validWaveNumber(sel.wave ?? 1,sel.maxWave ?? 100)) return;
     this.sel = sel;
     if (this.phase === 'setup') this.send({ t: 'setup', sel });
     else this.send({ t: 'lobby', sel });
@@ -270,6 +272,7 @@ class LanBridge {
     }
     if (this.phase !== 'setup') return;
     const sel = this.sel;
+    if (sel.mode === 'Coop' && !validWaveNumber(sel.wave ?? 1,maxUnlockedWave())) return;
     const settings = sel.settings ?? roomSettingsFromSave(sd);
     const cfg: GameConfig = {
       ...(sel.mode === 'Coop' && this.peerTeamPass ? {teamPass:'team-pass-v1' as const}:{}),

@@ -1,0 +1,213 @@
+{
+  "ok": true,
+  "cases": [
+    {
+      "raw": "1",
+      "want": "1"
+    },
+    {
+      "raw": "100",
+      "want": "100"
+    },
+    {
+      "raw": "00042",
+      "want": "42"
+    },
+    {
+      "raw": "  00012  ",
+      "want": "12"
+    },
+    {
+      "value": "",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "abc",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "中文",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "１２",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "1.5",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "+1",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "-1",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "1e1",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "0x10",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "1 0",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "0",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "101",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+      "trigger": "Enter",
+      "selected": 7
+    },
+    {
+      "value": "12x",
+      "trigger": "blur",
+      "selected": 7
+    },
+    {
+      "value": "12x",
+      "trigger": "arrow",
+      "selected": 7
+    },
+    {
+      "value": "12x",
+      "trigger": "start",
+      "selected": 7
+    },
+    {
+      "value": "12.0",
+      "trigger": "start",
+      "selected": 12
+    },
+    {
+      "value": "12.0",
+      "trigger": "start",
+      "selected": 12
+    },
+    {
+      "value": "12.0",
+      "trigger": "start",
+      "selected": 12
+    },
+    {
+      "value": "12.0",
+      "trigger": "start",
+      "selected": 12
+    }
+  ],
+  "geometry": [
+    {
+      "width": 640,
+      "height": 480,
+      "x": 55,
+      "y": 363,
+      "w": 90,
+      "h": 28,
+      "a": {
+        "x": 55,
+        "y": 363
+      },
+      "z": {
+        "x": 145,
+        "y": 391
+      },
+      "ink": 117
+    },
+    {
+      "width": 960,
+      "height": 720,
+      "x": 82.5,
+      "y": 544.5,
+      "w": 135,
+      "h": 42,
+      "a": {
+        "x": 82.5,
+        "y": 544.5
+      },
+      "z": {
+        "x": 217.5,
+        "y": 586.5
+      },
+      "ink": 268
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "x": 242.34375,
+      "y": 544.5,
+      "w": 135.046875,
+      "h": 42,
+      "a": {
+        "x": 242.34466588511137,
+        "y": 544.5
+      },
+      "z": {
+        "x": 377.39742086752636,
+        "y": 586.5
+      },
+      "ink": 269
+    },
+    {
+      "width": 640,
+      "height": 889,
+      "x": 55,
+      "y": 567.5,
+      "w": 90,
+      "h": 28,
+      "a": {
+        "x": 55,
+        "y": 567.5
+      },
+      "z": {
+        "x": 145,
+        "y": 595.5
+      },
+      "ink": 118
+    }
+  ],
+  "shots": [
+    "generated/reports/v029/wave-input/single-640x480.png",
+    "generated/reports/v029/wave-input/error-640x480.png",
+    "generated/reports/v029/wave-input/single-960x720.png",
+    "generated/reports/v029/wave-input/error-960x720.png",
+    "generated/reports/v029/wave-input/single-1280x720.png",
+    "generated/reports/v029/wave-input/error-1280x720.png",
+    "generated/reports/v029/wave-input/single-640x889.png",
+    "generated/reports/v029/wave-input/error-640x889.png",
+    "generated/reports/v029/wave-input/coop-640x480.png",
+    "generated/reports/v029/wave-input/coop-960x720.png",
+    "generated/reports/v029/wave-input/coop-1280x720.png",
+    "generated/reports/v029/wave-input/coop-640x889.png",
+    "generated/reports/v029/wave-input/host-640x480.png",
+    "generated/reports/v029/wave-input/host-960x720.png",
+    "generated/reports/v029/wave-input/host-1280x720.png",
+    "generated/reports/v029/wave-input/host-640x889.png",
+    "generated/reports/v029/wave-input/guest-640x480.png",
+    "generated/reports/v029/wave-input/guest-960x720.png",
+    "generated/reports/v029/wave-input/guest-1280x720.png",
+    "generated/reports/v029/wave-input/guest-640x889.png"
+  ]
+}

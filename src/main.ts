@@ -25,6 +25,7 @@ import { lanBridge } from './game/local/Net/bridge.ts';
 import { netSession } from './game/local/Net/NetSession.ts';
 import { maxUnlockedWave, recordWaveReached } from './game/local/WaveUnlock.ts';
 import { initDebriefDom } from './game/local/DebriefName.ts';
+import { initWaveDom } from './game/local/WaveInput.ts';
 import { setViewportPresenter } from './game/local/Viewport.ts';
 import * as GamePackages from './game/packages.ts';
 import { _global } from './engine/flash/as2.ts';
@@ -229,6 +230,7 @@ async function boot(): Promise<void> {
   dbg.platform = startPlatform({ container: stage, player, getMenu: () => _root?.menu });
   lanBridge().setPresenter(dbg.platform.presenter); // LAN DOM overlays track the letterboxed canvas (v0.1.4)
   initDebriefDom(dbg.platform.presenter, stage); // debrief name-input conduit (v0.1.8 DEBRIEF_NAME_IME_INPUT)
+  initWaveDom(dbg.platform.presenter, stage);
   setViewportPresenter(dbg.platform.presenter); // DYNAMIC_VIEWPORT: world view follows window resizes
   dbg.platform.presenter.canvas.focus();
   // Local gamepad support (deviation GAMEPAD_INPUT): poll the pads every rAF before the enterFrame batch.

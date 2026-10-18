@@ -6,12 +6,13 @@
 // Single/Coop only (Death Match has no waves); the value is screen-session state (StartWave.ts), while its cap -
 // shown as the grey BEST copy below the cycler - is the persisted best wave (v0.2.4, WaveUnlock.ts).
 import { CSound } from '../packages.ts';
-import { cycleSelectedStartWave, getSelectedStartWave } from './StartWave.ts';
+import { getSelectedStartWave, setSelectedStartWave } from './StartWave.ts';
+import { WaveInput } from './WaveInput.ts';
 import { maxUnlockedWave } from './WaveUnlock.ts';
 import { GREY, PILL_FILL, PILL_LABEL, menuText, menuShadow, pillBase } from './UiStyle.ts';
 
 /** An outlined white triangle with the original level selector's soft shadow. */
-function arrow(parent: any, name: string, x: number, y: number, dir: -1 | 1, onPress: () => void): any {
+export function waveArrow(parent: any, name: string, x: number, y: number, dir: -1 | 1, onPress: () => void): any {
   const mc = parent.createEmptyMovieClip(name, parent.getNextHighestDepth());
   mc._x = x;
   mc._y = y;
@@ -50,13 +51,16 @@ export function buildStartWaveCycler(parent: any, x: number, y: number): any {
   pillBase(plate, 90, 28);
   const value = menuText(plate, 'mcValue', 0, 3, 90, 24, '1', 18, PILL_LABEL);
   const best = menuText(mc, 'mcBest', -45, 21, 90, 16, 'BEST 1', 11, GREY);
+  const editor = parent.waveInput = new WaveInput({ screen: parent, field: value, rect: {x:x-45,y:y-14,w:90,h:28},
+    get:getSelectedStartWave, set:setSelectedStartWave, max:maxUnlockedWave,
+    visible:()=>mc._visible&&!parent._LocalHighscores?._visible });
   const refresh = (): void => {
-    value.text = String(getSelectedStartWave());
     best.text = 'BEST ' + maxUnlockedWave();
   };
-  const bump = (d: number): void => { cycleSelectedStartWave(d); refresh(); };
-  mc.bLeft = arrow(mc, 'bLeft', -60, 0, -1, () => bump(-1));
-  mc.bRight = arrow(mc, 'bRight', 60, 0, 1, () => bump(1));
+  const bump = (d: number): void => { editor.cycle(d); refresh(); };
+  mc.bLeft = waveArrow(mc, 'bLeft', -60, 0, -1, () => bump(-1));
+  mc.bRight = waveArrow(mc, 'bRight', 60, 0, 1, () => bump(1));
+  plate.onRelease = () => editor.focus();
   mc.mcValue = value;
   mc.mcBest = best;
   refresh();

@@ -106,7 +106,7 @@ const CREATE_ROOM_BTN = [320 - 117, 240 - 6];
 const JOIN_BTN = [520, 350];
 const READY_BTN = [210, 330];
 const START_ROOM_BTN = [210, 330];
-const WAVE_PLATE_BTN = [536, 399]; // the plate Button is CENTRED on (x, y)
+const WAVE_PLATE_BTN = [596, 399]; // right arrow; the value plate now accepts text
 
 let apps = [];
 const closeAll = async () => { for (const a of apps) { try { await a.close(); } catch {} } };
@@ -211,8 +211,8 @@ try {
   const pH = await plate(H.page);
   const pC = await plate(C.page);
   step(`C: host plate ${JSON.stringify(pH)} / client plate ${JSON.stringify(pC)}`);
-  if (pH.wave !== 'WAVE 1' || pH.best !== 'BEST 30') fail('C: host plate wrong: ' + JSON.stringify(pH));
-  if (pC.wave !== 'WAVE 1' || pC.best !== 'BEST 30') fail('C: client mirror plate wrong: ' + JSON.stringify(pC));
+  if (pH.wave !== '1' || pH.best !== 'BEST 30') fail('C: host plate wrong: ' + JSON.stringify(pH));
+  if (pC.wave !== '1' || pC.best !== 'BEST 30') fail('C: client mirror plate wrong: ' + JSON.stringify(pC));
   if (pC.sel.maxWave !== 30) fail('C: client did not mirror maxWave 30: ' + pC.sel.maxWave);
   await shot('04_lansetup_host', H.page);
   await shot('05_lansetup_guest', C.page);
@@ -220,7 +220,7 @@ try {
   await h.click(...WAVE_PLATE_BTN);
   await H.page.waitForTimeout(300);
   const after = await plate(C.page);
-  if (after.sel.wave !== 3 || after.wave !== 'WAVE 3') fail('C: host wave plate did not cycle to 3: ' + JSON.stringify(after));
+  if (after.sel.wave !== 3 || after.wave !== '3') fail('C: host wave plate did not cycle to 3: ' + JSON.stringify(after));
   step('C: host cycles the wave plate to 3 (capped at its best 30), mirrored to the client');
   await shot('06_lansetup_wave3', H.page);
   report.ok = report.errors.length === 0;

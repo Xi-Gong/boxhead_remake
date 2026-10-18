@@ -2,11 +2,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const lan = vi.hoisted(() => ({onMessage:vi.fn(),onPeer:vi.fn(),onHosts:vi.fn(),connect:vi.fn(),hostStart:vi.fn(),addresses:vi.fn(),discoverStart:vi.fn(),send:vi.fn(),shutdown:vi.fn()}));
 vi.mock('../../../src/engine/platform/desktop.ts',()=>({desktop:{lan}}));
 import { lanBridge, _resetBridgeForTests } from '../../../src/game/local/Net/bridge.ts';
-import { CMain } from '../../../src/game/packages.ts';
+import { CMain, CSaveData } from '../../../src/game/packages.ts';
 import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it('never publishes an invalid wave and rechecks the host save cap before starting',()=>{
+  const b=lanBridge(),previous=CMain.mSaveData,oldShared=CSaveData.mSharedObject;CMain.mSaveData={} as any;
+  CSaveData.mSharedObject={data:{mMaxWaveReached:7}} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  try{
+   b.phase='setup';const before=b.sel;
+   for(const wave of [0,101,1.5,'2',NaN])b.setSel({...before,wave:wave as number,maxWave:100});
+   expect(b.sel).toBe(before);expect(lan.send).not.toHaveBeenCalled();
+   b.sel={...before,wave:8,maxWave:100};b.startGame(false);expect(launch).not.toHaveBeenCalled();
+   b.sel={...before,wave:7,maxWave:100};b.startGame(false);expect(launch).toHaveBeenCalledOnce();
+  }finally{CMain.mSaveData=previous;CSaveData.mSharedObject=oldShared;launch.mockRestore();}
+ });
  it('normalizes numeric save switches and publishes host settings in the waiting room and setup',()=>{
   const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={mGameSpeed:0,mDevilsActive:0,mCollisionsActive:1,mDamageActive:0,mDetail:0} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});

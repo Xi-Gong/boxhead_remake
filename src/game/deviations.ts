@@ -14,6 +14,17 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'WAVE_TEXT_INPUT',
+    file: 'local/WaveValidation.ts, WaveInput.ts, StartWaveUi.ts; local/Net/Setup.ts, bridge.ts; scope.ts; main.ts',
+    description: 'Local Single/Coop and LAN host wave selectors accept full ASCII decimal drafts through '+
+      'a native text/IME/paste conduit over the embedded canvas font. Enter, blur, start and arrows share '+
+      'strict unlocked-range validation; Escape restores the last legal value. Invalid drafts open a '+
+      'screen-owned modal, cancel the action and retain/select the draft without publishing it. Raw pasted '+
+      'line breaks cannot be silently stripped into valid numbers. Guest values remain readonly. '+
+      'Presenter transforms, visibility/unload cleanup and a numeric host-cap start guard preserve input '+
+      'ownership, scale alignment and saved unlocks; re-entering still starts at wave 1.',
+  },
+  {
     id: 'LAN_ROOM_SETTINGS',
     file: 'local/Net/RoomSettings.ts, RoomSettingsPanel.ts, Lobby.ts, Setup.ts, bridge.ts, protocol.ts; local/FriendlyFire.ts',
     description: 'The waiting room and setup share a host-editable, guest-readonly options panel. Numeric '+

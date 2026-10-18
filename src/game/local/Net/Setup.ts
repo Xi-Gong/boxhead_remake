@@ -10,6 +10,8 @@ import { CScreen_SelectWorld } from '../../Screen/CScreen_SelectWorld.ts';
 import { CSound } from '../../packages.ts';
 import { lanBridge } from './bridge.ts';
 import { RoomSettingsPanel } from './RoomSettingsPanel.ts';
+import { WaveInput } from '../WaveInput.ts';
+import { waveArrow } from '../StartWaveUi.ts';
 import { SCREEN_LAN_SETUP_LINKAGE } from '../localSymbols.ts';
 import { BODY_FONT, GREY, INK, glow, pillButton, setButtonEnabled, setButtonLabel, text } from '../UiStyle.ts';
 
@@ -37,6 +39,9 @@ export class CScreen_LanSetup extends CScreen {
   private bLeave: any;
   private waitText: any;
   private roomSettings!: RoomSettingsPanel;
+  waveInput!: WaveInput;
+  private waveLeft: any;
+  private waveRight: any;
 
   override ctor(): void {
     super.ctor();
@@ -56,7 +61,9 @@ export class CScreen_LanSetup extends CScreen {
     this.Refresh();
     // The screen system removes replaced screens with removeMovieClip (CScreen.Dispose is never called) -
     // unsubscribe from the bridge when the clip goes, or the dead screen keeps refreshing forever.
+    const previousUnload = this.onUnload;
     this.onUnload = (): void => {
+      previousUnload?.call(this);
       this.unregisterUi?.();
       this.unregisterUi = undefined;
     };
@@ -72,9 +79,11 @@ export class CScreen_LanSetup extends CScreen {
       this.dirty = false;
       this.Refresh();
     }
+    this.waveInput.refresh();
   }
 
   override Dispose(): void {
+    this.waveInput.dispose();
     this.unregisterUi?.();
     super.Dispose();
   }
@@ -121,7 +130,13 @@ export class CScreen_LanSetup extends CScreen {
     // frag limit (the only mode-dependent control of that band, like the local screen's DM-hidden cycler).
     this.bWaveLabel = this.Text(472, 369, 128, 16, 'Calibri', 12, INK, true, 'center', 'WAVE');
     this.bWaveLabel.filters = glow();
-    this.bWave = this.Button(536, 399, 128, 24, '', 12, () => this.cycleWave(1));
+    this.bWave = this.Button(536, 399, 90, 24, '', 14, () => this.waveInput.focus());
+    this.waveInput = new WaveInput({screen:this,field:this.bWave._Contents._Label,rect:{x:491,y:387,w:90,h:24},
+      get:()=>lanBridge().sel.wave ?? 1, set:wave=>{const b=lanBridge();b.setSel({...b.sel,wave});},
+      max:()=>lanBridge().sel.maxWave ?? 100, editable:()=>lanBridge().isHost,
+      visible:()=>lanBridge().sel.mode==='Coop'&&!this.roomSettings.root._visible});
+    this.waveLeft=waveArrow(this.widgets,'_WaveLeft',476,399,-1,()=>this.waveInput.cycle(-1));
+    this.waveRight=waveArrow(this.widgets,'_WaveRight',596,399,1,()=>this.waveInput.cycle(1));
     // START_WAVE_SELECTOR (v0.2.4): the host's historical best wave = the cycler's cap, mirrored to the client with
     // every setup change - small grey copy centred under the plate, in the gap above the bottom button row.
     this.bBest = this.Text(472, 414, 128, 14, BODY_FONT, 11, GREY, true, 'center', 'BEST 1');
@@ -131,7 +146,9 @@ export class CScreen_LanSetup extends CScreen {
     // options-window selected wash (the primary action); WAITING uses the body ink like the original status copy.
     this.waitText = this.Text(170, 436, 300, 18, BODY_FONT, 14, INK, true, 'center', 'WAITING FOR HOST...');
     this.waitText.filters = glow();
-    this.bStart = this.Button(320, 444, 180, 28, 'START GAME', 15, () => lanBridge().startGame(false), { selected: true });
+    this.bStart = this.Button(320, 444, 180, 28, 'START GAME', 15, () => {
+      if (lanBridge().sel.mode !== 'Coop' || this.waveInput.commit()) lanBridge().startGame(false);
+    }, { selected: true });
     this.bBack = this.Button(90, 444, 140, 24, 'BACK', 13, () => lanBridge().backToRoom());
     this.bLeave = this.Button(550, 444, 140, 24, 'LEAVE', 13, () => lanBridge().leaveLobby());
   }
@@ -184,14 +201,6 @@ export class CScreen_LanSetup extends CScreen {
     b.setSel({ ...b.sel, levelIdx: (b.sel.levelIdx + d + 18) % 18 });
   }
 
-  private cycleWave(d: number): void {
-    CSound.mSamples.Click2.PlaySound();
-    const b = lanBridge();
-    const max = Math.max(1, Math.floor(b.sel.maxWave ?? 100)); // v0.2.4: wrap within the HOST's best (sel is host-authored)
-    const w = ((b.sel.wave - 1 + d) % max + max) % max + 1;
-    b.setSel({ ...b.sel, wave: w });
-  }
-
   private cycleMode(): void {
     CSound.mSamples.Click2.PlaySound();
     const b = lanBridge();
@@ -211,7 +220,6 @@ export class CScreen_LanSetup extends CScreen {
     setButtonLabel(this.bMode, sel.mode === 'Coop' ? 'CO-OP' : 'DEATHMATCH');
     setButtonLabel(this.bDiff, DIFFICULTY[sel.difficulty]!);
     setButtonLabel(this.bFrags, String(FRAGS[sel.gameAmount]!));
-    setButtonLabel(this.bWave, 'WAVE ' + (sel.wave ?? 1));
     this.bBest.text = 'BEST ' + Math.max(1, Math.floor(sel.maxWave ?? 1));
     const showFrags = sel.mode === 'DeathMatch';
     this.bFrags._visible = showFrags;
@@ -222,6 +230,7 @@ export class CScreen_LanSetup extends CScreen {
     this.bWave.enabled = showWave;
     this.bWaveLabel._visible = showWave;
     this.bBest._visible = showWave;
+    this.waveLeft._visible = showWave; this.waveRight._visible = showWave;
 
     // Mirror the selection into the original art (preview frames are 1-based).
     if (this.mcSubScreen) {
@@ -236,6 +245,8 @@ export class CScreen_LanSetup extends CScreen {
     this.bBack._visible = host;
     this.bLeave._visible = !host;
     for (const button of [this.bMode, this.bDiff, this.bFrags, this.bWave]) setButtonEnabled(button, host, 55);
+    for (const arrow of [this.waveLeft,this.waveRight]) setButtonEnabled(arrow,host,55);
+    this.waveInput.refresh();
   }
 }
 proto(CScreen_LanSetup, { _CLASSID_: 'CScreen_LanSetup' });

@@ -38,11 +38,11 @@ describe('LAN net setup screen (v0.1.4)', () => {
     // sel.maxWave (absent = uncapped, the legacy-peer tolerance; v0.2.4 caps it at the HOST's best).
     expect(s.bWave._visible).toBe(true);
     expect(s.bWaveLabel._visible).toBe(true);
-    expect(s.bWave._Contents._Label.text).toBe('WAVE 1');
-    s.bWave.onRelease.call(s.bWave);
+    expect(s.bWave._Contents._Label.text).toBe('1');
+    s.waveRight.onRelease.call(s.waveRight);
     g.step(4);
     expect(b.sel.wave).toBe(2);
-    expect(s.bWave._Contents._Label.text).toBe('WAVE 2');
+    expect(s.bWave._Contents._Label.text).toBe('2');
 
     // bRight on the P2 card cycles charP2 and the preview frame (through bridge.setSel).
     const p2right = s.mcSubScreen.mcPlayer2_Character.bRight;
@@ -99,13 +99,13 @@ describe('LAN net setup screen (v0.1.4)', () => {
     g.step(4);
     expect(s.bBest._visible).toBe(true);
     expect(s.bBest.text).toBe('BEST 3');
-    s.bWave.onRelease.call(s.bWave);
+    s.waveRight.onRelease.call(s.waveRight);
     g.step(4);
     expect(b.sel.wave).toBe(2);
-    s.bWave.onRelease.call(s.bWave);
+    s.waveRight.onRelease.call(s.waveRight);
     g.step(4);
     expect(b.sel.wave).toBe(3); // at the host's cap
-    s.bWave.onRelease.call(s.bWave);
+    s.waveRight.onRelease.call(s.waveRight);
     g.step(4);
     expect(b.sel.wave).toBe(1); // wraps within 1..3, never beyond the cap
 
@@ -115,7 +115,7 @@ describe('LAN net setup screen (v0.1.4)', () => {
     cl.b.notify();
     cl.g.step(4);
     expect(cl.s.bBest.text).toBe('BEST 3');
-    expect(cl.s.bWave._Contents._Label.text).toBe('WAVE 2');
+    expect(cl.s.bWave._Contents._Label.text).toBe('2');
     expect(g.errors).toEqual([]);
     expect(cl.g.errors).toEqual([]);
     _resetBridgeForTests();
