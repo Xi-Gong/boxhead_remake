@@ -451,18 +451,26 @@ function drawFlashTypeStatic(o: StaticText, ctx: Ctx, m: M6, cx: ColorTransform 
  * game fonts) makes the whole field drop to the outline renderer, which draws missing codes device-side instead
  * of skipping them. Latin-only fields keep the exact FlashType path.
  */
+const ftCoverage = new WeakMap<TextField, { layout: TextLayout; library: Library; covered: boolean }>();
+
 export function ftEditCodesCovered(tf: TextField): boolean {
   const L = engine.library;
   if (!L || !tf.$embed) return false;
-  for (const line of tf.$getLayout().lines) {
+  // Layout identity changes on text/format/password/embedding edits. A cache hit must not rescan every
+  // glyph before the raster cache can be used (notably the pause screen's complete upgrade list).
+  const layout = tf.$getLayout();
+  const cached = ftCoverage.get(tf);
+  if (cached?.layout === layout && cached.library === L) return cached.covered;
+  let covered = true;
+  scan: for (const line of layout.lines) {
     for (const g of line.glyphs) {
       if (g.code === 32 || g.code === 13 || g.code === 10 || g.code === 160) continue;
       const res = tf.$font(g.fmt);
-      if (!res.font) return false;
-      if (!L.fontCodeMap(res.font).has(g.code)) return false;
+      if (!res.font || !L.fontCodeMap(res.font).has(g.code)) { covered = false;break scan; }
     }
   }
-  return true;
+  ftCoverage.set(tf, { layout, library: L, covered });
+  return covered;
 }
 
 /** DefineEditText with CSMTextSettings (FlashType), embedded fonts only. False: use the outline renderer. */

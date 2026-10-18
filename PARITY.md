@@ -578,3 +578,7 @@ START WAVE 与 OPTIONS/CONTROLS 在同一基线；BEST 移到数值下方，方�
 ### 18.20 实际便携启动器验收
 
 新增portable.electron.mjs直接启动NSIS单文件exe，通过独立CDP端口连接其子进程（Playwright Electron启动无法取得启动器未转发的inspector stderr）。校验实际解压目录asar版本，使用隔离存档，真实点击进入游戏、保存退出、继续及31声音健康检查。v0.2.5原始发布包基线提取与v0.2.6便携流程均通过；新增优化后最终包将再次运行同一门禁。
+
+### 18.21 FlashType字符覆盖检查缓存
+
+暂停CPU采样定位到缓存文字每帧仍逐字符调用$font/fontCodeMap检查覆盖。按不可变layout对象与Library身份缓存覆盖结果，WeakMap不延长已移除TextField生命周期；文本/格式/password/embedFonts/layout变化或库切换自动失效。新增回归旧版重复扫描失败，修复后缓存帧0次字体查询；CJK缺字仍完整回退。53项文字/滤镜/FlashType黄金回归、完整1265项Vitest及类型检查通过。实际函数微基准20000次变更等价，240000调用三轮中位65.67→3.65ms（约18倍，仅覆盖检查路径）；整游戏新对照另记录。

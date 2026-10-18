@@ -320,4 +320,27 @@ describe('CJK fallback for embedded fonts (v0.1.8)', () => {
     const tf2 = p2.root.attachMovie('T', 't', 1)!.tf as TextField;
     expect(ftEditCodesCovered(tf2)).toBe(false); // device-font fields never take the FT path
   });
+
+  it('reuses coverage for unchanged layouts and invalidates it for text, formats, embedding and libraries', () => {
+    const p = Player.fromJson(textLib({ initialText: 'AB' }));p.enterFrame();
+    const tf = p.root.attachMovie('T', 't', 1)!.tf as TextField;
+    tf.$getLayout();
+    const font = tf.$font.bind(tf);let calls = 0;
+    tf.$font = (fmt) => { calls++;return font(fmt); };
+    expect(ftEditCodesCovered(tf)).toBe(true);
+    calls = 0;
+    for (let n=0;n<8;n++) expect(ftEditCodesCovered(tf)).toBe(true);
+    expect(calls).toBe(0); // cached raster frames must not scan every glyph again
+    tf.text = 'A王B';expect(ftEditCodesCovered(tf)).toBe(false);
+    calls = 0;expect(ftEditCodesCovered(tf)).toBe(false);expect(calls).toBe(0);
+    tf.password = true;expect(ftEditCodesCovered(tf)).toBe(true);
+    tf.password = false;expect(ftEditCodesCovered(tf)).toBe(false);
+    tf.text = 'AB';expect(ftEditCodesCovered(tf)).toBe(true);
+    calls = 0;tf.setTextFormat(new TextFormat('TestFont',20,0xffffff,true));
+    expect(ftEditCodesCovered(tf)).toBe(true);expect(calls).toBeGreaterThan(0);
+    tf.embedFonts = false;expect(ftEditCodesCovered(tf)).toBe(false);
+    tf.embedFonts = true;expect(ftEditCodesCovered(tf)).toBe(true);
+    Player.fromJson(textLib());calls = 0;
+    expect(ftEditCodesCovered(tf)).toBe(true);expect(calls).toBeGreaterThan(0);
+  });
 });
