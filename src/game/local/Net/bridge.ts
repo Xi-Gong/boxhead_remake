@@ -59,6 +59,7 @@ class LanBridge {
   /** Client: the host ip it joined (reconnects go there). */
   hostIp = '';
   private reconnectTimer: number | undefined;
+  private reconnectGeneration = 0;
   private deadlineTimer: number | undefined;
   private uiCbs = new Set<() => void>();
   private started = false;
@@ -433,11 +434,14 @@ class LanBridge {
 
   private startReconnectLoop(): void {
     this.stopTimers();
+    const generation = this.reconnectGeneration;
     if (this.session?.role === 1 && this.hostIp) {
+      let pending = false;
       const tryConnect = (): void => {
-        if (!this.session || this.session.phase !== 'reconnecting' || !this.hostIp) return;
+        if (pending || generation !== this.reconnectGeneration || !this.session || this.session.phase !== 'reconnecting' || !this.hostIp) return;
+        pending = true;
         void desktop?.lan?.connect(this.hostIp, undefined, { name: 'player', sid: this.sid, char: 0, capTick: this.session.netCheckpoint?.tick })
-          .catch(() => undefined);
+          .catch(() => undefined).finally(() => { pending = false; });
       };
       // Retry every 1 s (v0.1.3 used 2 s; never AT ONCE): a GRACEFUL app quit also fires peer-lost, and an instant
       // retry would hello the host mid-shutdown and trigger a pointless checkpoint resume (the app dies 200-400 ms
@@ -461,6 +465,7 @@ class LanBridge {
   }
 
   private stopTimers(): void {
+    ++this.reconnectGeneration;
     if (this.reconnectTimer !== undefined) { clearInterval(this.reconnectTimer); this.reconnectTimer = undefined; }
     if (this.deadlineTimer !== undefined) { clearInterval(this.deadlineTimer); this.deadlineTimer = undefined; }
   }

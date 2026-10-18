@@ -30,4 +30,22 @@ describe('LAN bridge operation lifetime',()=>{
   const d=deferred<{ok:boolean;reason:string}>();lan.discoverStart.mockReturnValue(d.promise);
   const b=lanBridge();b.refresh();b.leaveLobby();d.resolve({ok:false,reason:'late'});await settle();expect(b.message).toBe('');
  });
+ it('reconnect timer never cancels an in-flight slow connection',async()=>{
+  vi.useFakeTimers();vi.stubGlobal('window',globalThis);
+  const d=deferred<{ok:boolean}>();lan.connect.mockReturnValue(d.promise);
+  const b=lanBridge();
+  const session={role:1,phase:'reconnecting',reconnectSecondsLeft:()=>30,dispose:()=>{},forfeit:()=>{}};
+  b.session=session as any;b.hostIp='10.0.0.7';b.phase='playing';
+  try {
+   (b as any).startReconnectLoop();
+   await vi.advanceTimersByTimeAsync(4000);
+   expect(lan.connect).toHaveBeenCalledTimes(1);
+   d.resolve({ok:false});await settle();
+   await vi.advanceTimersByTimeAsync(1000);
+   expect(lan.connect).toHaveBeenCalledTimes(2);
+   (b as any).stopTimers();
+   await vi.advanceTimersByTimeAsync(3000);
+   expect(lan.connect).toHaveBeenCalledTimes(2);
+  } finally {b.session=null;(b as any).stopTimers();vi.useRealTimers();vi.unstubAllGlobals();}
+ });
 });
