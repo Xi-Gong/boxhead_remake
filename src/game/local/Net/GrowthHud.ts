@@ -12,7 +12,7 @@ export function growthLayout(width: number): { left: number; right: number; cent
     center: (width - GROWTH_HUD.centerWidth) / 2, bottom: GROWTH_HUD.top + GROWTH_HUD.height };
 }
 interface Side { clip: any; score: any; level: any; xp: any; fill: any; lastScore: number; lastLevel: number; lastXp: number; pulseUntil: number; pulse: boolean }
-interface HudView { clip: any; sides: [Side, Side]; center: any; wave: any; lastWave: number }
+interface HudView { clip: any; sides: [Side, Side]; center: any; wave: any; lastWave: number; lastWidth: number }
 const views = new WeakMap<object, HudView>();
 const outlined = (): any[] => [new flash.filters.GlowFilter(0x000000, 1, 2, 2, 10, 1)];
 
@@ -42,21 +42,26 @@ function side(parent: any, index: number): Side {
 function create(hud: any): HudView {
   const world=hud.mWorld;
   const clip=world.createEmptyMovieClip('_LanGrowthHud',world.getNextHighestDepth());
+  clip._y=GROWTH_HUD.top;
   const center=clip.createEmptyMovieClip('_Wave',clip.getNextHighestDepth()); backing(center,112,46);
   text(center,'_Caption',0,0,112,17,BODY_FONT,10,INK,true,'center','WAVE');
   const wave=text(center,'_Number',0,14,112,30,MENU_FONT,22,0xffffff,false,'center',''); wave.filters=outlined();
-  const result:HudView={clip,sides:[side(clip,0),side(clip,1)],center,wave,lastWave:-1};
+  const result:HudView={clip,sides:[side(clip,0),side(clip,1)],center,wave,lastWave:-1,lastWidth:-1};
   clip.onUnload=():void=>{views.delete(hud);};
   views.set(hud,result); return result;
 }
 function update(hud: any, state: GrowthState, wave: number): void {
-  const view=views.get(hud)??create(hud), layout=growthLayout(hud.mWorld.mScreenSize.x), time=nowMs();
-  view.clip._y=GROWTH_HUD.top;
+  const view=views.get(hud)??create(hud), width=hud.mWorld.mScreenSize.x, time=nowMs();
   view.clip._visible=!hud.mcScreenPause;
-  view.sides[0].clip._x=layout.left; view.sides[1].clip._x=layout.right; view.center._x=layout.center;
+  if(view.lastWidth!==width){
+    const layout=growthLayout(width);
+    view.sides[0].clip._x=layout.left; view.sides[1].clip._x=layout.right; view.center._x=layout.center;
+    view.lastWidth=width;
+  }
   if(view.lastWave!==wave){view.wave.text=String(wave);view.lastWave=wave;}
   for(let index=0;index<2;index++){
     const p=state.players[index]!, ui=view.sides[index]!;
+    const progressChanged=ui.lastXp!==p.xp||ui.lastLevel!==p.level;
     if(ui.lastScore!==p.score){
       const value=String(p.score).padStart(12,'0');
       ui.score.setNewTextFormat(new TextFormat(MENU_FONT,Math.min(18,18*12/value.length),0xffffff,false,false,false,undefined,undefined,'right'));
@@ -72,8 +77,10 @@ function update(hud: any, state: GrowthState, wave: number): void {
       ui.xp.textColor=pulse?0x007000:INK;ui.level.textColor=pulse?0x007000:INK;
       ui.pulse=pulse;ui.lastXp=p.xp;
     }
-    ui.fill._xscale=p.level===MAX_LEVEL?100:p.xp/XP_PER_LEVEL*100;
-    ui.fill._visible=p.level===MAX_LEVEL||p.xp>0;
+    if(progressChanged){
+      ui.fill._xscale=p.level===MAX_LEVEL?100:p.xp/XP_PER_LEVEL*100;
+      ui.fill._visible=p.level===MAX_LEVEL||p.xp>0;
+    }
   }
 }
 
@@ -139,8 +146,10 @@ export function installGrowthHud(): void {
       if(clip){
         // Keep the original ammo/weapon and life display clear of the new top strip. No extra head label.
         const top=clip.mcAmmo.getBounds(clip).yMin;
-        clip._x=Math.max(48,Math.min(this.mWorld.mScreenSize.x-48,clip._x));
-        clip._y=Math.max(growthLayout(this.mWorld.mScreenSize.x).bottom+3-top,clip._y);
+        const x=Math.max(48,Math.min(this.mWorld.mScreenSize.x-48,clip._x));
+        const y=Math.max(growthLayout(this.mWorld.mScreenSize.x).bottom+3-top,clip._y);
+        if(clip._x!==x)clip._x=x;
+        if(clip._y!==y)clip._y=y;
       }
     }
     return result;
