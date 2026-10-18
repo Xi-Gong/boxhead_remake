@@ -182,7 +182,7 @@ try {
   // Original pause QUIT -> Debrief -> EXIT clears the stored run.
   await page.keyboard.press('KeyP');
   await waitFor(() => window.__game.main().mcWorld?.mPaused, null, 10000);
-  await click(320, 52);
+  await click(230, 52);
   if (!(await waitScreen('State_Debrief', 'Screen_Debrief', 30000))) throw new Error(`QUIT did not reach the debrief (state ${await state()})`);
   const exitBtn = await centreOf('m.mcScreen._Exit');
   await click(exitBtn.x, exitBtn.y);

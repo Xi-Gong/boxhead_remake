@@ -74,7 +74,7 @@ try {
   await click(320, 388); // BACK TO MENU (v0.2.2 panel layout: 240 + 132)
   if (!(await onScreen('State_Main', 'Screen_Main'))) throw new Error('no main menu (2)');
   await page.waitForTimeout(300);
-  await click(320.15, 259.25); // CO-OP PLAY
+  await click(320, 256); // CO-OP PLAY
   if (!(await waitFor(() => window.__game?.state?.() === 'State_SelectWorld_Coop', null, 20000))) throw new Error('no select world');
   await page.waitForTimeout(400);
   await click(392, 223); // the level preview -> LoadLevel
@@ -82,7 +82,7 @@ try {
   await page.waitForTimeout(500);
   await page.keyboard.press('KeyP'); // pause
   await page.waitForTimeout(400);
-  await click(320, 52); // pause QUIT (local coop 'quit' -> Debrief)
+  await click(230, 52); // pause QUIT (local coop 'quit' -> Debrief)
   if (!(await waitFor(() => window.__game?.state?.() === 'State_Debrief', null, 30000))) throw new Error(`no debrief (${await page.evaluate(() => window.__game?.state?.())})`);
   await page.waitForTimeout(500);
   await click(320, 190); // the mUsername field (placed at 205/179, spans right)

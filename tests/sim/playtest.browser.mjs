@@ -28,7 +28,7 @@ const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const MODES = args.length ? args : ['Single', 'Coop', 'DeathMatch'];
 const TAG = PACKAGED ? 'packaged_' : ELECTRON ? 'electron_' : '';
 const PLAY_MS = Number(process.env.PLAY_MS ?? 20000);
-const MENU_Y = { Single: 226, Coop: 259, DeathMatch: 292 };
+const MENU_Y = { Single: 226, Coop: 256, DeathMatch: 286 };
 
 const browser = ELECTRON ? undefined : await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
 const report = { url: PACKAGED ? 'packaged release/win-unpacked app://game/index.html' : ELECTRON ? 'electron app://game/index.html (generated/qa-dist)' : URL, modes: {} };

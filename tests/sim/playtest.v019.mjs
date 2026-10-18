@@ -12,7 +12,7 @@ import { chromium } from 'playwright-core';
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '../../generated/reports/qa');
 mkdirSync(OUT, { recursive: true });
 const URL = process.env.GAME_URL ?? 'http://localhost:5198/';
-const MENU_Y = { Single: 226, Coop: 259, DeathMatch: 292 };
+const MENU_Y = { Single: 226, Coop: 256, DeathMatch: 286 };
 
 const report = { ok: false, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };

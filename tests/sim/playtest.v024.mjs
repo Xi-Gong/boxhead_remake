@@ -91,7 +91,9 @@ async function stageClick(page, x, y) {
     const p = window.__game?.platform?.presenter;
     return { x: b.left, y: b.top, w: b.width, h: b.height, ox: p ? (p.stageW - 640) / 2 : 0, oy: p ? (p.stageH - 480) / 2 : 0, sw: p?.stageW ?? 640, sh: p?.stageH ?? 480 };
   });
-  await page.mouse.move(r.x + ((x + r.ox) / r.sw) * r.w, r.y + ((y + r.oy) / r.sh) * r.h);
+  // centreOfExpr already returns stage coordinates. Adding the content offset a second time misses the
+  // triangular arrows in a non-4:3 native window (the older rectangular buttons happened to hide the error).
+  await page.mouse.move(r.x + (x / r.sw) * r.w, r.y + (y / r.sh) * r.h);
   await page.waitForTimeout(60);
   await page.mouse.down();
   await page.waitForTimeout(60);
