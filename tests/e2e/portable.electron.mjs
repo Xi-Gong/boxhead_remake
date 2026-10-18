@@ -1,0 +1,57 @@
+// Launch the actual NSIS portable executable. Its launcher does not forward inspector stderr, so connect to CDP.
+import assert from 'node:assert/strict';
+import { spawn, execFileSync } from 'node:child_process';
+import { createServer } from 'node:net';
+import { mkdirSync, copyFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import asar from '@electron/asar';
+import { chromium } from 'playwright-core';
+import { Game, toMainMenu } from './lib.mjs';
+
+const root=process.cwd(),out=resolve('generated/reports/v026/portable');
+mkdirSync(out,{recursive:true});
+const exe=process.env.BOXHEAD_QA_EXE??resolve('release/Boxhead 2Play Rooms-0.2.6-portable.exe');
+const expected=process.env.BOXHEAD_QA_VERSION??'0.2.6';
+const port=await new Promise((resolvePort,reject)=>{const s=createServer();s.once('error',reject);s.listen(0,'127.0.0.1',()=>{const p=s.address().port;s.close(()=>resolvePort(p));});});
+const child=spawn(exe,['--boxhead-multi','--boxhead-hidden','--window-position=-32000,0',`--remote-debugging-port=${port}`,
+ '--disable-features=CalculateNativeWinOcclusion','--disable-backgrounding-occluded-windows','--disable-background-timer-throttling'],
+ {cwd:root,windowsHide:true,stdio:'ignore',env:{...process.env,BOXHEAD_USER_DATA:join(out,'data-'+expected)}});
+let browser,page;
+try{
+ const endpoint=`http://127.0.0.1:${port}`;
+ let ready=false;
+ for(let i=0;i<120;i++){
+  try{const r=await fetch(endpoint+'/json/version');if(r.ok){ready=true;break;}}catch{}
+  await new Promise(r=>setTimeout(r,500));
+ }
+ assert.ok(ready,'portable child exposes its CDP endpoint');
+ browser=await chromium.connectOverCDP(endpoint);
+ page=browser.contexts()[0].pages()[0];
+ const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ const g=new Game(page,browser.contexts()[0],errors);
+ const executable=execFileSync('powershell.exe',['-NoProfile','-Command',
+  `Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'Boxhead 2Play Rooms.exe' -and $_.CommandLine -like '*--remote-debugging-port=${port}*' } | Select-Object -First 1 -ExpandProperty ExecutablePath`],{encoding:'utf8',windowsHide:true}).trim();
+ assert.ok(executable,'identify this portable child by its unique debug port');
+ const archive=join(dirname(executable),'resources/app.asar');
+ const version=JSON.parse(asar.extractFile(archive,'package.json').toString()).version;
+ assert.equal(version,expected,'version inside the portable extraction');
+ if(process.env.BOXHEAD_QA_CAPTURE_ASAR){const target=resolve(process.env.BOXHEAD_QA_CAPTURE_ASAR);mkdirSync(dirname(target),{recursive:true});copyFileSync(archive,target);}
+ assert.ok(await g.waitExpr('g.ready',120000));await toMainMenu(g);
+ if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
+  await g.clickClip('m.mcScreen.mcSinglePlay');assert.ok(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
+  await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');
+  assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
+  await page.keyboard.press('p');assert.ok(await g.waitExpr('m.mcWorld.mPaused'));
+  await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert.ok(await g.waitScreen('State_Main','Screen_Main'));
+  await g.clickClip('m.mcScreen.mcContinue');assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
+  const audio=await g.expr('g.audio()');assert.equal(audio.decoded,31);assert.equal(audio.state,'running');
+  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
+  await g.shot(join(out,'final-portable.png'),false);
+ }
+ writeFileSync(join(out,'launch-'+version+'.json'),JSON.stringify({version,exe,executable,archive,ok:true},null,2));
+ console.log('PASS: actual portable',version,process.env.BOXHEAD_QA_CAPTURE_ASAR?'baseline extraction':'gameplay, save/continue and audio');
+}finally{
+ if(page)await page.evaluate(()=>window.boxheadDesktop.quit()).catch(()=>{});
+ await browser?.close().catch(()=>{});
+ if(child.exitCode===null)child.kill();
+}
