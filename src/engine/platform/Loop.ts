@@ -96,6 +96,8 @@ export interface LoopOptions {
   player: LoopPlayer;
   /** Called once per rAF after the EFs, if at least one EF ran. */
   render?: () => void;
+  /** Optional render-only update on every display frame; true requests presentation without an EF. */
+  beforeRender?: () => boolean;
   /** Called after each EF (debug overlays, profilers). */
   afterEnterFrame?: (scheduledMs: number) => void;
   /**
@@ -142,6 +144,7 @@ export class Loop {
 
   /** Replace the per-rAF pre-tick hook (gamepad polling installs itself here after startPlatform). */
   setBeforeTick(fn: ((blocked: boolean) => void) | undefined): void { this.opts.beforeTick = fn; }
+  setBeforeRender(fn: (() => boolean) | undefined): void { this.opts.beforeRender = fn; }
 
   private readonly tick = (ts: number): void => {
     if (!this.running) return;
@@ -151,7 +154,6 @@ export class Loop {
     if (this.paused) return;
     const now = ts - clock.origin;
     const due = this.scheduler.plan(now);
-    if (due.length === 0) return;
     try {
       for (const t of due) {
         beginEnterFrame(t);
@@ -159,7 +161,8 @@ export class Loop {
         this.efCount++;
         this.opts.afterEnterFrame?.(t);
       }
-      this.opts.render?.();
+      const changed = this.opts.beforeRender?.() ?? false;
+      if (due.length || changed) this.opts.render?.();
     } catch (e) {
       (this.opts.onError ?? ((err: unknown) => console.error('[loop]', err)))(e);
     }

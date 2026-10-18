@@ -38,6 +38,7 @@ export function simulationDigest(s: WorldSnap): Record<string, string> {
     things: hash(things), cells: hash(s.cells), collection: hash(s.collection),
     navigation: hash(s.nav), upgrades: hash(s.upgrades), slots: hash(s.slots),
     random: hash([s.rng, s.allocID]),
-    outcome: hash([s.world.mCompleteState, s.hud.nTotalScore, s.hud.mPlayer1_Deaths, s.hud.mPlayer2_Deaths, s.hud.mScores]),
+    // mScores contains floating score sprites, moved/removed by CHud.Draw, not gameplay score.
+    outcome: hash([s.world.mCompleteState, s.hud.nTotalScore, s.hud.mPlayer1_Deaths, s.hud.mPlayer2_Deaths]),
   };
 }

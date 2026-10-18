@@ -1,5 +1,23 @@
-import { describe, expect, it } from 'vitest';
-import { EF_MS, FrameScheduler } from '../../../src/engine/platform/Loop.ts';
+import { describe, expect, it, vi } from 'vitest';
+import { EF_MS, FrameScheduler, Loop } from '../../../src/engine/platform/Loop.ts';
+import { clock } from '../../../src/engine/flash/clock.ts';
+
+it.each([60, 120, 144])('presents every %i Hz display frame while retaining 50 Hz enterFrame', hz => {
+  let callback: FrameRequestCallback = () => {};
+  vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => { callback = fn; return 1; });
+  vi.stubGlobal('cancelAnimationFrame', () => {});
+  const enterFrame = vi.fn(), render = vi.fn();
+  const loop = new Loop({ player: { enterFrame }, render, beforeRender: () => true });
+  try {
+    loop.start();
+    for (let i = 0; i < hz; i++) callback(clock.origin + i * 1000 / hz);
+    expect(render).toHaveBeenCalledTimes(hz);
+    expect(enterFrame).toHaveBeenCalledTimes(50);
+    loop.setPaused(true);
+    callback(clock.origin + 1100);
+    expect(render).toHaveBeenCalledTimes(hz);
+  } finally { loop.stop(); vi.unstubAllGlobals(); }
+});
 
 /** Drive a scheduler with rAF timestamps; returns all EF times and the per-rAF EF counts. */
 function run(stamps: number[]): { efs: number[]; perRaf: number[]; s: FrameScheduler } {

@@ -168,6 +168,7 @@ export function applyCorrections(session: any, world: any): number {
   // The head tick's beginTick must see the virtual clock exactly as the original timeline would have:
   // head ticks executed => virtualTimeMs = head * tickMs (afterTick-equivalent advance).
   session.virtualTimeMs = head * (1000 / CMain.mFPS);
+  if (session.rollbackV2) session.presentation.corrected(session, world);
   return replayed;
 }
 

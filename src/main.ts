@@ -22,6 +22,7 @@ import { installLocalSymbols } from './game/local/localSymbols.ts';
 import { installGamepad } from './game/local/Gamepad.ts';
 import { installInputBadge } from './game/local/InputBadge.ts';
 import { lanBridge } from './game/local/Net/bridge.ts';
+import { netSession } from './game/local/Net/NetSession.ts';
 import { maxUnlockedWave, recordWaveReached } from './game/local/WaveUnlock.ts';
 import { initDebriefDom } from './game/local/DebriefName.ts';
 import { setViewportPresenter } from './game/local/Viewport.ts';
@@ -213,6 +214,15 @@ async function boot(): Promise<void> {
     container: stage,
   });
   dbg.platform.setBeforeTick(gamepad.poll);
+  dbg.platform.loop.setBeforeRender(() => {
+    const session = netSession(), main = dbg.main?.();
+    if (!session?.rollbackV2) return false;
+    session.presentation.external = true;
+    const world = main?.mcWorld;
+    if (session.phase !== 'playing' || session.netPaused || main?.fState !== main?.State_RunWorld || !world || !session.holdsWorld(world)) return false;
+    world.Draw();
+    return true;
+  });
   // Input recognition badge (v0.1.4): bottom-left KEYBOARD / PAD chips with activity + assignment.
   installInputBadge(gamepad);
   dbg.ready = true;

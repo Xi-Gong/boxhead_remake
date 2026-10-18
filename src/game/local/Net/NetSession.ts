@@ -42,6 +42,7 @@ import { captureWorldSnap, makeSnapCtx } from './WorldSnap.ts';
 import { simulationDigest } from './StateDigest.ts';
 import { recordWaveReached } from '../WaveUnlock.ts';
 import { EventJournal } from './Events.ts';
+import { NetPresentation } from './Presentation.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -151,6 +152,7 @@ export class NetSession {
   rollback = false;
   confirmedThrough = -1;
   events = new EventJournal();
+  presentation = new NetPresentation();
   soundOwner = -1;
   presentingSound = false;
   get rollbackV2(): boolean { return this.startOpts?.netcode === 'rollback-v2'; }
@@ -381,6 +383,8 @@ export class NetSession {
     this.world = world;
     this.phase = 'playing';
     this.shadow = newShadow(); // v0.2.1 L3: every world starts unpredicted
+    this.presentation = new NetPresentation();
+    this.presentation.capture(world);
     // Lockstep frames are indexed RELATIVE to this world's ready tick: the number of warm-up Process calls during
     // the build differs per machine (1-3 in the real app), so absolute CWorld.mTick would never line up between the
     // peers. mTick itself is unread by game logic - only the relative index matters.
@@ -572,7 +576,7 @@ export class NetSession {
     // future input frames - rollback fixes the cadence (stalls/jitter), the shadow hides the D-tick input
     // delay. Frozen during stalls by construction (advanceShadow only runs on executed ticks).
     if (!this.rollbackV2) advanceShadow(this, world);
-    else this.commitConfirmed(world);
+    else { this.commitConfirmed(world); this.presentation.capture(world); }
   }
 
   /** Shared live/replay step. Only the confirmed frontier may commit external side effects. */

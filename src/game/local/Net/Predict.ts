@@ -51,7 +51,7 @@ export function playersOf(world: any): any[] {
  * read-only (QCollide_Map only gathers cell refs); mCollideFlag is the helper's own scratch, written by the real
  * PlayerCollide every tick as well.
  */
-function predictCollide(collide: any, x: number, y: number, dX: number, dY: number, radius: number): { x: number; y: number } {
+export function predictCollide(collide: any, x: number, y: number, dX: number, dY: number, radius: number): { x: number; y: number } {
   if (collide.mCells[y & 65535]?.[x & 65535]?.mCollide & World.Map.CMap_Cell.mCollide_StaticImpassable) {
     return { x, y };
   }

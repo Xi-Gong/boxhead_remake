@@ -42,7 +42,7 @@ export function installNetScope(): void {
       session.setPaused(!session.netPaused);
     }
     if (session.netPaused && session.phase !== 'desync') {
-      if (flagDraw) w.Draw();
+      if (flagDraw && !session.presentation.external) w.Draw();
       return;
     }
     // v0.2.1: a checksum desync used to freeze both peers forever - the overlay promised a lobby return that no
@@ -70,7 +70,7 @@ export function installNetScope(): void {
           try { stateRunWorld.call(this, flagDraw); }
           finally { if (ownProcess) Object.defineProperty(w, 'Process', ownProcess); else delete w.Process; }
           session.markEnded();
-        } else if (flagDraw) w.Draw();
+        } else if (flagDraw && !session.presentation.external) w.Draw();
         return;
       }
     }
@@ -88,13 +88,13 @@ export function installNetScope(): void {
           m.mFrameCap = 2; // bounded catch-up burst while the schedule owes ticks
         }
       }
-      if (flagDraw) w.Draw();
+      if (flagDraw && !session.presentation.external) w.Draw();
       return;
     }
     if (session.rollbackV2) {
       session.executeWorldStep(w, session.tickIndex(w));
       session.afterTick(w);
-      if (flagDraw) w.Draw();
+      if (flagDraw && !session.presentation.external) w.Draw();
       return;
     }
     if (mode === 'confirmed' || !session.rollback) {
@@ -196,6 +196,27 @@ export function installNetScope(): void {
 
   // ---- InitFinished: hand the built world to the session (after consumePending applied a resume).
   const worldProto = (World as any).CWorld.prototype;
+  const drawWorld = worldProto.Draw;
+  worldProto.Draw = function (this: any): void {
+    const s = netSession();
+    if (s?.rollbackV2 && s.holdsWorld(this)) s.presentation.draw(s, this, () => drawWorld.call(this));
+    else drawWorld.call(this);
+  };
+  const trackWorld = worldProto.Process_Tracking;
+  worldProto.Process_Tracking = function (this: any, ...args: any[]): any {
+    const s = netSession();
+    return s?.rollbackV2 ? s.presentation.track(this, () => trackWorld.apply(this, args)) : trackWorld.apply(this, args);
+  };
+  const shakeWorld = worldProto.Process_Shake;
+  worldProto.Process_Shake = function (this: any): void {
+    const s = netSession();
+    if (!s?.rollbackV2 || s.presentation.advancing) shakeWorld.call(this);
+  };
+  const brightnessWorld = worldProto.Process_Brightness;
+  worldProto.Process_Brightness = function (this: any): any {
+    const s = netSession();
+    return s?.rollbackV2 ? s.presentation.brightness(this, () => brightnessWorld.call(this)) : brightnessWorld.call(this);
+  };
   const processWorld = worldProto.Process;
   worldProto.Process = function (this: any): any {
     const session = netSession();
@@ -259,7 +280,7 @@ export function installNetScope(): void {
   const scratchDelta = new (Thing.Math as any).CThing_Position(1, 0, 0);
   playerProto.Draw = function (this: any, ...args: any[]): any {
     const session = netSession();
-    const o = session ? shadowDrawOverride(session, this) : null;
+    const o = session && !session.rollbackV2 ? shadowDrawOverride(session, this) : null;
     if (!o) return playerDraw.apply(this, args as any[]);
     const realPos = this.mPosition;
     const realAngle = this.mAngle;
