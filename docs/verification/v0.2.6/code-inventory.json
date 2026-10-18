@@ -1,0 +1,6619 @@
+{
+  "base": "v0.2.5",
+  "modules": 413,
+  "portedModules": 117,
+  "changedPorts": [],
+  "inventory": [
+    {
+      "path": "electron/aspect.ts",
+      "lines": 32,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "electron/lan.ts",
+      "lines": 411,
+      "port": false,
+      "imports": [
+        "node:dgram",
+        "node:net",
+        "node:crypto",
+        "node:os",
+        "../src/game/local/Net/protocol.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setInterval",
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "electron/lanIpc.ts",
+      "lines": 48,
+      "port": false,
+      "imports": [
+        "electron",
+        "./lan.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "electron/main.ts",
+      "lines": 262,
+      "port": false,
+      "imports": [
+        "electron",
+        "node:fs",
+        "node:fs/promises",
+        "node:os",
+        "node:path",
+        "./aspect.ts",
+        "./lanIpc.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "electron/preload.ts",
+      "lines": 38,
+      "port": false,
+      "imports": [
+        "electron",
+        "../src/engine/platform/desktop.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/dev/fxSceneList.ts",
+      "lines": 288,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/dev/fxScenes.ts",
+      "lines": 269,
+      "port": false,
+      "imports": [
+        "../engine/runtime.ts",
+        "../engine/swf/Player.ts",
+        "../engine/platform/AudioEngine.ts",
+        "../engine/flash/rng.ts",
+        "../game/packages.ts",
+        "./sceneList.ts",
+        "./fxSceneList.ts",
+        "./scenes.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/dev/gallery.ts",
+      "lines": 359,
+      "port": false,
+      "imports": [
+        "../shared/assetSchema.ts",
+        "../engine/swf/Library.ts",
+        "../engine/swf/Player.ts",
+        "../engine/swf/DisplayObject.ts",
+        "../engine/swf/render/renderer.ts",
+        "../engine/swf/state.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/dev/platform-smoke.ts",
+      "lines": 197,
+      "port": false,
+      "imports": [
+        "../shared/assetSchema.ts",
+        "../engine/flash/clock.ts",
+        "../engine/flash/input.ts",
+        "../engine/flash/Sound.ts",
+        "../engine/flash/stubs.ts",
+        "../engine/platform/index.ts",
+        "../engine/platform/index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "setInterval"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/dev/sceneList.ts",
+      "lines": 255,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/dev/scenes.ts",
+      "lines": 166,
+      "port": false,
+      "imports": [
+        "../engine/runtime.ts",
+        "../engine/swf/Player.ts",
+        "../engine/platform/AudioEngine.ts",
+        "../engine/flash/rng.ts",
+        "../engine/flash/input.ts",
+        "../engine/flash/strokeSnap.ts",
+        "../engine/swf/render/renderer.ts",
+        "../game/packages.ts",
+        "./sceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/BitmapData.ts",
+      "lines": 1338,
+      "port": false,
+      "imports": [
+        "./geom.ts",
+        "./filters.ts",
+        "./filters/apply.ts",
+        "./filters/gl.ts",
+        "./color.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/Graphics.ts",
+      "lines": 665,
+      "port": false,
+      "imports": [
+        "./geom.ts",
+        "./BitmapData.ts",
+        "./color.ts",
+        "./strokeSnap.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/SharedObject.ts",
+      "lines": 95,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/Sound.ts",
+      "lines": 104,
+      "port": false,
+      "imports": [
+        "../platform/AudioEngine.ts",
+        "../platform/AudioEngine.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/TextFormat.ts",
+      "lines": 26,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/engine/flash/as2.ts",
+      "lines": 285,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/clock.ts",
+      "lines": 62,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/engine/flash/color.ts",
+      "lines": 199,
+      "port": false,
+      "imports": [
+        "./geom.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/filters.ts",
+      "lines": 119,
+      "port": false,
+      "imports": [
+        "../../shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/filters/apply.ts",
+      "lines": 593,
+      "port": false,
+      "imports": [
+        "../filters.ts",
+        "../color.ts",
+        "../color.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/filters/gl.ts",
+      "lines": 809,
+      "port": false,
+      "imports": [
+        "../filters.ts",
+        "../color.ts",
+        "./apply.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/geom.ts",
+      "lines": 306,
+      "port": false,
+      "imports": [
+        "./as2.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/engine/flash/input.ts",
+      "lines": 101,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/rng.ts",
+      "lines": 59,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/engine/flash/strokeSnap.ts",
+      "lines": 76,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/flash/stubs.ts",
+      "lines": 52,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/platform/AudioEngine.ts",
+      "lines": 796,
+      "port": false,
+      "imports": [
+        "../../shared/assetSchema.ts",
+        "../flash/clock.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setInterval",
+        "addEventListener",
+        "setTimeout",
+        "removeEventListener"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/platform/ContextMenu.ts",
+      "lines": 184,
+      "port": false,
+      "imports": [
+        "../flash/input.ts",
+        "../flash/stubs.ts",
+        "../swf/Player.ts",
+        "./SaveStore.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "removeEventListener",
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/platform/Gamepad.ts",
+      "lines": 164,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/platform/Keyboard.ts",
+      "lines": 137,
+      "port": false,
+      "imports": [
+        "../flash/input.ts",
+        "./desktop.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "removeEventListener"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/platform/Loop.ts",
+      "lines": 168,
+      "port": false,
+      "imports": [
+        "../flash/clock.ts",
+        "./AudioEngine.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/platform/Pointer.ts",
+      "lines": 127,
+      "port": false,
+      "imports": [
+        "../flash/input.ts",
+        "./Presenter.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "removeEventListener"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/platform/Presenter.ts",
+      "lines": 227,
+      "port": false,
+      "imports": [
+        "./desktop.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "removeEventListener",
+        "dispose"
+      ],
+      "dynamic": false
+    },
+    {
+      "path": "src/engine/platform/SaveStore.ts",
+      "lines": 123,
+      "port": false,
+      "imports": [
+        "../flash/SharedObject.ts",
+        "../flash/SharedObject.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/platform/desktop.ts",
+      "lines": 72,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/engine/platform/index.ts",
+      "lines": 107,
+      "port": false,
+      "imports": [
+        "../swf/Player.ts",
+        "./ContextMenu.ts",
+        "../flash/stubs.ts",
+        "./Keyboard.ts",
+        "./Loop.ts",
+        "./Pointer.ts",
+        "./Presenter.ts",
+        "./AudioEngine.ts",
+        "./ContextMenu.ts",
+        "./desktop.ts",
+        "./desktop.ts",
+        "./Keyboard.ts",
+        "./Loop.ts",
+        "./Pointer.ts",
+        "./Presenter.ts",
+        "./SaveStore.ts",
+        "./SaveStore.ts",
+        "./Gamepad.ts",
+        "./Gamepad.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose"
+      ],
+      "dynamic": false
+    },
+    {
+      "path": "src/engine/runtime.ts",
+      "lines": 46,
+      "port": false,
+      "imports": [
+        "./flash/geom.ts",
+        "./flash/BitmapData.ts",
+        "./flash/filters.ts",
+        "./flash/geom.ts",
+        "./flash/BitmapData.ts",
+        "./flash/filters.ts",
+        "./swf/DisplayObject.ts",
+        "./swf/Player.ts",
+        "./flash/as2.ts",
+        "./flash/clock.ts",
+        "./flash/rng.ts",
+        "./flash/input.ts",
+        "./flash/Sound.ts",
+        "./flash/SharedObject.ts",
+        "./flash/TextFormat.ts",
+        "./flash/stubs.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/DisplayObject.ts",
+      "lines": 1655,
+      "port": false,
+      "imports": [
+        "../flash/geom.ts",
+        "../flash/filters.ts",
+        "../flash/BitmapData.ts",
+        "../flash/Graphics.ts",
+        "../flash/TextFormat.ts",
+        "../flash/as2.ts",
+        "../../shared/assetSchema.ts",
+        "./state.ts",
+        "./registry.ts",
+        "./timeline.ts",
+        "./mat.ts",
+        "./paths.ts",
+        "./text.ts",
+        "./render/renderer.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "onUnload",
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/Library.ts",
+      "lines": 260,
+      "port": false,
+      "imports": [
+        "../../shared/assetSchema.ts",
+        "./registry.ts",
+        "./paths.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/Player.ts",
+      "lines": 386,
+      "port": false,
+      "imports": [
+        "../../shared/assetSchema.ts",
+        "../flash/input.ts",
+        "./DisplayObject.ts",
+        "./Library.ts",
+        "./state.ts",
+        "./registry.ts",
+        "./render/renderer.ts",
+        "./stageLayout.ts",
+        "./Library.ts",
+        "./registry.ts",
+        "./registry.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/flashType.ts",
+      "lines": 357,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/mat.ts",
+      "lines": 59,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/paths.ts",
+      "lines": 170,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/registry.ts",
+      "lines": 64,
+      "port": false,
+      "imports": [
+        "../../shared/assetSchema.ts",
+        "./DisplayObject.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/render/renderer.ts",
+      "lines": 1149,
+      "port": false,
+      "imports": [
+        "../../flash/geom.ts",
+        "../../flash/filters/apply.ts",
+        "../../flash/strokeSnap.ts",
+        "../../flash/filters/gl.ts",
+        "../../flash/color.ts",
+        "../../../shared/assetSchema.ts",
+        "../DisplayObject.ts",
+        "../Library.ts",
+        "../state.ts",
+        "../mat.ts",
+        "../paths.ts",
+        "../text.ts",
+        "../flashType.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/stageLayout.ts",
+      "lines": 66,
+      "port": false,
+      "imports": [
+        "./DisplayObject.ts",
+        "./state.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/engine/swf/state.ts",
+      "lines": 202,
+      "port": false,
+      "imports": [
+        "./Library.ts",
+        "./DisplayObject.ts",
+        "./registry.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/text.ts",
+      "lines": 489,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/engine/swf/timeline.ts",
+      "lines": 127,
+      "port": false,
+      "imports": [
+        "../../shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/CInput.ts",
+      "lines": 230,
+      "port": true,
+      "imports": [
+        "../engine/runtime.ts",
+        "./packages.ts"
+      ],
+      "registrations": [
+        "CInput"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/CMain.ts",
+      "lines": 248,
+      "port": true,
+      "imports": [
+        "../engine/runtime.ts",
+        "./packages.ts"
+      ],
+      "registrations": [
+        "CMain"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/CSaveData.ts",
+      "lines": 473,
+      "port": true,
+      "imports": [
+        "../engine/runtime.ts",
+        "./packages.ts"
+      ],
+      "registrations": [
+        "CSaveData"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/CSound.ts",
+      "lines": 362,
+      "port": true,
+      "imports": [
+        "../engine/runtime.ts",
+        "./packages.ts"
+      ],
+      "registrations": [
+        "CSound"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/CDrawPrimitive.ts",
+      "lines": 80,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.CDrawPrimitive"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/CDrawPrimitive_Line.ts",
+      "lines": 24,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CDrawPrimitive.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.CDrawPrimitive_Line"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/CDrawPrimitive_Square.ts",
+      "lines": 34,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CDrawPrimitive.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.CDrawPrimitive_Square"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip.ts",
+      "lines": 42,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "../CDrawPrimitive.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.MovieClip.CDrawPrimitive_MovieClip"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Animation.ts",
+      "lines": 102,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CDrawPrimitive_MovieClip.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.MovieClip.CDrawPrimitive_MovieClip_Animation"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Directional.ts",
+      "lines": 127,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CDrawPrimitive_MovieClip.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.MovieClip.CDrawPrimitive_MovieClip_Directional"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_OmniDirectional.ts",
+      "lines": 72,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CDrawPrimitive_MovieClip.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.MovieClip.CDrawPrimitive_MovieClip_OmniDirectional"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Static.ts",
+      "lines": 43,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CDrawPrimitive_MovieClip.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.MovieClip.CDrawPrimitive_MovieClip_Static"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI.ts",
+      "lines": 19,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "../CDrawPrimitive.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.XSI.CDrawPrimitive_XSI"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI_Animation.ts",
+      "lines": 229,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CDrawPrimitive_XSI.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.XSI.CDrawPrimitive_XSI_Animation"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI_Collection.ts",
+      "lines": 42,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.XSI.CDrawPrimitive_XSI_Collection"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI_DI.ts",
+      "lines": 457,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CDrawPrimitive_XSI.ts",
+        "./xsiData.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.XSI.CDrawPrimitive_XSI_DI"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI_StyleSheet.ts",
+      "lines": 190,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.XSI.CDrawPrimitive_XSI_StyleSheet"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/DrawPrimitive/XSI/xsiData.ts",
+      "lines": 86,
+      "port": false,
+      "imports": [
+        "../../../shared/assetSchema.ts",
+        "../../../engine/runtime.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/External/CHighscore_Submit.ts",
+      "lines": 254,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "External.CHighscore_Submit"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/External/CTracker.ts",
+      "lines": 153,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "External.CTracker"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen.ts",
+      "lines": 59,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_Collection.ts",
+      "lines": 47,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_Collection"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_Debrief.ts",
+      "lines": 103,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CScreen.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_Debrief"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_Debrief_Winner.ts",
+      "lines": 95,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CScreen.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_Debrief_Winner"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_Init.ts",
+      "lines": 32,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CScreen.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_Init"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_Intro.ts",
+      "lines": 81,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CScreen.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_Intro"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_LoadingWorld.ts",
+      "lines": 37,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CScreen.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_LoadingWorld"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_Main.ts",
+      "lines": 69,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CScreen.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_Main"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_SelectWorld.ts",
+      "lines": 412,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./CScreen.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_SelectWorld"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Screen/CScreen_Transition.ts",
+      "lines": 90,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "Screen.CScreen_Transition"
+      ],
+      "lifecycle": [
+        "Dispose",
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/System/CContextMenu.ts",
+      "lines": 63,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "System.CContextMenu"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Affect/CThing_Affect.ts",
+      "lines": 50,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "Thing.Affect.CThing_Affect"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Affect/CThing_Affect_Bullet.ts",
+      "lines": 24,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Affect.ts"
+      ],
+      "registrations": [
+        "Thing.Affect.CThing_Affect_Bullet"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Affect/CThing_Affect_DevilAttack.ts",
+      "lines": 24,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Affect.ts"
+      ],
+      "registrations": [
+        "Thing.Affect.CThing_Affect_DevilAttack"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Affect/CThing_Affect_Explosion.ts",
+      "lines": 31,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Affect.ts"
+      ],
+      "registrations": [
+        "Thing.Affect.CThing_Affect_Explosion"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Affect/CThing_Affect_FireBall.ts",
+      "lines": 24,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Affect.ts"
+      ],
+      "registrations": [
+        "Thing.Affect.CThing_Affect_FireBall"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Affect/CThing_Affect_ZombieAttack.ts",
+      "lines": 21,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Affect.ts"
+      ],
+      "registrations": [
+        "Thing.Affect.CThing_Affect_ZombieAttack"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/CThing.ts",
+      "lines": 133,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "Thing.CThing"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/CThing_Collection.ts",
+      "lines": 173,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "Thing.CThing_Collection"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Creature/CThing_Creature.ts",
+      "lines": 468,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "../CThing.ts"
+      ],
+      "registrations": [
+        "Thing.Creature.CThing_Creature"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Creature/CThing_Creature_Devil.ts",
+      "lines": 209,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Creature.ts"
+      ],
+      "registrations": [
+        "Thing.Creature.CThing_Creature_Devil"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Creature/CThing_Creature_Player.ts",
+      "lines": 397,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Creature.ts"
+      ],
+      "registrations": [
+        "Thing.Creature.CThing_Creature_Player"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Creature/CThing_Creature_Zombie.ts",
+      "lines": 126,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Creature.ts"
+      ],
+      "registrations": [
+        "Thing.Creature.CThing_Creature_Zombie"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect.ts",
+      "lines": 29,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "../CThing.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_BloodPool.ts",
+      "lines": 29,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_BloodPool"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_BloodSplat.ts",
+      "lines": 31,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_BloodSplat"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_BulletHit.ts",
+      "lines": 48,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_BulletHit"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_Explosion.ts",
+      "lines": 99,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_Explosion"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_FireBall_Held.ts",
+      "lines": 47,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_FireBall_Held"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_MuzzleFlash.ts",
+      "lines": 36,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_MuzzleFlash"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_RocketSmoke.ts",
+      "lines": 50,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_RocketSmoke"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_SmartBomb.ts",
+      "lines": 40,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_SmartBomb"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Effect/CThing_Effect_SmokeCloud.ts",
+      "lines": 48,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Effect.ts"
+      ],
+      "registrations": [
+        "Thing.Effect.CThing_Effect_SmokeCloud"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Math/CThing_Angle.ts",
+      "lines": 215,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "Thing.Math.CThing_Angle"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Math/CThing_Navigation.ts",
+      "lines": 51,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "Thing.Math.CThing_Navigation"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Math/CThing_Position.ts",
+      "lines": 315,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "Thing.Math.CThing_Position"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Object/CThing_Object.ts",
+      "lines": 39,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "../CThing.ts"
+      ],
+      "registrations": [
+        "Thing.Object.CThing_Object"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Object/CThing_Object_Barrel.ts",
+      "lines": 104,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Object.ts"
+      ],
+      "registrations": [
+        "Thing.Object.CThing_Object_Barrel"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Object/CThing_Object_ChargePack.ts",
+      "lines": 70,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Object.ts"
+      ],
+      "registrations": [
+        "Thing.Object.CThing_Object_ChargePack"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Object/CThing_Object_LaserNode.ts",
+      "lines": 29,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Object.ts"
+      ],
+      "registrations": [
+        "Thing.Object.CThing_Object_LaserNode"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Object/CThing_Object_Mine.ts",
+      "lines": 80,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Object.ts"
+      ],
+      "registrations": [
+        "Thing.Object.CThing_Object_Mine"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Object/CThing_Object_Pickup.ts",
+      "lines": 106,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Object.ts"
+      ],
+      "registrations": [
+        "Thing.Object.CThing_Object_Pickup"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Object/CThing_Object_Wall.ts",
+      "lines": 121,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Object.ts"
+      ],
+      "registrations": [
+        "Thing.Object.CThing_Object_Wall"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Object/CThing_Object_WallMovable.ts",
+      "lines": 29,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Object.ts"
+      ],
+      "registrations": [
+        "Thing.Object.CThing_Object_WallMovable"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot.ts",
+      "lines": 33,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "../CThing.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_Bullet.ts",
+      "lines": 79,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_Bullet"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_ClusterShell.ts",
+      "lines": 65,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_ClusterShell"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_DLaser.ts",
+      "lines": 66,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_DLaser"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_Devastator.ts",
+      "lines": 80,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_Devastator"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_FireBall.ts",
+      "lines": 60,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_FireBall"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_Grenade.ts",
+      "lines": 77,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_Grenade"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_HomingMissile.ts",
+      "lines": 69,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_HomingMissile"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_Laser.ts",
+      "lines": 58,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_Laser"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_Railgun.ts",
+      "lines": 66,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_Railgun"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Shot/CThing_Shot_Rocket.ts",
+      "lines": 69,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Shot.ts"
+      ],
+      "registrations": [
+        "Thing.Shot.CThing_Shot_Rocket"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon.ts",
+      "lines": 122,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "../CThing.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_Barrel.ts",
+      "lines": 44,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_Barrel"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_ChargePack.ts",
+      "lines": 71,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_ChargePack"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_Devastator.ts",
+      "lines": 41,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_Devastator"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_FakeWall.ts",
+      "lines": 44,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_FakeWall"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_Grenade.ts",
+      "lines": 49,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_Grenade"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_Mine.ts",
+      "lines": 44,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_Mine"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_Pistol.ts",
+      "lines": 50,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_Pistol"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_Railgun.ts",
+      "lines": 49,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_Railgun"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_Rocket.ts",
+      "lines": 46,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_Rocket"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_Shotgun.ts",
+      "lines": 65,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_Shotgun"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_SmartBomb.ts",
+      "lines": 41,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_SmartBomb"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/Thing/Weapon/CThing_Weapon_UZI.ts",
+      "lines": 49,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CThing_Weapon.ts"
+      ],
+      "registrations": [
+        "Thing.Weapon.CThing_Weapon_UZI"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/CHud.ts",
+      "lines": 305,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "World.CHud"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/CUpgrades.ts",
+      "lines": 577,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "World.CUpgrades"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/CWorld.ts",
+      "lines": 644,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "World.CWorld"
+      ],
+      "lifecycle": [
+        "Dispose",
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init.ts",
+      "lines": 73,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_Barrel.ts",
+      "lines": 15,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_Barrel"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_CollisionSolid.ts",
+      "lines": 15,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_CollisionSolid"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_Devil.ts",
+      "lines": 15,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_Devil"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_Pickup.ts",
+      "lines": 15,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_Pickup"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_Piece.ts",
+      "lines": 27,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_Piece"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_Player1.ts",
+      "lines": 15,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_Player1"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_Player2.ts",
+      "lines": 15,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_Player2"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_Wall.ts",
+      "lines": 15,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_Wall"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Init/CWorld_Init_Zombie.ts",
+      "lines": 15,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts",
+        "./CWorld_Init.ts"
+      ],
+      "registrations": [
+        "World.Init.CWorld_Init_Zombie"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Map/CMap.ts",
+      "lines": 204,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Map.CMap"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Map/CMap_Affect.ts",
+      "lines": 97,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Map.CMap_Affect"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Map/CMap_Cell.ts",
+      "lines": 662,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Map.CMap_Cell"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Map/CMap_Collide.ts",
+      "lines": 268,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Map.CMap_Collide"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Map/CMap_Decal.ts",
+      "lines": 61,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Map.CMap_Decal"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Map/CMap_Mapwho.ts",
+      "lines": 57,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Map.CMap_Mapwho"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Map/CMap_Math.ts",
+      "lines": 25,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Map.CMap_Math"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/World/Map/CMap_Navigation.ts",
+      "lines": 25,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "World.Map.CMap_Navigation"
+      ],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/allClasses.ts",
+      "lines": 117,
+      "port": false,
+      "imports": [
+        "./CInput.ts",
+        "./CMain.ts",
+        "./CSaveData.ts",
+        "./CSound.ts",
+        "./DrawPrimitive/CDrawPrimitive.ts",
+        "./DrawPrimitive/CDrawPrimitive_Line.ts",
+        "./DrawPrimitive/CDrawPrimitive_Square.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Animation.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Directional.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_OmniDirectional.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Static.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI_Animation.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI_Collection.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI_DI.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI_StyleSheet.ts",
+        "./External/CHighscore_Submit.ts",
+        "./External/CTracker.ts",
+        "./Screen/CScreen.ts",
+        "./Screen/CScreen_Collection.ts",
+        "./Screen/CScreen_Debrief.ts",
+        "./Screen/CScreen_Debrief_Winner.ts",
+        "./Screen/CScreen_Init.ts",
+        "./Screen/CScreen_Intro.ts",
+        "./Screen/CScreen_LoadingWorld.ts",
+        "./Screen/CScreen_Main.ts",
+        "./Screen/CScreen_SelectWorld.ts",
+        "./Screen/CScreen_Transition.ts",
+        "./System/CContextMenu.ts",
+        "./Thing/Affect/CThing_Affect.ts",
+        "./Thing/Affect/CThing_Affect_Bullet.ts",
+        "./Thing/Affect/CThing_Affect_DevilAttack.ts",
+        "./Thing/Affect/CThing_Affect_Explosion.ts",
+        "./Thing/Affect/CThing_Affect_FireBall.ts",
+        "./Thing/Affect/CThing_Affect_ZombieAttack.ts",
+        "./Thing/CThing.ts",
+        "./Thing/CThing_Collection.ts",
+        "./Thing/Creature/CThing_Creature.ts",
+        "./Thing/Creature/CThing_Creature_Devil.ts",
+        "./Thing/Creature/CThing_Creature_Player.ts",
+        "./Thing/Creature/CThing_Creature_Zombie.ts",
+        "./Thing/Effect/CThing_Effect.ts",
+        "./Thing/Effect/CThing_Effect_BloodPool.ts",
+        "./Thing/Effect/CThing_Effect_BloodSplat.ts",
+        "./Thing/Effect/CThing_Effect_BulletHit.ts",
+        "./Thing/Effect/CThing_Effect_Explosion.ts",
+        "./Thing/Effect/CThing_Effect_FireBall_Held.ts",
+        "./Thing/Effect/CThing_Effect_MuzzleFlash.ts",
+        "./Thing/Effect/CThing_Effect_RocketSmoke.ts",
+        "./Thing/Effect/CThing_Effect_SmartBomb.ts",
+        "./Thing/Effect/CThing_Effect_SmokeCloud.ts",
+        "./Thing/Math/CThing_Angle.ts",
+        "./Thing/Math/CThing_Navigation.ts",
+        "./Thing/Math/CThing_Position.ts",
+        "./Thing/Object/CThing_Object.ts",
+        "./Thing/Object/CThing_Object_Barrel.ts",
+        "./Thing/Object/CThing_Object_ChargePack.ts",
+        "./Thing/Object/CThing_Object_LaserNode.ts",
+        "./Thing/Object/CThing_Object_Mine.ts",
+        "./Thing/Object/CThing_Object_Pickup.ts",
+        "./Thing/Object/CThing_Object_Wall.ts",
+        "./Thing/Object/CThing_Object_WallMovable.ts",
+        "./Thing/Shot/CThing_Shot.ts",
+        "./Thing/Shot/CThing_Shot_Bullet.ts",
+        "./Thing/Shot/CThing_Shot_ClusterShell.ts",
+        "./Thing/Shot/CThing_Shot_DLaser.ts",
+        "./Thing/Shot/CThing_Shot_Devastator.ts",
+        "./Thing/Shot/CThing_Shot_FireBall.ts",
+        "./Thing/Shot/CThing_Shot_Grenade.ts",
+        "./Thing/Shot/CThing_Shot_HomingMissile.ts",
+        "./Thing/Shot/CThing_Shot_Laser.ts",
+        "./Thing/Shot/CThing_Shot_Railgun.ts",
+        "./Thing/Shot/CThing_Shot_Rocket.ts",
+        "./Thing/Weapon/CThing_Weapon.ts",
+        "./Thing/Weapon/CThing_Weapon_Barrel.ts",
+        "./Thing/Weapon/CThing_Weapon_ChargePack.ts",
+        "./Thing/Weapon/CThing_Weapon_Devastator.ts",
+        "./Thing/Weapon/CThing_Weapon_FakeWall.ts",
+        "./Thing/Weapon/CThing_Weapon_Grenade.ts",
+        "./Thing/Weapon/CThing_Weapon_Mine.ts",
+        "./Thing/Weapon/CThing_Weapon_Pistol.ts",
+        "./Thing/Weapon/CThing_Weapon_Railgun.ts",
+        "./Thing/Weapon/CThing_Weapon_Rocket.ts",
+        "./Thing/Weapon/CThing_Weapon_Shotgun.ts",
+        "./Thing/Weapon/CThing_Weapon_SmartBomb.ts",
+        "./Thing/Weapon/CThing_Weapon_UZI.ts",
+        "./World/CHud.ts",
+        "./World/CUpgrades.ts",
+        "./World/CWorld.ts",
+        "./World/Init/CWorld_Init.ts",
+        "./World/Init/CWorld_Init_Barrel.ts",
+        "./World/Init/CWorld_Init_CollisionSolid.ts",
+        "./World/Init/CWorld_Init_Devil.ts",
+        "./World/Init/CWorld_Init_Pickup.ts",
+        "./World/Init/CWorld_Init_Piece.ts",
+        "./World/Init/CWorld_Init_Player1.ts",
+        "./World/Init/CWorld_Init_Player2.ts",
+        "./World/Init/CWorld_Init_Wall.ts",
+        "./World/Init/CWorld_Init_Zombie.ts",
+        "./World/Map/CMap.ts",
+        "./World/Map/CMap_Affect.ts",
+        "./World/Map/CMap_Cell.ts",
+        "./World/Map/CMap_Collide.ts",
+        "./World/Map/CMap_Decal.ts",
+        "./World/Map/CMap_Mapwho.ts",
+        "./World/Map/CMap_Math.ts",
+        "./World/Map/CMap_Navigation.ts",
+        "./scidd/CProfiler.ts",
+        "./scidd/Draw/CColor.ts",
+        "./scidd/Math/CLine.ts",
+        "./scidd/Math/CMath.ts",
+        "./scidd/Math/CRandom.ts",
+        "./scidd/Math/CVector3.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/game/deviations.ts",
+      "lines": 386,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [
+        "onUnload"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/frames/ButtonActions.ts",
+      "lines": 81,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../../engine/swf/Player.ts",
+        "../packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/frames/MainTimeline.ts",
+      "lines": 143,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/frames/SpriteScripts.ts",
+      "lines": 171,
+      "port": true,
+      "imports": [
+        "../../shared/assetSchema.ts",
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "../DrawPrimitive/XSI/xsiData.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/DebriefName.ts",
+      "lines": 99,
+      "port": false,
+      "imports": [
+        "../../engine/swf/state.ts",
+        "../../engine/swf/DisplayObject.ts",
+        "../../engine/platform/Presenter.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "onUnload",
+        "addEventListener",
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Gamepad.ts",
+      "lines": 326,
+      "port": false,
+      "imports": [
+        "../../engine/platform/AudioEngine.ts",
+        "../../engine/platform/Gamepad.ts",
+        "../../engine/platform/Presenter.ts",
+        "../../engine/flash/input.ts",
+        "../packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose",
+        "addEventListener",
+        "removeEventListener"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Highscores.ts",
+      "lines": 164,
+      "port": false,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "./localSymbols.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/InputBadge.ts",
+      "lines": 117,
+      "port": false,
+      "imports": [
+        "./Gamepad.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/InstructionsPage.ts",
+      "lines": 176,
+      "port": false,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "../Screen/CScreen.ts",
+        "./localSymbols.ts",
+        "./UiStyle.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/Lobby.ts",
+      "lines": 375,
+      "port": false,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../Screen/CScreen.ts",
+        "./bridge.ts",
+        "../StartWave.ts",
+        "../localSymbols.ts",
+        "../InputBadge.ts",
+        "../UiStyle.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "Dispose",
+        "onUnload",
+        "addEventListener",
+        "setInterval"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/NetScope.ts",
+      "lines": 230,
+      "port": false,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../../engine/flash/clock.ts",
+        "../../packages.ts",
+        "./NetSession.ts",
+        "./NetSlot.ts",
+        "./protocol.ts",
+        "./Rollback.ts",
+        "./Predict.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/NetSession.ts",
+      "lines": 798,
+      "port": false,
+      "imports": [
+        "../../../engine/flash/rng.ts",
+        "../../packages.ts",
+        "../Resume.ts",
+        "../StartWave.ts",
+        "./NetSlot.ts",
+        "./Predict.ts",
+        "./protocol.ts",
+        "./Rollback.ts",
+        "./WorldSnap.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose",
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/NetSlot.ts",
+      "lines": 89,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/Predict.ts",
+      "lines": 158,
+      "port": false,
+      "imports": [
+        "../../packages.ts",
+        "./NetSlot.ts",
+        "./NetSession.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/Rollback.ts",
+      "lines": 176,
+      "port": false,
+      "imports": [
+        "../../packages.ts",
+        "./protocol.ts",
+        "./WorldSnap.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/Setup.ts",
+      "lines": 242,
+      "port": false,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../Screen/CScreen.ts",
+        "../../Screen/CScreen_SelectWorld.ts",
+        "../../packages.ts",
+        "./bridge.ts",
+        "../localSymbols.ts",
+        "../UiStyle.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "Dispose",
+        "onUnload"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/WorldSnap.ts",
+      "lines": 600,
+      "port": false,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../../engine/flash/rng.ts",
+        "../../packages.ts",
+        "./NetSlot.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/bridge.ts",
+      "lines": 485,
+      "port": false,
+      "imports": [
+        "../../../engine/platform/desktop.ts",
+        "../../packages.ts",
+        "../WaveUnlock.ts",
+        "./NetSession.ts",
+        "./protocol.ts",
+        "./protocol.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose",
+        "setInterval"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Net/overlay.ts",
+      "lines": 137,
+      "port": false,
+      "imports": [
+        "./NetSession.ts",
+        "./bridge.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": false
+    },
+    {
+      "path": "src/game/local/Net/protocol.ts",
+      "lines": 286,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Resume.ts",
+      "lines": 458,
+      "port": false,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../../engine/flash/rng.ts",
+        "../packages.ts",
+        "./WeaponCrate.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/StartWave.ts",
+      "lines": 92,
+      "port": false,
+      "imports": [
+        "../packages.ts",
+        "./WaveUnlock.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/StartWaveUi.ts",
+      "lines": 65,
+      "port": false,
+      "imports": [
+        "../packages.ts",
+        "./StartWave.ts",
+        "./WaveUnlock.ts",
+        "./UiStyle.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "src/game/local/UiStyle.ts",
+      "lines": 166,
+      "port": false,
+      "imports": [
+        "../../engine/runtime.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/Viewport.ts",
+      "lines": 220,
+      "port": false,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../../engine/platform/Presenter.ts",
+        "../packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "Dispose",
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/WaveUnlock.ts",
+      "lines": 37,
+      "port": false,
+      "imports": [
+        "../packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/WeaponCrate.ts",
+      "lines": 145,
+      "port": false,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts",
+        "../Thing/Object/CThing_Object.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/local/localSymbols.ts",
+      "lines": 85,
+      "port": false,
+      "imports": [
+        "../../shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/packages.ts",
+      "lines": 450,
+      "port": false,
+      "imports": [
+        "./CInput.ts",
+        "./CMain.ts",
+        "./CSaveData.ts",
+        "./CSound.ts",
+        "./DrawPrimitive/CDrawPrimitive.ts",
+        "./DrawPrimitive/CDrawPrimitive_Line.ts",
+        "./DrawPrimitive/CDrawPrimitive_Square.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Animation.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Directional.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_OmniDirectional.ts",
+        "./DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Static.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI_Animation.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI_Collection.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI_DI.ts",
+        "./DrawPrimitive/XSI/CDrawPrimitive_XSI_StyleSheet.ts",
+        "./External/CHighscore_Submit.ts",
+        "./External/CTracker.ts",
+        "./Screen/CScreen.ts",
+        "./Screen/CScreen_Collection.ts",
+        "./Screen/CScreen_Debrief.ts",
+        "./Screen/CScreen_Debrief_Winner.ts",
+        "./Screen/CScreen_Init.ts",
+        "./Screen/CScreen_Intro.ts",
+        "./Screen/CScreen_LoadingWorld.ts",
+        "./Screen/CScreen_Main.ts",
+        "./Screen/CScreen_SelectWorld.ts",
+        "./Screen/CScreen_Transition.ts",
+        "./System/CContextMenu.ts",
+        "./Thing/Affect/CThing_Affect.ts",
+        "./Thing/Affect/CThing_Affect_Bullet.ts",
+        "./Thing/Affect/CThing_Affect_DevilAttack.ts",
+        "./Thing/Affect/CThing_Affect_Explosion.ts",
+        "./Thing/Affect/CThing_Affect_FireBall.ts",
+        "./Thing/Affect/CThing_Affect_ZombieAttack.ts",
+        "./Thing/CThing.ts",
+        "./Thing/CThing_Collection.ts",
+        "./Thing/Creature/CThing_Creature.ts",
+        "./Thing/Creature/CThing_Creature_Devil.ts",
+        "./Thing/Creature/CThing_Creature_Player.ts",
+        "./Thing/Creature/CThing_Creature_Zombie.ts",
+        "./Thing/Effect/CThing_Effect.ts",
+        "./Thing/Effect/CThing_Effect_BloodPool.ts",
+        "./Thing/Effect/CThing_Effect_BloodSplat.ts",
+        "./Thing/Effect/CThing_Effect_BulletHit.ts",
+        "./Thing/Effect/CThing_Effect_Explosion.ts",
+        "./Thing/Effect/CThing_Effect_FireBall_Held.ts",
+        "./Thing/Effect/CThing_Effect_MuzzleFlash.ts",
+        "./Thing/Effect/CThing_Effect_RocketSmoke.ts",
+        "./Thing/Effect/CThing_Effect_SmartBomb.ts",
+        "./Thing/Effect/CThing_Effect_SmokeCloud.ts",
+        "./Thing/Math/CThing_Angle.ts",
+        "./Thing/Math/CThing_Navigation.ts",
+        "./Thing/Math/CThing_Position.ts",
+        "./Thing/Object/CThing_Object.ts",
+        "./Thing/Object/CThing_Object_Barrel.ts",
+        "./Thing/Object/CThing_Object_ChargePack.ts",
+        "./Thing/Object/CThing_Object_LaserNode.ts",
+        "./Thing/Object/CThing_Object_Mine.ts",
+        "./Thing/Object/CThing_Object_Pickup.ts",
+        "./Thing/Object/CThing_Object_Wall.ts",
+        "./Thing/Object/CThing_Object_WallMovable.ts",
+        "./Thing/Shot/CThing_Shot.ts",
+        "./Thing/Shot/CThing_Shot_Bullet.ts",
+        "./Thing/Shot/CThing_Shot_ClusterShell.ts",
+        "./Thing/Shot/CThing_Shot_DLaser.ts",
+        "./Thing/Shot/CThing_Shot_Devastator.ts",
+        "./Thing/Shot/CThing_Shot_FireBall.ts",
+        "./Thing/Shot/CThing_Shot_Grenade.ts",
+        "./Thing/Shot/CThing_Shot_HomingMissile.ts",
+        "./Thing/Shot/CThing_Shot_Laser.ts",
+        "./Thing/Shot/CThing_Shot_Railgun.ts",
+        "./Thing/Shot/CThing_Shot_Rocket.ts",
+        "./Thing/Weapon/CThing_Weapon.ts",
+        "./Thing/Weapon/CThing_Weapon_Barrel.ts",
+        "./Thing/Weapon/CThing_Weapon_ChargePack.ts",
+        "./Thing/Weapon/CThing_Weapon_Devastator.ts",
+        "./Thing/Weapon/CThing_Weapon_FakeWall.ts",
+        "./Thing/Weapon/CThing_Weapon_Grenade.ts",
+        "./Thing/Weapon/CThing_Weapon_Mine.ts",
+        "./Thing/Weapon/CThing_Weapon_Pistol.ts",
+        "./Thing/Weapon/CThing_Weapon_Railgun.ts",
+        "./Thing/Weapon/CThing_Weapon_Rocket.ts",
+        "./Thing/Weapon/CThing_Weapon_Shotgun.ts",
+        "./Thing/Weapon/CThing_Weapon_SmartBomb.ts",
+        "./Thing/Weapon/CThing_Weapon_UZI.ts",
+        "./World/CHud.ts",
+        "./World/CUpgrades.ts",
+        "./World/CWorld.ts",
+        "./World/Init/CWorld_Init.ts",
+        "./World/Init/CWorld_Init_Barrel.ts",
+        "./World/Init/CWorld_Init_CollisionSolid.ts",
+        "./World/Init/CWorld_Init_Devil.ts",
+        "./World/Init/CWorld_Init_Pickup.ts",
+        "./World/Init/CWorld_Init_Piece.ts",
+        "./World/Init/CWorld_Init_Player1.ts",
+        "./World/Init/CWorld_Init_Player2.ts",
+        "./World/Init/CWorld_Init_Wall.ts",
+        "./World/Init/CWorld_Init_Zombie.ts",
+        "./World/Map/CMap.ts",
+        "./World/Map/CMap_Affect.ts",
+        "./World/Map/CMap_Cell.ts",
+        "./World/Map/CMap_Collide.ts",
+        "./World/Map/CMap_Decal.ts",
+        "./World/Map/CMap_Mapwho.ts",
+        "./World/Map/CMap_Math.ts",
+        "./World/Map/CMap_Navigation.ts",
+        "./scidd/CProfiler.ts",
+        "./scidd/Draw/CColor.ts",
+        "./scidd/Math/CLine.ts",
+        "./scidd/Math/CMath.ts",
+        "./scidd/Math/CRandom.ts",
+        "./scidd/Math/CVector3.ts"
+      ],
+      "registrations": [
+        "Thing.Creature.CThing_Creature_Player"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/registerClasses.ts",
+      "lines": 62,
+      "port": false,
+      "imports": [
+        "../engine/runtime.ts",
+        "../engine/swf/Player.ts",
+        "./packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/scidd/CProfiler.ts",
+      "lines": 136,
+      "port": true,
+      "imports": [
+        "../../engine/runtime.ts",
+        "../packages.ts"
+      ],
+      "registrations": [
+        "scidd.CProfiler"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/scidd/Draw/CColor.ts",
+      "lines": 263,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "scidd.Draw.CColor"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/scidd/Math/CLine.ts",
+      "lines": 449,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "scidd.Math.CLine"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/scidd/Math/CMath.ts",
+      "lines": 263,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "scidd.Math.CMath"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/scidd/Math/CRandom.ts",
+      "lines": 125,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "scidd.Math.CRandom"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/scidd/Math/CVector3.ts",
+      "lines": 145,
+      "port": true,
+      "imports": [
+        "../../../engine/runtime.ts",
+        "../../packages.ts"
+      ],
+      "registrations": [
+        "scidd.Math.CVector3"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/game/scope.ts",
+      "lines": 508,
+      "port": false,
+      "imports": [
+        "../engine/flash/input.ts",
+        "../engine/runtime.ts",
+        "../engine/swf/Player.ts",
+        "./packages.ts",
+        "./local/Highscores.ts",
+        "./local/InstructionsPage.ts",
+        "./local/localSymbols.ts",
+        "./local/Resume.ts",
+        "./local/Net/NetSession.ts",
+        "./local/Net/NetScope.ts",
+        "./local/Net/bridge.ts",
+        "./local/Net/Lobby.ts",
+        "./local/Net/Setup.ts",
+        "./local/Net/overlay.ts",
+        "./local/DebriefName.ts",
+        "./local/WeaponCrate.ts",
+        "./local/StartWave.ts",
+        "./local/WaveUnlock.ts",
+        "./local/StartWaveUi.ts",
+        "./local/InputBadge.ts",
+        "./local/UiStyle.ts",
+        "./local/Viewport.ts",
+        "../engine/platform/desktop.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/main.ts",
+      "lines": 228,
+      "port": false,
+      "imports": [
+        "./shared/assetSchema.ts",
+        "./engine/flash/BitmapData.ts",
+        "./engine/swf/Player.ts",
+        "./engine/platform/index.ts",
+        "./engine/platform/index.ts",
+        "./game/allClasses.ts",
+        "./game/registerClasses.ts",
+        "./game/frames/MainTimeline.ts",
+        "./game/frames/SpriteScripts.ts",
+        "./game/frames/ButtonActions.ts",
+        "./game/scope.ts",
+        "./game/local/localSymbols.ts",
+        "./game/local/Gamepad.ts",
+        "./game/local/InputBadge.ts",
+        "./game/local/Net/bridge.ts",
+        "./game/local/WaveUnlock.ts",
+        "./game/local/DebriefName.ts",
+        "./game/local/Viewport.ts",
+        "./game/packages.ts",
+        "./engine/flash/as2.ts",
+        "./game/packages.ts",
+        "./dev/scenes.ts",
+        "./dev/fxScenes.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "src/shared/assetSchema.ts",
+      "lines": 409,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/browser/benchmark-coverage.mjs",
+      "lines": 34,
+      "port": false,
+      "imports": [
+        "node:assert/strict",
+        "node:child_process",
+        "node:fs",
+        "typescript",
+        "data:text/javascript;base64,"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/browser/benchmark-scheduler.mjs",
+      "lines": 41,
+      "port": false,
+      "imports": [
+        "node:assert/strict",
+        "node:child_process",
+        "node:fs",
+        "typescript",
+        "data:text/javascript;base64,"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/browser/engine.ts",
+      "lines": 532,
+      "port": false,
+      "imports": [
+        "../../src/engine/flash/BitmapData.ts",
+        "../../src/engine/flash/Graphics.ts",
+        "../../src/engine/flash/geom.ts",
+        "../../src/engine/flash/filters.ts",
+        "../../src/engine/flash/filters/apply.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/browser/filters-gl.ts",
+      "lines": 285,
+      "port": false,
+      "imports": [
+        "../../src/engine/flash/filters.ts",
+        "../../src/engine/flash/filters/apply.ts",
+        "../../src/engine/flash/color.ts",
+        "../../src/engine/flash/geom.ts",
+        "../../src/engine/flash/filters/gl.ts",
+        "../../src/engine/flash/color.ts",
+        "../../src/engine/swf/Library.ts",
+        "../../src/engine/swf/Player.ts",
+        "../../src/engine/swf/DisplayObject.ts",
+        "../../src/engine/swf/render/renderer.ts",
+        "../../src/engine/swf/mat.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/browser/run-engine.ts",
+      "lines": 85,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core",
+        "vite"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/browser/run-filters-gl.ts",
+      "lines": 56,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core",
+        "vite"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/browser/run-perf-game.ts",
+      "lines": 337,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:module",
+        "node:path",
+        "node:url",
+        "playwright-core",
+        "vite",
+        "/src/engine/swf/render/renderer.ts",
+        "/src/engine/flash/filters/gl.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/added-ui.browser.mjs",
+      "lines": 107,
+      "port": false,
+      "imports": [
+        "node:assert/strict",
+        "node:fs",
+        "./lib.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/audio.browser.mjs",
+      "lines": 156,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "./lib.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/inputBadge.browser.mjs",
+      "lines": 27,
+      "port": false,
+      "imports": [
+        "node:assert/strict",
+        "./lib.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/lib.mjs",
+      "lines": 120,
+      "port": false,
+      "imports": [
+        "playwright-core",
+        "node:fs",
+        "node:path",
+        "node:url"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/perf-metrics.mjs",
+      "lines": 29,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/portable.electron.mjs",
+      "lines": 58,
+      "port": false,
+      "imports": [
+        "node:assert/strict",
+        "node:child_process",
+        "node:net",
+        "node:fs",
+        "node:path",
+        "@electron/asar",
+        "playwright-core",
+        "./lib.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/saveCompatibility.electron.mjs",
+      "lines": 41,
+      "port": false,
+      "imports": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "playwright-core",
+        "./lib.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/ui.browser.mjs",
+      "lines": 706,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "./lib.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setInterval"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/e2e/viewportPause.browser.mjs",
+      "lines": 32,
+      "port": false,
+      "imports": [
+        "node:assert/strict",
+        "./lib.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/bots.ts",
+      "lines": 254,
+      "port": false,
+      "imports": [
+        "../../src/game/packages.ts",
+        "./harness.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/cursor.test.ts",
+      "lines": 40,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/engine/flash/input.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tests/sim/debriefName.test.ts",
+      "lines": 181,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../src/engine/swf/state.ts",
+        "../../src/game/local/DebriefName.ts",
+        "../../src/game/local/Gamepad.ts",
+        "./harness.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "onUnload",
+        "Dispose",
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/flow.test.ts",
+      "lines": 179,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "./bots.ts",
+        "../../src/game/local/Resume.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/fx_creatures_audio.test.ts",
+      "lines": 345,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "./fxkit.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/fx_effects.test.ts",
+      "lines": 518,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "./fxkit.ts",
+        "../../src/game/packages.ts",
+        "../../src/engine/runtime.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "Dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/fxkit.ts",
+      "lines": 193,
+      "port": false,
+      "imports": [
+        "../../src/game/packages.ts",
+        "./harness.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/gamepad.test.ts",
+      "lines": 240,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../src/engine/flash/input.ts",
+        "../../src/engine/swf/state.ts",
+        "../../src/game/local/Gamepad.ts",
+        "../../src/game/packages.ts",
+        "./harness.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/harness.ts",
+      "lines": 612,
+      "port": false,
+      "imports": [
+        "./headless.ts",
+        "node:fs",
+        "node:url",
+        "../../src/shared/assetSchema.ts",
+        "../../src/engine/flash/clock.ts",
+        "../../src/engine/flash/rng.ts",
+        "../../src/engine/flash/input.ts",
+        "../../src/engine/flash/SharedObject.ts",
+        "../../src/engine/flash/as2.ts",
+        "../../src/engine/swf/Player.ts",
+        "../../src/engine/swf/state.ts",
+        "../../src/engine/platform/AudioEngine.ts",
+        "../../src/game/allClasses.ts",
+        "../../src/game/registerClasses.ts",
+        "../../src/game/frames/MainTimeline.ts",
+        "../../src/game/frames/SpriteScripts.ts",
+        "../../src/game/frames/ButtonActions.ts",
+        "../../src/game/scope.ts",
+        "../../src/game/local/localSymbols.ts",
+        "../../src/game/local/Resume.ts",
+        "../../src/game/local/StartWave.ts",
+        "../../src/game/local/Net/NetSession.ts",
+        "../../src/game/local/Net/bridge.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/headless.ts",
+      "lines": 6,
+      "port": false,
+      "imports": [
+        "../../src/engine/flash/BitmapData.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tests/sim/lanlobby.test.ts",
+      "lines": 136,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/game/local/Net/bridge.ts",
+        "../../src/game/local/Net/NetSession.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/lansetup.test.ts",
+      "lines": 150,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/game/local/Net/bridge.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/menus.test.ts",
+      "lines": 164,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "./bots.ts",
+        "../../src/game/packages.ts",
+        "../../src/game/local/Highscores.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/netlockstep.test.ts",
+      "lines": 1126,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../src/engine/flash/as2.ts",
+        "../../src/engine/flash/rng.ts",
+        "./harness.ts",
+        "./fxkit.ts",
+        "../../src/game/local/Net/NetSlot.ts",
+        "../../src/game/local/Net/NetSession.ts",
+        "../../src/game/local/Net/bridge.ts",
+        "../../src/game/local/WaveUnlock.ts",
+        "../../src/game/packages.ts",
+        "../../src/game/local/Net/protocol.ts",
+        "../../src/engine/flash/clock.ts",
+        "../../src/game/local/Net/overlay.ts",
+        "../../src/game/local/Net/Predict.ts",
+        "../../src/game/local/Net/protocol.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose",
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.browser.mjs",
+      "lines": 249,
+      "port": false,
+      "imports": [
+        "playwright-core",
+        "node:fs",
+        "node:module",
+        "node:path",
+        "node:url"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.lanui.mjs",
+      "lines": 176,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.net.mjs",
+      "lines": 392,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core",
+        "../e2e/perf-metrics.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.netretry.mjs",
+      "lines": 274,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.netsmooth.mjs",
+      "lines": 292,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core",
+        "../e2e/perf-metrics.mjs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.typing.mjs",
+      "lines": 115,
+      "port": false,
+      "imports": [
+        "node:path",
+        "node:url",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.v012.mjs",
+      "lines": 206,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.v019.mjs",
+      "lines": 222,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.v020.mjs",
+      "lines": 151,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.v023.mjs",
+      "lines": 272,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/playtest.v024.mjs",
+      "lines": 235,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/regressions.test.ts",
+      "lines": 84,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "./bots.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/resume.test.ts",
+      "lines": 371,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../src/engine/flash/rng.ts",
+        "../../src/engine/flash/SharedObject.ts",
+        "../../src/game/local/Resume.ts",
+        "../../src/game/packages.ts",
+        "./harness.ts",
+        "./bots.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/rollback.book.test.ts",
+      "lines": 88,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../src/game/allClasses.ts",
+        "../../src/game/local/Net/Rollback.ts",
+        "../../src/game/local/Net/protocol.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/rollback.snapshot.test.ts",
+      "lines": 150,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/game/local/Net/WorldSnap.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/rules.test.ts",
+      "lines": 220,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "./bots.ts",
+        "./soak.ts",
+        "./soakSuite.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/soak.ts",
+      "lines": 176,
+      "port": false,
+      "imports": [
+        "./harness.ts",
+        "./bots.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/soakSuite.ts",
+      "lines": 90,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./soak.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/soak_coop.test.ts",
+      "lines": 26,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./soak.ts",
+        "./soakSuite.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/soak_dm.test.ts",
+      "lines": 32,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./soak.ts",
+        "./soakSuite.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/soak_long.test.ts",
+      "lines": 67,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./soak.ts",
+        "./soakSuite.ts",
+        "./bots.ts",
+        "./harness.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/soak_single_a.test.ts",
+      "lines": 20,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./soak.ts",
+        "./soakSuite.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/soak_single_b.test.ts",
+      "lines": 20,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./soak.ts",
+        "./soakSuite.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/soak_single_c.test.ts",
+      "lines": 20,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./soak.ts",
+        "./soakSuite.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/spawnAudit.test.ts",
+      "lines": 41,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/startWave.test.ts",
+      "lines": 310,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../src/engine/flash/rng.ts",
+        "../../src/game/packages.ts",
+        "../../src/game/local/StartWave.ts",
+        "../../src/game/local/WaveUnlock.ts",
+        "../../src/game/local/Resume.ts",
+        "./harness.ts",
+        "./bots.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/ui_monkey.test.ts",
+      "lines": 98,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/ui_options.test.ts",
+      "lines": 178,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/engine/swf/Player.ts",
+        "../../src/engine/platform/ContextMenu.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/ui_save.test.ts",
+      "lines": 234,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/engine/flash/SharedObject.ts",
+        "../../src/engine/swf/Player.ts",
+        "../../src/engine/platform/ContextMenu.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/ui_screens.test.ts",
+      "lines": 203,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/engine/flash/clock.ts",
+        "../../src/engine/swf/Player.ts",
+        "../../src/engine/platform/AudioEngine.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/ui_sounds.test.ts",
+      "lines": 123,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/weaponCrate.test.ts",
+      "lines": 302,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../src/game/packages.ts",
+        "../../src/game/local/WeaponCrate.ts",
+        "../../src/game/local/Resume.ts",
+        "./harness.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/weapons_fire.test.ts",
+      "lines": 446,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "./fxkit.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/sim/weapons_upgrades.test.ts",
+      "lines": 307,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./harness.ts",
+        "./fxkit.ts",
+        "../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/avm1/asm.ts",
+      "lines": 128,
+      "port": false,
+      "imports": [
+        "../../../tools/avm1/opcodes.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/avm1/cfg.test.ts",
+      "lines": 38,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../tools/avm1/cfg.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/avm1/dataVm.test.ts",
+      "lines": 229,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../tools/avm1/dataVm.ts",
+        "../../../tools/avm1/dataVm.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/avm1/decompile.test.ts",
+      "lines": 210,
+      "port": false,
+      "imports": [
+        "vitest",
+        "node:fs",
+        "../../../tools/avm1/explore.ts",
+        "../../../tools/avm1/decompile.ts",
+        "../../../tools/avm1/unit.ts",
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/paths.ts",
+        "../../../tools/disasm.ts",
+        "../../../tools/avm1/selfcheck.ts",
+        "./asm.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/avm1/hotspots.test.ts",
+      "lines": 68,
+      "port": false,
+      "imports": [
+        "vitest",
+        "node:fs",
+        "node:path",
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/paths.ts",
+        "../../../tools/disasm.ts",
+        "../../../tools/avm1/hotspots.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/avm1/opcodes.test.ts",
+      "lines": 96,
+      "port": false,
+      "imports": [
+        "vitest",
+        "node:fs",
+        "../../../tools/avm1/opcodes.ts",
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/paths.ts",
+        "./asm.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/avm1/registerClass.test.ts",
+      "lines": 46,
+      "port": false,
+      "imports": [
+        "vitest",
+        "node:fs",
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/paths.ts",
+        "../../../tools/avm1/registerClass.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tests/unit/avm1/xsi.test.ts",
+      "lines": 188,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:os",
+        "node:path",
+        "vitest",
+        "../../../src/shared/assetSchema.ts",
+        "../../../tools/paths.ts",
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/xsi/extractXsi.ts",
+        "../../../tools/xsi/xsiScript.ts",
+        "../../../tools/xsi/xsiScript.ts",
+        "../../../tools/xsi/xsiModel.ts",
+        "../../../tools/xsi/xsiModel.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/engine/as2.test.ts",
+      "lines": 157,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/as2.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/engine/bitmapdata.test.ts",
+      "lines": 135,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/BitmapData.ts",
+        "../../../src/engine/flash/geom.ts",
+        "../../../src/engine/flash/filters.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/engine/filters.test.ts",
+      "lines": 326,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/filters.ts",
+        "../../../src/engine/flash/filters/apply.ts",
+        "../../../src/engine/flash/color.ts",
+        "../../../src/engine/flash/geom.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/engine/geom.test.ts",
+      "lines": 159,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/geom.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/engine/graphics.test.ts",
+      "lines": 207,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/Graphics.ts",
+        "../../../src/engine/flash/geom.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/engine/rng-state.test.ts",
+      "lines": 37,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/rng"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/engine/strokeSnap.test.ts",
+      "lines": 54,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/strokeSnap.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f1/f1Modules.ts",
+      "lines": 58,
+      "port": false,
+      "imports": [
+        "../../../../src/game/scidd/CProfiler.ts",
+        "../../../../src/game/scidd/Draw/CColor.ts",
+        "../../../../src/game/scidd/Math/CLine.ts",
+        "../../../../src/game/scidd/Math/CMath.ts",
+        "../../../../src/game/scidd/Math/CRandom.ts",
+        "../../../../src/game/scidd/Math/CVector3.ts",
+        "../../../../src/game/Thing/Math/CThing_Angle.ts",
+        "../../../../src/game/Thing/Math/CThing_Navigation.ts",
+        "../../../../src/game/Thing/Math/CThing_Position.ts",
+        "../../../../src/game/World/Map/CMap.ts",
+        "../../../../src/game/World/Map/CMap_Affect.ts",
+        "../../../../src/game/World/Map/CMap_Cell.ts",
+        "../../../../src/game/World/Map/CMap_Collide.ts",
+        "../../../../src/game/World/Map/CMap_Decal.ts",
+        "../../../../src/game/World/Map/CMap_Mapwho.ts",
+        "../../../../src/game/World/Map/CMap_Math.ts",
+        "../../../../src/game/World/Map/CMap_Navigation.ts",
+        "../../../../src/game/World/Init/CWorld_Init.ts",
+        "../../../../src/game/World/Init/CWorld_Init_Barrel.ts",
+        "../../../../src/game/World/Init/CWorld_Init_CollisionSolid.ts",
+        "../../../../src/game/World/Init/CWorld_Init_Devil.ts",
+        "../../../../src/game/World/Init/CWorld_Init_Pickup.ts",
+        "../../../../src/game/World/Init/CWorld_Init_Piece.ts",
+        "../../../../src/game/World/Init/CWorld_Init_Player1.ts",
+        "../../../../src/game/World/Init/CWorld_Init_Player2.ts",
+        "../../../../src/game/World/Init/CWorld_Init_Wall.ts",
+        "../../../../src/game/World/Init/CWorld_Init_Zombie.ts",
+        "../../../../src/game/DrawPrimitive/CDrawPrimitive.ts",
+        "../../../../src/game/DrawPrimitive/CDrawPrimitive_Line.ts",
+        "../../../../src/game/DrawPrimitive/CDrawPrimitive_Square.ts",
+        "../../../../src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip.ts",
+        "../../../../src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Animation.ts",
+        "../../../../src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Directional.ts",
+        "../../../../src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_OmniDirectional.ts",
+        "../../../../src/game/DrawPrimitive/MovieClip/CDrawPrimitive_MovieClip_Static.ts",
+        "../../../../src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI.ts",
+        "../../../../src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI_Animation.ts",
+        "../../../../src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI_Collection.ts",
+        "../../../../src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI_DI.ts",
+        "../../../../src/game/DrawPrimitive/XSI/CDrawPrimitive_XSI_StyleSheet.ts",
+        "../../../../src/game/packages.ts"
+      ],
+      "registrations": [
+        "Thing.CThing",
+        "CMain",
+        "CSaveData"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f1/init.test.ts",
+      "lines": 178,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "vitest",
+        "./f1Modules.ts",
+        "./f1Modules.ts",
+        "../../../../src/game/packages.ts",
+        "../../../../src/shared/assetSchema.ts",
+        "../../../../src/engine/flash/BitmapData.ts",
+        "../../../../src/engine/flash/geom.ts",
+        "../../../../src/engine/swf/Player.ts",
+        "../../../../src/engine/swf/state.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f1/map.test.ts",
+      "lines": 443,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./f1Modules.ts",
+        "./f1Modules.ts",
+        "../../../../src/game/packages.ts",
+        "../../../../src/engine/flash/geom.ts",
+        "../../../../src/engine/flash/clock.ts",
+        "../../../../src/engine/flash/rng.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f1/math.test.ts",
+      "lines": 290,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./f1Modules.ts",
+        "./f1Modules.ts",
+        "../../../../src/game/packages.ts",
+        "../../../../src/engine/flash/geom.ts",
+        "../../../../src/engine/flash/rng.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f1/xsi.test.ts",
+      "lines": 195,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "vitest",
+        "./f1Modules.ts",
+        "./f1Modules.ts",
+        "../../../../src/game/packages.ts",
+        "../../../../src/game/DrawPrimitive/XSI/xsiData.ts",
+        "../../../../src/shared/assetSchema.ts",
+        "../../../../src/engine/flash/BitmapData.ts",
+        "../../../../src/engine/swf/Player.ts",
+        "../../../../src/engine/flash/as2.ts",
+        "../../../../src/engine/swf/state.ts",
+        "../../../../src/engine/flash/clock.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f2/affects.test.ts",
+      "lines": 265,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./f2Modules.ts",
+        "../../../../src/engine/flash/geom.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f2/devil_shots.test.ts",
+      "lines": 109,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./f2Modules.ts",
+        "../../../../src/engine/flash/clock.ts",
+        "../../../../src/engine/flash/rng.ts",
+        "../../../../src/engine/flash/as2.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f2/f2Modules.ts",
+      "lines": 256,
+      "port": false,
+      "imports": [
+        "../../../../src/game/scidd/CProfiler.ts",
+        "../../../../src/game/scidd/Draw/CColor.ts",
+        "../../../../src/game/scidd/Math/CLine.ts",
+        "../../../../src/game/scidd/Math/CMath.ts",
+        "../../../../src/game/scidd/Math/CRandom.ts",
+        "../../../../src/game/scidd/Math/CVector3.ts",
+        "../../../../src/game/Thing/Math/CThing_Angle.ts",
+        "../../../../src/game/Thing/Math/CThing_Navigation.ts",
+        "../../../../src/game/Thing/Math/CThing_Position.ts",
+        "../../../../src/game/World/Map/CMap.ts",
+        "../../../../src/game/World/Map/CMap_Affect.ts",
+        "../../../../src/game/World/Map/CMap_Cell.ts",
+        "../../../../src/game/World/Map/CMap_Collide.ts",
+        "../../../../src/game/World/Map/CMap_Decal.ts",
+        "../../../../src/game/World/Map/CMap_Mapwho.ts",
+        "../../../../src/game/World/Map/CMap_Math.ts",
+        "../../../../src/game/World/Map/CMap_Navigation.ts",
+        "../../../../src/game/Thing/CThing.ts",
+        "../../../../src/game/Thing/CThing_Collection.ts",
+        "../../../../src/game/Thing/Affect/CThing_Affect.ts",
+        "../../../../src/game/Thing/Affect/CThing_Affect_Bullet.ts",
+        "../../../../src/game/Thing/Affect/CThing_Affect_DevilAttack.ts",
+        "../../../../src/game/Thing/Affect/CThing_Affect_Explosion.ts",
+        "../../../../src/game/Thing/Affect/CThing_Affect_FireBall.ts",
+        "../../../../src/game/Thing/Affect/CThing_Affect_ZombieAttack.ts",
+        "../../../../src/game/Thing/Creature/CThing_Creature.ts",
+        "../../../../src/game/Thing/Creature/CThing_Creature_Devil.ts",
+        "../../../../src/game/Thing/Creature/CThing_Creature_Player.ts",
+        "../../../../src/game/Thing/Creature/CThing_Creature_Zombie.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_BloodPool.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_BloodSplat.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_BulletHit.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_Explosion.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_FireBall_Held.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_MuzzleFlash.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_RocketSmoke.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_SmartBomb.ts",
+        "../../../../src/game/Thing/Effect/CThing_Effect_SmokeCloud.ts",
+        "../../../../src/game/Thing/Object/CThing_Object.ts",
+        "../../../../src/game/Thing/Object/CThing_Object_Barrel.ts",
+        "../../../../src/game/Thing/Object/CThing_Object_ChargePack.ts",
+        "../../../../src/game/Thing/Object/CThing_Object_LaserNode.ts",
+        "../../../../src/game/Thing/Object/CThing_Object_Mine.ts",
+        "../../../../src/game/Thing/Object/CThing_Object_Pickup.ts",
+        "../../../../src/game/Thing/Object/CThing_Object_Wall.ts",
+        "../../../../src/game/Thing/Object/CThing_Object_WallMovable.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_Bullet.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_ClusterShell.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_DLaser.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_Devastator.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_FireBall.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_Grenade.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_HomingMissile.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_Laser.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_Railgun.ts",
+        "../../../../src/game/Thing/Shot/CThing_Shot_Rocket.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_Barrel.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_ChargePack.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_Devastator.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_FakeWall.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_Grenade.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_Mine.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_Pistol.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_Railgun.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_Rocket.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_Shotgun.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_SmartBomb.ts",
+        "../../../../src/game/Thing/Weapon/CThing_Weapon_UZI.ts",
+        "../../../../src/game/packages.ts",
+        "../../../../src/engine/flash/BitmapData.ts",
+        "../../../../src/engine/flash/geom.ts",
+        "../../../../src/engine/swf/Player.ts"
+      ],
+      "registrations": [
+        "DrawPrimitive.MovieClip.",
+        "DrawPrimitive.XSI.CDrawPrimitive_XSI_Animation",
+        "DrawPrimitive.XSI.CDrawPrimitive_XSI_Collection",
+        "DrawPrimitive.XSI.CDrawPrimitive_XSI_StyleSheet",
+        "DrawPrimitive.CDrawPrimitive_Line",
+        "CSound",
+        "CInput",
+        "CSaveData",
+        "CMain",
+        "World.CWorld"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f2/player.test.ts",
+      "lines": 215,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./f2Modules.ts",
+        "../../../../src/engine/flash/rng.ts",
+        "../../../../src/engine/flash/as2.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f2/sim.test.ts",
+      "lines": 246,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./f2Modules.ts",
+        "../../../../src/engine/flash/clock.ts",
+        "../../../../src/engine/flash/rng.ts",
+        "../../../../src/engine/flash/as2.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f2/weapons.test.ts",
+      "lines": 232,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./f2Modules.ts",
+        "../../../../src/engine/flash/clock.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f3/f3Setup.ts",
+      "lines": 63,
+      "port": false,
+      "imports": [
+        "../../../../src/engine/flash/BitmapData.ts",
+        "node:fs",
+        "node:url",
+        "../../../../src/shared/assetSchema.ts",
+        "../../../../src/engine/flash/input.ts",
+        "../../../../src/engine/flash/SharedObject.ts",
+        "../../../../src/engine/swf/Player.ts",
+        "../../../../src/game/allClasses.ts",
+        "../../../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f3/highscores_classes.test.ts",
+      "lines": 141,
+      "port": false,
+      "imports": [
+        "./f3Setup.ts",
+        "vitest",
+        "../../../../src/engine/swf/Player.ts",
+        "../../../../src/game/packages.ts",
+        "../../../../src/game/registerClasses.ts",
+        "../../../../src/game/local/Highscores.ts",
+        "../../../../src/game/local/localSymbols.ts",
+        "../../../../src/game/frames/MainTimeline.ts",
+        "../../../../src/game/frames/SpriteScripts.ts",
+        "../../../../src/game/frames/ButtonActions.ts",
+        "../../../../src/game/scope.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f3/input_save.test.ts",
+      "lines": 147,
+      "port": false,
+      "imports": [
+        "./f3Setup.ts",
+        "vitest",
+        "../../../../src/engine/flash/input.ts",
+        "../../../../src/engine/flash/SharedObject.ts",
+        "../../../../src/engine/swf/Player.ts",
+        "../../../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/f3/upgrades.test.ts",
+      "lines": 260,
+      "port": false,
+      "imports": [
+        "./f3Setup.ts",
+        "vitest",
+        "../../../../src/game/packages.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/gamepad.test.ts",
+      "lines": 54,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/game/local/Gamepad.ts",
+        "../../../src/engine/platform/Gamepad.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose",
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/lanBridge.test.ts",
+      "lines": 34,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/game/local/Net/bridge.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/netOverlay.test.ts",
+      "lines": 92,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/game/local/Net/overlay.ts",
+        "../../../src/game/local/Net/bridge.ts",
+        "../../../src/game/local/Net/NetSession.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/netProtocol.test.ts",
+      "lines": 238,
+      "port": false,
+      "imports": [
+        "vitest",
+        "node:net",
+        "../../../src/game/local/Net/protocol.ts",
+        "../../../electron/lan.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/game/startWave.test.ts",
+      "lines": 35,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/game/local/StartWave.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tests/unit/oracle/as2.test.ts",
+      "lines": 112,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/as2.ts",
+        "./golden.ts",
+        "../../../tools/oracle/probes/p6_p7_numbers.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/bitmap.test.ts",
+      "lines": 80,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/color.ts",
+        "./golden.ts",
+        "../../../tools/oracle/probes/p3b_premul.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/displaylist.test.ts",
+      "lines": 245,
+      "port": false,
+      "imports": [
+        "../../../src/engine/flash/BitmapData.ts",
+        "vitest",
+        "../../../src/engine/swf/Player.ts",
+        "../../../src/engine/swf/DisplayObject.ts",
+        "../../../src/engine/flash/as2.ts",
+        "../swf-runtime/fixtures.ts",
+        "../../../tools/oracle/probes/p2_numeric.ts",
+        "./golden.ts"
+      ],
+      "registrations": [
+        "A",
+        "A2",
+        "B",
+        "D"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/filters.test.ts",
+      "lines": 89,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/filters.ts",
+        "../../../src/engine/flash/filters/apply.ts",
+        "../../../tools/oracle/probes/p5_filters.ts",
+        "./golden.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/flashtype.test.ts",
+      "lines": 204,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/shared/assetSchema.ts",
+        "../../../src/engine/swf/flashType.ts",
+        "../swf/helpers.ts",
+        "node:fs",
+        "node:path"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/game.test.ts",
+      "lines": 143,
+      "port": false,
+      "imports": [
+        "../game/f3/f3Setup.ts",
+        "vitest",
+        "node:fs",
+        "node:url",
+        "../../../src/game/packages.ts",
+        "../../../src/engine/flash/as2.ts",
+        "./golden.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/golden.ts",
+      "lines": 82,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:url"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/goldens.test.ts",
+      "lines": 72,
+      "port": false,
+      "imports": [
+        "vitest",
+        "./golden.ts",
+        "../../../tools/oracle/probes/p0_hello.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/initlist.test.ts",
+      "lines": 94,
+      "port": false,
+      "imports": [
+        "../game/f3/f3Setup.ts",
+        "vitest",
+        "../../../src/engine/swf/Player.ts",
+        "../../../src/engine/swf/state.ts",
+        "../../../src/engine/flash/as2.ts",
+        "../../../src/game/registerClasses.ts",
+        "./golden.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/sort.test.ts",
+      "lines": 122,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../tools/oracle/flashSort.ts",
+        "../../../src/engine/flash/as2.ts",
+        "./golden.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/oracle/toolchain.test.ts",
+      "lines": 108,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../tools/oracle/avm1asm.ts",
+        "../../../tools/oracle/as1c.ts",
+        "../../../tools/oracle/swfWrite.ts",
+        "../../../tools/oracle/sol.ts",
+        "../../../tools/swf/ByteReader.ts",
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/paths.ts",
+        "node:fs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/platform/aspect.test.ts",
+      "lines": 25,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../electron/aspect.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tests/unit/platform/audio-recovery.test.ts",
+      "lines": 267,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/platform/AudioEngine.ts",
+        "../../../src/engine/flash/clock.ts",
+        "../../../src/shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "removeEventListener",
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/platform/audio.test.ts",
+      "lines": 194,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/platform/AudioEngine.ts",
+        "../../../src/engine/flash/Sound.ts",
+        "../../../src/engine/flash/clock.ts",
+        "../../../src/shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/platform/electron-smoke.run.ts",
+      "lines": 312,
+      "port": false,
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "node:module",
+        "node:path",
+        "node:url",
+        "playwright-core",
+        "playwright-core",
+        "vite"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/platform/gamepad.test.ts",
+      "lines": 127,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/platform/Gamepad.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/platform/keyboard.test.ts",
+      "lines": 156,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/platform/Keyboard.ts",
+        "../../../src/engine/platform/Pointer.ts",
+        "../../../src/engine/flash/input.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/platform/loop.test.ts",
+      "lines": 114,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/platform/Loop.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/platform/presenter.test.ts",
+      "lines": 78,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/platform/Presenter.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "addEventListener",
+        "removeEventListener",
+        "dispose"
+      ],
+      "dynamic": false
+    },
+    {
+      "path": "tests/unit/platform/saveStore.test.ts",
+      "lines": 184,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/flash/SharedObject.ts",
+        "../../../src/engine/flash/SharedObject.ts",
+        "../../../src/engine/platform/SaveStore.ts",
+        "../../../src/engine/platform/ContextMenu.ts",
+        "../../../src/engine/flash/stubs.ts",
+        "../../../src/engine/platform/Presenter.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf-runtime/buttonsMasksSounds.test.ts",
+      "lines": 172,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/shared/assetSchema.ts",
+        "../../../src/engine/swf/DisplayObject.ts",
+        "../../../src/engine/swf/Player.ts",
+        "./fixtures.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf-runtime/displayList.test.ts",
+      "lines": 418,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/swf/DisplayObject.ts",
+        "../../../src/engine/swf/Player.ts",
+        "./fixtures.ts"
+      ],
+      "registrations": [
+        "Child",
+        "Parent",
+        "Child",
+        "Child"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf-runtime/fixtures.ts",
+      "lines": 68,
+      "port": false,
+      "imports": [
+        "../../../src/shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf-runtime/gallery-shots.ts",
+      "lines": 95,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "vite",
+        "playwright-core"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf-runtime/realLibrary.test.ts",
+      "lines": 84,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "vitest",
+        "../../../src/shared/assetSchema.ts",
+        "../../../src/engine/swf/DisplayObject.ts",
+        "../../../src/engine/swf/Player.ts",
+        "../../../src/engine/swf/state.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf-runtime/textAndMouse.test.ts",
+      "lines": 347,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/engine/swf/DisplayObject.ts",
+        "../../../src/engine/swf/Player.ts",
+        "../../../src/engine/swf/paths.ts",
+        "../../../src/engine/flash/TextFormat.ts",
+        "../../../src/engine/flash/input.ts",
+        "../../../src/engine/swf/text.ts",
+        "../../../src/engine/swf/render/renderer.ts",
+        "../../../src/engine/swf/state.ts",
+        "./fixtures.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf/helpers.ts",
+      "lines": 63,
+      "port": false,
+      "imports": [
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/paths.ts",
+        "../../../tools/swf/library.ts",
+        "../../../tools/swf/zip.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf/inventory.test.ts",
+      "lines": 104,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/paths.ts",
+        "../../../tools/inventory.ts",
+        "./helpers.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf/media.test.ts",
+      "lines": 177,
+      "port": false,
+      "imports": [
+        "vitest",
+        "node:child_process",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:zlib",
+        "pngjs",
+        "../../../src/shared/assetSchema.ts",
+        "../../../tools/paths.ts",
+        "../../../tools/swf/SwfFile.ts",
+        "../../../tools/swf/png.ts",
+        "../../../tools/swf/bitmaps.ts",
+        "./helpers.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf/morph.test.ts",
+      "lines": 125,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/shared/assetSchema.ts",
+        "../../../tools/swf/shapes.ts",
+        "../../../tools/swf/shapeConvert.ts",
+        "../../../tools/swf/morph.ts",
+        "./helpers.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf/records.test.ts",
+      "lines": 91,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../tools/swf/ByteReader.ts",
+        "../../../tools/swf/records.ts",
+        "./helpers.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf/rooms.test.ts",
+      "lines": 59,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../tools/rooms/extractRooms.ts",
+        "./helpers.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf/shapeConvert.test.ts",
+      "lines": 260,
+      "port": false,
+      "imports": [
+        "vitest",
+        "../../../src/shared/assetSchema.ts",
+        "../../../tools/swf/ByteReader.ts",
+        "../../../tools/swf/shapes.ts",
+        "../../../tools/swf/shapeConvert.ts",
+        "./helpers.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/swf/text.test.ts",
+      "lines": 230,
+      "port": false,
+      "imports": [
+        "vitest",
+        "node:fs",
+        "../../../src/shared/assetSchema.ts",
+        "../../../tools/swf/ByteReader.ts",
+        "../../../tools/swf/text.ts",
+        "../../../tools/oracle/visual/csmProbe.ts",
+        "../../../tools/paths.ts",
+        "./helpers.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/visual/fxScenes.test.ts",
+      "lines": 58,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "vitest",
+        "../../../src/dev/fxSceneList.ts",
+        "../../../tools/oracle/visual/buildFxScene.ts",
+        "../../../tools/oracle/as1c.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/unit/visual/scenes.test.ts",
+      "lines": 62,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "vitest",
+        "../../../src/dev/sceneList.ts",
+        "../../../tools/oracle/visual/buildScene.ts",
+        "../../../tools/oracle/as1c.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/visual/align.mjs",
+      "lines": 29,
+      "port": false,
+      "imports": [
+        "pngjs",
+        "node:url",
+        "node:fs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/visual/captureFxRemake.ts",
+      "lines": 90,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core",
+        "vite",
+        "../../src/dev/fxSceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/visual/captureRemake.ts",
+      "lines": 93,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "playwright-core",
+        "vite",
+        "../../src/dev/sceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/visual/compare.ts",
+      "lines": 130,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "pngjs",
+        "pixelmatch",
+        "../../src/dev/sceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/visual/compareFx.ts",
+      "lines": 95,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "node:url",
+        "pngjs",
+        "pixelmatch",
+        "../../src/dev/fxSceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/visual/crop.mjs",
+      "lines": 30,
+      "port": false,
+      "imports": [
+        "pngjs",
+        "node:url",
+        "node:fs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tests/visual/cropFx.mjs",
+      "lines": 42,
+      "port": false,
+      "imports": [
+        "pngjs",
+        "node:url",
+        "node:fs"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/audit-code.mjs",
+      "lines": 24,
+      "port": false,
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "node:path",
+        "typescript"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "onUnload",
+        "dispose",
+        "Dispose",
+        "setInterval",
+        "setTimeout",
+        "addEventListener",
+        "removeEventListener"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/actionSources.ts",
+      "lines": 229,
+      "port": false,
+      "imports": [
+        "../swf/SwfFile.ts",
+        "../swf/ByteReader.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/cfg.ts",
+      "lines": 201,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/concrete.ts",
+      "lines": 146,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/dataVm.ts",
+      "lines": 387,
+      "port": false,
+      "imports": [
+        "../swf/ByteReader.ts",
+        "../../src/shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/decompile.ts",
+      "lines": 1325,
+      "port": false,
+      "imports": [
+        "./explore.ts",
+        "./opcodes.ts",
+        "./cfg.ts",
+        "./expr.ts",
+        "./concrete.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/explore.ts",
+      "lines": 678,
+      "port": false,
+      "imports": [
+        "./opcodes.ts",
+        "./concrete.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/expr.ts",
+      "lines": 288,
+      "port": false,
+      "imports": [
+        "./concrete.ts",
+        "./opcodes.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/flaZip.ts",
+      "lines": 67,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:zlib"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tools/avm1/hotspotNotes.ts",
+      "lines": 91,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/hotspots.ts",
+      "lines": 530,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "./unit.ts",
+        "./decompile.ts",
+        "./hotspotNotes.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/opcodes.ts",
+      "lines": 417,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/registerClass.ts",
+      "lines": 58,
+      "port": false,
+      "imports": [
+        "../swf/SwfFile.ts",
+        "../paths.ts",
+        "./actionSources.ts",
+        "./unit.ts",
+        "./flaZip.ts"
+      ],
+      "registrations": [
+        "Linkage"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/selfcheck.ts",
+      "lines": 59,
+      "port": false,
+      "imports": [
+        "./explore.ts",
+        "./decompile.ts",
+        "./decompile.ts",
+        "./expr.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/avm1/unit.ts",
+      "lines": 277,
+      "port": false,
+      "imports": [
+        "./explore.ts",
+        "./decompile.ts",
+        "./expr.ts",
+        "./opcodes.ts"
+      ],
+      "registrations": [
+        "Linkage"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/build-electron.ts",
+      "lines": 40,
+      "port": false,
+      "imports": [
+        "esbuild",
+        "esbuild",
+        "node:fs/promises",
+        "node:path",
+        "node:url"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/disasm.ts",
+      "lines": 218,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "./swf/SwfFile.ts",
+        "./paths.ts",
+        "./avm1/actionSources.ts",
+        "./avm1/unit.ts",
+        "./avm1/selfcheck.ts",
+        "./avm1/decompile.ts",
+        "./avm1/opcodes.ts",
+        "./avm1/hotspots.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/extract.ts",
+      "lines": 228,
+      "port": false,
+      "imports": [
+        "node:crypto",
+        "node:fs",
+        "node:path",
+        "../src/shared/assetSchema.ts",
+        "./paths.ts",
+        "./swf/SwfFile.ts",
+        "./swf/library.ts",
+        "./swf/records.ts",
+        "./rooms/extractRooms.ts",
+        "./xsi/extractXsi.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/gen-packages.ts",
+      "lines": 138,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "./paths.ts"
+      ],
+      "registrations": [
+        "<dotted.path>",
+        "Thing.Creature.CThing_Creature_Player"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/inventory.ts",
+      "lines": 25,
+      "port": false,
+      "imports": [
+        "./swf/SwfFile.ts",
+        "./paths.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/make-icon.ts",
+      "lines": 53,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "pngjs",
+        "./paths.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/as1c.ts",
+      "lines": 695,
+      "port": false,
+      "imports": [
+        "./avm1asm.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/avm1asm.ts",
+      "lines": 225,
+      "port": false,
+      "imports": [
+        "../avm1/opcodes.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/flashSort.ts",
+      "lines": 69,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/index.ts",
+      "lines": 36,
+      "port": false,
+      "imports": [
+        "./p0_hello.ts",
+        "./p1_forin.ts",
+        "./p2_numeric.ts",
+        "./p3_bitmap.ts",
+        "./p3b_premul.ts",
+        "./p4_bounds.ts",
+        "./p5_filters.ts",
+        "./p6_p7_numbers.ts",
+        "./p9_sort.ts",
+        "./p8_game.ts",
+        "./p11_construct.ts",
+        "./xplayer.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p0_hello.ts",
+      "lines": 92,
+      "port": false,
+      "imports": [
+        "../avm1asm.ts",
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p11_construct.ts",
+      "lines": 127,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "../sol.ts",
+        "./p8_game.ts",
+        "node:path",
+        "./index.ts"
+      ],
+      "registrations": [
+        "A",
+        "A2",
+        "B",
+        "D"
+      ],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p1_forin.ts",
+      "lines": 99,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p2_numeric.ts",
+      "lines": 64,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p3_bitmap.ts",
+      "lines": 166,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p3b_premul.ts",
+      "lines": 45,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tools/oracle/probes/p4_bounds.ts",
+      "lines": 115,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p5_filters.ts",
+      "lines": 213,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "dispose"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p6_p7_numbers.ts",
+      "lines": 133,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p8_game.ts",
+      "lines": 233,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "../sol.ts",
+        "../../swf/SwfFile.ts",
+        "../../paths.ts",
+        "node:path",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/p9_sort.ts",
+      "lines": 91,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/probes/xplayer.ts",
+      "lines": 57,
+      "port": false,
+      "imports": [
+        "node:path",
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "../sol.ts",
+        "./p1_forin.ts",
+        "./p2_numeric.ts",
+        "./p3_bitmap.ts",
+        "./p4_bounds.ts",
+        "./p5_filters.ts",
+        "./p6_p7_numbers.ts",
+        "./p8_game.ts",
+        "./index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/runProbe.ts",
+      "lines": 255,
+      "port": false,
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "../paths.ts",
+        "./probes/index.ts",
+        "./sol.ts",
+        "./probes/index.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/sol.ts",
+      "lines": 151,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:os",
+        "node:path"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/swfWrite.ts",
+      "lines": 381,
+      "port": false,
+      "imports": [
+        "node:zlib",
+        "./avm1asm.ts",
+        "../swf/SwfFile.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/buildFxScene.ts",
+      "lines": 185,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "../sol.ts",
+        "../../swf/SwfFile.ts",
+        "../../paths.ts",
+        "../../../src/dev/sceneList.ts",
+        "../../../src/dev/fxSceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/buildScene.ts",
+      "lines": 109,
+      "port": false,
+      "imports": [
+        "../as1c.ts",
+        "../swfWrite.ts",
+        "../sol.ts",
+        "../../swf/SwfFile.ts",
+        "../../paths.ts",
+        "../../../src/dev/sceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/captureFxRef.ts",
+      "lines": 117,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "pngjs",
+        "../../paths.ts",
+        "../sol.ts",
+        "./buildFxScene.ts",
+        "./projector.ts",
+        "../../../src/dev/fxSceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/captureRef.ts",
+      "lines": 132,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "pngjs",
+        "../../paths.ts",
+        "../sol.ts",
+        "./buildScene.ts",
+        "./projector.ts",
+        "../../../src/dev/sceneList.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/csmProbe.ts",
+      "lines": 461,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "pngjs",
+        "./projector.ts",
+        "../../paths.ts",
+        "../../swf/SwfFile.ts",
+        "../swfWrite.ts",
+        "../avm1asm.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/projector.ts",
+      "lines": 45,
+      "port": false,
+      "imports": [
+        "node:child_process",
+        "node:path",
+        "node:url",
+        "../../paths.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/snapProbe.ts",
+      "lines": 119,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "pngjs",
+        "./projector.ts",
+        "../../paths.ts",
+        "../swfWrite.ts",
+        "../../swf/SwfFile.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/strokeProbe.ts",
+      "lines": 124,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "pngjs",
+        "./projector.ts",
+        "../../paths.ts",
+        "../../swf/SwfFile.ts",
+        "../as1c.ts",
+        "../swfWrite.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/oracle/visual/textProbe.ts",
+      "lines": 170,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "pngjs",
+        "./projector.ts",
+        "../../paths.ts",
+        "../../swf/SwfFile.ts",
+        "../swfWrite.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [
+        "setTimeout"
+      ],
+      "dynamic": true
+    },
+    {
+      "path": "tools/paths.ts",
+      "lines": 22,
+      "port": false,
+      "imports": [
+        "node:url",
+        "node:path"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/rooms/extractRooms.ts",
+      "lines": 201,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "../../src/shared/assetSchema.ts",
+        "../swf/bounds.ts",
+        "../paths.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/ByteReader.ts",
+      "lines": 108,
+      "port": false,
+      "imports": [],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/SwfFile.ts",
+      "lines": 117,
+      "port": false,
+      "imports": [
+        "node:crypto",
+        "node:fs",
+        "node:zlib",
+        "./ByteReader.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/bitmaps.ts",
+      "lines": 183,
+      "port": false,
+      "imports": [
+        "node:zlib",
+        "./ByteReader.ts",
+        "./png.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/bounds.ts",
+      "lines": 101,
+      "port": false,
+      "imports": [
+        "../../src/shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/buttons.ts",
+      "lines": 33,
+      "port": false,
+      "imports": [
+        "../../src/shared/assetSchema.ts",
+        "./ByteReader.ts",
+        "./records.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tools/swf/exports.ts",
+      "lines": 13,
+      "port": false,
+      "imports": [
+        "./ByteReader.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": false
+    },
+    {
+      "path": "tools/swf/library.ts",
+      "lines": 188,
+      "port": false,
+      "imports": [
+        "../../src/shared/assetSchema.ts",
+        "./SwfFile.ts",
+        "../inventory.ts",
+        "./records.ts",
+        "./shapes.ts",
+        "./shapeConvert.ts",
+        "./morph.ts",
+        "./sprites.ts",
+        "./text.ts",
+        "./buttons.ts",
+        "./bitmaps.ts",
+        "./sounds.ts",
+        "./exports.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/morph.ts",
+      "lines": 194,
+      "port": false,
+      "imports": [
+        "./ByteReader.ts",
+        "../../src/shared/assetSchema.ts",
+        "./records.ts",
+        "./shapes.ts",
+        "./shapeConvert.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/png.ts",
+      "lines": 75,
+      "port": false,
+      "imports": [
+        "node:zlib"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/records.ts",
+      "lines": 266,
+      "port": false,
+      "imports": [
+        "./ByteReader.ts",
+        "../../src/shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/shapeConvert.ts",
+      "lines": 332,
+      "port": false,
+      "imports": [
+        "../../src/shared/assetSchema.ts",
+        "./shapes.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/shapes.ts",
+      "lines": 205,
+      "port": false,
+      "imports": [
+        "./ByteReader.ts",
+        "../../src/shared/assetSchema.ts",
+        "./records.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/sounds.ts",
+      "lines": 34,
+      "port": false,
+      "imports": [
+        "./ByteReader.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/sprites.ts",
+      "lines": 153,
+      "port": false,
+      "imports": [
+        "../../src/shared/assetSchema.ts",
+        "./ByteReader.ts",
+        "./SwfFile.ts",
+        "./records.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/svgPreview.ts",
+      "lines": 146,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "../../src/shared/assetSchema.ts",
+        "./bounds.ts",
+        "../paths.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/text.ts",
+      "lines": 216,
+      "port": false,
+      "imports": [
+        "./ByteReader.ts",
+        "../../src/shared/assetSchema.ts",
+        "./records.ts",
+        "./shapes.ts",
+        "./shapeConvert.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/swf/zip.ts",
+      "lines": 69,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:zlib"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/xsi/extractXsi.ts",
+      "lines": 58,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "../../src/shared/assetSchema.ts",
+        "../swf/SwfFile.ts",
+        "../paths.ts",
+        "./xsiScript.ts",
+        "./xsiSummary.ts",
+        "./xsiModel.ts",
+        "./xsiScript.ts",
+        "./xsiScript.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/xsi/xsiModel.ts",
+      "lines": 110,
+      "port": false,
+      "imports": [
+        "../../src/shared/assetSchema.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/xsi/xsiScript.ts",
+      "lines": 75,
+      "port": false,
+      "imports": [
+        "../../src/shared/assetSchema.ts",
+        "../swf/SwfFile.ts",
+        "../avm1/dataVm.ts",
+        "../avm1/dataVm.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    },
+    {
+      "path": "tools/xsi/xsiSummary.ts",
+      "lines": 533,
+      "port": false,
+      "imports": [
+        "node:fs",
+        "node:path",
+        "../../src/shared/assetSchema.ts",
+        "../paths.ts",
+        "../swf/SwfFile.ts",
+        "./xsiScript.ts",
+        "./xsiScript.ts",
+        "./xsiModel.ts",
+        "./xsiModel.ts"
+      ],
+      "registrations": [],
+      "lifecycle": [],
+      "dynamic": true
+    }
+  ]
+}

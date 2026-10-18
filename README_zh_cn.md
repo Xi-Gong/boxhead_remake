@@ -29,7 +29,7 @@ npm install
 npm run dist        # 生成 release/Boxhead 2Play Rooms-<版本>-portable.exe
 ```
 
-双击单文件 exe 即可游玩（存档在 exe 旁的 `Boxhead2PlayRooms-data/`）。首次打包需联网下载工具链，
+双击单文件 exe 即可游玩（存档统一保存在 `%USERPROFILE%\.boxhead`）。首次打包需联网下载工具链，
 失败时在命令前加 `NODE_USE_ENV_PROXY=1`；未签名 exe 首跑的 SmartScreen 提示选"仍要运行"。
 
 **浏览器**
@@ -85,4 +85,4 @@ AVM1 工具链；`tests/` 单元 / 模拟 / 真机 playtest；`assets/` 原版 S
 ## 联系
 
 - 原作者：[seantcooper.com](https://www.seantcooper.com/)
-- 问题与 PR：[github.com/Xi-Gong/boxhead_res](https://github.com/Xi-Gong/boxhead_res)
+- 问题与 PR：[github.com/Xi-Gong/boxhead_remake](https://github.com/Xi-Gong/boxhead_remake)

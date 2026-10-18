@@ -34,7 +34,7 @@ npm install
 npm run dist        # -> release/Boxhead 2Play Rooms-<version>-portable.exe
 ```
 
-Double-click the single-file exe (saves live next to it in `Boxhead2PlayRooms-data/`). The first packaging
+Double-click the single-file exe (saves live in `%USERPROFILE%\.boxhead`). The first packaging
 downloads toolchain bits — prefix `NODE_USE_ENV_PROXY=1` if your network needs it — and SmartScreen's
 "unknown publisher" prompt just chooses *Run anyway*.
 
@@ -104,4 +104,4 @@ commercially. Fan project, not affiliated.***
 ## Contacts
 
 - Original author: [seantcooper.com](https://www.seantcooper.com/)
-- Issues & PRs: [github.com/Xi-Gong/boxhead_res](https://github.com/Xi-Gong/boxhead_res)
+- Issues & PRs: [github.com/Xi-Gong/boxhead_remake](https://github.com/Xi-Gong/boxhead_remake)

@@ -9,6 +9,7 @@ Boxhead: 2Play Rooms is a faithful TypeScript + Canvas2D + Electron remake of th
 - Cross-class runtime references in ports use packages.ts; only base classes use direct runtime imports. allClasses.ts, strings, linkage/class registration, callbacks and prototype wrappers are LIVE dependencies. Static unreferenced-symbol reports alone do not prove dead code. Retain original unused classes and rollback infrastructure/tests (LAN coordination remains enabled; prediction depth ships at 0).
 - Flash runs at 50 enterFrames/s; game simulation at 25 ticks/s. Preserve scheduling, seeded RNG call order, enumeration order and simulation-visible time. Never substitute native random or wall-clock calls. RNG is a process-global singleton: headless games in one process run sequentially.
 - Async LAN work needs two lifetimes: renderer operation generations reject stale promises, and main-process transport shutdown cancels pending binds/connects/handshakes. Check both when changing leave/rejoin behavior.
+- Wrapper order in applyScope: local/menu/save/start-wave wrappers first, then LAN overlay/screens, then installNetScope(), and installViewport() last. Viewport Process_Tracking stays outermost around the net camera/prediction wrapper. Chain existing __set__mLevel/wave hooks rather than replacing them.
 - LAN invariants: world/checksum equality and ordered PlaySound identity between peers. Display prediction/cameras stay render-only. Preserve the wire and stored-snapshot formats.
 - Node 24 runs erasable TS directly: explicit .ts imports, import type, no enum/namespace/parameter properties. Engine/shared code passes strict checking; the AS2 port has looser checks.
 - Key control/depth map: main mcContinue/mcLanGame use _Contents and Register_Button; local pause mcScreenPause._Quit / _SaveQuit stay inside the 65.75px header. LAN mcSubScreen occupies depth 10; _SetupControls occupies depth 100 above authored masks. Options/highscore _Button_Close uses authored depth 136. Allocate unique child names and getNextHighestDepth inside each added layer.
@@ -22,6 +23,9 @@ Boxhead: 2Play Rooms is a faithful TypeScript + Canvas2D + Electron remake of th
 ## Commands and testing
 
 ```powershell
+npm run dev
+npm run extract -- --if-stale
+node tools/audit-code.mjs
 npm run typecheck
 npm test
 npx vitest run tests/sim/netlockstep.test.ts

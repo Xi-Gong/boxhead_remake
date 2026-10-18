@@ -1,0 +1,29 @@
+{
+  "version": "0.2.6",
+  "artifact": "Boxhead 2Play Rooms-0.2.6-portable.exe",
+  "bytes": 101612312,
+  "sha256": "e501c19a41f5e9010fa63c7675f1a998370ce56105980cb8dc7768e6083a0680",
+  "asarChecks": [
+    {
+      "path": "dist/index.html",
+      "sha256": "14615d4413940b0bda466e104e1e02a16279f05b7ec089d4e9a73c4f7543ad0a"
+    },
+    {
+      "path": "dist-electron/main.cjs",
+      "sha256": "1080215768c7a315496318d6ab67372899dba8589fb8dfe137afa0125a5016ec"
+    },
+    {
+      "path": "dist/bundle/gallery-CT6fihmr.js",
+      "sha256": "a050485dc3dfdb21107e4a957fa64eeb0d94a4f967141f290fddc30d0f36bc5a"
+    },
+    {
+      "path": "dist/bundle/main-lYT15zr1.js",
+      "sha256": "ac977b6ca61785f95759fb05d6e1c502f90f5fa0d706ae72c2fbd55daa176b63"
+    },
+    {
+      "path": "dist/bundle/Player-Dc6FgDaF.js",
+      "sha256": "b8bb428ba4b5b9f34fdfbb7c615d878ddb718e8bc0d94599e95dbbb15f7c5ebf"
+    }
+  ],
+  "manifestMatches": true
+}

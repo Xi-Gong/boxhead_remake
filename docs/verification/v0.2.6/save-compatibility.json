@@ -1,0 +1,14 @@
+{
+  "from": "0.2.5",
+  "to": "0.2.6",
+  "storedVersion": 2,
+  "maxWave": 7,
+  "fireKey": 70,
+  "restored": {
+    "room": "ROOM_Single_0009",
+    "score": 1234,
+    "life": 137,
+    "uzi": 17
+  },
+  "ok": true
+}

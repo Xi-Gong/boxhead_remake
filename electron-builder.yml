@@ -23,5 +23,5 @@ win:
   artifactName: "${productName}-${version}-portable.${ext}"
 portable:
   artifactName: "${productName}-${version}-portable.${ext}"
-  # Portable exe unpacks to %TEMP% on every start; saves go to <exe dir>/Boxhead2PlayRooms-data (electron/main.ts).
+  # Portable exe unpacks to %TEMP% on every start; saves go to <user home>/.boxhead (electron/main.ts).
   unicode: true
