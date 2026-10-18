@@ -2,10 +2,12 @@
 // reconnect countdown / desync / forfeit) and a small ping readout, both outside the canvas so they never touch
 // the simulation or the visual baseline tests. Driven by NetSession.onStateChange through bridge.setNetOverlaySync.
 import type { NetSession } from './NetSession.ts';
-import { setNetOverlaySync } from './bridge.ts';
+import { lanBridge, setNetOverlaySync } from './bridge.ts';
 
 let statusEl: HTMLDivElement | undefined;
 let pingEl: HTMLDivElement | undefined;
+let pingGrowth = false;
+let stopResize: (() => void) | undefined;
 let hideTimer: number | undefined;
 /** Pending delayed WAITING-strip show (the grace window, v0.1.7). */
 let stallTimer: number | undefined;
@@ -27,6 +29,17 @@ const STYLE_PROMINENT = 'position:absolute;left:50%;top:max(90px,16%);transform:
   + 'background:rgba(40,0,0,0.85);border:1px solid #ef1304;border-radius:12px;color:#fff;font:bold 22px Calibri,sans-serif;'
   + 'max-width:85%;box-sizing:border-box;text-align:center;pointer-events:none;z-index:8;display:none;white-space:pre-wrap';
 
+/** The growth strip ends at logical y=50; DOM overlays use CSS pixels, including on resize. */
+function positionPing(): void {
+  if (!pingEl) return;
+  let top = 8;
+  if (pingGrowth) {
+    const presenter = lanBridge().presenter, area = pingEl.parentElement?.getBoundingClientRect();
+    top += presenter && area ? presenter.logicalToClient(0, 50).y - area.top : 50;
+  }
+  pingEl.style.top = `${top}px`;
+}
+
 function ensure(): boolean {
   if (typeof document === 'undefined') return false;
   if (!statusEl) {
@@ -38,6 +51,7 @@ function ensure(): boolean {
       + 'border-radius:8px;color:#fff;font:12px Calibri,sans-serif;pointer-events:none;z-index:8;display:none';
     (document.getElementById('stage') ?? document.body).appendChild(pingEl);
   }
+  if (!stopResize) stopResize = lanBridge().presenter?.onResize(positionPing);
   return true;
 }
 
@@ -65,14 +79,16 @@ function hideSoon(ms: number): void {
 function sync(session: NetSession | null): void {
   if (!ensure()) return;
   if (!session) {
+    pingGrowth = false;
     cancelStallTimer();
     if (statusEl) statusEl.style.display = 'none';
     if (pingEl) pingEl.style.display = 'none';
     return;
   }
   const inGame = session.phase === 'playing' || session.phase === 'reconnecting' || session.phase === 'desync';
+  pingGrowth = inGame && !!session.confirmedGrowth;
   if (pingEl) {
-    pingEl.style.top = session.confirmedGrowth ? '58px' : '8px';
+    positionPing();
     // v0.1.7: live per heartbeat; hidden once the game is over (the lobby room view shows its own PING line).
     const rtt = inGame ? session.rttMs : undefined;
     pingEl.style.display = rtt !== undefined ? 'block' : 'none';
@@ -129,6 +145,9 @@ export function installNetOverlay(): void {
 
 /** Tests: drop the lazily created DOM elements and pending timers (the module keeps them across games). */
 export function _resetForTests(): void {
+  stopResize?.();
+  stopResize = undefined;
+  pingGrowth = false;
   cancelStallTimer();
   if (hideTimer !== undefined) { clearTimeout(hideTimer); hideTimer = undefined; }
   statusEl = undefined;

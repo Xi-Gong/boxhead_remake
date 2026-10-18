@@ -102,7 +102,7 @@ function helpers(page) {
   /** The v0.1.7 live in-game ping readout (top-right overlay div), null when absent/hidden. */
   const pingText = () => page.evaluate(() => {
     for (const d of document.querySelectorAll('div')) {
-      if (d.style.right !== '10px' || d.style.top !== '8px') continue;
+      if (d.style.right !== '10px') continue;
       const t = (d.textContent ?? '').trim();
       if (/(^<1|\d+)\s*ms$/.test(t)) return d.style.display === 'block' ? t : null;
     }

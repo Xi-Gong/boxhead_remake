@@ -3,7 +3,7 @@
 // through the bridge's netOverlaySync hook exactly like the real page does.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { _resetForTests, installNetOverlay } from '../../../src/game/local/Net/overlay.ts';
-import { netOverlaySync, setNetOverlaySync } from '../../../src/game/local/Net/bridge.ts';
+import { lanBridge, netOverlaySync, setNetOverlaySync } from '../../../src/game/local/Net/bridge.ts';
 import type { NetSession } from '../../../src/game/local/Net/NetSession.ts';
 
 /** Minimal element: only what overlay.ts touches (style props, textContent, appendChild). */
@@ -11,7 +11,8 @@ class FakeEl {
   style: Record<string, string> = {};
   textContent = '';
   children: FakeEl[] = [];
-  appendChild(c: FakeEl): FakeEl { this.children.push(c); return c; }
+  parentElement?: FakeEl;
+  appendChild(c: FakeEl): FakeEl { c.parentElement=this; this.children.push(c); return c; }
 }
 
 const makeDom = (): { body: FakeEl; created: FakeEl[] } => {
@@ -35,6 +36,23 @@ describe('net overlay sync (v0.1.7)', () => {
     vi.unstubAllGlobals();
     _resetForTests();
     setNetOverlaySync(() => {}); // drop the shim's sync so later imports re-install cleanly
+  });
+
+  it('keeps ping below the scaled growth HUD and updates on resize without a heartbeat', () => {
+    const dom=makeDom();let resize: (()=>void)|undefined,height=720;
+    const remove=vi.fn(),bridge=lanBridge(),previous=bridge.presenter;
+    bridge.presenter={logicalToClient:(_x,y)=>({x:0,y:10+y*height/480}),contentToClient:()=>({x:0,y:0}),onResize:fn=>{resize=fn;return remove;}};
+    Object.assign(dom.body,{getBoundingClientRect:()=>({top:10})});
+    try{
+    installNetOverlay();
+    netOverlaySync(fakeSession({phase:'playing',role:0,rttMs:2,confirmedGrowth:{},world:{mScreenSize:{y:480}}}));
+    const ping=dom.created[1]!;
+    expect(ping.style.top).toBe('83px');
+    height=960;resize!();expect(ping.style.top).toBe('108px');
+    netOverlaySync(null);expect(ping.style.display).toBe('none');
+    resize!();expect(ping.style.top).toBe('8px');
+    _resetForTests();expect(remove).toHaveBeenCalledOnce();
+    }finally{bridge.presenter=previous;}
   });
 
   it('ping readout: live while playing, hidden once the game ends (the E2E residue regression)', () => {

@@ -24,6 +24,7 @@ try{
    cfg:{progression:'personal-growth-v1',...(balanced?{supplies:'armor-ammo-v1',balance:'pve-balance-v1'}:{}),difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:3,charP2:0}});
  },balanced);
  assert(await g.waitExpr('g.state()==="State_RunWorld" && m.mcWorld?._LanGrowthHud'));
+ await g.eval(()=>window.__growthQA.message({t:'hb',ts:Date.now(),rttMs:2}));
  await g.eval(()=>{
   const w=window.__game.main().mcWorld,original=w.Process;
   for(const player of Object.values(w.mThing_Collection.mPlayerThings))player.mInvincible=0;
@@ -91,6 +92,13 @@ try{
   });
   assert.equal(geo.left,geo.stage-geo.right-210);assert(geo.center>=geo.left+222);
   assert(geo.right>=geo.center+184);assert(geo.fields.every(f=>f.textWidth<=f.width));
+  const ping=await g.eval(()=>{
+   const p=window.__game.platform.presenter,r=p.canvas.getBoundingClientRect();
+   const d=[...document.querySelectorAll('div')].find(d=>d.style.right==='10px'&&/ms$/.test(d.textContent??''));
+   const b=d?.getBoundingClientRect();return {top:b?.top,hudBottom:r.top+50*r.height/p.stageH,shown:d?.style.display==='block'};
+  });
+  assert(ping.shown&&ping.top>=ping.hudBottom+7,`ping must stay below the scaled HUD: ${JSON.stringify(ping)}`);
+  geo.ping=ping;
   assert.deepEqual(geo.counts,{zombies:'505',devils:'25'});
   assert(geo.head.every(p=>p.level==null),'levels belong only in the top HUD');
   report.geometry.push({width,height,...geo});await shot(`max-${width}x${height}`);

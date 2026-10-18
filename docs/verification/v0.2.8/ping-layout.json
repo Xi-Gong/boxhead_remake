@@ -1,0 +1,52 @@
+{
+  "before": {
+    "viewport": [
+      960,
+      720
+    ],
+    "pingTop": 58,
+    "hudBottom": 75,
+    "overlap": true
+  },
+  "after": [
+    {
+      "viewport": [
+        640,
+        480
+      ],
+      "top": 58,
+      "hudBottom": 50,
+      "shown": true
+    },
+    {
+      "viewport": [
+        960,
+        720
+      ],
+      "top": 83,
+      "hudBottom": 75,
+      "shown": true
+    },
+    {
+      "viewport": [
+        1280,
+        720
+      ],
+      "top": 83,
+      "hudBottom": 75,
+      "shown": true
+    },
+    {
+      "viewport": [
+        640,
+        889
+      ],
+      "top": 58,
+      "hudBottom": 50,
+      "shown": true
+    }
+  ],
+  "resizeWithoutHeartbeat": true,
+  "unitChecks": 4,
+  "packagedLanFlow": true
+}
