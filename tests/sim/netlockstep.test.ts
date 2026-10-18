@@ -24,7 +24,7 @@ import type { GameConfig, LanMode } from '../../src/game/local/Net/protocol.ts';
 
 // --------------------------------------------------------------------------------------------- helpers
 
-type PlayerKeys = typeof KEYS.P1;
+type PlayerKeys = { [K in keyof typeof KEYS.P1]: number };
 /** SLOT_ORDER names (mControls names) -> harness KEYS names (NEXT_WEAPON -> NEXT, ...). */
 const keyOf = (keyMap: PlayerKeys, name: string): number | undefined =>
   (keyMap as any)[name] ?? (keyMap as any)[name.replace('_WEAPON', '')];
