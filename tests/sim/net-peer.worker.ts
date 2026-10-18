@@ -14,10 +14,13 @@ session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242,
 if (!game.waitRunning(3000)) throw new Error('boot failed');
 process.send?.({ ready: true, sent });
 sent = [];
+const originalWorld = game.world();
 process.on('message', (m: any) => {
   try {
     for (const message of m.messages ?? []) session.onNetMessage(message);
     const world = game.world();
+    if (m.disconnect) session.onPeerEvent({ connected: false, reason: 'test interruption' });
+    if (m.reconnect && role === 0) session.onHello({ capTick: session.netCheckpoint?.tick });
     if (typeof m.pause === 'boolean') session.setPaused(m.pause);
     if (m.step && session.tickIndex(world) < m.total) {
       const t = session.tickIndex(world);
@@ -27,7 +30,7 @@ process.on('message', (m: any) => {
       for (let i = 0; i < (m.extraDraws ?? 0); i++) world.Draw();
     }
     if (m.settle) { applyCorrections(session, world); session.commitConfirmed(world); }
-    process.send?.({ sent, tick: session.tickIndex(world), phase: session.phase, paused: session.netPaused,
+    process.send?.({ sent, tick: session.tickIndex(world), phase: session.phase, paused: session.netPaused, sameWorld: world === originalWorld,
       desync: session.desyncDetail, errors: game.errors, stats: session.rollbackStats,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash] } : {}) });

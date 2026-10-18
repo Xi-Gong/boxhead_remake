@@ -337,6 +337,10 @@ class LanBridge {
   private send(msg: LanMessage): void { desktop?.lan?.send(msg); }
 
   private onMessage(msg: any): void {
+    if (msg.t === 'recover' && msg.stage === 'offer' && !this.session) {
+      this.send({ ...msg, stage: 'reject' });
+      return;
+    }
     if (msg.t === 'hello') {
       this.peerRollbackV2 = Array.isArray(msg.netcodes) && msg.netcodes.includes('rollback-v2');
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.

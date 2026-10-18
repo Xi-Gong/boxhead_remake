@@ -2,7 +2,7 @@ import { fork, type Serializable } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
 
-it.each([false, true])('independent asynchronous peers converge with delayed delivery (pause: %s)', async pause => {
+it.each([{pause:false,reconnect:false},{pause:true,reconnect:false},{pause:false,reconnect:true}])('independent asynchronous peers converge ($pause pause, $reconnect reconnect)', async ({pause,reconnect}) => {
   const children = [0, 1].map(role => fork(fileURLToPath(new URL('./net-peer.worker.ts', import.meta.url)), [String(role)], {
     execArgv: ['--experimental-transform-types'], stdio: ['ignore', 'ignore', 'pipe', 'ipc'], windowsHide: true,
   }));
@@ -25,12 +25,15 @@ it.each([false, true])('independent asynchronous peers converge with delayed del
         const due = queues[i]!.filter(x => x.at <= frame);
         queues[i] = queues[i]!.filter(x => x.at > frame);
         return ask(i, { step: true, total, extraDraws: i * 2, messages: due.map(x => x.message),
+          disconnect: reconnect && frame === 80, reconnect: reconnect && frame === 130,
           ...(pause && frame === 80 && i === 0 ? { pause: true } : {}),
           ...(pause && frame === 140 && i === 1 ? { pause: false } : {}) });
       }));
       for (let i = 0; i < 2; i++) {
         expect(responses[i].errors).toEqual([]);
-        expect(responses[i].phase, JSON.stringify(responses[i].desync)).toBe('playing');
+        if (reconnect && frame >= 80 && frame < 160) expect(['playing','reconnecting']).toContain(responses[i].phase);
+        else expect(responses[i].phase, JSON.stringify(responses[i].desync)).toBe('playing');
+        expect(responses[i].sameWorld).toBe(true);
         for (const message of responses[i].sent) queues[1 - i]!.push({ at: frame + 2 + (frame % 5), message });
       }
       if (pause && frame === 125) {

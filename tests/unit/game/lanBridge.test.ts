@@ -7,6 +7,11 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it('a restarted client without history rejects in-place recovery',()=>{
+  lanBridge();
+  lan.onMessage.mock.calls[0]![0]({t:'recover',stage:'offer',generation:3,seed:7,need:90,head:95});
+  expect(lan.send).toHaveBeenCalledWith({t:'recover',stage:'reject',generation:3,seed:7,need:90,head:95});
+ });
  it.each([{netcodes:[]},{netcodes:['rollback-v2']}])('negotiates start mode from peer capability $netcodes',({netcodes})=>{
   const b=lanBridge(), previous=CMain.mSaveData;
   CMain.mSaveData={} as any;

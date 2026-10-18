@@ -346,6 +346,7 @@ export class LanTransport {
       const msg = m as LanMessage;
       if (msg?.t === 'input-path') { peer.fast?.accept(msg); continue; }
       if (msg?.t === 'start') peer.fast?.begin(msg.netcode === 'rollback-v2' ? msg.epoch : undefined);
+      if (msg?.t === 'recover' && msg.stage === 'commit') peer.fast?.begin(msg.epoch);
       if (msg?.t === 'hb') {
         // Echo the peer's probe; our own returning echo is surfaced so the renderer can compute RTT (now - ts).
         if (!msg.echo) this.rawSend(peer.socket, { ...msg, echo: true });
@@ -407,6 +408,10 @@ export class LanTransport {
     if (!peer) return;
     if (msg.t === 'start') {
       msg = { ...msg, epoch: msg.netcode === 'rollback-v2' ? randomUUID() : undefined };
+      peer.fast?.begin(msg.epoch);
+    }
+    if (msg.t === 'recover' && msg.stage === 'commit') {
+      msg = { ...msg, epoch: randomUUID() };
       peer.fast?.begin(msg.epoch);
     }
     if (msg.t === 'in') peer.fast?.send(msg);

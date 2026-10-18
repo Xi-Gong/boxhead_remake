@@ -120,6 +120,8 @@ export class NetSession {
   mode: LanMode = 'Coop';
   /** The start parameters of the current/last game (the bridge reuses the seed for a 续局 continuation). */
   startOpts: NetStart | undefined;
+  private runGeneration = 0;
+  private recoveryNeed: number | undefined;
   /**
    * Why the last game ended. Forfeit routing (v0.1.4): 'timeout'/'peer-timeout' (the 30 s reconnect window ran
    * out) end at the MAIN MENU on both peers; a 'concede' (pause-screen QUIT) keeps the regular Debrief/Winner.
@@ -206,6 +208,7 @@ export class NetSession {
   // ---------------------------------------------------------------------------------------------- inbound (bridge/test)
 
   onNetMessage(msg: LanMessage): void {
+    if (msg.t === 'recover') { this.receiveRecovery(msg); return; }
     if ((msg.t === 'pause-request' || msg.t === 'pause-barrier') && this.rollbackV2 && this.phase === 'playing') {
       this.pauseBarrier.receive(msg, this.tickIndex(this.world));
       this.updatePauseBarrier();
@@ -289,13 +292,62 @@ export class NetSession {
    */
   onHello(hello: { sid?: string; capTick?: number }): void {
     if (this.role !== 0) return;
+    if (this.phase === 'reconnecting' && this.rollbackV2 && this.world) {
+      this.link.send(this.recoveryMessage('offer'));
+      return;
+    }
+    this.resumeCheckpoint(hello.capTick);
+  }
+
+  private resumeCheckpoint(capTick?: number): void {
     if (this.phase === 'reconnecting' && this.netCheckpoint) {
       const start: NetStart = { ...this.startOpts!, resumeTick: this.netCheckpoint.tick };
       // A client that restarted (no checkpoint of its own, capTick absent) receives the snapshot itself.
-      const snap = hello.capTick == null || hello.capTick < this.netCheckpoint.tick ? this.netCheckpoint.snap : undefined;
+      const snap = capTick == null || capTick < this.netCheckpoint.tick ? this.netCheckpoint.snap : undefined;
       this.link.send({ t: 'start', mode: start.mode, roomLink: start.roomLink, cfg: start.cfg, seed: start.seed, inputDelay: start.inputDelay, resumeTick: start.resumeTick, wave: start.wave, snap, rollback: true, netcode: start.netcode });
       this.startLocalGame(start, CMain._this); // the host rebuilds through the same path
     }
+  }
+
+  private recoveryMessage(stage: Extract<LanMessage, { t: 'recover' }>['stage']): Extract<LanMessage, { t: 'recover' }> {
+    return { t: 'recover', stage, generation: this.runGeneration, seed: this.startOpts?.seed ?? 0,
+      need: this.confirmTick + 1, head: this.tickIndex(this.world) };
+  }
+
+  private receiveRecovery(message: Extract<LanMessage, { t: 'recover' }>): void {
+    if (message.stage === 'reject' && this.role === 0 && this.phase === 'reconnecting') { this.resumeCheckpoint(); return; }
+    const head = this.world ? this.tickIndex(this.world) : -1;
+    let valid = this.rollbackV2 && this.phase === 'reconnecting' && message.generation === this.runGeneration &&
+      message.seed === this.startOpts?.seed && Number.isSafeInteger(message.need) && message.need >= 0 && message.need <= head &&
+      Number.isSafeInteger(message.head) && message.head >= 0 && Math.abs(head - message.head) <= this.predictionLimit + 1;
+    if (valid) for (let t = message.need; t < head; t++) if (!this.localFrames.has(t)) { valid = false; break; }
+    if (!valid) {
+      if (message.stage === 'offer' && this.role === 1) this.link.send({ ...message, stage: 'reject' });
+      else if (message.stage === 'ready' && this.role === 0) this.resumeCheckpoint();
+      return;
+    }
+    if (message.stage === 'offer' && this.role === 1) {
+      this.recoveryNeed = message.need;
+      this.link.send(this.recoveryMessage('ready'));
+    } else if (message.stage === 'ready' && this.role === 0) {
+      this.link.send(this.recoveryMessage('commit'));
+      this.finishRecovery(message.need);
+    } else if (message.stage === 'commit' && this.role === 1 && this.recoveryNeed !== undefined) {
+      this.finishRecovery(this.recoveryNeed);
+    }
+  }
+
+  private finishRecovery(need: number): void {
+    for (const [tick, bits] of this.localFrames) if (tick >= need) this.link.send({ t: 'in', tick, bits });
+    this.recoveryNeed = undefined;
+    this.phase = 'playing';
+    const wasPaused = this.netPaused || this.pauseBarrier.pending;
+    this.pauseBarrier = new PauseBarrier(this.role, m => this.link.send(m));
+    this.netPaused = false;
+    this.world?.mHud?.Pause(false);
+    if (wasPaused && this.role === 0) this.pauseBarrier.request(true, this.tickIndex(this.world));
+    this.stall(undefined);
+    this.onStateChange?.();
   }
 
   reconnectSecondsLeft(): number {
@@ -312,6 +364,8 @@ export class NetSession {
   startLocalGame(start: NetStart, main: any): void {
     if (!main) return;
     this.startOpts = start;
+    ++this.runGeneration;
+    this.recoveryNeed = undefined;
     this.pauseBarrier = new PauseBarrier(this.role, m => this.link.send(m));
     this.mode = start.mode;
     this.endReason = undefined;

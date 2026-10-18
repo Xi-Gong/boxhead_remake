@@ -129,6 +129,7 @@ export interface LanChecksum {
 }
 
 export type LanMessage =
+  | { t: 'recover'; stage: 'offer' | 'ready' | 'commit' | 'reject'; generation: number; seed: number; need: number; head: number; epoch?: string }
   | { t: 'pause-request'; paused: boolean }
   | { t: 'pause-barrier'; stage: 'freeze' | 'ready' | 'commit' | 'resume'; id: number; tick: number }
   | { t: 'input-path'; version: 1; port: number; token: string }

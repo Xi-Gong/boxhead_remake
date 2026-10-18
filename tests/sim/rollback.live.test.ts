@@ -62,6 +62,22 @@ function run(delay: number, modern = false) {
 }
 
 describe('actual rollback prediction', () => {
+  it('rejected history recovery falls back to a checkpoint with rollback mode preserved', () => {
+    const game = createHeadlessGame({ menuOnly: 'Main' });
+    const sent: any[] = [];
+    const s = new NetSession(0, { send: m => sent.push(m) });
+    s.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242, netcode: 'rollback-v2' }, game.main());
+    expect(game.waitRunning(3000)).toBe(true);
+    s.captureCheckpoint(game.world());
+    s.onPeerEvent({ connected: false });
+    s.onHello({});
+    const offer = sent.find(m => m.t === 'recover');
+    expect(offer.stage).toBe('offer');
+    s.onNetMessage({ ...offer, stage: 'reject' });
+    expect(sent.find(m => m.t === 'start')).toMatchObject({ netcode: 'rollback-v2', snap: expect.any(Object) });
+    expect(s.phase).toBe('starting');
+    game.quit();
+  });
   it.each([0, 1] as const)('player %i applies new input on the next tick without a remote frame', role => {
     const game = createHeadlessGame({ menuOnly: 'Main' });
     const sent: any[] = [];
