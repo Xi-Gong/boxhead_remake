@@ -5,6 +5,10 @@ export function explosionBurst(world: any, count: number, level = 125): void {
   const players = Object.values(world.mThing_Collection.mPlayerThings) as any[];
   if (world.mUpgrades.lanGrowth) for (const p of world.mUpgrades.lanGrowth.players) p.level = level;
   else while (world.mUpgrades.mMultiplierIndex < level) world.mUpgrades.__set__mMultiplier(world.mUpgrades.mMultiplierIndex + 1);
+  // Give both baseline and candidate the same fully unlocked inventory at the max-level stress point.
+  if (level === 125) for (const player of players) for (const name of Object.keys(player.mWeapons)) {
+    if (!player.mWeapons[name].mActive) player.NewWeapon(name);
+  }
   const cells: any[] = [];
   for (const row of world.mMap.mCells) for (const cell of row) {
     if (cell.mID.x >= 5 && cell.mID.y >= 5 && !(cell.mCollide & World.Map.CMap_Cell.mCollide_StaticImpassable)) cells.push(cell);

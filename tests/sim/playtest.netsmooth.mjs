@@ -17,11 +17,13 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 import { startMetrics } from '../e2e/perf-metrics.mjs';
+import { explosionBurst } from './explosionFixture.ts';
 
 const DELAY_MS = Number(process.argv[2] ?? 30);
 const MODERN = process.env.BOXHEAD_NETCODE === 'rollback-v2';
 const COMBAT = process.env.BOXHEAD_NET_COMBAT === '1';
 const RECOVERY = process.env.BOXHEAD_NET_RECOVERY === '1';
+const EXPLOSIONS = Number(process.env.BOXHEAD_NET_EXPLOSIONS ?? 0);
 if (!Number.isFinite(DELAY_MS) || DELAY_MS <= 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>0]');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -35,7 +37,7 @@ const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-rend
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
 const OFFSCREEN = ['-32000', '0'];
 
-const report = { ok: false, delayMs: DELAY_MS, netcode: MODERN ? 'rollback-v2' : 'legacy', combat: COMBAT, recovery: RECOVERY, steps: [], errors: [], shots: [] };
+const report = { ok: false, delayMs: DELAY_MS, netcode: MODERN ? 'rollback-v2' : 'legacy', combat: COMBAT, recovery: RECOVERY, explosions: EXPLOSIONS, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
 const shot = async (name, page) => { const p = join(OUT, `net_smooth_${name}.png`); await page.screenshot({ path: p }); report.shots.push(p); step(`shot ${p}`); };
 
@@ -150,6 +152,21 @@ try {
   if (MODERN && [lanH0,lanC0].some(s=>s.netcode!=='rollback-v2')) throw new Error('modern mode was not negotiated');
   if (!lanH0.rollback || !lanC0.rollback) throw new Error(`rollback not enabled: host=${JSON.stringify(lanH0.rollback)} client=${JSON.stringify(lanC0.rollback)}`);
   const dH = lanH0.inputDelay;
+  if(EXPLOSIONS){
+    if(!MODERN||!Number.isInteger(EXPLOSIONS)||EXPLOSIONS<1||EXPLOSIONS>256)throw new Error('invalid explosion stress configuration');
+    for(const P of [H,C])await P.page.evaluate(({source,count})=>{
+      const w=window.__game.main().mcWorld,start=window.__game.lan().startTick,pkg=window.__game.pkg;
+      const burst=new Function('Thing','World','return ('+source+')')(pkg.Thing,pkg.World),original=w.Process;
+      window.__explosionStress={bursts:0,peak:0};
+      w.Process=function(){
+        const t=this.mTick-start;
+        if(t>=200&&(t-200)%100===0){burst(this,count);window.__explosionStress.bursts++;}
+        const result=original.call(this);
+        window.__explosionStress.peak=Math.max(window.__explosionStress.peak,this.mThing_Collection.mThingCounters.CThing_Effect_Explosion??0);
+        return result;
+      };
+    },{source:explosionBurst.toString(),count:EXPLOSIONS});
+  }
   step(`rollback lockstep running at D=${dH} (injected ${DELAY_MS} ms one-way)`);
   await shot('01_host_ingame', H.page);
   await shot('02_client_ingame', C.page);
@@ -158,8 +175,11 @@ try {
   const WINDOW_MS = Number(process.env.BOXHEAD_NET_WINDOW_MS ?? 20000);
   if(!Number.isFinite(WINDOW_MS)||WINDOW_MS<20000||WINDOW_MS>1800000)throw new Error('invalid sample duration');
   await H.page.waitForTimeout(3000);
-  // Long stability gates use sparse allocation sampling; matched short comparisons retain 32 KiB.
-  const metricOptions = {samplingInterval: WINDOW_MS > 60000 ? 4194304 : 32768};
+  // Keep the interval explicit in reports: dense allocation stack sampling can dominate burst latency.
+  // The default remains 32 KiB for existing short comparisons; sparse profiling is opt-in there.
+  const samplingInterval = Number(process.env.BOXHEAD_NET_ALLOCATION_INTERVAL ?? (WINDOW_MS > 60000 ? 4194304 : 32768));
+  if (!Number.isInteger(samplingInterval) || samplingInterval < 32768) throw new Error('invalid allocation sampling interval');
+  const metricOptions = {samplingInterval};
   const finishHost = await startMetrics(H.page,metricOptions),finishClient = await startMetrics(C.page,metricOptions);
   const t0 = Date.now();
   let nextProgress = t0 + 60000;
@@ -191,6 +211,10 @@ try {
   }
   const last = samples[samples.length - 1];
   report.performance = { host:await finishHost(),client:await finishClient() };
+  if(EXPLOSIONS){
+    report.explosionStress=await Promise.all([H,C].map(P=>P.page.evaluate(()=>window.__explosionStress)));
+    if(report.explosionStress.some(s=>s.peak<EXPLOSIONS||s.bursts<1))throw new Error('explosion fixture did not execute');
+  }
   report.samples = samples;
   const mid = samples[Math.floor(samples.length / 2)];
   const stallsH = last.host.stallCount, stallsC = last.client.stallCount;

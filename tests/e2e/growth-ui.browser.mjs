@@ -1,6 +1,7 @@
 // Controlled transport/visual fixtures. Real two-process TCP/UDP acceptance remains in net/netsmooth.
 import assert from 'node:assert/strict';
-import {mkdirSync,writeFileSync} from 'node:fs';
+import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
+import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
 const out='generated/reports/v028/growth-ui';mkdirSync(out,{recursive:true});
 const browser=await launch(),report={ok:false,shots:[],geometry:[],errors:[]};
@@ -61,6 +62,18 @@ try{
   assert.equal(geo.left,geo.stage-geo.right-210);assert(geo.center>=geo.left+222);
   assert(geo.right>=geo.center+124);assert(geo.fields.every(f=>f.textWidth<=f.width));
   report.geometry.push({width,height,...geo});await shot(`max-${width}x${height}`);
+  if(width===640&&height===480){
+   const png=PNG.sync.read(readFileSync(`${out}/max-640x480.png`));
+   const green=(x,y)=>{const n=(y*png.width+x)*4;return png.data[n]===0&&png.data[n+1]===200&&png.data[n+2]===0;};
+   let left=0,right=0;
+   for(let y=43;y<47;y++){
+    for(let x=20;x<214;x++)if(green(x,y))left++;
+    for(let x=426;x<543;x++)if(green(x,y))right++;
+    for(let x=550;x<620;x++)assert(!green(x,y),'3/5 XP must not fill the remaining track');
+   }
+   assert(left>=300&&right>=180,'pixel fill must match MAX and 3/5 XP');
+   report.pixels={maxGreen:left,partialGreen:right};
+  }
  }
  await g.page.setViewportSize({width:960,height:720});await g.page.waitForTimeout(750);
  await g.eval(()=>window.__game.main().mcWorld.mHud.Pause(true));

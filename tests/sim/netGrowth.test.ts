@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createHeadlessGame } from './harness.ts';
 import { NetSession } from '../../src/game/local/Net/NetSession.ts';
-import { awardKill, copyGrowth, GROWTH_RULE, growthOf, newGrowth } from '../../src/game/local/Net/Growth.ts';
+import { awardKill, copyGrowth, GROWTH_RULE, growthOf, newGrowth, playerSource } from '../../src/game/local/Net/Growth.ts';
 import { capture, applyToWorld } from '../../src/game/local/Resume.ts';
 import { captureWorldSnap, makeSnapCtx, restoreWorldSnap } from '../../src/game/local/Net/WorldSnap.ts';
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
@@ -102,6 +102,22 @@ describe('LAN personal growth', () => {
   });
   it('leaves old cooperation unchanged when the capability is absent', () => {
     const {world}=boot(1,0,false); expect(growthOf(world)).toBeUndefined(); expect(capture(world).growth).toBeUndefined();
+  });
+  it('credits chained scene barrels to their trigger and keeps placed-barrel ownership',()=>{
+    const {game,world}=boot();const [a,b]=game.players();
+    growthOf(world)!.players[0].level=44;
+    const barrel=(parent?:any)=>{
+      const object=new Thing.Object.CThing_Object_Barrel(a.mPosition.Clone(),a.mAngle.Clone(),parent);
+      world.mThing_Collection.AddThing(object);object.Process_Init();return object;
+    };
+    const first=barrel();first.mAffectors=[new Thing.Affect.CThing_Affect_Bullet(a,a,1,a.mAngle)];first.ProcessAffects();
+    const explosions=()=>game.things().filter(t=>t._CLASSID_==='CThing_Effect_Explosion');
+    const explosion=explosions().at(-1)!;expect(playerSource(explosion)).toBe(0);expect(first.mBiggerBang).toBe(2);
+    const next=barrel();next.mAffectors=[new Thing.Affect.CThing_Affect_Explosion(explosion.mParent,explosion,100,5)];next.ProcessAffects();
+    expect(explosions().filter(e=>playerSource(e)===0)).toHaveLength(2);
+    const placed=barrel(b);placed.mAffectors=[new Thing.Affect.CThing_Affect_Bullet(a,a,1,a.mAngle)];placed.ProcessAffects();
+    expect(explosions().filter(e=>playerSource(e)===1)).toHaveLength(1);
+    expect(placed.mBiggerBang).toBe(0);expect(placed.mParent).toBe(b);
   });
   it('retries the very first wave from its initial growth, score and inventory', () => {
     const {game,world,session}=boot(20);
