@@ -89,6 +89,7 @@ const dbg: GameDebug = {
       desyncDetail: s?.desyncDetail ?? null,
       netcode: s?.startOpts?.netcode ?? 'legacy', diagnostics: s?.diagnostics ?? [],
       paused: s?.netPaused ?? false,
+      appliedBits: s?.debugAppliedBits() ?? 0,
       presentation: s?.presentation?.displayedLocal,
       confirmedEvents: s ? [s.events.confirmedCount, s.events.confirmedHash] : null,
       // v0.2.3 smoothness observability: stall episodes + rollback health (netlockstep pins the semantics;

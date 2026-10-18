@@ -1,6 +1,9 @@
 // Renderer work measured through the real Player methods, with CDP CPU/heap metrics outside the sample window.
 export async function startMetrics(page) {
  const cdp=await page.context().newCDPSession(page);await cdp.send('Performance.enable');
+ await cdp.send('HeapProfiler.enable');
+ await cdp.send('HeapProfiler.collectGarbage');
+ await cdp.send('HeapProfiler.startSampling',{samplingInterval:32768,includeObjectsCollectedByMajorGC:true,includeObjectsCollectedByMinorGC:true});
  const metrics=async()=>Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(m=>[m.name,m.value]));
  const before=await metrics(),started=Date.now();
  await page.evaluate(()=>{
@@ -13,6 +16,9 @@ export async function startMetrics(page) {
  });
  return async()=>{
   const after=await metrics();const elapsedMs=Date.now()-started;
+  const allocation=await cdp.send('HeapProfiler.stopSampling');
+  let estimatedAllocatedBytes=0;const pending=[allocation.profile.head];
+  while(pending.length){const node=pending.pop();estimatedAllocatedBytes+=node.selfSize;pending.push(...node.children);}
   const result=await page.evaluate(()=>{
    const s=window.__releasePerf,p=window.__game.player;p.enterFrame=s.ef;p.render=s.render;delete window.__releasePerf;
    if(s.world){if(s.ownDraw)Object.defineProperty(s.world,'Draw',s.ownDraw);else delete s.world.Draw;}
@@ -25,7 +31,9 @@ export async function startMetrics(page) {
    return {frames:s.frames,intervals:s.intervals,frameP50:percent(.5),frameP95:percent(.95),objects,filterCaches,filterPixels,fontEntries,disposedBitmapRefs,domInputs:document.querySelectorAll('input').length};
   });
   if (!result.frames.length || result.disposedBitmapRefs) throw new Error('invalid LAN frame/resource sample');
-  await cdp.detach();return {...result,elapsedMs,taskMs:(after.TaskDuration-before.TaskDuration)*1000,scriptMs:(after.ScriptDuration-before.ScriptDuration)*1000,
+  await cdp.send('HeapProfiler.collectGarbage');const collected=await metrics();
+  await cdp.detach();return {...result,elapsedMs,estimatedAllocatedBytes,allocationSamples:allocation.profile.samples.length,heapAfterGC:collected.JSHeapUsedSize,
+   taskMs:(after.TaskDuration-before.TaskDuration)*1000,scriptMs:(after.ScriptDuration-before.ScriptDuration)*1000,
    heapBefore:before.JSHeapUsedSize,heapAfter:after.JSHeapUsedSize,nodesBefore:before.Nodes,nodesAfter:after.Nodes};
  };
 }

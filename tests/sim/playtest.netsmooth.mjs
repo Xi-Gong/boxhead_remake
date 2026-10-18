@@ -141,6 +141,8 @@ try {
   for (const P of [H, C]) await P.page.evaluate(() => window.__game.__setInfiniteLife(true));
   // (1) Both peers agree on rollback coordination and an adaptive positive input delay.
   const lanH0 = await h.lan();
+  report.environment = await H.page.evaluate(() => ({userAgent:navigator.userAgent,dpr:devicePixelRatio,width:innerWidth,height:innerHeight,
+    canvas:[window.__game.platform.presenter.canvas.width,window.__game.platform.presenter.canvas.height],selection:window.__game.lan().sel}));
   const lanC0 = await c.lan();
   if ((MODERN ? lanH0.inputDelay !== 0 : lanH0.inputDelay < 1) || lanH0.inputDelay !== lanC0.inputDelay) throw new Error(`rollback inputDelay not agreed: ${lanH0.inputDelay}/${lanC0.inputDelay}`);
   if (MODERN && [lanH0,lanC0].some(s=>s.netcode!=='rollback-v2')) throw new Error('modern mode was not negotiated');
@@ -228,7 +230,10 @@ try {
 
   // (3) rAF-resolution key-event probe: DISPLAY position (shadow when live, otherwise sim) must react
   // within one tick + a frame. Record simulation movement independently; D carries steady link latency.
-  const probe = async (pg, key) => pg.evaluate(async (key) => {
+  const probe = async (pg, key) => {
+    await pg.keyboard.up(key);
+    await pg.waitForTimeout(500);
+    return pg.evaluate(async (key) => {
     const lan = () => window.__game.lan();
     const meOf = () => {
       const w = window.__game.main().mcWorld;
@@ -251,7 +256,8 @@ try {
       const me = meOf();
       return !!me && me.mLife > 0 && me.mStateID === 'State_PlayerControl';
     };
-    const before = { sim: simX(), disp: dispX() };
+    const before = { sim: simX(), disp: dispX(), bits: lan().appliedBits };
+    if(before.bits & 8)return {error:'direction already held',before};
     if (before.sim == null) return { error: 'no player', before };
     if (!inControl()) return { error: 'not in control', before };
     window.dispatchEvent(new KeyboardEvent('keydown', { code: key, key, bubbles: true }));
@@ -259,19 +265,22 @@ try {
     const t0 = performance.now();
     let dispAtMs = null;
     let simAtMs = null;
+    let positionAtMs = null;
     await new Promise((resolve) => {
       const tick = () => {
         frames++;
         if (dispAtMs == null && Math.abs((dispX() ?? before.disp) - before.disp) > 1e-6) dispAtMs = performance.now() - t0;
-        if (simAtMs == null && Math.abs((simX() ?? before.sim) - before.sim) > 1e-6) simAtMs = performance.now() - t0;
+        if (simAtMs == null && (lan().appliedBits & 8)) simAtMs = performance.now() - t0;
+        if (positionAtMs == null && Math.abs((simX() ?? before.sim) - before.sim) > 1e-6) positionAtMs = performance.now() - t0;
         if ((dispAtMs != null && simAtMs != null) || frames > 300 || performance.now() - t0 > 3000) resolve();
         else requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     });
     window.dispatchEvent(new KeyboardEvent('keyup', { code: key, key, bubbles: true }));
-    return { before, frames, dispAtMs: dispAtMs != null ? Math.round(dispAtMs) : null, simAtMs: simAtMs != null ? Math.round(simAtMs) : null };
-  }, key);
+    return { before, frames, dispAtMs: dispAtMs != null ? Math.round(dispAtMs) : null, simAtMs: simAtMs != null ? Math.round(simAtMs) : null, positionAtMs };
+    }, key);
+  };
   const probeWithRetry = async (pg, key) => {
     let p = await probe(pg, key);
     if (p.error) {
