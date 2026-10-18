@@ -20,6 +20,7 @@ export class NetPresentation {
   private camera: any;
   private brightnessFilters: any[] = [];
   advancing = false;
+  get displayedLocal(): Readonly<Pose> | undefined { return this.localDisplay; }
 
   capture(world: any): void {
     this.previous = this.current;

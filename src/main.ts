@@ -56,6 +56,8 @@ interface GameDebug {
   tickAudioWatchdog?: typeof tickAudioWatchdog;
   /** QA hook (the netsmooth playtest): the original's own cheat switch _global.mInfinateLife. */
   __setInfiniteLife?: (on: boolean) => Promise<void>;
+  __setRollbackV2?: (on: boolean) => void;
+  __netDigest?: () => unknown;
   /** QA hook (the v0.2.3 playtest): deliver a wire desync notice to the live session (visual gate). */
   __forceDesync?: () => boolean;
   /** QA hook (the v0.2.4 playtest): seed the persisted best-wave unlock (WaveUnlock); returns the current max. */
@@ -85,6 +87,10 @@ const dbg: GameDebug = {
       worldTick: s?.world?.mTick, state: (window as any).__game?.state?.(),
       checkpoint: s?.netCheckpoint?.tick ?? null, frames,
       desyncDetail: s?.desyncDetail ?? null,
+      netcode: s?.startOpts?.netcode ?? 'legacy', diagnostics: s?.diagnostics ?? [],
+      paused: s?.netPaused ?? false,
+      presentation: s?.presentation?.displayedLocal,
+      confirmedEvents: s ? [s.events.confirmedCount, s.events.confirmedHash] : null,
       // v0.2.3 smoothness observability: stall episodes + rollback health (netlockstep pins the semantics;
       // the netsmooth playtest asserts on these over a delayed-link window).
       stallCount: s?.stallCount ?? null,
@@ -92,6 +98,7 @@ const dbg: GameDebug = {
       rollback: s?.rollback
         ? {
             ...s.rollbackStats,
+            predictionLimit: s.predictionLimit,
             confirmLag: (s.world ? s.tickIndex(s.world) : 0) - s.confirmTick,
             ringSize: s.ring.filter(Boolean).length,
             confirmTick: s.confirmTick,
@@ -106,6 +113,8 @@ const dbg: GameDebug = {
     kill: () => SoundEngine.context?.close(),
   },
   __setInfiniteLife: async (on: boolean) => { _global.mInfinateLife = on; },
+  __setRollbackV2: (on: boolean) => { lanBridge().useRollbackV2 = on; },
+  __netDigest: () => netSession()?.debugChecksum(),
   __forceDesync: () => { const s = (lanBridge() as any)?.session; if (!s) return false; s.onNetMessage({ t: 'desync', tick: 1 }); return true; },
   __setWaveUnlock: (n: number) => { recordWaveReached(n); return maxUnlockedWave(); },
   // Watchdog nudge for the packaged audio assertions; also the future Electron 'boxhead:audio-nudge' hook.

@@ -752,6 +752,10 @@ export class NetSession {
   currentWorld(): any {
     return this.world;
   }
+  /** QA reads a paused common boundary; does not advance simulation. */
+  debugChecksum(): LanChecksum | undefined {
+    return this.world ? this.checksum(this.world, this.tickIndex(this.world)) : undefined;
+  }
 
   /** v0.2.1 L3 (Predict.ts): this world's relative lockstep tick index. */
   tickIndex(world: any): number {

@@ -19,6 +19,7 @@ import { _electron as electron } from 'playwright-core';
 import { startMetrics } from '../e2e/perf-metrics.mjs';
 
 const DELAY_MS = Number(process.argv[2] ?? 30);
+const MODERN = process.env.BOXHEAD_NETCODE === 'rollback-v2';
 if (!Number.isFinite(DELAY_MS) || DELAY_MS <= 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>0]');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -32,7 +33,7 @@ const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-rend
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
 const OFFSCREEN = ['-32000', '0'];
 
-const report = { ok: false, delayMs: DELAY_MS, steps: [], errors: [], shots: [] };
+const report = { ok: false, delayMs: DELAY_MS, netcode: MODERN ? 'rollback-v2' : 'legacy', steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
 const shot = async (name, page) => { const p = join(OUT, `net_smooth_${name}.png`); await page.screenshot({ path: p }); report.shots.push(p); step(`shot ${p}`); };
 
@@ -125,6 +126,10 @@ try {
   for (const [n, x] of [['host', h], ['client', c]]) {
     if (!(await x.waitScreen('State_LanSetup', 'Screen_LanSetup', 20000))) throw new Error(`${n}: no setup screen`);
   }
+  for (const P of [H,C]) await P.page.evaluate(async modern => {
+    window.__game.__setRollbackV2?.(modern);
+    await window.__game.__setInfiniteLife(true);
+  }, MODERN);
   await h.click(...START_GAME_BTN);
   for (const [n, x] of [['host', h], ['client', c]]) {
     if (!(await x.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) {
@@ -137,7 +142,8 @@ try {
   // (1) Both peers agree on rollback coordination and an adaptive positive input delay.
   const lanH0 = await h.lan();
   const lanC0 = await c.lan();
-  if (lanH0.inputDelay < 1 || lanH0.inputDelay !== lanC0.inputDelay) throw new Error(`rollback inputDelay not agreed: ${lanH0.inputDelay}/${lanC0.inputDelay}`);
+  if ((MODERN ? lanH0.inputDelay !== 0 : lanH0.inputDelay < 1) || lanH0.inputDelay !== lanC0.inputDelay) throw new Error(`rollback inputDelay not agreed: ${lanH0.inputDelay}/${lanC0.inputDelay}`);
+  if (MODERN && [lanH0,lanC0].some(s=>s.netcode!=='rollback-v2')) throw new Error('modern mode was not negotiated');
   if (!lanH0.rollback || !lanC0.rollback) throw new Error(`rollback not enabled: host=${JSON.stringify(lanH0.rollback)} client=${JSON.stringify(lanC0.rollback)}`);
   const dH = lanH0.inputDelay;
   step(`rollback lockstep running at D=${dH} (injected ${DELAY_MS} ms one-way)`);
@@ -145,7 +151,9 @@ try {
   await shot('02_client_ingame', C.page);
 
   // (2) the smoothness window: constant steering on both machines; sample the observability fields.
-  const WINDOW_MS = 20000;
+  const WINDOW_MS = Number(process.env.BOXHEAD_NET_WINDOW_MS ?? 20000);
+  if(!Number.isFinite(WINDOW_MS)||WINDOW_MS<20000||WINDOW_MS>1800000)throw new Error('invalid sample duration');
+  await H.page.waitForTimeout(3000);
   const finishHost = await startMetrics(H.page),finishClient = await startMetrics(C.page);
   const t0 = Date.now();
   let toggle = false;
@@ -196,13 +204,27 @@ try {
   }
   // (Prediction ships at depth 0 - see PREDICT_MAX_LAG_TICKS; predH/predC stay 0 by design. The counters
   // print so a future depth bump immediately shows live numbers in this report.)
-  if (corrH > 40 || corrC > 40) throw new Error(`rollback corrections ${corrH}/${corrC} too frequent in 20 s (link worse than the design window?)`);
+  if (!MODERN && (corrH > 40 || corrC > 40)) throw new Error(`rollback corrections ${corrH}/${corrC} too frequent in 20 s (link worse than the design window?)`);
+  if (MODERN) for (const rb of [rbH,rbC]) {
+    if(rb.maxDepth>rb.predictionLimit || rb.replayedTicks>rb.corrections*rb.predictionLimit)throw new Error(`unbounded rollback work: ${JSON.stringify(rb)}`);
+  }
   if (lagH > 10 || lagC > 10) throw new Error(`confirm lag ${lagH}/${lagC} beyond the 8-tick window (+2)`);
   for (const [n, P] of [['host', H], ['client', C]]) {
     const a = await P.page.evaluate(() => window.__game.audio?.());
     if (!a || a.state !== 'running' || a.decoded !== 31 || a.failed.length !== 0) throw new Error(`${n} audio gate failed: ${JSON.stringify(a)}`);
   }
   step('smoothness window clean: stalls bounded, lockstep intact, audio healthy on both');
+  if(MODERN){
+    await H.page.keyboard.press('KeyP');
+    for(const x of [h,c])if(!await x.waitFor(()=>window.__game.lan().paused,null,10000))throw new Error('pause did not settle');
+    const final=await Promise.all([H,C].map(p=>p.page.evaluate(()=>({digest:window.__game.__netDigest(),events:window.__game.lan().confirmedEvents}))));
+    report.confirmed=final;
+    if(JSON.stringify(final[0])!==JSON.stringify(final[1]))throw new Error('confirmed paused states/events differ');
+    await shot('confirmed_paused',H.page);
+    await C.page.keyboard.press('KeyP');
+    for(const x of [h,c])if(!await x.waitFor(()=>!window.__game.lan().paused,null,10000))throw new Error('resume did not settle');
+    await H.page.waitForTimeout(500);
+  }
 
   // (3) rAF-resolution key-event probe: DISPLAY position (shadow when live, otherwise sim) must react
   // within one tick + a frame. Record simulation movement independently; D carries steady link latency.
@@ -214,6 +236,8 @@ try {
       return me ?? null;
     };
     const dispX = () => {
+      const modern = lan().presentation;
+      if (lan().netcode === 'rollback-v2' && modern) return modern.x;
       const s = lan().shadow;
       if (s && s.valid) return s.x;
       const me = meOf();
@@ -261,10 +285,12 @@ try {
   };
   const probeH = await probeWithRetry(H.page, 'ArrowRight');
   const probeC = await probeWithRetry(C.page, 'KeyD');
+  report.probes = { host: probeH, client: probeC };
   step(`latency probe host=${JSON.stringify(probeH)}`);
   step(`latency probe client=${JSON.stringify(probeC)}`);
   for (const [n, p] of [['host', probeH], ['client', probeC]]) {
     if (p.skipped) {
+      if (MODERN) throw new Error(`${n} modern response probe must run: ${p.error}`);
       step(`${n} probe skipped (player unavailable)`);
       continue;
     }
@@ -273,6 +299,7 @@ try {
     // DISPLAY bar (what the player feels): one tick + a frame (~60 ms), shadow prediction live.
     if (p.dispAtMs == null) throw new Error(`${n} probe: display position never moved (shadow dead at D=${dH}?)`);
     if (p.dispAtMs > 60) throw new Error(`${n} probe: display took ${p.dispAtMs} ms to react (> one tick + a frame = not local-feeling)`);
+    if (MODERN && (p.simAtMs == null || p.simAtMs > 60)) throw new Error(`${n} simulation response took ${p.simAtMs} ms`);
     step(`${n} sim followed at ${p.simAtMs ?? '>3000'} ms (D=${dH} ticks - the designed input delay)`);
   }
   step(`operation latency is local-class on both peers: display reacts within one tick + a frame`);
