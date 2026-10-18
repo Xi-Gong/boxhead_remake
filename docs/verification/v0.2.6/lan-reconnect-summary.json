@@ -1,0 +1,74 @@
+{
+  "baseline": {
+    "steady": {
+      "host": {
+        "frameP50": 0.5,
+        "frameP95": 2.100000023841858,
+        "taskMs": 1006.364,
+        "elapsedMs": 12129,
+        "heapBefore": 30557888,
+        "heapAfter": 40837136,
+        "filterCaches": 6,
+        "disposedBitmapRefs": 0
+      },
+      "client": {
+        "frameP50": 0.5,
+        "frameP95": 1.9000000357627869,
+        "taskMs": 1007.7399999999999,
+        "elapsedMs": 12132,
+        "heapBefore": 38545564,
+        "heapAfter": 49347796,
+        "filterCaches": 6,
+        "disposedBitmapRefs": 0
+      }
+    },
+    "reconnect": {
+      "host": {
+        "frameP50": 0.3999999761581421,
+        "frameP95": 1,
+        "taskMs": 1367.2450000000001,
+        "elapsedMs": 21788,
+        "heapBefore": 42988280,
+        "heapAfter": 46998692,
+        "filterCaches": 7,
+        "disposedBitmapRefs": 0
+      }
+    }
+  },
+  "candidate": {
+    "steady": {
+      "host": {
+        "frameP50": 0.5,
+        "frameP95": 2.099999964237213,
+        "taskMs": 1021.1560000000002,
+        "elapsedMs": 12127,
+        "heapBefore": 30882020,
+        "heapAfter": 40657044,
+        "filterCaches": 6,
+        "disposedBitmapRefs": 0
+      },
+      "client": {
+        "frameP50": 0.5,
+        "frameP95": 1.9000000357627869,
+        "taskMs": 1037.202,
+        "elapsedMs": 12129,
+        "heapBefore": 30640164,
+        "heapAfter": 41573420,
+        "filterCaches": 6,
+        "disposedBitmapRefs": 0
+      }
+    },
+    "reconnect": {
+      "host": {
+        "frameP50": 0.3999999761581421,
+        "frameP95": 1,
+        "taskMs": 1372.523,
+        "elapsedMs": 21922,
+        "heapBefore": 42706880,
+        "heapAfter": 47862360,
+        "filterCaches": 7,
+        "disposedBitmapRefs": 0
+      }
+    }
+  }
+}

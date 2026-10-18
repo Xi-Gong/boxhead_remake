@@ -1,17 +1,16 @@
-// v0.2.3 packaged LAN smoothness playtest (rollback acceptance): two real exes over a REAL localhost TCP link
+// Packaged LAN smoothness playtest: two real exes over a REAL localhost TCP link
 // with --boxhead-net-delay=<ms> one-way latency injected in the transport (the UDP beacons are untouched).
-// v0.2.3 replaced input-delay escalation + display prediction with prediction+rollback: the local input
-// applies after ONE tick (D pinned to 1) and late remote frames run as predictions (corrections roll back).
+// Rollback coordination is enabled, but PREDICT_MAX_LAG_TICKS ships at 0. D adapts to link latency;
+// the render-only shadow supplies immediate display feedback while the simulation waits for inputs.
 //
 // Asserted (smoothness itself is PROGRAMMATIC - a screenshot cannot show cadence; the zai vision gate uses the
 // screenshots to verify the scenes render correctly):
-//   1. rollback mode agreed by both peers with D=1 at ANY injected delay class;
-//   2. a 20 s play window with constant steering: stall episodes <= 1 in the late half (prediction absorbs
-//      late frames; a stall means the peer fell behind the 8-tick window), tick drift <= 2, scores equal,
+//   1. rollback coordination and the same positive input delay agreed by both peers;
+//   2. a 20 s steering/fire window: late-half stall episodes <=1 at30ms, <=3 at higher delays,
+//      sampled tick drift <=10, scores equal,
 //      no desync, audio healthy on both;
-//   3. the SIM position itself (not a display shadow - retired in v0.2.3) reacts to a keypress within one
-//      tick + a frame (~60 ms worst case) - operation latency, exactly like local play;
-//   4. prediction health: corrections engaged but bounded (< 40 per 20 s per peer), confirm lag <= window.
+//   3. DISPLAY response <=60ms; simulation response is recorded separately;
+//   4. rollback counters remain bounded (prediction/corrections normally0 at shipping depth0).
 //   node tests/sim/playtest.netsmooth.mjs [delayMs=30]
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -135,7 +134,7 @@ try {
   // Smoothness isolation: the original's own cheat switch - players take no damage, so the window measures
   // cadence, not survival.
   for (const P of [H, C]) await P.page.evaluate(() => window.__game.__setInfiniteLife(true));
-  // (1) rollback mode on both peers with the pinned D=1 (any delay class - prediction absorbs the latency).
+  // (1) Both peers agree on rollback coordination and an adaptive positive input delay.
   const lanH0 = await h.lan();
   const lanC0 = await c.lan();
   if (lanH0.inputDelay < 1 || lanH0.inputDelay !== lanC0.inputDelay) throw new Error(`rollback inputDelay not agreed: ${lanH0.inputDelay}/${lanC0.inputDelay}`);
@@ -183,8 +182,8 @@ try {
   const wiH = await h.worldInfo(), wiC = await c.worldInfo();
   step(`window done: stalls ${stallsH}/${stallsC} (late-half ${lateStallsH}/${lateStallsC}), predictions ${predH}/${predC}, corrections ${corrH}/${corrC}, confirmLag ${lagH}/${lagC}, ticks ${wiH.tick}/${wiC.tick}, scores ${wiH.score}/${wiC.score}`);
   // The opening seconds can yield a few slots while the peers' tick phases settle; what must hold is the
-  // SUSTAINED rate: (almost) no stalls in the second half (prediction absorbs late frames).
-  const LATE_LIMIT = DELAY_MS <= 40 ? 1 : 3; // strict at the 60 ms class; the stress class tolerates a burst
+  // SUSTAINED rate: bounded stalls in the second half after delay/phase settling.
+  const LATE_LIMIT = DELAY_MS <= 40 ? 1 : 3; // stricter at30ms; higher-delay stress permits a small burst
   if (lateStallsH > LATE_LIMIT || lateStallsC > LATE_LIMIT) {
     throw new Error(`sustained stall rate ${lateStallsH}/${lateStallsC} in the late half (peer beyond the 8-tick prediction window?)`);
   }
@@ -205,12 +204,8 @@ try {
   }
   step('smoothness window clean: stalls bounded, lockstep intact, audio healthy on both');
 
-  // (3) operation-latency probe (in-page, rAF-resolution): dispatch a real key event and count until the SIM
-  // position itself moves. v0.2.3 rollback applies the local input after ONE tick (D=1) - the bar is exactly
-  // local play's worst case (one 40 ms tick + a frame), no display-layer prediction involved any more.
-  // v0.2.3: the DISPLAY position (the shadow when prediction is live, else the sim) must react within one
-  // tick + a frame - that is what the player perceives as input latency. The sim position follows D ticks
-  // later by design (D carries the steady link latency).
+  // (3) rAF-resolution key-event probe: DISPLAY position (shadow when live, otherwise sim) must react
+  // within one tick + a frame. Record simulation movement independently; D carries steady link latency.
   const probe = async (pg, key) => pg.evaluate(async (key) => {
     const lan = () => window.__game.lan();
     const meOf = () => {
@@ -280,7 +275,7 @@ try {
     if (p.dispAtMs > 60) throw new Error(`${n} probe: display took ${p.dispAtMs} ms to react (> one tick + a frame = not local-feeling)`);
     step(`${n} sim followed at ${p.simAtMs ?? '>3000'} ms (D=${dH} ticks - the designed input delay)`);
   }
-  step(`operation latency is local-class on both peers: sim reacts within one tick + a frame`);
+  step(`operation latency is local-class on both peers: display reacts within one tick + a frame`);
   await shot('03_host_after_window', H.page);
   await shot('04_client_after_window', C.page);
 

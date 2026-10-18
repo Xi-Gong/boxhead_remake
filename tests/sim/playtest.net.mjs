@@ -237,8 +237,8 @@ try {
     await lanState('host', H.page);
     await lanState('client', C.page);
   }
-  // v0.2.3 rollback: the ABSOLUTE mTick gap contains the opening prediction head start (the host simulates on
-  // prediction while the client's world builds); the lockstep invariant is the RELATIVE tick (mTick - startTick).
+  // Sampled peers can differ by startup phase and sequential observation time.
+  // Compare relative ticks (mTick - startTick); deterministic state/sound equality is tested in netlockstep.
   const rel = async (pg) => pg.evaluate(() => {
     const l = window.__game?.lan?.();
     const w = window.__game?.main?.()?.mcWorld;
@@ -246,11 +246,9 @@ try {
   });
   const relH = await rel(H.page);
   const relC = await rel(C.page);
-  step(`relative ticks: host=${relH} client=${relC} (absolute ${wi1.tick}/${wc1}, opening head start ${wi1.tick - wc1.tick})`);
-  // v0.2.3 rollback steady state: the peer whose world finished building first runs up to one prediction
-  // window ahead (ROLLBACK_WINDOW_TICKS=8) while the other's prime is in flight; every frame still crosses
-  // and corrections keep the timelines identical (scores equal below). A drift BEYOND the window would mean
-  // frames stopped crossing - that is the lockstep failure this asserts against.
+  step(`relative ticks: host=${relH} client=${relC} (absolute ${wi1.tick}/${wc1.tick}, sampled gap ${wi1.tick - wc1.tick})`);
+  // Retain the historical10-tick liveness bound. Shipping prediction depth is0; this bound is not
+  // evidence that rollback predictions are occurring, nor a substitute for exact checksum tests.
   if (Math.abs(relH - relC) > 10) throw new Error(`RELATIVE tick drift ${relH} vs ${relC} beyond the prediction window (frames stopped crossing?)`);
   if (wi1.tick <= wi0.tick) throw new Error('no ticks ran');
   if (wi1.score !== wc1.score) throw new Error(`score mismatch ${wi1.score} vs ${wc1.score}`);
@@ -335,8 +333,7 @@ try {
     await lanState('client-post-resume', C2.page);
     throw new Error('no ticks after the resume');
   }
-  // v0.2.3: the same prediction-window bound as the pre-kill phase (the resumed worlds also rebuild with a
-  // small skew; frames cross and scores stay equal - that is the lockstep invariant under rollback).
+  // Retain the same liveness bound after checkpoint recovery; samples are not simultaneous.
   if (Math.abs(wi4.tick - wc4.tick) > 10) throw new Error(`post-resume tick drift ${wi4.tick} vs ${wc4.tick} beyond the prediction window`);
   if (wi4.score !== wc4.score) throw new Error(`post-resume score mismatch ${wi4.score} vs ${wc4.score}`);
   if (wi4.score !== wc4.score) throw new Error(`post-resume score mismatch ${wi4.score} vs ${wc4.score}`);
