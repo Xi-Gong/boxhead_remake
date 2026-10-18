@@ -98,6 +98,18 @@ function pair(opts?: { identity?: string; linkDeadMs?: number }): { host: LanTra
 }
 
 describe('LanTransport over localhost', () => {
+  it('discovers real UDP beacons and mirrors room availability', async () => {
+    const { host, client } = pair();
+    let hosts: NonNullable<LanEvent['hosts']> = [];
+    client.onEvent(e => { if (e.kind === 'hosts') hosts = e.hosts ?? []; });
+    try {
+      await client.startDiscovery();const port = await host.startHost();
+      await waitUntil(() => hosts.some(h => h.port === port && h.app === ID && h.status === 'lobby'));
+      expect((await client.connect('127.0.0.1', { name:'discovery-client',char:0 },port)).ok).toBe(true);
+      host.setHostStatus('playing');
+      await waitUntil(() => hosts.some(h => h.port === port && h.status === 'playing' && h.players === 2));
+    } finally { client.shutdown();host.shutdown(); }
+  });
   it('shutdown closes accepted sockets that have not sent a hello', async () => {
     const { host } = pair();const port = await host.startHost();
     const raw = tcpConnect({ host:'127.0.0.1',port });cleanups.push(()=>raw.destroy());
