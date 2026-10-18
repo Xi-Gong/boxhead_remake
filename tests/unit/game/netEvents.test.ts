@@ -1,6 +1,22 @@
 import { expect, it } from 'vitest';
 import { EventJournal } from '../../../src/game/local/Net/Events.ts';
 
+it('keeps legacy burst event identities, including colon-prefix kinds, after correction and discard',()=>{
+  const journal=new EventJournal(),heard:number[]=[],reference:string[]=[];
+  journal.begin(0);journal.record(0,0,'discarded',()=>{throw new Error('discarded event played');});
+  journal.discardFrom(0);journal.begin(0);
+  for(let n=0;n<2000;n++){
+    const owner=n%3-1,kind=['explosion','explosion:0','explosion:0:1','scorch:'+n+':12:0:1'][n%4]!;
+    const prefix=`0:${owner}:${kind}:`,ordinal=reference.filter(id=>id.startsWith(prefix)).length;
+    reference.push(prefix+ordinal);journal.record(0,owner,kind,()=>heard.push(n));
+  }
+  let hash=0x811c9dc5;
+  for(const id of reference)for(let n=0;n<id.length;n++)hash=Math.imul(hash^id.charCodeAt(n),0x01000193)>>>0;
+  journal.confirm(0);
+  expect(journal.confirmedHash).toBe(hash);expect(journal.confirmedCount).toBe(2000);
+  expect(heard).toEqual(Array.from({length:2000},(_,n)=>n));expect(journal.retainedEvents).toBe(0);
+});
+
 it('plays local feedback immediately, defers remote feedback and deduplicates correction/confirmation', () => {
   const e = new EventJournal();
   const heard: string[] = [];

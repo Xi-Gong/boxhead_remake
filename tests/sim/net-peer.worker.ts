@@ -5,6 +5,7 @@ import { captureWorldSnap, makeSnapCtx } from '../../src/game/local/Net/WorldSna
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 import { advanceVirtual } from '../../src/engine/flash/clock.ts';
 import { Thing } from '../../src/game/packages.ts';
+import { explosionBurst } from './explosionFixture.ts';
 
 const role = Number(process.argv[2]) as 0 | 1;
 const options = JSON.parse(process.argv[3] ?? '{}');
@@ -19,18 +20,22 @@ if (options.weapons) for (const player of game.players()) for (const name of Obj
 process.send?.({ ready: true, sent });
 sent = [];
 const originalWorld = game.world();
-if (options.growth) {
+let peakExplosions = 0;
+if (options.growth || options.explosions) {
   const processWorld = originalWorld.Process;
   originalWorld.Process = function (this: any) {
     const tick = session.tickIndex(this);
-    if (tick > 0 && tick % 19 === 0) {
+    if (options.explosions && tick === 40) explosionBurst(this, options.explosions);
+    if (options.growth && tick > 0 && tick % 19 === 0) {
       const owner = game.players()[Math.floor(tick / 19) % 2];
       const victim = new Thing.Creature.CThing_Creature_Zombie(owner.mPosition.Clone(), owner.mAngle.Clone());
       this.mThing_Collection.AddThing(victim); victim.Process_Init(); victim.mLife = 1;
       new Thing.Affect.CThing_Affect_Bullet(owner,owner,1,owner.mAngle).AffectThing(victim);
       victim.SetState('State_Dying'); // Exercise the original death bookkeeping inside this simulated step.
     }
-    return processWorld.call(this);
+    const result = processWorld.call(this);
+    if (options.explosions) peakExplosions = Math.max(peakExplosions, this.mThing_Collection.mThingCounters.CThing_Effect_Explosion ?? 0);
+    return result;
   };
 }
 const weapons = new Set<string>();
@@ -56,6 +61,7 @@ process.on('message', (m: any) => {
       errors: game.errors, stats: session.rollbackStats, weapons: [...weapons],
       checkpoint: session.netCheckpoint?.tick, startTick: world.mTick - session.tickIndex(world),
       growth: world.mUpgrades.lanGrowth,
+      peakExplosions,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash],
         decals: [session.decals.confirmedCount, session.decals.confirmedHash] } : {}) });
