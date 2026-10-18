@@ -8,36 +8,24 @@
 import { CSound } from '../packages.ts';
 import { cycleSelectedStartWave, getSelectedStartWave } from './StartWave.ts';
 import { maxUnlockedWave } from './WaveUnlock.ts';
-import { GREY, PILL_FILL, PILL_LABEL, menuText, pillBase, washCapsule } from './UiStyle.ts';
+import { GREY, PILL_FILL, PILL_LABEL, menuText, menuShadow, pillBase } from './UiStyle.ts';
 
 /** An outlined white square arrow button with a solid dark triangle (the level selector's arrow family). */
 function arrow(parent: any, name: string, x: number, y: number, dir: -1 | 1, onPress: () => void): any {
-  const S = 26;
   const mc = parent.createEmptyMovieClip(name, parent.getNextHighestDepth());
   mc._x = x;
   mc._y = y;
   const c = mc.createEmptyMovieClip('_Contents', mc.getNextHighestDepth());
-  c._x = -S / 2;
-  c._y = -S / 2;
-  c.lineStyle(2, 0x6b6b6b);
+  c.lineStyle(1.2, 0x333333);
   c.beginFill(PILL_FILL, 100);
-  c.moveTo(0, 0);
-  c.lineTo(S, 0);
-  c.lineTo(S, S);
-  c.lineTo(0, S);
-  c.lineTo(0, 0);
+  c.moveTo(dir * 6, 0);
+  c.lineTo(-dir * 6, -11);
+  c.lineTo(-dir * 6, 11);
+  c.lineTo(dir * 6, 0);
   c.endFill();
-  c.lineStyle();
-  c.beginFill(PILL_LABEL, 100);
-  const cx = S / 2, half = 6;
-  c.moveTo(cx + dir * half, S / 2);
-  c.lineTo(cx - dir * half * 0.6, S / 2 - half);
-  c.lineTo(cx - dir * half * 0.6, S / 2 + half);
-  c.lineTo(cx + dir * half, S / 2);
-  c.endFill();
-  const hover = washCapsule(c, '_Wash', 0, 0, S, S);
-  mc.onRollOver = function (): void { hover._visible = true; };
-  mc.onRollOut = function (): void { hover._visible = false; };
+  c.filters = menuShadow();
+  mc.onRollOver = (): void => { c._alpha = 65; };
+  mc.onRollOut = (): void => { c._alpha = 100; };
   mc.onDragOut = mc.onRollOut;
   mc.onRelease = function (): void {
     onPress();
@@ -61,7 +49,7 @@ export function buildStartWaveCycler(parent: any, x: number, y: number): any {
   plate._y = -14;
   pillBase(plate, 90, 28);
   const value = menuText(plate, 'mcValue', 0, 3, 90, 24, '1', 18, PILL_LABEL);
-  const best = menuText(mc, 'mcBest', 82, -8, 70, 16, 'BEST 1', 11, GREY); // right of the right arrow, plate-row centred
+  const best = menuText(mc, 'mcBest', -45, 21, 90, 16, 'BEST 1', 11, GREY); // right of the right arrow, plate-row centred
   const refresh = (): void => {
     value.text = String(getSelectedStartWave());
     best.text = 'BEST ' + maxUnlockedWave();

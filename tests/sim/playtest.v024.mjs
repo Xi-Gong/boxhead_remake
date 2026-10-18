@@ -121,7 +121,7 @@ try {
   await A.page.waitForTimeout(700); // screen-transition settle
   if ((await waveText(A.page)) !== '1') fail('A: fresh cycler default is not 1: ' + (await waveText(A.page)));
   if ((await bestText(A.page)) !== 'BEST 1') fail('A: fresh BEST copy is not BEST 1: ' + (await bestText(A.page)));
-  await a.click(320 - 160, 364); await a.click(320 - 160, 364); // right-arrow area clicks on a PINNED cycler
+  await a.click(320 - 160, 377); await a.click(320 - 160, 377); // right-arrow area clicks on a PINNED cycler
   if ((await waveText(A.page)) !== '1') fail('A: fresh cycler is not pinned at 1: ' + (await waveText(A.page)));
   step('A: fresh save pinned at wave 1 (BEST 1)');
   await shot('01_select_fresh', A.page);

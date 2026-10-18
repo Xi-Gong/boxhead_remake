@@ -35,9 +35,9 @@ export const MENU_STEP = 33;            // main-menu item rhythm: y 226/259/292/
 export const MENU_FONT = 'Arial Rounded MT Bold';
 export const BODY_FONT = 'Calibri';
 
-/** The original menu-item drop shadow (white glow + soft 45deg shadow - what the baked items carry). */
+/** The soft 45-degree shadow carried by the authored menu parents. */
 export function menuShadow(): any[] {
-  return [new flash.filters.GlowFilter(0xffffff, 1, 6, 6, 6, 2), new flash.filters.DropShadowFilter(5, 45, 0x000000, 1, 5, 5, 0.18, 1)];
+  return [new flash.filters.DropShadowFilter(5, 45, 0x000000, 1, 5, 5, 0.18, 1)];
 }
 
 /** Plain white glow (labels over art, the options-window look). */
@@ -102,7 +102,7 @@ export function menuTextItem(parent: any, name: string, x: number, y: number, la
   text(contents, '_Label', -150, -size * 0.67, 300, 30, MENU_FONT, size, INK, false, 'center', label);
   // Authored items carry their soft shadow on the PARENT; Register_Button owns child hover filters.
   // A white child glow made additions look outlined and disappeared permanently on the first roll-out.
-  mc.filters = [new flash.filters.DropShadowFilter(5, 45, 0x000000, 1, 5, 5, 0.18, 1)];
+  mc.filters = menuShadow();
   return mc;
 }
 

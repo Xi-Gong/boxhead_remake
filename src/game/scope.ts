@@ -331,7 +331,7 @@ export function applyScope(): void {
     selectCtorPrev.call(this);
     resetSelectedStartWave();
     if (this.mMode !== 'DeathMatch') {
-      buildStartWaveCycler(this, 100, 364);
+      buildStartWaveCycler(this, 100, 377);
     }
   };
   // v0.2.5 (modal z-order): the cycler is drawn at runtime, so in AS2 depth terms it sits ABOVE the SWF-authored
