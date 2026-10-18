@@ -4,7 +4,7 @@
 // Pads connect automatically (Gamepad API, appears after any button press); clicking a pad chip SWAPS the
 // assignments (the manual connect). DOM-only like the LAN overlays: it never touches the simulation or the
 // visual baselines, and only the pad chips catch clicks - the strip itself is pointer-transparent.
-import type { GamepadHandle, GamepadStatus } from './Gamepad.ts';
+import type { GamepadHandle } from './Gamepad.ts';
 
 const CHIP = 'padding:3px 9px;border:1px solid #9c9c9c;border-radius:3px;background:#181818;color:#fff;'
   + 'font:inherit;white-space:nowrap';
@@ -24,9 +24,9 @@ let timer: number | undefined;
 let lastKey = '';
 
 export function installInputBadge(h: GamepadHandle): void {
+  disposeInputBadge();
   handle = h;
   if (typeof document === 'undefined') return;
-  disposeInputBadge();
   const stage = document.getElementById('stage') ?? document.body;
   el = document.createElement('div');
   el.style.cssText = 'position:absolute;left:10px;bottom:10px;z-index:8;display:flex;gap:6px;align-items:center;'
@@ -77,6 +77,7 @@ function draw(): void {
     const p = s.pads[i]!;
     chip.textContent = p.present ? `PAD ${i + 1} →P${p.player + 1}` : `PAD ${i + 1}`;
     chip.style.cssText = p.present && now - p.lastActive < ACTIVE_MS ? CHIP_ACTIVE : p.present ? CHIP : CHIP_OFF;
+    chip.style.pointerEvents = 'auto'; // cssText replaces every inline property, including the click opt-in.
   }
   if (hintEl) hintEl.textContent = s.pads[0].present || s.pads[1].present ? '' : 'press any button on your gamepad to connect it';
 }
@@ -101,5 +102,6 @@ export function disposeInputBadge(): void {
   el = undefined;
   chips = [];
   hintEl = undefined;
+  handle = undefined;
   lastKey = '';
 }

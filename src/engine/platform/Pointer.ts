@@ -66,9 +66,9 @@ export function attachMouse(opts: MouseOptions): MouseHandle {
   };
   const onDown = (e: PointerEvent): void => {
     if (opts.isBlocked?.() || e.button !== 0) return;
-    // A DOM text widget (the LAN IP input) owns its clicks: preventDefault + canvas.focus() would steal the
-    // focus it needs for typing, and feeding the click into the game would press the canvas button UNDER it.
-    if (e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
+    // DOM controls own their clicks. Capturing a pad-chip press on the stage retargets its release/click away
+    // from the button; forwarding it would also press the canvas control underneath the DOM widget.
+    if (e.target instanceof HTMLElement && (e.target.closest('button,input,textarea,select') || e.target.isContentEditable)) return;
     e.preventDefault();
     presenter.canvas.focus({ preventScroll: true });
     try { el.setPointerCapture(e.pointerId); } catch { /* ignore */ }
