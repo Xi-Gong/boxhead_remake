@@ -15,12 +15,14 @@ export interface Deviation {
 export const DEVIATIONS: Deviation[] = [
   {
     id: 'LAN_PERSONAL_GROWTH',
-    file: 'local/Net/Growth.ts, NetSession.ts; local/Resume.ts',
+    file: 'local/Net/Growth.ts, GrowthHud.ts, NetSession.ts; local/Resume.ts',
     description: 'Capable LAN Coop peers negotiate personal-growth-v1: separate last-hit scores, permanent levels ' +
       '(zombie 1 XP, devil 5 XP, 5 XP per level, cap 125) and original weapon upgrades per player. Score uses ' +
       'pre-kill level. Current-wave retry restores its starting checkpoint, including personal growth; fresh ' +
       'selected waves use the existing difficulty/head-start curve. Optional snapshot/config fields preserve ' +
-      'local version2 saves and the legacy cooperative rules when the capability is absent.',
+      'local version2 saves and the legacy cooperative rules when the capability is absent. Confirmed personal ' +
+      'scores/XP flank a centered wave HUD; overhead levels and a two-player pause upgrade summary use original ' +
+      'embedded fonts and display-only clips. Level feedback is bounded to 700 ms without timers.',
   },
   {
     id: 'DECAL_MASK_1X',

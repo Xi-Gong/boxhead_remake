@@ -1,0 +1,154 @@
+// LAN_PERSONAL_GROWTH: display-only, world-owned clips. No simulation fields, timers or DOM listeners.
+import { flash, TextFormat } from '../../../engine/runtime.ts';
+import { nowMs } from '../../../engine/flash/clock.ts';
+import { World } from '../../packages.ts';
+import { BODY_FONT, MENU_FONT, INK, RED, text, capsule } from '../UiStyle.ts';
+import { growthOf, MAX_LEVEL, XP_PER_LEVEL, type GrowthState } from './Growth.ts';
+import { netSession } from './NetSession.ts';
+
+export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 112, top: 4, headTop: -94 } as const;
+export function growthLayout(width: number): { left: number; right: number; center: number; bottom: number } {
+  return { left: GROWTH_HUD.margin, right: width - GROWTH_HUD.margin - GROWTH_HUD.width,
+    center: (width - GROWTH_HUD.centerWidth) / 2, bottom: GROWTH_HUD.top + GROWTH_HUD.height };
+}
+interface Side { clip: any; score: any; level: any; xp: any; fill: any; lastScore: number; lastLevel: number; lastXp: number; pulseUntil: number; pulse: boolean }
+interface HudView { clip: any; sides: [Side, Side]; center: any; wave: any; lastWave: number }
+const views = new WeakMap<object, HudView>();
+const heads = new WeakMap<object, any>();
+const outlined = (): any[] => [new flash.filters.GlowFilter(0x000000, 1, 2, 2, 10, 1)];
+
+function backing(clip: any, width: number, height: number): void {
+  clip.lineStyle(0.5, 0x777777, 30);
+  clip.beginFill(0xf5f5f3, 85);
+  // Small-radius corners echo the original game's life bar without a large menu-shaped capsule.
+  const r=5;
+  clip.moveTo(r,0); clip.lineTo(width-r,0); clip.curveTo(width,0,width,r);
+  clip.lineTo(width,height-r); clip.curveTo(width,height,width-r,height);
+  clip.lineTo(r,height); clip.curveTo(0,height,0,height-r); clip.lineTo(0,r); clip.curveTo(0,0,r,0);
+  clip.endFill(); clip.lineStyle();
+}
+function side(parent: any, index: number): Side {
+  const clip = parent.createEmptyMovieClip('_Player' + index, parent.getNextHighestDepth());
+  backing(clip,GROWTH_HUD.width,GROWTH_HUD.height);
+  text(clip,'_Identity',7,3,34,19,BODY_FONT,12,index===0?RED:INK,true,'left','P'+(index+1));
+  const score=text(clip,'_Score',38,0,164,26,MENU_FONT,18,0xffffff,false,'right',''); score.filters=outlined();
+  const level=text(clip,'_Level',7,24,78,16,BODY_FONT,11,INK,true,'left','');
+  const xp=text(clip,'_Experience',89,24,113,16,BODY_FONT,11,INK,false,'right','');
+  const track=clip.createEmptyMovieClip('_Track',clip.getNextHighestDepth()); track._x=8; track._y=39;
+  track.beginFill(0x333333,22); capsule(track,0,0,194,4); track.endFill();
+  const fill=track.createEmptyMovieClip('_Fill',track.getNextHighestDepth());
+  fill.beginFill(0x00c800,100); capsule(fill,0,0,194,4); fill.endFill();
+  return {clip,score,level,xp,fill,lastScore:-1,lastLevel:-1,lastXp:-1,pulseUntil:0,pulse:false};
+}
+function create(hud: any): HudView {
+  const world=hud.mWorld;
+  const clip=world.createEmptyMovieClip('_LanGrowthHud',world.getNextHighestDepth());
+  const center=clip.createEmptyMovieClip('_Wave',clip.getNextHighestDepth()); backing(center,112,46);
+  text(center,'_Caption',0,0,112,17,BODY_FONT,10,INK,true,'center','WAVE');
+  const wave=text(center,'_Number',0,14,112,30,MENU_FONT,22,0xffffff,false,'center',''); wave.filters=outlined();
+  const result:HudView={clip,sides:[side(clip,0),side(clip,1)],center,wave,lastWave:-1};
+  clip.onUnload=():void=>{views.delete(hud);};
+  views.set(hud,result); return result;
+}
+function update(hud: any, state: GrowthState, wave: number): void {
+  const view=views.get(hud)??create(hud), layout=growthLayout(hud.mWorld.mScreenSize.x), time=nowMs();
+  view.clip._y=GROWTH_HUD.top;
+  view.clip._visible=!hud.mcScreenPause;
+  view.sides[0].clip._x=layout.left; view.sides[1].clip._x=layout.right; view.center._x=layout.center;
+  if(view.lastWave!==wave){view.wave.text=String(wave);view.lastWave=wave;}
+  for(let index=0;index<2;index++){
+    const p=state.players[index]!, ui=view.sides[index]!;
+    if(ui.lastScore!==p.score){
+      const value=String(p.score).padStart(12,'0');
+      ui.score.setNewTextFormat(new TextFormat(MENU_FONT,Math.min(18,18*12/value.length),0xffffff,false,false,false,undefined,undefined,'right'));
+      ui.score.text=value;ui.lastScore=p.score;
+    }
+    if(ui.lastLevel!==p.level){
+      if(ui.lastLevel>=0&&p.level>ui.lastLevel)ui.pulseUntil=time+700;
+      ui.level.text='LV '+p.level;ui.lastLevel=p.level;
+    }
+    const pulse=time<ui.pulseUntil;
+    if(ui.lastXp!==p.xp||ui.pulse!==pulse||ui.xp.text===''){
+      ui.xp.text=p.level===MAX_LEVEL?'MAX':pulse?'LEVEL UP!':`${p.xp} / ${XP_PER_LEVEL} XP`;
+      ui.xp.textColor=pulse?0x007000:INK;ui.level.textColor=pulse?0x007000:INK;
+      ui.pulse=pulse;ui.lastXp=p.xp;
+    }
+    ui.fill._xscale=p.level===MAX_LEVEL?100:p.xp/XP_PER_LEVEL*100;
+    ui.fill._visible=p.level===MAX_LEVEL||p.xp>0;
+  }
+}
+
+const WEAPONS=[['pistol','Pistol'],['uzi','UZI'],['shotgun','Shotgun'],['barrel','Barrel'],['grenade','Grenade'],
+  ['fakewall','Fake wall'],['mine','Claymore'],['rocket','Rocket'],['chargepack','Charge pack'],['railgun','Railgun']];
+function pauseGrowth(hud: any, state: GrowthState): void {
+  const pause=hud.mcScreenPause;
+  if(!pause||pause._PersonalUpgrades)return;
+  const oldHeading=pause.getInstanceAtDepth(15); if(oldHeading)oldHeading._visible=false;
+  for(let n=0;n<100;n++)if(pause['upgrade_'+n])pause['upgrade_'+n]._visible=false;
+  const layer=pause.createEmptyMovieClip('_PersonalUpgrades',pause.getNextHighestDepth());
+  text(layer,'_Title',0,73,640,20,BODY_FONT,13,0xffffff,true,'center','PERSONAL UPGRADES');
+  for(let i=0;i<2;i++){
+    const x=28+i*304,p=state.players[i]!;
+    text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${p.level===MAX_LEVEL?'MAX':p.xp+'/5 XP'}`);
+    const groups:Record<string,Record<string,boolean>>={pistol:{}};
+    for(let n=1;n<=p.level;n++)for(const item of hud.mWorld.mUpgrades.mMultipliers[n]??[]){
+      if(item.mClassID==='CThing_Creature_Player'&&typeof item.mValue==='string')groups[item.mValue]??={};
+      else if(item.mName){
+        const key=item.mClassID.replace(/^CThing_(?:Weapon|Object)_/,'').toLowerCase();
+        if(item.mValue===true)(groups[key]??={})[item.mProp]=true;
+      }
+    }
+    let row=0;
+    for(const [key,name] of WEAPONS){
+      if(!groups[key!])continue;
+      const y=129+row++*34;
+      text(layer,`_Weapon${i}_${key}`,x,y,280,17,BODY_FONT,12,0xffffff,true,'left',name!);
+      const flags=groups[key!]!, details:string[]=[];
+      for(const [prop,label] of Object.entries(PERK_LABELS)){
+        if(!flags[prop])continue;
+        if((prop==='DoubleDamage'&&(flags.QuadDamage||flags.FatalDamage))||(prop==='QuadDamage'&&flags.FatalDamage)
+          ||(prop==='DoubleAmmo'&&(flags.QuadAmmo||flags.InfinateAmmo))||(prop==='QuadAmmo'&&flags.InfinateAmmo)
+          ||(prop==='FastFire'&&flags.RapidFire)||(prop==='LongShot'&&flags.InfinateRange)
+          ||(prop==='BigBang'&&flags.BiggerBang)||(prop==='WideShot'&&flags.WiderShot))continue;
+        details.push(label);
+      }
+      text(layer,`_Details${i}_${key}`,x,y+14,280,27,BODY_FONT,10,0xcccccc,false,'left',details.join(' / ')||'Standard',true);
+    }
+  }
+  pause.cacheAsBitmap=false;
+}
+
+const PERK_LABELS:Record<string,string>={FastFire:'Auto fire',RapidFire:'Rapid fire',DoubleDamage:'2x damage',
+  QuadDamage:'4x damage',FatalDamage:'10x damage',DoubleAmmo:'2x ammo',QuadAmmo:'4x ammo',InfinateAmmo:'Infinite ammo',
+  LongShot:'Long range',InfinateRange:'Infinite range',WideShot:'Wide shot',WiderShot:'Wider shot',BigBang:'Big blast',
+  BiggerBang:'Bigger blast',ClusterExplode:'Cluster blast',HomingMissiles:'Homing'};
+
+export function installGrowthHud(): void {
+  const proto=World.CHud.prototype as any,draw=proto.Draw,updatePlayer=proto.UpdatePlayer,pause=proto.Pause;
+  proto.Draw=function(this:any,...args:any[]):any{
+    const result=draw.apply(this,args),session=netSession();
+    if(growthOf(this.mWorld)&&session?.confirmedGrowth){
+      if(World.CHud.mcScoreTotal)World.CHud.mcScoreTotal._visible=false;
+      update(this,session.confirmedGrowth,session.confirmedWave);
+    }
+    return result;
+  };
+  proto.UpdatePlayer=function(this:any,player:any,position:any,...args:any[]):any{
+    const result=updatePlayer.call(this,player,position,...args),session=netSession();
+    if(!growthOf(this.mWorld)||!session?.confirmedGrowth)return result;
+    const clip=this.mcPlayers[player.mPlayerIndex];if(!clip)return result;
+    let label=heads.get(clip);
+    if(!label){label=text(clip,'_PersonalLevel',-30,GROWTH_HUD.headTop,60,17,BODY_FONT,11,0xffffff,true,'center','');label.filters=outlined();heads.set(clip,label);}
+    const value='LV '+session.confirmedGrowth.players[player.mPlayerIndex]!.level;
+    if(label.text!==value)label.text=value;
+    clip._x=Math.max(48,Math.min(this.mWorld.mScreenSize.x-48,clip._x));
+    clip._y=Math.max(growthLayout(this.mWorld.mScreenSize.x).bottom-GROWTH_HUD.headTop+3,clip._y);
+    return result;
+  };
+  proto.Pause=function(this:any,on:any):any{
+    const result=pause.call(this,on),state=netSession()?.confirmedGrowth;
+    if(on&&growthOf(this.mWorld)&&state)pauseGrowth(this,state);
+    const view=views.get(this);if(view)view.clip._visible=!on;
+    return result;
+  };
+}

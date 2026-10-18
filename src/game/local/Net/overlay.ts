@@ -72,6 +72,7 @@ function sync(session: NetSession | null): void {
   }
   const inGame = session.phase === 'playing' || session.phase === 'reconnecting' || session.phase === 'desync';
   if (pingEl) {
+    pingEl.style.top = session.confirmedGrowth ? '58px' : '8px';
     // v0.1.7: live per heartbeat; hidden once the game is over (the lobby room view shows its own PING line).
     const rtt = inGame ? session.rttMs : undefined;
     pingEl.style.display = rtt !== undefined ? 'block' : 'none';
