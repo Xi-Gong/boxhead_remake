@@ -253,13 +253,14 @@ try {
   if (wi1.tick <= wi0.tick) throw new Error('no ticks ran');
   if (wi1.score !== wc1.score) throw new Error(`score mismatch ${wi1.score} vs ${wc1.score}`);
 
-  // ---- force a wave checkpoint on the host (out-of-band: exactly the "client crashed and lost its own
-  // checkpoint" scenario - the resume below must transfer the host's snapshot to the restarted client) ----
+  // Force the host's wave advance INSIDE a simulation tick so rollback can confirm its checkpoint.
+  // The client intentionally retains the old wave: restarting it below must transfer the host snapshot.
   await H.page.evaluate(() => {
-    const u = window.__game.main().mcWorld.mUpgrades;
-    u.__set__mLevel(u.mLevelIndex + 1);
+    const w = window.__game.main().mcWorld, process = w.Process, target = w.mTick, level = w.mUpgrades.mLevelIndex + 1;
+    window.__forcedCheckpointTick = target;
+    w.Process = function() { if(this.mTick===target)this.mUpgrades.__set__mLevel(level); process.call(this); };
   });
-  await H.page.waitForTimeout(500);
+  if(!await h.waitFor(()=>window.__game.lan().checkpoint===window.__forcedCheckpointTick,null,5000))throw new Error('forced wave checkpoint did not confirm');
   const wi2 = await h.worldInfo();
   if (wi2.level !== 2) throw new Error(`forced advance did not take (${wi2.level})`);
   step(`forced checkpoint at wave ${wi2.level}, host tick ${wi2.tick} (client keeps wave 1 until the resume)`);
@@ -328,6 +329,11 @@ try {
   await C2.page.keyboard.up('Space');
   const wi4 = await h.worldInfo();
   const wc4 = await c2.worldInfo();
+  if (!wi4 || !wc4) {
+    await lanState('host-post-resume-missing', H.page);
+    await lanState('client-post-resume-missing', C2.page);
+    throw new Error('world exited after checkpoint resume');
+  }
   if (wi4.tick <= wi3.tick || wc4.tick <= wi3.tick) {
     await lanState('host-post-resume', H.page);
     await lanState('client-post-resume', C2.page);
