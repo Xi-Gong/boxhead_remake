@@ -445,19 +445,24 @@ export function applyScope(): void {
   // Main menu: CONTINUE appears only while a stored run exists. v0.2.2 restyle (UiStyle): a BARE-TEXT item in the
   // original items' own language (ARMTB #333333 + the menu drop shadow) instead of the old dark plate - visually
   // indistinguishable from the four baked items; Register_Button's rollover (alpha 50 -> 100 + jitter) applies to
-  // its _Contents child unchanged. The y positions sit on the menu's own 33px rhythm (226/259/292/325 + n*33).
+  // its _Contents child unchanged. v0.2.6 packs the actual visible items into a 30px column.
   const mainMenuProto = Screen.CScreen_Main.prototype as any;
   const initButtonsPrev = mainMenuProto.Init_Buttons;
   mainMenuProto.Init_Buttons = function (this: any): void {
     initButtonsPrev.call(this);
+    const items = [this.mcSinglePlay, this.mcCoopPlay, this.mcDeathPlay, this.mcInstructions];
     if (hasStored()) {
-      const mc = menuTextItem(this, 'mcContinue', 320, 359.1, 'CONTINUE', 30);
+      const mc = menuTextItem(this, 'mcContinue', 320, 0, 'CONTINUE', 30);
       this.Register_Button(mc, 'State_Continue');
+      items.push(mc);
     }
     if (desktop?.lan) {
-      const mc = menuTextItem(this, 'mcLanGame', 320, 392.4, 'LAN GAME', 30);
+      const mc = menuTextItem(this, 'mcLanGame', 320, 0, 'LAN GAME', 30);
       this.Register_Button(mc, 'State_LanLobby');
+      items.push(mc);
     }
+    // A compact, stable column leaves the author credit clear even when both additions are present.
+    items.forEach((mc, i) => { mc._x = 320; mc._y = 226 + i * 30; });
   };
   mainProtoResume.State_Continue = function (this: any): void {
     const snap = armFromStored();

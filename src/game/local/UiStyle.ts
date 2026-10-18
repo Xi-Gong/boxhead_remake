@@ -99,9 +99,10 @@ export function menuTextItem(parent: any, name: string, x: number, y: number, la
   mc._x = x;
   mc._y = y;
   const contents = mc.createEmptyMovieClip('_Contents', mc.getNextHighestDepth());
-  const tf = text(contents, '_Label', -160, -size * 0.75, 320, size * 1.5, MENU_FONT, size, INK, false, 'center', label);
-  contents.filters = menuShadow();
-  void tf;
+  text(contents, '_Label', -150, -size * 0.67, 300, 30, MENU_FONT, size, INK, false, 'center', label);
+  // Authored items carry their soft shadow on the PARENT; Register_Button owns child hover filters.
+  // A white child glow made additions look outlined and disappeared permanently on the first roll-out.
+  mc.filters = [new flash.filters.DropShadowFilter(5, 45, 0x000000, 1, 5, 5, 0.18, 1)];
   return mc;
 }
 
