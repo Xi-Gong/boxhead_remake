@@ -9,6 +9,7 @@ import { CScreen } from '../../Screen/CScreen.ts';
 import { CScreen_SelectWorld } from '../../Screen/CScreen_SelectWorld.ts';
 import { CSound } from '../../packages.ts';
 import { lanBridge } from './bridge.ts';
+import { RoomSettingsPanel } from './RoomSettingsPanel.ts';
 import { SCREEN_LAN_SETUP_LINKAGE } from '../localSymbols.ts';
 import { BODY_FONT, GREY, INK, glow, pillButton, setButtonEnabled, setButtonLabel, text } from '../UiStyle.ts';
 
@@ -35,6 +36,7 @@ export class CScreen_LanSetup extends CScreen {
   private bBack: any;
   private bLeave: any;
   private waitText: any;
+  private roomSettings!: RoomSettingsPanel;
 
   override ctor(): void {
     super.ctor();
@@ -49,6 +51,7 @@ export class CScreen_LanSetup extends CScreen {
     // range: a mode switch must not mask individual labels/plates that happen to share authored depths.
     this.widgets = this.createEmptyMovieClip('_SetupControls', 100);
     this.Build();
+    this.roomSettings = new RoomSettingsPanel(this);
     this.unregisterUi = lanBridge().onUi(() => { this.dirty = true; });
     this.Refresh();
     // The screen system removes replaced screens with removeMovieClip (CScreen.Dispose is never called) -
@@ -101,6 +104,7 @@ export class CScreen_LanSetup extends CScreen {
     const modeLabel = this.Text(30, 12, 55, 16, 'Calibri', 12, INK, true, 'left', 'MODE');
     modeLabel.filters = glow();
     this.bMode = this.Button(165, 24, 140, 22, '', 12, () => this.cycleMode());
+    this.Button(533, 24, 164, 24, 'GAME SETTINGS', 12, () => this.roomSettings.open());
     const diffLabel = this.Text(230, 369, 180, 16, 'Calibri', 12, INK, true, 'center', 'DIFFICULTY');
     diffLabel.filters = glow();
     this.bDiff = this.Button(320, 399, 180, 24, '', 12, () => {
@@ -196,6 +200,7 @@ export class CScreen_LanSetup extends CScreen {
 
   private Refresh(): void {
     const b = lanBridge();
+    this.roomSettings.refresh();
     if (b.phase !== 'setup' && b.phase !== 'playing') {
       this.nState = 'State_LanLobby';
       return;

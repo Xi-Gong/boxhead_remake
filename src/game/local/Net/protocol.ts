@@ -79,6 +79,7 @@ export function netStallRewind(sliceMs: number | undefined, nowMs: number, tickM
 
 export type LanMode = 'Coop' | 'DeathMatch';
 export type LanRole = 0 | 1; // 0 = host (player 1), 1 = client (player 2)
+export interface RoomSettings { gameSpeed: number; devils: boolean; collisions: boolean; damage: boolean }
 
 /**
  * The host's setup-screen selection (v0.1.4): mode, BOTH characters, the level and the options that shape the run.
@@ -101,10 +102,13 @@ export interface SetupSelection {
   wave: number;
   /** START_WAVE_SELECTOR (v0.2.4): the HOST's historical highest wave ever entered (WaveUnlock) - the setup cycler's cap, shown as BEST on both setup screens. Host-authored; absent (older peer) = uncapped. */
   maxWave?: number;
+  settings?: RoomSettings;
 }
 
 /** The CSaveData fields the host's StartGame imposes on the client (they shape the simulation; see PARITY §9). */
 export interface GameConfig {
+  /** Player-owned shots skip teammates in cooperative games; old peers keep original hit selection. */
+  teamPass?: 'team-pass-v1';
   /** Optional, enabled only after the joining peer advertises the same growth rules. */
   progression?: 'personal-growth-v1';
   /** Optional PvE armor/ammunition loot rules; absent peers retain the original simulation. */
@@ -146,7 +150,7 @@ export type LanMessage =
   | { t: 'welcome'; ok: boolean; reason?: string; proto: number; app: string; name: string; sid: string }
   // host -> client: (back) in the room view (also right after a successful connect; sent after backing out of
   // the setup screen so the client mirrors the return).
-  | { t: 'lobby' }
+  | { t: 'lobby'; sel?: SetupSelection }
   // client -> host: the client player's ready flag in the room (the host's START is gated on it).
   | { t: 'ready'; ready: boolean }
   // host -> client: enter / mirror the net setup screen with the host's current selection (sent on entry and on

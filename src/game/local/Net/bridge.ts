@@ -14,6 +14,7 @@ import { CMain } from '../../packages.ts';
 import { maxUnlockedWave } from '../WaveUnlock.ts';
 import { NetSession } from './NetSession.ts';
 import { computeInputDelay } from './protocol.ts';
+import { roomSettingsFromSave, savedSwitch } from './RoomSettings.ts';
 import type { GameConfig, LanMessage, SetupSelection } from './protocol.ts';
 
 /** The Presenter surface the bridge needs (main.ts hands the real platform Presenter over). */
@@ -60,6 +61,7 @@ class LanBridge {
   private peerGrowth = false;
   private peerSupplies = false;
   private peerBalance = false;
+  private peerTeamPass = false;
   session: NetSession | null = null;
   sid: string | undefined;
   /** Client: the host ip it joined (reconnects go there). */
@@ -113,6 +115,9 @@ class LanBridge {
     if (!this.available) return;
     const operation = ++this.operation;
     this.isHost = true;
+    const sd: any = CMain.mSaveData;
+    this.sel = { ...this.sel, mode: 'Coop', wave: 1, maxWave: maxUnlockedWave(), difficulty: sd?.mDifficulty ?? 0,
+      gameAmount: sd?.mGameAmount ?? 0, settings: roomSettingsFromSave(sd) };
     this.phase = 'hosting';
     this.message = 'HOSTING - waiting for player 2...';
     this.notify();
@@ -209,8 +214,9 @@ class LanBridge {
       charP1: sd?.mPlayer1_CharacterIndex != null ? sd.mPlayer1_CharacterIndex : 3,
       charP2: sd?.mPlayer2_CharacterIndex != null ? sd.mPlayer2_CharacterIndex : 0,
       levelIdx: sd?.mLevelIndex_Coop != null ? sd.mLevelIndex_Coop : 0,
-      difficulty: sd?.mDifficulty != null ? sd.mDifficulty : 0,
-      gameAmount: sd?.mGameAmount != null ? sd.mGameAmount : 0,
+      difficulty: this.sel.settings ? this.sel.difficulty : sd?.mDifficulty ?? 0,
+      gameAmount: this.sel.settings ? this.sel.gameAmount : sd?.mGameAmount ?? 0,
+      settings: this.sel.settings ?? roomSettingsFromSave(sd),
       wave: 1, // START_WAVE_SELECTOR: the choice is not persisted - every setup entry starts at wave 1...
       maxWave: maxUnlockedWave(), // ...but its cap = the HOST's historical best (v0.2.4, WaveUnlock); both setup screens show it
     };
@@ -223,7 +229,7 @@ class LanBridge {
   /** Host: BACK on the setup screen -> both sides return to the room view. */
   backToRoom(): void {
     if (this.phase !== 'setup' || !this.isHost) return;
-    this.send({ t: 'lobby' });
+    this.send({ t: 'lobby', sel: this.sel });
     this.phase = 'lobby';
     CMain._this?.SetState('State_LanLobby');
     this.notify();
@@ -231,8 +237,10 @@ class LanBridge {
 
   /** Host: the setup selection changed -> mirror it to the client. */
   setSel(sel: SetupSelection): void {
+    if (!this.isHost || !['hosting','lobby','setup'].includes(this.phase)) return;
     this.sel = sel;
     if (this.phase === 'setup') this.send({ t: 'setup', sel });
+    else this.send({ t: 'lobby', sel });
     this.notify();
   }
 
@@ -262,17 +270,16 @@ class LanBridge {
     }
     if (this.phase !== 'setup') return;
     const sel = this.sel;
+    const settings = sel.settings ?? roomSettingsFromSave(sd);
     const cfg: GameConfig = {
+      ...(sel.mode === 'Coop' && this.peerTeamPass ? {teamPass:'team-pass-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth ? { progression: 'personal-growth-v1' as const } : {}),
       ...(sel.mode === 'Coop' && this.peerSupplies ? { supplies: 'armor-ammo-v1' as const } : {}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerBalance ? {balance:'pve-balance-v1' as const}:{}),
       difficulty: sel.difficulty,
-      gameSpeed: sd.mGameSpeed != null ? sd.mGameSpeed : 1,
-      devils: sd.mDevilsActive !== false,
-      collisions: sd.mCollisionsActive !== false,
-      damage: sd.mDamageActive !== false,
+      ...settings,
       gameAmount: sel.gameAmount,
-      detail: sd.mDetail !== false,
+      detail: savedSwitch(sd.mDetail),
       charP1: sel.charP1,
       charP2: sel.charP2,
     };
@@ -289,6 +296,8 @@ class LanBridge {
     sd.mPlayer2_CharacterIndex = sel.charP2;
     sd.mDifficulty = sel.difficulty;
     sd.mGameAmount = sel.gameAmount;
+    sd.mGameSpeed = settings.gameSpeed; sd.mDevilsActive = settings.devils;
+    sd.mCollisionsActive = settings.collisions; sd.mDamageActive = settings.damage;
     this.send({ t: 'start', mode: sel.mode, roomLink, cfg, seed, inputDelay, wave: sel.wave ?? 1, rollback: true, netcode });
     this.launch(sel.mode, roomLink, cfg, seed, inputDelay, undefined, 0, sel.wave ?? 1, netcode);
   }
@@ -352,6 +361,7 @@ class LanBridge {
       this.peerGrowth = Array.isArray(msg.features) && msg.features.includes('personal-growth-v1');
       this.peerSupplies = Array.isArray(msg.features) && msg.features.includes('armor-ammo-v1');
       this.peerBalance = Array.isArray(msg.features) && msg.features.includes('pve-balance-v1');
+      this.peerTeamPass = Array.isArray(msg.features) && msg.features.includes('team-pass-v1');
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.
       this.sid = this.sid ?? msg.sid;
       this.peerName = String(msg.name ?? 'player 2');
@@ -360,7 +370,7 @@ class LanBridge {
         if (this.phase === 'hosting') this.message = '';
         this.phase = 'lobby';
         this.ready = false; // a fresh hello = a fresh room member (mid-game reconnects go through session.onHello)
-        this.send({ t: 'lobby' }); // (back) in the room view
+        this.send({ t: 'lobby', sel: this.sel }); // (back) in the room view
       }
       if (this.session) this.session.onHello(msg); // a reconnect mid-game resumes
       this.notify();
@@ -377,6 +387,7 @@ class LanBridge {
       return;
     }
     if (msg.t === 'setup') {
+      if (this.isHost || this.phase === 'playing') return;
       // Client: enter / mirror the host's setup screen (read-only).
       this.sel = msg.sel;
       if (this.phase !== 'setup') {
@@ -393,6 +404,7 @@ class LanBridge {
       return;
     }
     if (msg.t === 'lobby') {
+      if (!this.isHost && this.phase !== 'playing' && msg.sel) this.sel = msg.sel;
       // v0.1.4: bare "in the room" signal. For a client on the setup screen it means the host backed out.
       if (!this.isHost && this.phase === 'setup') {
         this.phase = 'lobby';

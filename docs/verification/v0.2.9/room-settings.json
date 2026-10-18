@@ -1,0 +1,357 @@
+{
+  "ok": true,
+  "shots": [
+    "generated/reports/v029/room-settings/host-640x480.png",
+    "generated/reports/v029/room-settings/host-960x720.png",
+    "generated/reports/v029/room-settings/host-1280x720.png",
+    "generated/reports/v029/room-settings/host-640x889.png",
+    "generated/reports/v029/room-settings/host-setup.png",
+    "generated/reports/v029/room-settings/guest-readonly.png"
+  ],
+  "geometry": [
+    {
+      "width": 640,
+      "height": 480,
+      "scale": 1,
+      "left": 0,
+      "top": 0,
+      "fields": [
+        {
+          "text": "INTERMEDIATE",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 147,
+            "yMax": 178
+          },
+          "width": 182,
+          "textWidth": 75.8671875
+        },
+        {
+          "text": "FAST",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 180,
+            "yMax": 211
+          },
+          "width": 182,
+          "textWidth": 24.3984375
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 213,
+            "yMax": 244
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 246,
+            "yMax": 277
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 279,
+            "yMax": 310
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "SURVIVE WAVES",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 312,
+            "yMax": 343
+          },
+          "width": 182,
+          "textWidth": 83.0390625
+        },
+        {
+          "text": "CLOSE",
+          "bounds": {
+            "xMin": 235,
+            "xMax": 406,
+            "yMin": 370,
+            "yMax": 403
+          },
+          "width": 170,
+          "textWidth": 36.2578125
+        }
+      ]
+    },
+    {
+      "width": 960,
+      "height": 720,
+      "scale": 1.5,
+      "left": 0,
+      "top": 0,
+      "fields": [
+        {
+          "text": "INTERMEDIATE",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 147,
+            "yMax": 178
+          },
+          "width": 182,
+          "textWidth": 75.8671875
+        },
+        {
+          "text": "FAST",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 180,
+            "yMax": 211
+          },
+          "width": 182,
+          "textWidth": 24.3984375
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 213,
+            "yMax": 244
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 246,
+            "yMax": 277
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 279,
+            "yMax": 310
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "SURVIVE WAVES",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 312,
+            "yMax": 343
+          },
+          "width": 182,
+          "textWidth": 83.0390625
+        },
+        {
+          "text": "CLOSE",
+          "bounds": {
+            "xMin": 235,
+            "xMax": 406,
+            "yMin": 370,
+            "yMax": 403
+          },
+          "width": 170,
+          "textWidth": 36.2578125
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "scale": 1.5005861664712778,
+      "left": 0,
+      "top": 0,
+      "fields": [
+        {
+          "text": "INTERMEDIATE",
+          "bounds": {
+            "xMin": 443.5,
+            "xMax": 626.5,
+            "yMin": 147,
+            "yMax": 178
+          },
+          "width": 182,
+          "textWidth": 75.8671875
+        },
+        {
+          "text": "FAST",
+          "bounds": {
+            "xMin": 443.5,
+            "xMax": 626.5,
+            "yMin": 180,
+            "yMax": 211
+          },
+          "width": 182,
+          "textWidth": 24.3984375
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 443.5,
+            "xMax": 626.5,
+            "yMin": 213,
+            "yMax": 244
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 443.5,
+            "xMax": 626.5,
+            "yMin": 246,
+            "yMax": 277
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 443.5,
+            "xMax": 626.5,
+            "yMin": 279,
+            "yMax": 310
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "SURVIVE WAVES",
+          "bounds": {
+            "xMin": 443.5,
+            "xMax": 626.5,
+            "yMin": 312,
+            "yMax": 343
+          },
+          "width": 182,
+          "textWidth": 83.0390625
+        },
+        {
+          "text": "CLOSE",
+          "bounds": {
+            "xMin": 341.5,
+            "xMax": 512.5,
+            "yMin": 370,
+            "yMax": 403
+          },
+          "width": 170,
+          "textWidth": 36.2578125
+        }
+      ]
+    },
+    {
+      "width": 640,
+      "height": 889,
+      "scale": 1,
+      "left": 0,
+      "top": 0,
+      "fields": [
+        {
+          "text": "INTERMEDIATE",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 351.5,
+            "yMax": 382.5
+          },
+          "width": 182,
+          "textWidth": 75.8671875
+        },
+        {
+          "text": "FAST",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 384.5,
+            "yMax": 415.5
+          },
+          "width": 182,
+          "textWidth": 24.3984375
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 417.5,
+            "yMax": 448.5
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 450.5,
+            "yMax": 481.5
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "OFF",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 483.5,
+            "yMax": 514.5
+          },
+          "width": 182,
+          "textWidth": 19.13671875
+        },
+        {
+          "text": "SURVIVE WAVES",
+          "bounds": {
+            "xMin": 337,
+            "xMax": 520,
+            "yMin": 516.5,
+            "yMax": 547.5
+          },
+          "width": 182,
+          "textWidth": 83.0390625
+        },
+        {
+          "text": "CLOSE",
+          "bounds": {
+            "xMin": 235,
+            "xMax": 406,
+            "yMin": 574.5,
+            "yMax": 607.5
+          },
+          "width": 170,
+          "textWidth": 36.2578125
+        }
+      ]
+    }
+  ]
+}

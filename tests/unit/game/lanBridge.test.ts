@@ -7,6 +7,26 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it('normalizes numeric save switches and publishes host settings in the waiting room and setup',()=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={mGameSpeed:0,mDevilsActive:0,mCollisionsActive:1,mDamageActive:0,mDetail:0} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  try{
+   b.phase='lobby';b.setSel({...b.sel,difficulty:2,settings:{gameSpeed:2,devils:false,collisions:true,damage:false}});
+   expect(lan.send).toHaveBeenLastCalledWith({t:'lobby',sel:b.sel});
+   b.peerName='guest';b.ready=true;b.enterSetup();expect(b.sel.difficulty).toBe(2);expect(b.sel.settings?.gameSpeed).toBe(2);
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features:['team-pass-v1']});
+   b.phase='setup';b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');
+   expect(start.cfg).toMatchObject({difficulty:2,gameSpeed:2,devils:false,collisions:true,damage:false,detail:false,teamPass:'team-pass-v1'});
+   b.sel={...b.sel,settings:undefined};lan.send.mockClear();b.startGame(false);
+   const next=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(next.cfg.damage).toBe(false);
+  }finally{CMain.mSaveData=previous;launch.mockRestore();}
+ });
+ it('blocks guest edits and changes during a running game',()=>{
+  const b=lanBridge(),before=b.sel;b.phase='lobby';b.isHost=false;
+  b.setSel({...before,difficulty:3});expect(b.sel).toBe(before);expect(lan.send).not.toHaveBeenCalled();
+  b.isHost=true;b.phase='playing';b.setSel({...before,difficulty:3});expect(b.sel).toBe(before);
+ });
  it.each([[],['personal-growth-v1'],['armor-ammo-v1'],['personal-growth-v1','armor-ammo-v1'],['pve-balance-v1'],['personal-growth-v1','pve-balance-v1'],['personal-growth-v1','armor-ammo-v1','pve-balance-v1']].map(features=>({features})))('negotiates gameplay rules from advertised features $features',({features})=>{
   const b=lanBridge(), previous=CMain.mSaveData;
   CMain.mSaveData={} as any;

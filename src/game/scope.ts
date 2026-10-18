@@ -30,6 +30,7 @@ import { installViewport } from './local/Viewport.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 import { installArmorScope } from './local/Armor.ts';
 import {installBalanceScope} from './local/Balance.ts';
+import { installFriendlyFire } from './local/FriendlyFire.ts';
 
 /**
  * CrazyMonkeyGames sponsor / cross-promotion links, hidden on every screen they appear on (Screen_Main,
@@ -105,6 +106,7 @@ export function applyScope(): void {
   applied = true;
   installArmorScope();
   installBalanceScope();
+  installFriendlyFire();
   setInstanceHook(scopeInstanceHook);
 
   // Sean Cooper logo: keep, but not clickable.

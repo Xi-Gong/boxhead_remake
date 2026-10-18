@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const scenarios = [
+  {name:'teammate pass-through with weapons, correction and recovery',teamPass:true,weapons:true,rtt:100,jitter:20,reconnect:true,total:360},
   ...[0,1,2,3].map(difficulty=>({name:`balanced difficulty ${difficulty} with supplies and recovery`,balance:true,difficulty,supplies:true,growth:true,allowEnd:true,wave:[1,10,20,35][difficulty],rtt:100,jitter:20,reconnect:true,total:360})),
   {name:'armor and ammo pickups under correction and recovery',supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:360},
   ...[32,64,128,256].map(explosions=>({name:`mixed explosive burst ${explosions}`,explosions,growth:true,rtt:100,jitter:20,total:180})),

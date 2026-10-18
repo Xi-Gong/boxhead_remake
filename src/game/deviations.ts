@@ -14,6 +14,16 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'LAN_ROOM_SETTINGS',
+    file: 'local/Net/RoomSettings.ts, RoomSettingsPanel.ts, Lobby.ts, Setup.ts, bridge.ts, protocol.ts; local/FriendlyFire.ts',
+    description: 'The waiting room and setup share a host-editable, guest-readonly options panel. Numeric '+
+      '0/1 and boolean saved switches retain their meaning; optional lobby selections mirror changes. '+
+      'A running game retains its start configuration, including on resume. New team-pass-v1 peers and '+
+      'local Coop skip teammate affect masks in player-owned line queries when friendly fire is disabled, '+
+      'letting bullets reach enemies behind them without changing movement collisions or enemy attacks. '+
+      'Legacy LAN and Death Match retain their original hit filtering.',
+  },
+  {
     id: 'AUDIO_BOOT_RECOVERY',
     file: 'engine/platform/AudioEngine.ts; main.ts',
     description: 'Arm the audio watchdog before the first context construction, retain gesture retries on '+

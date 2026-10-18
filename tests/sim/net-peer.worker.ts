@@ -14,7 +14,7 @@ const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: tru
 let sent: unknown[] = [];
 const session = new NetSession(role, { send: message => sent.push(message) });
 session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, wave:options.wave, netcode: 'rollback-v2',
-  cfg: { ...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: true,
+  cfg: { ...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
     gameAmount: 3, detail: options.detail ?? true, charP1: 0, charP2: 0 } }, game.main());
 if (!game.waitRunning(3000)) throw new Error('boot failed');
 if (options.weapons||options.supplies) for (const player of game.players()) for (const name of Object.keys(player.mWeapons)) player.NewWeapon(name);

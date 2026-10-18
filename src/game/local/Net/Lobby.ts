@@ -13,6 +13,7 @@ import { lanBridge } from './bridge.ts';
 import { getRunStartWave } from '../StartWave.ts';
 import { SCREEN_LAN_LOBBY_LINKAGE } from '../localSymbols.ts';
 import { inputSummary } from '../InputBadge.ts';
+import { RoomSettingsPanel } from './RoomSettingsPanel.ts';
 import { BODY_FONT, GREEN, GREY, INK, MENU_FONT, RED, glow, panelCard, pillButton, setButtonEnabled, setButtonLabel, text } from '../UiStyle.ts';
 
 /** The manual-IP input's logical rectangle (top-left x/y, width, height in 640x480 stage units). */
@@ -55,6 +56,7 @@ export class CScreen_LanLobby extends CScreen {
   private startHint: any;
   private closeBtn: any;
   bBack: any;
+  private roomSettings!: RoomSettingsPanel;
 
   override ctor(): void {
     super.ctor();
@@ -65,6 +67,7 @@ export class CScreen_LanLobby extends CScreen {
     this.roomEls = [];
     this.hostRows = [];
     this.Build();
+    this.roomSettings = new RoomSettingsPanel(this);
     this.unregisterUi = lanBridge().onUi(() => { this.dirty = true; });
     if (typeof document !== 'undefined') this.buildIpInput();
     this.startTimers();
@@ -176,21 +179,22 @@ export class CScreen_LanLobby extends CScreen {
     room(this.p2Badge);
     this.inputsText = this.Text(-222, -20, 290, 16, BODY_FONT, 11, GREY, false, 'left', 'YOUR INPUTS: KEYBOARD');
     room(this.inputsText);
+    room(this.Button(0, 64, 170, 24, 'GAME SETTINGS', 12, () => this.roomSettings.open()));
 
     this.resumeText = this.Text(-230, 8, 460, 16, BODY_FONT, 12, INK, true, 'center', 'LAST GAME AVAILABLE');
     room(this.resumeText);
     this.resumeBtn = this.Button(0, 36, 190, 28, 'RESUME GAME', 14, () => lanBridge().requestRetry());
     room(this.resumeBtn);
 
-    this.readyBtn = this.Button(-110, 90, 150, 28, 'READY', 15, () => lanBridge().setReady(!lanBridge().ready), { selected: true });
+    this.readyBtn = this.Button(-110, 96, 150, 28, 'READY', 15, () => lanBridge().setReady(!lanBridge().ready), { selected: true });
     room(this.readyBtn);
-    this.leaveBtn = this.Button(110, 90, 150, 28, 'LEAVE', 15, () => lanBridge().leaveLobby());
+    this.leaveBtn = this.Button(110, 96, 150, 28, 'LEAVE', 15, () => lanBridge().leaveLobby());
     room(this.leaveBtn);
-    this.startBtn = this.Button(-110, 90, 150, 28, 'START', 15, () => lanBridge().enterSetup(), { selected: true });
+    this.startBtn = this.Button(-110, 96, 150, 28, 'START', 15, () => lanBridge().enterSetup(), { selected: true });
     room(this.startBtn);
     this.startHint = this.Text(-230, 115, 460, 14, BODY_FONT, 11, GREY, false, 'center', 'waiting for player 2 to get ready');
     room(this.startHint);
-    this.closeBtn = this.Button(110, 90, 150, 28, 'CLOSE ROOM', 14, () => lanBridge().leaveLobby());
+    this.closeBtn = this.Button(110, 96, 150, 28, 'CLOSE ROOM', 14, () => lanBridge().leaveLobby());
     room(this.closeBtn);
 
     // shared (both views): the status line under the title + BACK at the panel's lower edge
@@ -288,6 +292,8 @@ export class CScreen_LanLobby extends CScreen {
     const b = lanBridge();
     const entry = b.phase === 'idle' || b.phase === 'error' || b.phase === 'joining';
     const room = b.phase === 'hosting' || b.phase === 'lobby' || b.phase === 'playing';
+    if (!room) this.roomSettings.root._visible = false;
+    this.roomSettings.refresh();
     for (const el of this.entryEls) el._visible = entry;
     for (const el of this.roomEls) el._visible = room;
     if (this.ipInput) this.ipInput.style.display = entry ? 'block' : 'none';
