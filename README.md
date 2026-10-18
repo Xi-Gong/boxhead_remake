@@ -70,6 +70,12 @@ npm run dev         # http://localhost:5173/
   the best wave you have fought up to (shown as `BEST` beside it), with the loadout the original's difficulty
   curve would have granted by then. A fresh save can only start at wave 1 — the historical best persists in the
   save and caps the cycler; in LAN the host's best is the cap.
+- **Personal LAN co-op progression** — separate last-hit scores, permanent levels and original weapon upgrades
+  for each player. Zombies award 1 XP and devils 5 XP; every 5 XP grants a level, up to 125. Top corner
+  score/level/XP panels flank the current wave and its remaining zombie/devil totals (including pending spawns),
+  with individual upgrade summaries while paused. Retry restores the current wave's starting growth and
+  inventory; a fresh selected-wave run grants its baseline level. Local co-op and death match retain their
+  original rules.
 - **LAN multiplayer** (portable build) — host & auto-discover or join by IP for co-op and death match.
   Rollback applies local input on the next simulation tick without waiting for the peer, with immediate local
   weapon audio and display interpolation at the monitor's refresh rate. Redundant UDP inputs use TCP as a
@@ -79,7 +85,9 @@ npm run dev         # http://localhost:5173/
 - **One data folder** — every build (the portable exe included) keeps all user game data — saves and settings —
   in `%USERPROFILE%\.boxhead`, migrated there automatically on first run: one folder to manage and back up.
 
-All 27 deviations are registered in [`src/game/deviations.ts`](src/game/deviations.ts) and audited in
+![Personal LAN co-op progression](assets/readme/lan-growth.png)
+
+Intentional deviations are registered in [`src/game/deviations.ts`](src/game/deviations.ts) and audited in
 [`PARITY.md`](PARITY.md): sponsor content (CMG logo, online scores, external links) is replaced by local
 highscores; timing stays at the original 50 fps logic on any refresh rate.
 
