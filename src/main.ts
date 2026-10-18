@@ -137,8 +137,8 @@ window.__game = dbg;
 for (const type of ['keydown', 'keyup']) window.addEventListener(type, event => {
   const session = netSession();
   if (!session?.responseTrace.enabled || session.phase !== 'playing') return;
-  const key = event as KeyboardEvent, target = key.target as HTMLElement | null;
-  if (target?.matches('input, textarea, [contenteditable="true"]')) return;
+  const key = event as KeyboardEvent, target = key.target;
+  if (target instanceof Element && target.matches('input, textarea, [contenteditable="true"]')) return;
   session.responseTrace.record('input', session.tickIndex(session.currentWorld()), session.role,
     { type, code: key.code, repeat: key.repeat });
 }, true);
