@@ -10,6 +10,21 @@ import { captureWorldSnap, restoreWorldSnap, makeSnapCtx, type RingSlot } from '
 
 const TOTAL = 60;
 
+it('keeps older primitive snapshots immutable across changes, deletions and reinsertion',()=>{
+  const game=createHeadlessGame({mode:'Coop',room:1}),world=game.world(),p=game.players()[0],ctx=makeSnapCtx(world);
+  p.mLife=137;p.snapshotProbe=undefined;
+  const first=captureWorldSnap(world,ctx,false),saved=JSON.stringify(first);
+  p.mLife=99;delete p.snapshotProbe;p.snapshotProbe='changed';
+  captureWorldSnap(world,ctx,false);
+  expect(JSON.stringify(first)).toBe(saved);
+  p.mLife=137;p.snapshotProbe=undefined;
+  const third=captureWorldSnap(world,ctx,false);
+  expect(JSON.stringify(third)).toBe(saved);
+  const slot:RingSlot={tRel:0,data:first,instances:ctx.instances,sharedObjs:ctx.sharedObjs};
+  restoreWorldSnap(world,slot,ctx);
+  expect(p.mLife).toBe(137);expect(Object.hasOwn(p,'snapshotProbe')).toBe(true);expect(p.snapshotProbe).toBeUndefined();
+});
+
 it('restores enumerable insertion order after a predicted delete and re-add', () => {
   const game = createHeadlessGame({ mode: 'Coop', room: 1 });
   const world = game.world(), player = game.players()[0];

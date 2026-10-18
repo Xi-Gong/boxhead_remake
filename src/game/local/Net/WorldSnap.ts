@@ -252,14 +252,29 @@ function captureValue(v: any, ctx: SnapCtx, owner: any, path: string): SV {
   throw new Error(`WorldSnap: unknown value at ${path}: ${v._CLASSID_ ?? v.constructor?.name} (${String(v).slice(0, 60)})`);
 }
 
+// Primitive property pairs are immutable snapshot data. Reuse unchanged pairs across boundaries;
+// never reuse object tokens, whose references/alias memo and shared indices belong to one slot.
+const primitiveProps = new WeakMap<object, Map<string, [string, SV]>>();
 function captureOwnProps(o: any, ctx: SnapCtx, path: string): [string, SV][] {
   const out: [string, SV][] = [];
+  let primitives = primitiveProps.get(o);
+  if (!primitives) primitiveProps.set(o, primitives = new Map());
   for (const k of Object.keys(o)) {
     // The players' mControls dict is identity-stable per player instance (Process_Init swaps entries in
     // place); the NetSlots inside it are captured separately through ctx.slots, the offline CInput slots are
     // engine-live. Capture the DICT by identity, never by contents.
     if (k === 'mControls' && o.mControls && !Array.isArray(o.mControls)) out.push([k, ['shared', sharedIdx(ctx, o.mControls)]]);
-    else out.push([k, captureValue(o[k], ctx, o, `${path}.${k}`)]);
+    else {
+      const value = o[k], type = typeof value;
+      if (value === null || type === 'undefined' || type === 'number' || type === 'string' || type === 'boolean') {
+        let pair = primitives.get(k);
+        if (!pair || !(Object.is(pair[1], value) || value === undefined && Array.isArray(pair[1]) && pair[1][0] === 'u')) {
+          pair = [k, value === undefined ? ['u'] : value];
+          primitives.set(k, pair);
+        }
+        out.push(pair);
+      } else out.push([k, captureValue(value, ctx, o, `${path}.${k}`)]);
+    }
   }
   return out;
 }
