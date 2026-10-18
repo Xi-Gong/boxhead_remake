@@ -102,7 +102,7 @@ function sync(session: NetSession | null): void {
   // playing: transient stalls only
   if (session.stallReason === 'peer') {
     const text = 'WAITING FOR PLAYER ' + (session.role === 0 ? '2' : '1') + '...';
-    if (stallStripDue(session.stallSince, Date.now())) {
+    if (stallStripDue(session.stallSince, performance.now())) {
       cancelStallTimer();
       show(text);
     } else if (stallTimer === undefined) {

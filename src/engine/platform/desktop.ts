@@ -52,7 +52,7 @@ export interface LanApi {
   /** v0.1.4: this machine's non-internal IPv4s (the room shows them for join-by-IP). */
   addresses?(): Promise<string[]>;
   onMessage(cb: (msg: any) => void): void;
-  onPeer(cb: (s: { connected: boolean; reason?: string }) => void): void;
+  onPeer(cb: (s: { connected: boolean; reason?: string; diagnostic?: Record<string, number | string> }) => void): void;
   onHosts(cb: (hosts: LanHostEntry[]) => void): void;
 }
 

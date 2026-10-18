@@ -129,6 +129,7 @@ export interface LanChecksum {
 }
 
 export type LanMessage =
+  | { t: 'input-gap'; need: number }
   | { t: 'recover'; stage: 'offer' | 'ready' | 'commit' | 'reject'; generation: number; seed: number; need: number; head: number; epoch?: string }
   | { t: 'pause-request'; paused: boolean }
   | { t: 'pause-barrier'; stage: 'freeze' | 'ready' | 'commit' | 'resume'; id: number; tick: number }
@@ -157,7 +158,7 @@ export type LanMessage =
   // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
   | { t: 'in'; tick: number; bits: number; sum?: LanChecksum }
   // both -> both, echoed back once (`echo` marks the reply; RTT probe + liveness).
-  | { t: 'hb'; ts: number; echo?: true }
+  | { t: 'hb'; ts: number; echo?: true; rttMs?: number }
   // both -> both: orderly exit. 'quit' = left the lobby; 'forfeit' = conceded. `via` says why a forfeit happened
   // ('timeout' = the 30 s reconnect window ran out; 'concede' = the pause-screen QUIT) so both peers route to the
   // same end screen (timeout -> main menu, concede -> the regular Debrief/Winner screens).
@@ -268,7 +269,7 @@ export class LinkWatchdog {
   private readonly now: () => number;
   private readonly deadAfter: number;
 
-  constructor(now: () => number = Date.now, deadAfter: number = LAN_LINK_DEAD_MS) {
+  constructor(now: () => number = () => performance.now(), deadAfter: number = LAN_LINK_DEAD_MS) {
     this.now = now;
     this.deadAfter = deadAfter;
     this.lastHeard = now();
@@ -278,6 +279,7 @@ export class LinkWatchdog {
     this.lastHeard = this.now();
     this.dead = false;
   }
+  get silenceMs(): number { return Math.max(0, this.now() - this.lastHeard); }
 
   /** Returns true exactly once when the link has gone silent. */
   check(): boolean {

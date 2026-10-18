@@ -122,6 +122,12 @@ export class NetSession {
   startOpts: NetStart | undefined;
   private runGeneration = 0;
   private recoveryNeed: number | undefined;
+  readonly diagnostics: { at: number; event: string; tick: number; confirmed: number; detail?: unknown }[] = [];
+  private lastRepairAt = -Infinity;
+  private trace(event: string, detail?: unknown): void {
+    this.diagnostics.push({ at: performance.now(), event, tick: this.world ? this.tickIndex(this.world) : -1, confirmed: this.confirmTick, detail });
+    if (this.diagnostics.length > 128) this.diagnostics.shift();
+  }
   /**
    * Why the last game ended. Forfeit routing (v0.1.4): 'timeout'/'peer-timeout' (the 30 s reconnect window ran
    * out) end at the MAIN MENU on both peers; a 'concede' (pause-screen QUIT) keeps the regular Debrief/Winner.
@@ -208,6 +214,11 @@ export class NetSession {
   // ---------------------------------------------------------------------------------------------- inbound (bridge/test)
 
   onNetMessage(msg: LanMessage): void {
+    if (msg.t === 'input-gap' && this.rollbackV2 && Number.isSafeInteger(msg.need) && msg.need >= 0) {
+      this.trace('input-repair', msg.need);
+      for (const [tick, bits] of this.localFrames) if (tick >= msg.need) this.link.send({ t: 'in', tick, bits });
+      return;
+    }
     if (msg.t === 'recover') { this.receiveRecovery(msg); return; }
     if ((msg.t === 'pause-request' || msg.t === 'pause-barrier') && this.rollbackV2 && this.phase === 'playing') {
       this.pauseBarrier.receive(msg, this.tickIndex(this.world));
@@ -225,7 +236,7 @@ export class NetSession {
       return;
     }
     if (msg.t === 'hb') {
-      this.rttMs = Date.now() - msg.ts;
+      this.rttMs = msg.rttMs ?? Date.now() - msg.ts;
       // Live ping (v0.1.7): the in-game overlay refreshes with every probe. Only while playing - an ended session
       // (back in the lobby after a game) must not re-trigger the overlay strip every second.
       if (this.phase === 'playing') this.onStateChange?.();
@@ -272,11 +283,12 @@ export class NetSession {
   }
 
   /** Transport peer-link event: connected(false) while playing => freeze and start the 30 s reconnect window. */
-  onPeerEvent(e: { connected: boolean; reason?: string }): void {
+  onPeerEvent(e: { connected: boolean; reason?: string; diagnostic?: Record<string, number | string> }): void {
+    this.trace(e.connected ? 'connected' : 'disconnected', e);
     if (!e.connected) {
       if (this.phase === 'playing' || this.phase === 'starting') {
         this.phase = 'reconnecting';
-        this.deadline = Date.now() + RECONNECT_WINDOW_MS;
+        this.deadline = performance.now() + RECONNECT_WINDOW_MS;
         this.onStateChange?.();
       }
       return;
@@ -338,6 +350,7 @@ export class NetSession {
   }
 
   private finishRecovery(need: number): void {
+    this.trace('history-recovered', need);
     for (const [tick, bits] of this.localFrames) if (tick >= need) this.link.send({ t: 'in', tick, bits });
     this.recoveryNeed = undefined;
     this.phase = 'playing';
@@ -351,7 +364,7 @@ export class NetSession {
   }
 
   reconnectSecondsLeft(): number {
-    return this.phase === 'reconnecting' ? Math.max(0, Math.ceil((this.deadline - Date.now()) / 1000)) : 0;
+    return this.phase === 'reconnecting' ? Math.max(0, Math.ceil((this.deadline - performance.now()) / 1000)) : 0;
   }
 
   // ---------------------------------------------------------------------------------------------- game start
@@ -366,6 +379,8 @@ export class NetSession {
     this.startOpts = start;
     ++this.runGeneration;
     this.recoveryNeed = undefined;
+    this.lastRepairAt = -Infinity;
+    this.trace('start', start.netcode ?? 'legacy');
     this.pauseBarrier = new PauseBarrier(this.role, m => this.link.send(m));
     this.mode = start.mode;
     this.endReason = undefined;
@@ -565,14 +580,27 @@ export class NetSession {
 
   /** Set the stall reason; the UI (WAITING strip) is told when it CHANGES (v0.1.7 - it never was before). */
   private stall(reason: 'peer' | 'local' | 'waiting' | undefined): void {
+    const now = performance.now();
+    if (this.rollbackV2 && reason && this.phase === 'playing' && this.peerReady && this.stallSince !== undefined) {
+      if (now - this.stallSince >= RECONNECT_WINDOW_MS) {
+        this.trace('input-timeout', reason);
+        this.forfeit('timeout');
+        return;
+      }
+      if (now - this.stallSince >= 500 && now - this.lastRepairAt >= 1000) {
+        this.lastRepairAt = now;
+        this.trace('input-gap', this.confirmTick + 1);
+        this.link.send({ t: 'input-gap', need: this.confirmTick + 1 });
+      }
+    }
     // v0.2.3 stall watchdog: a stall that has now lasted STALL_DESYNC_MS continuously (stallSince survives the
     // unchanged-reason early return below) means the frames dried up while the link stayed alive - no checksum
     // can ever be paired again. Escalate to the desync teardown instead of freezing on WAITING forever.
     // EXEMPT: while the peer's world is still building (no frame of this game yet - a relaunched client
     // cold-boots for ~5-8 s), waiting is the intended state, not a divergence.
     if (
-      reason !== undefined && this.phase === 'playing' && this.peerReady &&
-      this.stallSince !== undefined && Date.now() - this.stallSince >= STALL_DESYNC_MS
+      !this.rollbackV2 && reason !== undefined && this.phase === 'playing' && this.peerReady &&
+      this.stallSince !== undefined && now - this.stallSince >= STALL_DESYNC_MS
     ) {
       this.triggerDesync(undefined, undefined, undefined);
       return;
@@ -580,7 +608,8 @@ export class NetSession {
     if (this.stallReason === reason) return;
     if (reason !== undefined && this.stallReason === undefined) this.stallCount++;
     this.stallReason = reason;
-    this.stallSince = reason === undefined ? undefined : Date.now();
+    this.stallSince = reason === undefined ? undefined : now;
+    this.trace(reason ? 'waiting' : 'input-restored', reason);
     this.onStateChange?.();
   }
 
@@ -594,7 +623,8 @@ export class NetSession {
     if (typeof tick === 'number') this.desyncTick = tick;
     this.desyncDetail = { tick: tick ?? -1, mine: mine ?? '?', theirs: theirs ?? '?' };
     this.phase = 'desync';
-    this.desyncAt = Date.now();
+    this.desyncAt = performance.now();
+    this.trace('checksum-mismatch', this.desyncDetail);
     this.desynced = true;
     this.link.send({ t: 'desync', tick, mine, theirs });
     this.onStateChange?.();

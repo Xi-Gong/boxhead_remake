@@ -411,14 +411,14 @@ class LanBridge {
     if (msg.t === 'hb') {
       // Our own heartbeat probe echoed back: the link round-trip time (live already in the room). The recent
       // samples feed the input-delay picker at START (v0.1.7).
-      this.rttMs = Math.max(0, Date.now() - msg.ts);
+      this.rttMs = Math.max(0, msg.rttMs ?? Date.now() - msg.ts);
       this.rttSamples.push(this.rttMs);
       if (this.rttSamples.length > 20) this.rttSamples.shift();
     }
     this.session?.onNetMessage(msg);
   }
 
-  private onPeer(e: { connected: boolean; reason?: string }): void {
+  private onPeer(e: { connected: boolean; reason?: string; diagnostic?: Record<string, number | string> }): void {
     if (e.connected) {
       this.stopTimers();
       if (this.phase === 'joining') this.phase = 'lobby';

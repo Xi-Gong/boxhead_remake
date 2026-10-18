@@ -1,6 +1,6 @@
 // LAN protocol + transport unit tests (v0.1.3 L0): pure framing/beacon/watchdog, then the real node transport
 // over localhost sockets (the LanTransport itself has no Electron dependency).
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { connect as tcpConnect, Socket } from 'node:net';
 import {
   decodeBeacon, encodeBeacon, encodeFrame, FrameDecoder, LinkWatchdog,
@@ -9,6 +9,13 @@ import {
 import { LanTransport, type LanEvent } from '../../../electron/lan.ts';
 
 const ID = '0.1.3-test+chromium';
+
+it('wall-clock jumps cannot expire a new network watchdog', () => {
+  const watchdog = new LinkWatchdog();
+  const now = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 3600000);
+  try { expect(watchdog.check()).toBe(false); expect(watchdog.silenceMs).toBeLessThan(1000); }
+  finally { now.mockRestore(); }
+});
 
 describe('LAN TCP framing', () => {
   it('round-trips whole frames, split chunks and pipelined frames', () => {

@@ -30,6 +30,7 @@ export interface LanEvent {
   reason?: string;
   hosts?: HostInfo[];
   message?: string;
+  diagnostic?: Record<string, number | string>;
 }
 
 export interface LanHello {
@@ -44,6 +45,7 @@ interface Peer {
   decoder: FrameDecoder;
   watchdog: LinkWatchdog;
   fast?: FastInputPath;
+  probes?: Map<number, number>;
 }
 
 // --boxhead-net-delay=<ms> (v0.2.1 smoothness QA): delay every TCP send by N ms (one way) so localhost
@@ -350,7 +352,11 @@ export class LanTransport {
       if (msg?.t === 'hb') {
         // Echo the peer's probe; our own returning echo is surfaced so the renderer can compute RTT (now - ts).
         if (!msg.echo) this.rawSend(peer.socket, { ...msg, echo: true });
-        else this.fire(msg);
+        else {
+          const sent = peer.probes?.get(msg.ts);
+          peer.probes?.delete(msg.ts);
+          this.fire({ ...msg, rttMs: sent === undefined ? undefined : Math.max(0, performance.now() - sent) });
+        }
         continue;
       }
       this.fire(msg);
@@ -359,7 +365,7 @@ export class LanTransport {
 
   /** Install the long-lived peer: message forwarding, heartbeat, watchdog. */
   private attachPeer(socket: TcpSocket, decoder: FrameDecoder): void {
-    const peer: Peer = { socket, decoder, watchdog: new LinkWatchdog(undefined, this.linkDeadMs) };
+    const peer: Peer = { socket, decoder, watchdog: new LinkWatchdog(undefined, this.linkDeadMs), probes: new Map() };
     this.peer = peer;
     if (socket.remoteAddress) peer.fast = new FastInputPath(socket.remoteAddress,
       message => { if (this.peer === peer) this.rawSend(socket, message); },
@@ -380,7 +386,10 @@ export class LanTransport {
     socket.on('close', () => this.endPeer('closed', peer));
     this.heartbeatTimer = setInterval(() => {
       if (this.peer !== peer) return;
-      this.rawSend(socket, { t: 'hb', ts: Date.now() });
+      const ts = Date.now();
+      peer.probes!.set(ts, performance.now());
+      while (peer.probes!.size > 8) peer.probes!.delete(peer.probes!.keys().next().value!);
+      this.rawSend(socket, { t: 'hb', ts });
       if (peer.watchdog.check()) this.endPeer('lost', peer);
     }, LAN_HEARTBEAT_MS);
     this.emit({ kind: 'peer', connected: true });
@@ -393,7 +402,8 @@ export class LanTransport {
     if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = undefined; }
     peer.socket.destroy();
     peer.fast?.close();
-    this.emit({ kind: 'peer', connected: false, reason });
+    this.emit({ kind: 'peer', connected: false, reason, diagnostic: { silenceMs: peer.watchdog.silenceMs,
+      pendingBytes: peer.socket.writableLength, udpReceived: peer.fast?.stats.received ?? 0, udpRejected: peer.fast?.stats.rejected ?? 0 } });
   }
 
   private rawSend(socket: TcpSocket, msg: LanMessage): void {

@@ -62,6 +62,26 @@ function run(delay: number, modern = false) {
 }
 
 describe('actual rollback prediction', () => {
+  it('input starvation requests repair without claiming a checksum desync', () => {
+    const game = createHeadlessGame({ menuOnly: 'Main' });
+    const sent: any[] = [];
+    const s = new NetSession(0, { send: m => sent.push(m) });
+    s.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242, netcode: 'rollback-v2' }, game.main());
+    expect(game.waitRunning(3000)).toBe(true);
+    s.onNetMessage({ t: 'in', tick: 0, bits: 0 });
+    game.step(30);
+    expect(s.stallSince).toBeDefined();
+    s.stallSince = performance.now() - 6000;
+    expect(s.beginTick(game.world())).toBe('stall');
+    expect(s.phase).toBe('playing');
+    expect(sent.some(m => m.t === 'input-gap')).toBe(true);
+    expect(sent.some(m => m.t === 'desync')).toBe(false);
+    s.stallSince = performance.now() - 31000;
+    s.beginTick(game.world());
+    expect(s.endReason).toBe('timeout');
+    expect(s.diagnostics.some(d => d.event === 'input-timeout')).toBe(true);
+    game.quit();
+  });
   it('rejected history recovery falls back to a checkpoint with rollback mode preserved', () => {
     const game = createHeadlessGame({ menuOnly: 'Main' });
     const sent: any[] = [];

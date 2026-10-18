@@ -49,7 +49,7 @@ export function installNetScope(): void {
     // code ever performed. After the grace window (so the players see what happened) both peers abandon to the
     // room independently; a checkpoint taken after divergence may diverge again, so the fresh-RETRY strip is the
     // safe escape (both peers hold the identical checkpoint by determinism of the captures themselves).
-    if (session.phase === 'desync' && session.desyncAt !== undefined && Date.now() - session.desyncAt >= DESYNC_RETURN_MS) {
+    if (session.phase === 'desync' && session.desyncAt !== undefined && performance.now() - session.desyncAt >= DESYNC_RETURN_MS) {
       session.abandonToLobby();
       this.SetState('State_LanLobby');
       return;

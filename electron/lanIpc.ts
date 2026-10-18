@@ -17,7 +17,7 @@ export function registerLanIpc(getWin: () => BrowserWindow | undefined): void {
 
   transport.onEvent((e: LanEvent) => {
     if (e.kind === 'hosts') send('boxhead:lan-hosts', e.hosts ?? []);
-    else if (e.kind === 'peer') send('boxhead:lan-peer', { connected: e.connected === true, reason: e.reason });
+    else if (e.kind === 'peer') send('boxhead:lan-peer', { connected: e.connected === true, reason: e.reason, diagnostic: e.diagnostic });
     else send('boxhead:lan-error', { message: e.message ?? 'lan error' });
   });
   transport.onMessage((msg) => send('boxhead:lan-message', msg));

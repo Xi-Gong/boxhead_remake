@@ -435,7 +435,7 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
       if (B.session.phase === 'desync') desynced = true;
     }
     expect(desynced).toBe(true);
-    (B.session as any).desyncAt = Date.now() - 4000; // backdate past the grace window
+    (B.session as any).desyncAt = performance.now() - 4000; // backdate past the grace window
     B.game.step(2);
     expect(B.game.state()).toBe('State_LanLobby'); // the promised return actually happened
     expect(B.session.phase).toBe('ended');         // and the room is actionable again
@@ -628,7 +628,7 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     const B = bootNetPeer('Coop', 'ROOM_Single_0001');
     B.session.setPaused(true);
     B.session.onNetMessage({ t: 'desync', tick: 1 });
-    B.session.desyncAt = Date.now() - 1000;
+    B.session.desyncAt = performance.now() - 1000;
     B.game.step(40);
     expect(B.game.state()).toBe('State_LanLobby');
     expect(B.game.world()).toBeUndefined();
