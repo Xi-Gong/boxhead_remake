@@ -21,6 +21,7 @@ import { getRandomState, setRandomState } from '../../engine/flash/rng.ts';
 import { CSaveData, Thing, World } from '../packages.ts';
 import { CThing_Object_WeaponCrate, type CrateWeapon } from './WeaponCrate.ts';
 import { copyGrowth, type GrowthState } from './Net/Growth.ts';
+import { armorValue, suppliesEnabled } from './Supplies.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -39,6 +40,8 @@ export interface PlayerState {
   x: number; y: number; z: number;
   angle: number;
   life: number; maxLife: number;
+  /** Optional v2 extension; absent old saves restore with no armor. */
+  armor?: number;
   invincible: number; alpha: number; flags: number;
   stateID: string; returnStateID?: string; baseStateID?: string; stateCount: number;
   weapons: Record<string, WeaponState>;
@@ -168,6 +171,7 @@ function capturePlayer(p: any): PlayerState {
     x: p.mPosition.mX, y: p.mPosition.mY, z: p.mPosition.mZ,
     angle: p.mAngle.mAngle,
     life: p.mLife, maxLife: p.mMaxLife,
+    ...(p.mArmor!==undefined?{armor:armorValue(p.mArmor)}:{}),
     invincible: p.mInvincible ?? 0, alpha: p.mAlpha, flags: p.mFlags,
     stateID: p.mStateID, returnStateID: p.mReturnStateID, baseStateID: p.mBaseStateID, stateCount: p.mStateCount ?? 0,
     weapons,
@@ -259,6 +263,7 @@ function applyPlayer(world: any, s: PlayerState): void {
   p.mAngle.__set__mAngle(s.angle);
   p.mLife = s.life;
   p.mMaxLife = s.maxLife;
+  if(suppliesEnabled(world)){if(s.armor!==undefined)p.mArmor=armorValue(s.armor);else delete p.mArmor;}
   p.mInvincible = s.invincible;
   p.mAlpha = s.alpha;
   p.mFlags = s.flags;

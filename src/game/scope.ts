@@ -28,6 +28,7 @@ import { setBadgeHidden, setBadgeInGame } from './local/InputBadge.ts';
 import { menuTextItem, text } from './local/UiStyle.ts';
 import { installViewport } from './local/Viewport.ts';
 import { desktop } from '../engine/platform/desktop.ts';
+import { installArmorScope } from './local/Armor.ts';
 
 /**
  * CrazyMonkeyGames sponsor / cross-promotion links, hidden on every screen they appear on (Screen_Main,
@@ -101,6 +102,7 @@ let applied = false;
 export function applyScope(): void {
   if (applied) return;
   applied = true;
+  installArmorScope();
   setInstanceHook(scopeInstanceHook);
 
   // Sean Cooper logo: keep, but not clickable.

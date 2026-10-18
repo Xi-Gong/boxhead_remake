@@ -14,6 +14,20 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'DEVIL_SUPPLIES',
+    file:'local/Armor.ts, Supplies.ts, Resume.ts; local/Net/bridge.ts, protocol.ts; electron/lan.ts',
+    description:'PvE Devil kills use one seeded roll: 20% armor crate, 20% whole-backpack ammunition crate, '+
+      '60% original pickup. Armor is capped at 100, absorbs actual affect damage before health and is refilled '+
+      'without healing. Original health regeneration and hit reactions are unchanged. Owned active weapons '+
+      '(including empty ones) refill to their personal upgraded capacities; locked weapons and the held slot '+
+      'are unchanged. New crates retain original geometry/shading/expiry with blue armor or olive ammo finishes, '+
+      'corner hardware and shield or cartridge badges baked once into cached bitmaps. An original '+
+      'life-bar fill clone is tinted blue over the original health bar; partial armor exposes the remaining health fill. '+
+      'Armor is an optional version2 player-save field and part of full rollback state; transient dropped crates '+
+      'follow the original save exclusion. LAN enables this only after armor-ammo-v1 capability negotiation; '+
+      'legacy peers and Death Match retain original rules. Rendering is RNG-neutral.',
+  },
+  {
     id: 'LAN_PERSONAL_GROWTH',
     file: 'local/Net/Growth.ts, GrowthHud.ts, NetSession.ts; local/Resume.ts',
     description: 'Capable LAN Coop peers negotiate personal-growth-v1: separate last-hit scores, permanent levels ' +

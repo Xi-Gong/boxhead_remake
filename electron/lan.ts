@@ -315,7 +315,7 @@ export class LanTransport {
       socket.setTimeout(1500); // per-port patience; a closed port refuses instantly, a filtered one times out
       const decoder = new FrameDecoder();
       socket.on('connect', () => {
-        this.rawSend(socket, { t: 'hello', proto: LAN_PROTOCOL_VERSION, app: this.identity, name: hello.name, sid: hello.sid, char: hello.char, capTick: hello.capTick, netcodes: ['rollback-v2'], features: ['personal-growth-v1'] });
+        this.rawSend(socket, { t: 'hello', proto: LAN_PROTOCOL_VERSION, app: this.identity, name: hello.name, sid: hello.sid, char: hello.char, capTick: hello.capTick, netcodes: ['rollback-v2'], features: ['personal-growth-v1','armor-ammo-v1'] });
       });
       socket.on('data', (chunk: Buffer) => {
         let msgs: unknown[];

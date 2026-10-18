@@ -6,25 +6,44 @@ import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 import { advanceVirtual } from '../../src/engine/flash/clock.ts';
 import { Thing } from '../../src/game/packages.ts';
 import { explosionBurst } from './explosionFixture.ts';
+import {CThing_Object_SupplyCrate,armorValue} from '../../src/game/local/Supplies.ts';
 
 const role = Number(process.argv[2]) as 0 | 1;
 const options = JSON.parse(process.argv[3] ?? '{}');
 const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: true } });
 let sent: unknown[] = [];
 const session = new NetSession(role, { send: message => sent.push(message) });
-session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, netcode: 'rollback-v2',
-  cfg: { ...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), difficulty: 0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: true,
+session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, wave:options.wave, netcode: 'rollback-v2',
+  cfg: { ...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}), difficulty: 0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: true,
     gameAmount: 3, detail: options.detail ?? true, charP1: 0, charP2: 0 } }, game.main());
 if (!game.waitRunning(3000)) throw new Error('boot failed');
-if (options.weapons) for (const player of game.players()) for (const name of Object.keys(player.mWeapons)) player.NewWeapon(name);
+if (options.weapons||options.supplies) for (const player of game.players()) for (const name of Object.keys(player.mWeapons)) player.NewWeapon(name);
 process.send?.({ ready: true, sent });
 sent = [];
 const originalWorld = game.world();
 let peakExplosions = 0;
-if (options.growth || options.explosions) {
+let peakArmor=0,ammoGrants=0;
+if (options.growth || options.explosions || options.supplies) {
   const processWorld = originalWorld.Process;
   originalWorld.Process = function (this: any) {
     const tick = session.tickIndex(this);
+    if(options.supplies&&tick>0&&tick%31===0){
+      const player=game.players()[Math.floor(tick/31)%2];
+      const crate=this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(player.mPosition.Clone(),Math.floor(tick/31)%2?'armor':'ammo'));
+      crate.Process_DeleteCounter_Init();crate.PickedUp();
+      peakArmor=Math.max(peakArmor,...game.players().map(p=>armorValue(p.mArmor)));
+      if(crate.mSupplyConsumed&&crate.mSupplyKind==='ammo'){
+        if(!game.players().some(p=>p.mWeaponList.every((e:any)=>!e.mActive||e.mThing.mAmmo===e.mThing.mTotalAmmo)))throw new Error('ammo crate did not refill an entire inventory');
+        ammoGrants++;
+      }
+      new Thing.Affect.CThing_Affect_ZombieAttack(player,35).AffectThing(player);
+    }
+    if(options.supplies&&tick>0&&tick%47===0&&this.mUpgrades.Level.Devil_TotalCount>0){
+      const owner=game.players()[0],victim=new Thing.Creature.CThing_Creature_Devil(owner.mPosition.Clone(),owner.mAngle.Clone());
+      this.mThing_Collection.AddThing(victim);victim.Process_Init();victim.mLife=1;
+      this.mUpgrades.__set__mDevilCount(this.mUpgrades.__get__mDevilCount()+1);
+      new Thing.Affect.CThing_Affect_Bullet(owner,owner,1,owner.mAngle).AffectThing(victim);victim.SetState('State_Dying');
+    }
     if (options.explosions && tick === 40) explosionBurst(this, options.explosions);
     if (options.growth && tick > 0 && tick % 19 === 0) {
       const owner = game.players()[Math.floor(tick / 19) % 2];
@@ -62,6 +81,8 @@ process.on('message', (m: any) => {
       checkpoint: session.netCheckpoint?.tick, startTick: world.mTick - session.tickIndex(world),
       growth: world.mUpgrades.lanGrowth,
       confirmedEnemies: session.confirmedEnemies,
+      armor:game.players().map(p=>armorValue(p.mArmor)),
+      peakArmor,ammoGrants,
       peakExplosions,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash],

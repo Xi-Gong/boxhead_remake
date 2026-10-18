@@ -58,6 +58,7 @@ class LanBridge {
   useRollbackV2 = true;
   private peerRollbackV2 = false;
   private peerGrowth = false;
+  private peerSupplies = false;
   session: NetSession | null = null;
   sid: string | undefined;
   /** Client: the host ip it joined (reconnects go there). */
@@ -262,6 +263,7 @@ class LanBridge {
     const sel = this.sel;
     const cfg: GameConfig = {
       ...(sel.mode === 'Coop' && this.peerGrowth ? { progression: 'personal-growth-v1' as const } : {}),
+      ...(sel.mode === 'Coop' && this.peerSupplies ? { supplies: 'armor-ammo-v1' as const } : {}),
       difficulty: sel.difficulty,
       gameSpeed: sd.mGameSpeed != null ? sd.mGameSpeed : 1,
       devils: sd.mDevilsActive !== false,
@@ -346,6 +348,7 @@ class LanBridge {
     if (msg.t === 'hello') {
       this.peerRollbackV2 = Array.isArray(msg.netcodes) && msg.netcodes.includes('rollback-v2');
       this.peerGrowth = Array.isArray(msg.features) && msg.features.includes('personal-growth-v1');
+      this.peerSupplies = Array.isArray(msg.features) && msg.features.includes('armor-ammo-v1');
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.
       this.sid = this.sid ?? msg.sid;
       this.peerName = String(msg.name ?? 'player 2');

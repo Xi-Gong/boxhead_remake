@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const scenarios = [
+  {name:'armor and ammo pickups under correction and recovery',supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:360},
   ...[32,64,128,256].map(explosions=>({name:`mixed explosive burst ${explosions}`,explosions,growth:true,rtt:100,jitter:20,total:180})),
   { name: 'personal growth under correction and recovery', growth: true, rtt: 100, jitter: 20, reconnect: true, total: 360 },
   { name: 'asymmetric jitter' }, { name: 'shared pause', pause: true }, { name: 'history recovery', reconnect: true },
@@ -89,6 +90,10 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
       expect(final[0].growth.players.some((p:any)=>p.level>1)).toBe(true);
     }
     if (scenario.explosions) for (const peer of final) expect(peer.peakExplosions).toBeGreaterThanOrEqual(scenario.explosions);
+    if(scenario.supplies){
+      expect(final[0].armor).toEqual(final[1].armor);
+      for(const peer of final){expect(peer.peakArmor).toBe(100);expect(peer.ammoGrants).toBeGreaterThan(0);}
+    }
     for (const r of final) {
       if (scenario.rtt === undefined || scenario.rtt > 0) expect(r.stats.corrections).toBeGreaterThan(0);
       expect(r.errors).toEqual([]);

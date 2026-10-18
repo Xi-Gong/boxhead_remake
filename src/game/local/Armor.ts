@@ -1,0 +1,79 @@
+// DEVIL_SUPPLIES: changes are isolated from the mechanical ports; install before growth's fatal-hit observer.
+import {flash,random} from '../../engine/runtime.ts';
+import {Thing,World} from '../packages.ts';
+import {netActive,netSession} from './Net/NetSession.ts';
+import {crateDropPosition} from './WeaponCrate.ts';
+import {ARMOR_MAX,SUPPLY_RULE,armorValue,CThing_Object_SupplyCrate,devilSupply,suppliesEnabled,setSuppliesEnabled} from './Supplies.ts';
+
+const bars=new WeakMap<object,any>();
+const fills=new WeakMap<object,any>();
+export function installArmorScope():void{
+  const world=World.CWorld.prototype as any,ready=world.InitFinished,logKill=world.LogKill;
+  world.InitFinished=function(this:any):any{
+    setSuppliesEnabled(this,World.CWorld.mGameMode!=='DeathMatch'&&(!netActive()||netSession()?.startOpts?.cfg.supplies===SUPPLY_RULE));
+    return ready.call(this);
+  };
+  world.LogKill=function(this:any,victim:any):any{
+    if(!suppliesEnabled(this)||victim?._CLASSID_!=='CThing_Creature_Devil')return logKill.call(this,victim);
+    if(victim.supplyDropLogged)return;
+    victim.supplyDropLogged=true;
+    const create=this._CreatePickup,own=Object.getOwnPropertyDescriptor(this,'_CreatePickup');
+    this._CreatePickup=function(this:any,position:any):void{
+      const kind=devilSupply(random(100));
+      if(!kind){create.call(this,position);return;}
+      const at=crateDropPosition(this,position);
+      if(at)this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(at,kind));
+    };
+    try{return logKill.call(this,victim);}
+    finally{if(own)Object.defineProperty(this,'_CreatePickup',own);else delete this._CreatePickup;}
+  };
+  for(const ctor of [Thing.Affect.CThing_Affect,Thing.Affect.CThing_Affect_Bullet,Thing.Affect.CThing_Affect_Explosion,
+    Thing.Affect.CThing_Affect_FireBall,Thing.Affect.CThing_Affect_ZombieAttack,Thing.Affect.CThing_Affect_DevilAttack]){
+    const prototype=ctor.prototype as any,affect=prototype.AffectThing;
+    prototype.AffectThing=function(this:any,victim:any):any{
+      const before=victim.mLife,shield=armorValue(victim.mArmor),result=affect.call(this,victim);
+      if(victim._CLASSID_==='CThing_Creature_Player'&&before>0&&shield>0&&suppliesEnabled(victim.mWorld)
+        &&typeof result==='number'&&Number.isFinite(result)&&result>0){
+        const absorbed=Math.min(shield,result);
+        victim.mArmor=shield-absorbed;
+        victim.mLife=before-(result-absorbed);
+      }
+      return result;
+    };
+  }
+  const player=Thing.Creature.CThing_Creature_Player.prototype as any,respawn=player.State_Respawn;
+  player.State_Respawn=function(this:any):any{
+    const before=this.mLife,result=respawn.call(this);
+    if(before<=0&&this.mLife>0&&suppliesEnabled(this.mWorld))delete this.mArmor;
+    return result;
+  };
+  const hud=World.CHud.prototype as any,update=hud.UpdatePlayer;
+  hud.UpdatePlayer=function(this:any,p:any,...args:any[]):any{
+    const result=update.call(this,p,...args);
+    if(!suppliesEnabled(this.mWorld))return result;
+    const head=this.mcPlayers[p.mPlayerIndex];if(!head)return result;
+    const amount=armorValue(p.mArmor);let bar=bars.get(head);
+    if(amount>0&&!bar){
+      bar=head.mcLife.duplicateMovieClip('_ArmorBar',head.getNextHighestDepth());
+      bars.set(head,bar);
+    }
+    head.mcLife._visible=true;
+    if(bar){
+      bar._visible=amount>0;
+      if(amount>0){
+        bar.gotoAndStop(Math.floor(Math.min(bar._totalframes,Math.max(1,bar._totalframes*amount/ARMOR_MAX+1))));
+        // Only armor's fill overlays health. Its duplicate background would dim/cover the exposed health.
+        const background=bar.getInstanceAtDepth(1);if(background)background._visible=false;
+        // Authored HUD.Player life clip: depth 1 outline/background, depth 2 mask, depth 3 fill.
+        // Its fill swaps red/orange/green shapes across frames; tint only that shape so armor stays blue
+        // at every ratio, while the original outline, mask, animation geometry and alpha are unchanged.
+        const fill=bar.getInstanceAtDepth(3);
+        if(fill&&fills.get(bar)!==fill){
+          fill.transform.colorTransform=new flash.geom.ColorTransform(0,0,0,1,54,173,235,0);
+          fills.set(bar,fill);
+        }
+      }
+    }
+    return result;
+  };
+}
