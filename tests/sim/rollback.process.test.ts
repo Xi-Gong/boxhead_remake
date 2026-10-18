@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const scenarios = [
+  ...[0,1,2,3].map(difficulty=>({name:`balanced difficulty ${difficulty} with supplies and recovery`,balance:true,difficulty,supplies:true,growth:true,allowEnd:true,wave:[1,10,20,35][difficulty],rtt:100,jitter:20,reconnect:true,total:360})),
   {name:'armor and ammo pickups under correction and recovery',supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:360},
   ...[32,64,128,256].map(explosions=>({name:`mixed explosive burst ${explosions}`,explosions,growth:true,rtt:100,jitter:20,total:180})),
   { name: 'personal growth under correction and recovery', growth: true, rtt: 100, jitter: 20, reconnect: true, total: 360 },
@@ -55,7 +56,7 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
       for (let i = 0; i < 2; i++) {
         expect(responses[i].errors).toEqual([]);
         if (reconnect && frame >= 80 && frame < 160) expect(['playing','reconnecting']).toContain(responses[i].phase);
-        else if (scenario.weapons && responses[i].phase === 'ended') {
+        else if ((scenario.weapons||scenario.allowEnd) && responses[i].phase === 'ended') {
           expect(responses[i].complete).toBe('player dead');
           expect(responses[i].desync).toBeUndefined();
           expect(responses[i].endReason).toBeUndefined();

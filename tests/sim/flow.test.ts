@@ -88,6 +88,9 @@ describe('Coop: the game ends only when both players are down', () => {
     });
     expect(sawOneDown).toBe(true);
     expect(respawns).toBeGreaterThan(0);
+    // Verify the final both-down route with both players deliberately passive after the respawn checks.
+    // The tuned pacing can let the active bot survive beyond the old fixed 4000-tick window.
+    runBots(g,[new Bot(0,{passive:true}),new Bot(1,{passive:true})],1500);
     expect(w.mCompleteState).toBe('player dead');
     expect(w.mUpgrades.mPlayerCount).toBe(0);
     expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);

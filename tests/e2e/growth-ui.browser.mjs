@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
-const out='generated/reports/v028/growth-ui';mkdirSync(out,{recursive:true});
+const balanced=process.env.BOXHEAD_GROWTH_BALANCED==='1';
+const out=`generated/reports/v028/${balanced?'balance':'growth'}-ui`;mkdirSync(out,{recursive:true});
 const browser=await launch(),report={ok:false,shots:[],geometry:[],errors:[]};
 let g;
 try{
@@ -17,11 +18,11 @@ try{
  await toMainMenu(g);
  await g.clickClip('m.mcScreen.mcLanGame');
  assert(await g.waitScreen('State_LanLobby','Screen_LanLobby'));
- await g.eval(async()=>{
+ await g.eval(async balanced=>{
   await window.__game.__setInfiniteLife(true);
   window.__growthQA.message({t:'start',mode:'Coop',roomLink:'ROOM_Single_0001',seed:4242,netcode:'rollback-v2',inputDelay:0,
-   cfg:{progression:'personal-growth-v1',difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:3,charP2:0}});
- });
+   cfg:{progression:'personal-growth-v1',...(balanced?{supplies:'armor-ammo-v1',balance:'pve-balance-v1'}:{}),difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:3,charP2:0}});
+ },balanced);
  assert(await g.waitExpr('g.state()==="State_RunWorld" && m.mcWorld?._LanGrowthHud'));
  await g.eval(()=>{
   const w=window.__game.main().mcWorld,original=w.Process;
@@ -43,7 +44,8 @@ try{
     new P.Thing.Affect.CThing_Affect_Bullet(owner,owner,1,owner.mAngle).AffectThing(victim);victim.SetState('State_Dying');
    }else if(a==='max'){
     Object.assign(this.mUpgrades.lanGrowth.players[0],{score:999999999999999,level:125,xp:0});
-    Object.assign(this.mUpgrades.lanGrowth.players[1],{score:12345,level:17,xp:3});
+    const balanced=this.mUpgrades.lanGrowth.players[1].curve==='pve-balance-v1';
+    Object.assign(this.mUpgrades.lanGrowth.players[1],{score:12345,level:balanced?124:17,xp:balanced?39:3});
     this.mUpgrades.mLevelIndex=103;
     Object.assign(this.mUpgrades.Level,{Zombie_TotalCount:505,Devil_TotalCount:25});
    }
@@ -62,6 +64,7 @@ try{
  assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Player0._Experience.text'),'0 / 5 XP');
  await g.eval(()=>{window.__growthQA.action='max';});
  assert(await g.waitExpr('m.mcWorld._LanGrowthHud._Player0._Experience.text==="MAX"'));
+ assert(await g.waitExpr(`m.mcWorld._LanGrowthHud._Player1._Experience.text===${JSON.stringify(balanced?'39 / 65 XP':'3 / 5 XP')}`));
  for(const [width,height]of[[640,480],[960,720],[1280,720],[640,889]]){
   await g.page.setViewportSize({width,height});await g.page.waitForTimeout(750);
   const geo=await g.eval(()=>{
@@ -69,7 +72,7 @@ try{
    return {stage:w.mScreenSize.x,left:h._Player0._x,right:h._Player1._x,center:h._Wave._x,
     score:h._Player0._Score.text,head:Object.values(w.mHud.mcPlayers).filter(Boolean).map(p=>({x:p._x,y:p._y,level:p._PersonalLevel?.text,visible:p._visible})),
     counts:{zombies:h._Wave._Zombies.text,devils:h._Wave._Devils.text},
-    fields:[h._Player0._Score,h._Player1._Score,h._Wave._Zombies,h._Wave._Devils,h._Wave._Number].map(t=>({width:t._width,textWidth:t.textWidth}))};
+    fields:[h._Player0._Score,h._Player1._Score,h._Player0._Experience,h._Player1._Experience,h._Wave._Zombies,h._Wave._Devils,h._Wave._Number].map(t=>({width:t._width,textWidth:t.textWidth}))};
   });
   assert.equal(geo.left,geo.stage-geo.right-210);assert(geo.center>=geo.left+222);
   assert(geo.right>=geo.center+184);assert(geo.fields.every(f=>f.textWidth<=f.width));

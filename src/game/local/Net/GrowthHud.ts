@@ -3,7 +3,7 @@ import { flash, TextFormat } from '../../../engine/runtime.ts';
 import { nowMs } from '../../../engine/flash/clock.ts';
 import { World } from '../../packages.ts';
 import { BODY_FONT, MENU_FONT, INK, RED, text, capsule } from '../UiStyle.ts';
-import { growthOf, MAX_LEVEL, XP_PER_LEVEL, type GrowthState } from './Growth.ts';
+import { growthOf, MAX_LEVEL, xpRequired, type GrowthState } from './Growth.ts';
 import { netSession } from './NetSession.ts';
 import type { EnemyCounts } from './EnemyCounts.ts';
 
@@ -81,13 +81,13 @@ function update(hud: any, state: GrowthState, wave: number, enemies: EnemyCounts
       ui.level.text='LV '+p.level;ui.lastLevel=p.level;
     }
     const pulse=time<ui.pulseUntil;
-    if(ui.lastXp!==p.xp||ui.pulse!==pulse||ui.xp.text===''){
-      ui.xp.text=p.level===MAX_LEVEL?'MAX':pulse?'LEVEL UP!':`${p.xp} / ${XP_PER_LEVEL} XP`;
+    if(progressChanged||ui.pulse!==pulse||ui.xp.text===''){
+      ui.xp.text=p.level===MAX_LEVEL?'MAX':pulse?'LEVEL UP!':`${p.xp} / ${xpRequired(p)} XP`;
       ui.xp.textColor=pulse?0x007000:INK;ui.level.textColor=pulse?0x007000:INK;
       ui.pulse=pulse;ui.lastXp=p.xp;
     }
     if(progressChanged){
-      ui.fill._xscale=p.level===MAX_LEVEL?100:p.xp/XP_PER_LEVEL*100;
+      ui.fill._xscale=p.level===MAX_LEVEL?100:p.xp/xpRequired(p)*100;
       ui.fill._visible=p.level===MAX_LEVEL||p.xp>0;
     }
   }
@@ -104,7 +104,7 @@ function pauseGrowth(hud: any, state: GrowthState): void {
   text(layer,'_Title',0,73,640,20,BODY_FONT,13,0xffffff,true,'center','PERSONAL UPGRADES');
   for(let i=0;i<2;i++){
     const x=28+i*304,p=state.players[i]!;
-    text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${p.level===MAX_LEVEL?'MAX':p.xp+'/5 XP'}`);
+    text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${p.level===MAX_LEVEL?'MAX':p.xp+'/'+xpRequired(p)+' XP'}`);
     const groups:Record<string,Record<string,boolean>>={pistol:{}};
     for(let n=1;n<=p.level;n++)for(const item of hud.mWorld.mUpgrades.mMultipliers[n]??[]){
       if(item.mClassID==='CThing_Creature_Player'&&typeof item.mValue==='string')groups[item.mValue]??={};

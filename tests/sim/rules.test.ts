@@ -14,7 +14,7 @@ describe('difficulty -> start level / multiplier', () => {
   for (const d of [0, 1, 2, 3] as const) {
     const [level, mult] = DIFFICULTY_START[d]!;
     it(`difficulty ${d}: level ${level}, x${mult}, upgrades and weapons up to x${mult}`, () => {
-      const g = createHeadlessGame({ mode: d === 2 ? 'Coop' : 'Single', room: 1 + d, seed: d, difficulty: d as 0 | 1 | 2 | 3 });
+      const g = createHeadlessGame({ classicWaves:true, mode: d === 2 ? 'Coop' : 'Single', room: 1 + d, seed: d, difficulty: d as 0 | 1 | 2 | 3 });
       const s = g.snapshot();
       expect([s.level, s.multiplier]).toEqual([level, mult]);
       const u = g.world().mUpgrades;
@@ -65,7 +65,7 @@ describe('Death Match start', () => {
 describe('zombie spawn cap = min(Zombie_Count, 60), 40 on LOW quality', () => {
   for (const detail of [true, false]) {
     it(`${detail ? 'HIGH' : 'LOW'}: level 35 fills up to ${detail ? 60 : 40} zombies and never more`, () => {
-      const g = createHeadlessGame({ mode: 'Single', room: 18, seed: 9, difficulty: 3, options: { detail, infiniteLife: true } });
+      const g = createHeadlessGame({ classicWaves:true, mode: 'Single', room: 18, seed: 9, difficulty: 3, options: { detail, infiniteLife: true } });
       expect(CMain.mSaveData.mDetail).toBe(detail);
       const cap = detail ? 60 : 40;
       let max = 0;

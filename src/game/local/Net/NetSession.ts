@@ -44,7 +44,8 @@ import { recordWaveReached } from '../WaveUnlock.ts';
 import { EventJournal } from './Events.ts';
 import { NetPresentation } from './Presentation.ts';
 import { PauseBarrier } from './PauseBarrier.ts';
-import { GROWTH_RULE, newGrowth, copyGrowth, growthOf, type GrowthState } from './Growth.ts';
+import { GROWTH_RULE, newGrowth, copyGrowth, growthOf, grantGrowthLoadout, type GrowthState } from './Growth.ts';
+import {BALANCE_RULE,balancedStartLevel,DIFFICULTY_START_WAVES,difficultyIndex} from '../BalanceRules.ts';
 import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
@@ -470,7 +471,13 @@ export class NetSession {
   onWorldReady(world: any): void {
     this.world = world;
     if (this.mode === 'Coop' && this.startOpts?.cfg.progression === GROWTH_RULE) {
-      world.mUpgrades.lanGrowth ??= newGrowth(world.mUpgrades.mMultiplierIndex);
+      const balanced=this.startOpts.cfg.balance===BALANCE_RULE,fresh=!world.mUpgrades.lanGrowth;
+      const baseWave=Math.max(world.mUpgrades.mLevelIndex,DIFFICULTY_START_WAVES[difficultyIndex(this.startOpts.cfg.difficulty)]!);
+      world.mUpgrades.lanGrowth ??= newGrowth(balanced?balancedStartLevel(baseWave,this.startOpts.cfg.devils):world.mUpgrades.mMultiplierIndex,balanced);
+      if(balanced){
+        for(const player of world.mUpgrades.lanGrowth.players)player.curve=BALANCE_RULE;
+        if(fresh)grantGrowthLoadout(world);
+      }
       this.confirmedGrowth = copyGrowth(world.mUpgrades.lanGrowth);
       this.confirmedWave = world.mUpgrades.mLevelIndex;
       this.confirmedEnemies = remainingEnemies(world);

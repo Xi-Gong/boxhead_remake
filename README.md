@@ -76,11 +76,15 @@ npm run dev         # http://localhost:5173/
   curve would have granted by then. A fresh save can only start at wave 1 — the historical best persists in the
   save and caps the cycler; in LAN the host's best is the cap.
 - **Personal LAN co-op progression** — separate last-hit scores, permanent levels and original weapon upgrades
-  for each player. Zombies award 1 XP and devils 5 XP; every 5 XP grants a level, up to 125. Top corner
+  for each player. Zombies award 1 XP and devils 5 XP; level requirements begin at 5 XP and rise by 5 every ten
+  levels, up to level 125. Top corner
   score/level/XP panels flank the current wave and its remaining zombie/devil totals (including pending spawns),
   with individual upgrade summaries while paused. Retry restores the current wave's starting growth and
-  inventory; a fresh selected-wave run grants its baseline level. Local co-op and death match retain their
-  original rules.
+  inventory; a fresh selected-wave run grants its baseline level from the same earned-wave curve, respecting
+  the difficulty head start. Local co-op retains original kill-multiplier growth; death match retains its rules.
+- **Four PvE difficulty curves** — Single and co-op tune spawn pacing, active enemy caps and speed ceilings for
+  Beginner, Intermediate, Expert and Nightmare. Per-wave kill budgets, enemy health/damage and weapon upgrades
+  stay intact, so stronger weapons keep their impact. LAN enables the tuning only after capability negotiation.
 - **LAN multiplayer** (portable build) — host & auto-discover or join by IP for co-op and death match.
   Rollback applies local input on the next simulation tick without waiting for the peer, with immediate local
   weapon audio and display interpolation at the monitor's refresh rate. Redundant UDP inputs use TCP as a

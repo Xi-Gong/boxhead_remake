@@ -35,6 +35,7 @@ import { _resetForTests as resetResumeForTests, hasStored as resumeHasStored } f
 import { _resetForTests as resetStartWaveForTests } from '../../src/game/local/StartWave.ts';
 import { _resetNetForTests } from '../../src/game/local/Net/NetSession.ts';
 import { _resetBridgeForTests } from '../../src/game/local/Net/bridge.ts';
+import {setClassicWaveFixture} from '../../src/game/local/Balance.ts';
 import { CMain, Screen, Thing, World } from '../../src/game/packages.ts';
 
 export type GameMode = 'Single' | 'Coop' | 'DeathMatch';
@@ -71,6 +72,8 @@ export interface HeadlessGameOptions {
   /** Room 1..18. */
   room?: number;
   difficulty?: 0 | 1 | 2 | 3;
+  /** Original wave tables for legacy LAN/reference and mechanical-port contract fixtures. */
+  classicWaves?: boolean;
   seed?: number;
   options?: GameOptions;
   /** Cells per Nav_Update call (deviation NAV_BUDGET_TEST_HOOK); null = original getTimer budget. Default 300. */
@@ -421,6 +424,7 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
     throw new Error(`boot did not reach State_Intro (state ${state()}, errors ${errors[0]})`);
   }
   const m = main();
+  if(opts.classicWaves)setClassicWaveFixture(m);
   const sd = m.constructor.mSaveData ?? (CMain as any).mSaveData;
   const o = opts.options ?? {};
   // options window fields (CScreen_SelectWorld.RegisterButton_Option writes CMain.mSaveData[field] = value)

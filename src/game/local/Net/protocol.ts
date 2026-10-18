@@ -109,6 +109,8 @@ export interface GameConfig {
   progression?: 'personal-growth-v1';
   /** Optional PvE armor/ammunition loot rules; absent peers retain the original simulation. */
   supplies?: 'armor-ammo-v1';
+  /** Optional difficulty/growth curve; requires personal growth and supply capabilities. */
+  balance?: 'pve-balance-v1';
   difficulty: number;
   gameSpeed: number; // 0 slow / 1 normal / 2 fast - CMain.mFPS = 25 * (0.5, 1, 2), read by sim code
   devils: boolean;

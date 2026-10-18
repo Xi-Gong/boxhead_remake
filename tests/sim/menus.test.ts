@@ -4,8 +4,7 @@
 // highscores (debrief SEND SCORE -> table; level icon "View Highscores").
 import { describe, expect, it } from 'vitest';
 import { createHeadlessGame, KEYS } from './harness.ts';
-import { Bot, runBots } from './bots.ts';
-import { CMain, CSaveData } from '../../src/game/packages.ts';
+import { CMain, CSaveData, Thing } from '../../src/game/packages.ts';
 import { getTable } from '../../src/game/local/Highscores.ts';
 
 const release = (mc: any): void => { mc.onRelease.call(mc); };
@@ -145,7 +144,11 @@ describe('local screens (scope)', () => {
   it('debrief SEND SCORE stores the HUD total in the local table of the room and shows it', () => {
     const g = createHeadlessGame({ mode: 'Single', room: 4, seed: 8, difficulty: 1 });
     const w = g.world();
-    runBots(g, [new Bot(0)], 3000);
+    // This gate verifies score submission, independently of a bot's aim under changing wave tuning.
+    // Produce its positive score through a real bullet and the original death accounting path.
+    const owner=g.players()[0],target=w.mThing_Collection.AddThing(new Thing.Creature.CThing_Creature_Zombie(owner.mPosition.Clone(),owner.mAngle.Clone()));
+    target.Process_Init();new Thing.Affect.CThing_Affect_Bullet(owner,owner,100,owner.mAngle).AffectThing(target);
+    target.SetState('State_Dying');g.tick(2);
     if (g.state() === 'State_RunWorld') g.quit();
     const score = w.mHud.nTotalScore;
     expect(score).toBeGreaterThan(0);

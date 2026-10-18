@@ -7,7 +7,7 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
- it.each([{features:[]},{features:['personal-growth-v1']},{features:['armor-ammo-v1']},{features:['personal-growth-v1','armor-ammo-v1']}])('negotiates gameplay rules from advertised features $features',({features})=>{
+ it.each([[],['personal-growth-v1'],['armor-ammo-v1'],['personal-growth-v1','armor-ammo-v1'],['pve-balance-v1'],['personal-growth-v1','pve-balance-v1'],['personal-growth-v1','armor-ammo-v1','pve-balance-v1']].map(features=>({features})))('negotiates gameplay rules from advertised features $features',({features})=>{
   const b=lanBridge(), previous=CMain.mSaveData;
   CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
@@ -17,6 +17,7 @@ describe('LAN bridge operation lifetime',()=>{
    const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');
    expect(start.cfg.progression).toBe(features.includes('personal-growth-v1')?'personal-growth-v1':undefined);
    expect(start.cfg.supplies).toBe(features.includes('armor-ammo-v1')?'armor-ammo-v1':undefined);
+   expect(start.cfg.balance).toBe(['personal-growth-v1','armor-ammo-v1','pve-balance-v1'].every(f=>features.includes(f))?'pve-balance-v1':undefined);
   } finally {CMain.mSaveData=previous;launch.mockRestore();}
  });
  it('a restarted client without history rejects in-place recovery',()=>{

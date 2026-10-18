@@ -417,4 +417,18 @@ export const DEVIATIONS: Deviation[] = [
       'family) points userData at an exact directory instead: isolated saves per test run, NO migration. One ' +
       'folder to manage and back up.',
   },
+  {
+    id:'PVE_BALANCE',
+    file:'local/Balance.ts, BalanceRules.ts; local/Net/Growth.ts, GrowthHud.ts, NetSession.ts, bridge.ts, protocol.ts; electron/lan.ts',
+    description:'PvE difficulty profiles tune wave-table spawn intervals, active caps and speed ceilings while '+
+      'retaining original per-wave kill budgets, enemy health/damage, attack patterns, weapon upgrade thresholds '+
+      'and health regeneration. Devil active caps cannot exceed their remaining wave budget. Local Single/Coop '+
+      'retain original kill-multiplier growth. Capable LAN Coop peers additionally use 5 XP per level plus 5 more '+
+      'per ten-level block, with the optional player curve marker saved/restored in existing v2 growth data. '+
+      'Fresh wave starts use the same previous-wave, equal-kill-share model for their baseline level and loadout, '+
+      'retaining the difficulty head-start floor. Scores/XP start at zero; retry preserves checkpoints. '+
+      'The pve-balance-v1 capability requires personal-growth-v1 and armor-ammo-v1. Legacy peers and Death Match '+
+      'retain original wave rules. A main-owned weak test fixture keeps exact original port-contract assertions '+
+      'runnable alongside the new actual-spawn and balance tests; it has no player-facing switch.',
+  },
 ];

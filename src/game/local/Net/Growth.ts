@@ -2,20 +2,30 @@
 // Derived upgrade views are immutable caches owned by that world's upgrade table, never snapshot state.
 import { forIn } from '../../../engine/runtime.ts';
 import { Thing, World } from '../../packages.ts';
+import {BALANCE_RULE,balancedXpRequired} from '../BalanceRules.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
 export const MAX_LEVEL = 125;
 export const XP_PER_LEVEL = 5;
-export interface PlayerGrowth { score: number; level: number; xp: number }
+export interface PlayerGrowth { score: number; level: number; xp: number; curve?: typeof BALANCE_RULE }
 export interface GrowthState { version: 1; players: [PlayerGrowth, PlayerGrowth] }
-export function newGrowth(level: number): GrowthState {
+export function newGrowth(level: number,balanced=false): GrowthState {
   const base = Math.max(1, Math.min(MAX_LEVEL, Math.floor(level)));
-  return { version: 1, players: [{ score: 0, level: base, xp: 0 }, { score: 0, level: base, xp: 0 }] };
+  const player=():PlayerGrowth=>({score:0,level:base,xp:0,...(balanced?{curve:BALANCE_RULE}:{})});
+  return { version: 1, players: [player(),player()] };
 }
 export function copyGrowth(state: GrowthState): GrowthState {
   return { version: 1, players: [{ ...state.players[0] }, { ...state.players[1] }] };
 }
 export function growthOf(world: any): GrowthState | undefined { return world?.mUpgrades?.lanGrowth; }
+export function xpRequired(player:PlayerGrowth):number{return player.curve===BALANCE_RULE?balancedXpRequired(player.level):XP_PER_LEVEL;}
+export function grantGrowthLoadout(world:any):void{
+  const state=growthOf(world);if(!state)return;
+  for(const player of Object.values(world.mThing_Collection.mPlayerThings) as any[]){
+    const flags=atLevel(world.mUpgrades,state.players[player.mPlayerIndex]!.level).CThing_Creature_Player;
+    for(const value of Object.values(flags??{}))if(typeof value==='string'&&player.mWeapons?.[value]&&!player.mWeapons[value].mActive)player.NewWeapon(value);
+  }
+}
 
 /** Parent chains already carry shot/weapon/placed-object owners, including dead players. */
 export function playerSource(thing: any): number | undefined {
@@ -49,9 +59,9 @@ function atLevel(upgrades: any, level: number): Record<string, UpgradeRow> {
 export function awardKill(state: PlayerGrowth, baseScore: number, xp: number): number {
   const amount = baseScore * state.level;
   state.score += amount;
-  const total = state.xp + xp;
-  state.level = Math.min(MAX_LEVEL, state.level + Math.floor(total / XP_PER_LEVEL));
-  state.xp = state.level === MAX_LEVEL ? 0 : total % XP_PER_LEVEL;
+  let total = state.xp + xp;
+  while(state.level<MAX_LEVEL&&total>=xpRequired(state)){total-=xpRequired(state);state.level++;}
+  state.xp = state.level === MAX_LEVEL ? 0 : total;
   return amount;
 }
 
