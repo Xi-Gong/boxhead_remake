@@ -11,7 +11,7 @@ import { CSound } from '../../packages.ts';
 import { lanBridge } from './bridge.ts';
 import { SCREEN_LAN_SETUP_LINKAGE } from '../localSymbols.ts';
 import { BODY_FONT, GREY, INK, glow, pillButton, text } from '../UiStyle.ts';
-import type { SetupSelection } from './protocol.ts';
+
 
 const DIFFICULTY = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'NIGHTMARE'];
 const FRAGS = [5, 10, 20, 50];

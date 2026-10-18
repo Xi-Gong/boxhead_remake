@@ -47,7 +47,7 @@ import { Graphics } from '../flash/Graphics.ts';
 import { TextFormat } from '../flash/TextFormat.ts';
 import { forIn, toAS2String, toNumber } from '../flash/as2.ts';
 import type {
-  ButtonDef, ButtonRecord, CX, EditTextDef, Filter, FontDef, Mat, MorphDef, ShapeDef, SoundInfo, SpriteDef,
+  ButtonDef, ButtonRecord, CX, EditTextDef, Filter, FontDef, MorphDef, ShapeDef, SoundInfo, SpriteDef,
   StaticTextDef,
 } from '../../shared/assetSchema.ts';
 import {

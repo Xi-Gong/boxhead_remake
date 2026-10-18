@@ -11,7 +11,7 @@
 //   9005 "Local_PanelCard"      = v0.2.2 the 9002 chrome WITHOUT the CLOSE button (mcLock #274 + white panel #317),
 //                                 the shared options-window card for the restyled added panels (UiStyle.panelCard).
 import type { CharDef, LibraryJson, PlaceOp, SpriteDef } from '../../shared/assetSchema.ts';
-import { TextFormat } from '../../engine/runtime.ts';
+
 
 export const SCREEN_INSTRUCTIONS_ID = 9001;
 export const SCREEN_INSTRUCTIONS_LINKAGE = 'Screen_Instructions';
@@ -84,31 +84,3 @@ export function installLocalSymbols(json: LibraryJson): void {
   json.exports[LOCAL_PANEL_CARD_LINKAGE] = LOCAL_PANEL_CARD_ID;
 }
 
-/**
- * Deviation SAVE_QUIT_RESUME: a menu-style button drawn at runtime (the original menu / pause buttons are baked
- * library art whose labels cannot change). The clip is centred on (x, y) and carries a `_Contents` child holding
- * the drawn plate + label, so CScreen_Main.Register_Button's rollover (alpha + jitter filters on _Contents)
- * applies to it unchanged.
- */
-export function buildMenuButton(parent: any, name: string, x: number, y: number, w: number, h: number, label: string, fontSize: number): any {
-  const mc = parent.createEmptyMovieClip(name, parent.getNextHighestDepth());
-  mc._x = x;
-  mc._y = y;
-  const contents = mc.createEmptyMovieClip('_Contents', mc.getNextHighestDepth());
-  contents._x = -w / 2;
-  contents._y = -h / 2;
-  contents.lineStyle(2, 0x9c9c9c);
-  contents.beginFill(0x181818);
-  contents.moveTo(0, 0);
-  contents.lineTo(w, 0);
-  contents.lineTo(w, h);
-  contents.lineTo(0, h);
-  contents.lineTo(0, 0);
-  contents.endFill();
-  const tf = contents.createTextField('_Label', contents.getNextHighestDepth(), 0, (h - fontSize) / 2 - 2, w, h);
-  tf.embedFonts = true;
-  tf.selectable = false;
-  tf.setNewTextFormat(new TextFormat('Arial Rounded MT Bold', fontSize, 0xffffff, true, false, false, undefined, undefined, 'center'));
-  tf.text = label;
-  return mc;
-}

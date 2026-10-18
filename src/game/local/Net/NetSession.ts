@@ -28,7 +28,7 @@
 // from the checkpoint. Not back in time: forfeit - Death Match forces 'playerN wins' (both peers see the correct
 // winner screen), Coop forces 'player dead' - and both return to the lobby where the checkpoint survives for a
 // later continuation.
-import { getRandomState, setRandomState } from '../../../engine/flash/rng.ts';
+import { setRandomState } from '../../../engine/flash/rng.ts';
 import { CMain, Thing, World } from '../../packages.ts';
 import { armSnapshot, capture, type RunSnapshot } from '../Resume.ts';
 import { armStartWave, getRunStartWave } from '../StartWave.ts';

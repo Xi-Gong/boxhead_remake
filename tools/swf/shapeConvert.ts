@@ -15,7 +15,7 @@
  * start/end edges (`Seg.b`).
  */
 import type { ShapeLayer } from '../../src/shared/assetSchema.ts';
-import type { RawShape, ShapeRecord, StyleArrays } from './shapes.ts';
+import type { RawShape, ShapeRecord } from './shapes.ts';
 
 // ---------------------------------------------------------------- segment model
 

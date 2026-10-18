@@ -11,7 +11,7 @@ import { getFrameScript, registerFrameScript, setInstanceHook } from '../engine/
 import { CMain, CSaveData, CSound, External, Screen, World } from './packages.ts';
 import { hasTable, roomIndexOfLibLink, showHighscoreTable, submitLocalScore } from './local/Highscores.ts';
 import { registerInstructionsPage } from './local/InstructionsPage.ts';
-import { SCREEN_INSTRUCTIONS_LINKAGE, SCREEN_LAN_LOBBY_LINKAGE, SCREEN_LAN_SETUP_LINKAGE, buildMenuButton } from './local/localSymbols.ts';
+import { SCREEN_INSTRUCTIONS_LINKAGE, SCREEN_LAN_LOBBY_LINKAGE, SCREEN_LAN_SETUP_LINKAGE } from './local/localSymbols.ts';
 import { armFromCheckpoint, armFromStored, capture, clearAll, clearStored, consumePending, hasStored, isArmed, isSuppressing, recordCheckpoint, writeStored } from './local/Resume.ts';
 import { netActive, netSession } from './local/Net/NetSession.ts';
 import { installNetScope } from './local/Net/NetScope.ts';

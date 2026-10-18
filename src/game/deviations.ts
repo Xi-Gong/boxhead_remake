@@ -170,7 +170,7 @@ export const DEVIATIONS: Deviation[] = [
   },
   {
     id: 'SAVE_QUIT_RESUME',
-    file: 'scope.ts (CHud.Pause wrapper, CMain.State_RunWorld/State_SaveQuitMenu/State_Continue/State_Debrief wrappers, CScreen_Main.Init_Buttons wrapper), local/Resume.ts, local/localSymbols.ts (buildMenuButton)',
+    file: 'scope.ts (CHud.Pause wrapper, CMain.State_RunWorld/State_SaveQuitMenu/State_Continue/State_Debrief wrappers, CScreen_Main.Init_Buttons wrapper), local/Resume.ts, local/UiStyle.ts',
     description:
       'The original has no mid-run save at all. The remake adds a "SAVE & QUIT" button to the pause screen (drawn at ' +
       'runtime below QUIT; the original pause screen has a single QUIT) that stores a run snapshot in the game save ' +
