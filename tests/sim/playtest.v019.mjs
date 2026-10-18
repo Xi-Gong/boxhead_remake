@@ -84,6 +84,9 @@ await shot('select_single_wave25');
 
 // Start the room (the level icon's own START button handler) and verify the run really begins at LEVEL 25 / x36
 // (anchorInterp(25) = 30 + 5 * (20/15) = 36.67 -> 36: tiers up to x30 - uzi, shotgun, barrel, grenade, fakewall).
+// The original cheat switch is read during player initialization, before the screenshot/navigation run.
+// Normal-life combat has dedicated balance/flow tests; disable this before the real death-crate scenario.
+await page.evaluate(() => window.__game.__setInfiniteLife(true));
 await page.evaluate(() => {
   const m = window.__game.main();
   const icons = m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons;
@@ -100,15 +103,17 @@ if (startState.level !== 25 || startState.mult !== 36) fail(`wave-25 start wrong
 const wantWeapons = 'pistol,uzi,shotgun,barrel,grenade,fakewall';
 if (startState.weapons.join(',') !== wantWeapons) fail(`wave-25 loadout wrong (${startState.weapons.join(',')}), wanted ${wantWeapons}`);
 step(`wave-25 run verified: level ${startState.level} mult ${startState.mult} weapons ${startState.weapons.join(',')}`);
-await page.waitForTimeout(4200); // let wave 25's zombies spawn and reach the open floor (README gameplay shot)
+// v0.2.8 Beginner pacing is intentionally slower. Preserve the ten-enemy field assertion,
+// giving the approved wave curve enough ticks to populate the gameplay screenshot.
+await page.waitForTimeout(6200);
 const zombieState = await page.evaluate(() => {
   const w = window.__game.main().mcWorld;
   const counts = w.mThing_Collection.mThingCounters;
   const p = Object.values(w.mThing_Collection.mPlayerThings)[0];
   return { zombies: counts.CThing_Creature_Zombie ?? 0, tick: w.mTick, level: w.mUpgrades.mLevelIndex, px: p.mPosition.mX, py: p.mPosition.mY, life: p.mLife };
 });
-step(`wave-25 field after 4.2 s: ${JSON.stringify(zombieState)}`);
-if (zombieState.zombies < 10) fail(`wave-25 spawned only ${zombieState.zombies} zombies in 4.2 s (sim: 51)`);
+step(`wave-25 field after 6.2 s: ${JSON.stringify(zombieState)}`);
+if (zombieState.zombies < 10) fail(`wave-25 spawned only ${zombieState.zombies} zombies in 6.2 s`);
 // Draw the horde on camera for the README shot: a few seconds of real movement + fire (the real keyboard path).
 for (const key of ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp']) {
   await page.keyboard.down(key);
@@ -123,6 +128,7 @@ await page.keyboard.press('p');
 await page.waitForTimeout(300);
 await page.evaluate(() => { const w = window.__game.main().mcWorld; w.mHud.mcScreenPause?._Quit?.onRelease?.call(w.mHud.mcScreenPause._Quit); });
 await waitFor(() => window.__game?.state?.() === 'State_Debrief', null, 30000);
+await page.evaluate(() => window.__game.__setInfiniteLife(false)); // the death-crate scenario below must really die
 
 // ---- Coop: the death crate ---------------------------------------------------------------------------
 await page.evaluate(() => window.__game.main().SetState('State_SelectWorld_Coop'));
