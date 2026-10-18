@@ -700,6 +700,10 @@ export class NetSession {
     this.soundRecordingTick = tick;
     try { world.Process(); } finally { this.soundRecordingTick = undefined; }
     meta.endState = world.mCompleteState;
+    if (this.mode === 'DeathMatch' && (tick + 1) % DM_CHECKPOINT_EVERY === 0) {
+      const snap = capture(world);
+      meta.checkpoint = { tick: world.mTick, snap, digest: fnv(JSON.stringify(snap)) };
+    }
     if ((tick + 1) % LAN_CHECKSUM_EVERY === 0) this.computeChecksumString(world, tick + 1);
   }
 

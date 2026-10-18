@@ -10,6 +10,7 @@ const scenarios = [
   { name: '50ms jitter, 3% primary loss, 500ms outage', rtt: 100, jitter: 50, loss: 3, outage: 500 },
   ...[0,1,2].map(speed => ({ name: `all weapons speed ${speed}`, speed, weapons: true, total: 360 })),
   { name: 'deathmatch low detail', mode: 'DeathMatch', detail: false, weapons: true, total: 360 },
+  { name: 'deathmatch confirmed checkpoint', mode: 'DeathMatch', total: 1550 },
 ];
 it.each(scenarios)('independent asynchronous peers converge: $name', async (scenario: any) => {
   const {pause,reconnect} = scenario;
@@ -81,6 +82,7 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
       if (scenario.rtt === undefined || scenario.rtt > 0) expect(r.stats.corrections).toBeGreaterThan(0);
       expect(r.errors).toEqual([]);
       if (scenario.weapons) expect(r.weapons).toHaveLength(10);
+      if (scenario.total === 1550) expect(r.checkpoint - r.startTick).toBe(1500);
     }
   } finally { for (const child of children) child.kill(); }
 }, 120000);
