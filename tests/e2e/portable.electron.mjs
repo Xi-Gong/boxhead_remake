@@ -1,6 +1,7 @@
 // Launch the actual NSIS portable executable. Its launcher does not forward inspector stderr, so connect to CDP.
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:net';
 import { mkdirSync, copyFileSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -35,9 +36,13 @@ try{
  const archive=join(dirname(executable),'resources/app.asar');
  const version=JSON.parse(asar.extractFile(archive,'package.json').toString()).version;
  assert.equal(version,expected,'version inside the portable extraction');
+ const extractedAsarSha256=createHash('sha256').update(readFileSync(archive)).digest('hex');
+ const verifiedRuntimeFiles=[];
  if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
-  for(const file of [join('dist-electron','main.cjs'),...readdirSync('dist/bundle').filter(n=>n.endsWith('.js')).map(n=>join('dist','bundle',n))]){
+  assert.equal(extractedAsarSha256,createHash('sha256').update(readFileSync('release/win-unpacked/resources/app.asar')).digest('hex'),'complete portable asar matches the validated unpacked build');
+  for(const file of [join('dist-electron','main.cjs'),join('dist-electron','preload.cjs'),...readdirSync('dist/bundle').filter(n=>n.endsWith('.js')).map(n=>join('dist','bundle',n))]){
    assert.ok(asar.extractFile(archive,file).equals(readFileSync(file)),'portable contains current built code: '+file);
+   verifiedRuntimeFiles.push(file.replaceAll('\\','/'));
   }
  }
  if(process.env.BOXHEAD_QA_CAPTURE_ASAR){const target=resolve(process.env.BOXHEAD_QA_CAPTURE_ASAR);mkdirSync(dirname(target),{recursive:true});copyFileSync(archive,target);}
@@ -53,7 +58,7 @@ try{
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
  }
- writeFileSync(join(out,'launch-'+version+'.json'),JSON.stringify({version,exe,executable,archive,ok:true},null,2));
+ writeFileSync(join(out,'launch-'+version+'.json'),JSON.stringify({version,exe,executable,archive,extractedAsarSha256,verifiedRuntimeFiles,ok:true},null,2));
  console.log('PASS: actual portable',version,process.env.BOXHEAD_QA_CAPTURE_ASAR?'baseline extraction':'gameplay, save/continue and audio');
 }finally{
  if(page)await page.evaluate(()=>window.boxheadDesktop.quit()).catch(()=>{});
