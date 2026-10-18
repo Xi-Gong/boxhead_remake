@@ -1,0 +1,614 @@
+{
+  "backend": "default",
+  "scale": 2,
+  "seed": 182026,
+  "electron": false,
+  "gpu": "ANGLE (Intel, Intel(R) Graphics (0x0000A7AA) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "phases": [
+    {
+      "phase": "intro",
+      "frames": 668,
+      "efMax": 978.6999999880791,
+      "efMean": 1.6654191618551037,
+      "renderMax": 3.600000023841858,
+      "renderMean": 0.28143712664078807,
+      "frameMax": 978.6999999880791,
+      "frameP50": 0.30000007152557373,
+      "frameP95": 1.300000011920929,
+      "efPerSec": 44.57047539616347,
+      "xsiMs": 776.6000002622604,
+      "xsiCalls": 1072,
+      "maxEfState": "State_Init",
+      "taskMs": 2136.098,
+      "scriptMs": 1496.634,
+      "heapBefore": 16793748,
+      "heapAfter": 26249820,
+      "nodes": 38,
+      "resources": {
+        "objects": 165,
+        "filterCaches": 7,
+        "filterPixels": 2867776,
+        "fontEntries": 0,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "intro (after XSI)",
+      "frames": 439,
+      "efMax": 1.5,
+      "efMean": 0.21272727278145878,
+      "renderMax": 3.600000023841858,
+      "renderMean": 0.30273348595395444,
+      "frameMax": 4.399999976158142,
+      "frameP50": 0.3999999761581421,
+      "frameP95": 1.399999976158142,
+      "efPerSec": 46.49835179200466,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_Intro"
+    },
+    {
+      "phase": "intro->main",
+      "frames": 13,
+      "efMax": 0.5999999642372131,
+      "efMean": 0.13076922985223624,
+      "renderMax": 0.20000004768371582,
+      "renderMean": 0.13076924360715425,
+      "frameMax": 0.800000011920929,
+      "frameP50": 0.20000004768371582,
+      "frameP95": 0.800000011920929,
+      "efPerSec": 48.94578313912062,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_Main",
+      "taskMs": 50.47699999999988,
+      "scriptMs": 7.414999999999949,
+      "heapBefore": 41025772,
+      "heapAfter": 26435044,
+      "nodes": 38,
+      "resources": {
+        "objects": 160,
+        "filterCaches": 6,
+        "filterPixels": 1607420,
+        "fontEntries": 0,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "main idle",
+      "frames": 75,
+      "efMax": 0.6000000238418579,
+      "efMean": 0.2786666671435038,
+      "renderMax": 0.6000000238418579,
+      "renderMean": 0.31333333253860474,
+      "frameMax": 1,
+      "frameP50": 0.6999999284744263,
+      "frameP95": 0.9000000357627869,
+      "efPerSec": 49.449462649561205,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_Main",
+      "taskMs": 186.50900000000004,
+      "scriptMs": 66.81599999999999,
+      "heapBefore": 26512500,
+      "heapAfter": 39815968,
+      "nodes": 38,
+      "resources": {
+        "objects": 160,
+        "filterCaches": 6,
+        "filterPixels": 1607420,
+        "fontEntries": 0,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "rollover",
+      "frames": 100,
+      "efMax": 1,
+      "efMean": 0.2690000027418137,
+      "renderMax": 2.300000011920929,
+      "renderMean": 0.9439999955892563,
+      "frameMax": 2.800000011920929,
+      "frameP50": 1.199999988079071,
+      "frameP95": 2.300000011920929,
+      "efPerSec": 49.87531172069826,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_Main",
+      "taskMs": 307.5670000000001,
+      "scriptMs": 149.2770000000001,
+      "heapBefore": 39958376,
+      "heapAfter": 36051236,
+      "nodes": 38,
+      "resources": {
+        "objects": 160,
+        "filterCaches": 5,
+        "filterPixels": 1539020,
+        "fontEntries": 0,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "main->select",
+      "frames": 27,
+      "efMax": 13.399999976158142,
+      "efMean": 1.1703703646306638,
+      "renderMax": 1,
+      "renderMean": 0.22592592901653713,
+      "frameMax": 14.100000023841858,
+      "frameP50": 0.40000003576278687,
+      "frameP95": 8.800000011920929,
+      "efPerSec": 50.34495618571813,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_SelectWorld_Single",
+      "taskMs": 112.58899999999983,
+      "scriptMs": 47.66199999999987,
+      "heapBefore": 36906072,
+      "heapAfter": 37208056,
+      "nodes": 42,
+      "resources": {
+        "objects": 410,
+        "filterCaches": 18,
+        "filterPixels": 2019721,
+        "fontEntries": 3,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "options",
+      "frames": 47,
+      "efMax": 0.5999999642372131,
+      "efMean": 0.23404255699604115,
+      "renderMax": 25.100000023841858,
+      "renderMean": 0.970212774073824,
+      "frameMax": 25.600000023841858,
+      "frameP50": 0.6000000238418579,
+      "frameP95": 1.300000011920929,
+      "efPerSec": 50.57570214074797,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_SelectWorld_Single",
+      "taskMs": 139.93300000000008,
+      "scriptMs": 66.69800000000015,
+      "heapBefore": 37220412,
+      "heapAfter": 38009032,
+      "nodes": 38,
+      "resources": {
+        "objects": 410,
+        "filterCaches": 38,
+        "filterPixels": 2800336,
+        "fontEntries": 3,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "select->main",
+      "frames": 25,
+      "efMax": 4.5,
+      "efMean": 0.4480000019073486,
+      "renderMax": 0.6000000238418579,
+      "renderMean": 0.1799999952316284,
+      "frameMax": 5.100000023841858,
+      "frameP50": 0.30000001192092896,
+      "frameP95": 2.199999988079071,
+      "efPerSec": 51.07252298263534,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_Main",
+      "taskMs": 80.26899999999992,
+      "scriptMs": 21.207999999999892,
+      "heapBefore": 38021360,
+      "heapAfter": 36967424,
+      "nodes": 38,
+      "resources": {
+        "objects": 160,
+        "filterCaches": 6,
+        "filterPixels": 1607420,
+        "fontEntries": 0,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "main->coop",
+      "frames": 28,
+      "efMax": 12.100000023841858,
+      "efMean": 0.9892857181174415,
+      "renderMax": 0.7000000476837158,
+      "renderMean": 0.2607142925262451,
+      "frameMax": 12.399999976158142,
+      "frameP50": 0.5000000596046448,
+      "frameP95": 7.300000011920929,
+      "efPerSec": 50.68790731025934,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_SelectWorld_Coop",
+      "taskMs": 117.8239999999997,
+      "scriptMs": 44.68500000000009,
+      "heapBefore": 36980216,
+      "heapAfter": 38196040,
+      "nodes": 42,
+      "resources": {
+        "objects": 420,
+        "filterCaches": 22,
+        "filterPixels": 2075031,
+        "fontEntries": 3,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "coop->main",
+      "frames": 27,
+      "efMax": 3.400000035762787,
+      "efMean": 0.399999996026357,
+      "renderMax": 0.5,
+      "renderMean": 0.21111110183927748,
+      "frameMax": 3.800000011920929,
+      "frameP50": 0.4999999403953552,
+      "frameP95": 1.5,
+      "efPerSec": 50.65666041275797,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_Main",
+      "taskMs": 92.26899999999993,
+      "scriptMs": 23.862999999999968,
+      "heapBefore": 38208444,
+      "heapAfter": 37659244,
+      "nodes": 38,
+      "resources": {
+        "objects": 160,
+        "filterCaches": 6,
+        "filterPixels": 1607420,
+        "fontEntries": 0,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "main->select2",
+      "frames": 27,
+      "efMax": 7,
+      "efMean": 0.7000000035321271,
+      "renderMax": 0.6000000238418579,
+      "renderMean": 0.21111111066959523,
+      "frameMax": 7.300000011920929,
+      "frameP50": 0.40000003576278687,
+      "frameP95": 4.300000011920929,
+      "efPerSec": 51.146050390641065,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_SelectWorld_Single",
+      "taskMs": 103.81399999999985,
+      "scriptMs": 34.108999999999945,
+      "heapBefore": 37672048,
+      "heapAfter": 38787980,
+      "nodes": 38,
+      "resources": {
+        "objects": 410,
+        "filterCaches": 18,
+        "filterPixels": 2019721,
+        "fontEntries": 3,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "room load",
+      "frames": 35,
+      "efMax": 34.09999996423721,
+      "efMean": 2.045714282989502,
+      "renderMax": 1.9000000357627869,
+      "renderMean": 0.27428570985794065,
+      "frameMax": 34.19999998807907,
+      "frameP50": 0.3999999761581421,
+      "frameP95": 11.700000047683716,
+      "efPerSec": 49.772468715292,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_LoadingWorld",
+      "taskMs": 183.53399999999988,
+      "scriptMs": 94.46600000000016,
+      "heapBefore": 38800308,
+      "heapAfter": 38945500,
+      "nodes": 41,
+      "world": {
+        "tick": 4,
+        "loaded": true,
+        "paused": false,
+        "things": 15,
+        "zombies": 0
+      },
+      "resources": {
+        "objects": 151,
+        "filterCaches": 6,
+        "filterPixels": 1412558,
+        "fontEntries": 4,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "in game",
+      "frames": 151,
+      "efMax": 2.100000023841858,
+      "efMean": 0.5052980172713071,
+      "renderMax": 0.8999999761581421,
+      "renderMean": 0.2629139052321579,
+      "frameMax": 2.5,
+      "frameP50": 0.5000000596046448,
+      "frameP95": 1.800000011920929,
+      "efPerSec": 50.054695528424006,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_RunWorld",
+      "taskMs": 343.6790000000003,
+      "scriptMs": 156.18799999999976,
+      "heapBefore": 38962140,
+      "heapAfter": 28422860,
+      "nodes": 41,
+      "world": {
+        "tick": 82,
+        "loaded": true,
+        "paused": false,
+        "things": 18,
+        "zombies": 3
+      },
+      "resources": {
+        "objects": 151,
+        "filterCaches": 6,
+        "filterPixels": 1412558,
+        "fontEntries": 4,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "high load (60 spawns)",
+      "frames": 200,
+      "efMax": 1.699999988079071,
+      "efMean": 0.47799999833106993,
+      "renderMax": 1,
+      "renderMean": 0.24049999713897705,
+      "frameMax": 2.3000000715255737,
+      "frameP50": 0.5,
+      "frameP95": 1.899999976158142,
+      "efPerSec": 49.925112331502746,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_RunWorld",
+      "taskMs": 429.1129999999992,
+      "scriptMs": 191.33999999999983,
+      "heapBefore": 31221532,
+      "heapAfter": 54284796,
+      "nodes": 50,
+      "world": {
+        "tick": 211,
+        "loaded": true,
+        "paused": false,
+        "things": 78,
+        "zombies": 63
+      },
+      "resources": {
+        "objects": 151,
+        "filterCaches": 6,
+        "filterPixels": 1412558,
+        "fontEntries": 4,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    },
+    {
+      "phase": "paused",
+      "frames": 100,
+      "efMax": 0.5999999642372131,
+      "efMean": 0.21499999821186067,
+      "renderMax": 2.399999976158142,
+      "renderMean": 1.156000000834465,
+      "frameMax": 2.6999999284744263,
+      "frameP50": 1.300000011920929,
+      "frameP95": 2.100000023841858,
+      "efPerSec": 49.87779939060114,
+      "xsiMs": 0,
+      "xsiCalls": 0,
+      "maxEfState": "State_RunWorld",
+      "taskMs": 347.83700000000016,
+      "scriptMs": 166.099,
+      "heapBefore": 43866388,
+      "heapAfter": 32051084,
+      "nodes": 56,
+      "world": {
+        "tick": 211,
+        "loaded": true,
+        "paused": true,
+        "things": 78,
+        "zombies": 63
+      },
+      "resources": {
+        "objects": 402,
+        "filterCaches": 8,
+        "filterPixels": 1436397,
+        "fontEntries": 121,
+        "disposedBitmapRefs": 0,
+        "domInputs": 0
+      }
+    }
+  ],
+  "xsiTotal": 776.6000002622604,
+  "xsiCalls": 1072,
+  "allocatedSampleBytes": 665437716,
+  "gc": {
+    "count": 40,
+    "ms": 78.95600000000002,
+    "events": [
+      {
+        "name": "MinorGC",
+        "dur": 1116
+      },
+      {
+        "name": "MinorGC",
+        "dur": 1107
+      },
+      {
+        "name": "MinorGC",
+        "dur": 2276
+      },
+      {
+        "name": "MinorGC",
+        "dur": 1745
+      },
+      {
+        "name": "MajorGC",
+        "dur": 1157
+      },
+      {
+        "name": "MinorGC",
+        "dur": 2504
+      },
+      {
+        "name": "MinorGC",
+        "dur": 2556
+      },
+      {
+        "name": "MinorGC",
+        "dur": 928
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2464
+      },
+      {
+        "name": "MinorGC",
+        "dur": 687
+      },
+      {
+        "name": "MinorGC",
+        "dur": 818
+      },
+      {
+        "name": "MinorGC",
+        "dur": 761
+      },
+      {
+        "name": "MinorGC",
+        "dur": 858
+      },
+      {
+        "name": "MinorGC",
+        "dur": 1308
+      },
+      {
+        "name": "MinorGC",
+        "dur": 1307
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2602
+      },
+      {
+        "name": "MinorGC",
+        "dur": 1965
+      },
+      {
+        "name": "MinorGC",
+        "dur": 1262
+      },
+      {
+        "name": "MinorGC",
+        "dur": 1079
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2223
+      },
+      {
+        "name": "MinorGC",
+        "dur": 760
+      },
+      {
+        "name": "MinorGC",
+        "dur": 648
+      },
+      {
+        "name": "MajorGC",
+        "dur": 4874
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2425
+      },
+      {
+        "name": "MajorGC",
+        "dur": 3472
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2311
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2776
+      },
+      {
+        "name": "MinorGC",
+        "dur": 824
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2005
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2336
+      },
+      {
+        "name": "MajorGC",
+        "dur": 3264
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2657
+      },
+      {
+        "name": "MajorGC",
+        "dur": 2315
+      },
+      {
+        "name": "MajorGC",
+        "dur": 1964
+      },
+      {
+        "name": "MajorGC",
+        "dur": 3063
+      },
+      {
+        "name": "MinorGC",
+        "dur": 561
+      },
+      {
+        "name": "MinorGC",
+        "dur": 659
+      },
+      {
+        "name": "MinorGC",
+        "dur": 1349
+      },
+      {
+        "name": "MinorGC",
+        "dur": 927
+      },
+      {
+        "name": "MajorGC",
+        "dur": 9043
+      }
+    ]
+  },
+  "errors": []
+}

@@ -1,0 +1,182 @@
+{
+  "main idle": {
+    "baseline": {
+      "frameP50": 0.5,
+      "frameP95": 0.9,
+      "taskMs": 171.839,
+      "heapAfter": 39916168
+    },
+    "candidate": {
+      "frameP50": 0.6,
+      "frameP95": 0.9,
+      "taskMs": 171.162,
+      "heapAfter": 39815968
+    },
+    "p95Ranges": {
+      "baseline": [
+        0.9,
+        0.9
+      ],
+      "candidate": [
+        0.9,
+        1
+      ]
+    }
+  },
+  "rollover": {
+    "baseline": {
+      "frameP50": 1.2,
+      "frameP95": 2.1,
+      "taskMs": 311.178,
+      "heapAfter": 35954620
+    },
+    "candidate": {
+      "frameP50": 1.1,
+      "frameP95": 2.1,
+      "taskMs": 299.479,
+      "heapAfter": 36051236
+    },
+    "p95Ranges": {
+      "baseline": [
+        1.8,
+        2.1
+      ],
+      "candidate": [
+        2.1,
+        2.3
+      ]
+    }
+  },
+  "main->select": {
+    "baseline": {
+      "frameP50": 0.6,
+      "frameP95": 6.6,
+      "taskMs": 117.837,
+      "heapAfter": 37225384
+    },
+    "candidate": {
+      "frameP50": 0.4,
+      "frameP95": 7,
+      "taskMs": 112.589,
+      "heapAfter": 37208056
+    },
+    "p95Ranges": {
+      "baseline": [
+        6,
+        10.9
+      ],
+      "candidate": [
+        5.4,
+        8.8
+      ]
+    }
+  },
+  "room load": {
+    "baseline": {
+      "frameP50": 0.4,
+      "frameP95": 14,
+      "taskMs": 167.298,
+      "heapAfter": 39495080
+    },
+    "candidate": {
+      "frameP50": 0.4,
+      "frameP95": 11.6,
+      "taskMs": 183.534,
+      "heapAfter": 38888652
+    },
+    "p95Ranges": {
+      "baseline": [
+        11.7,
+        15.7
+      ],
+      "candidate": [
+        11.2,
+        11.7
+      ]
+    }
+  },
+  "in game": {
+    "baseline": {
+      "frameP50": 0.6,
+      "frameP95": 1.7,
+      "taskMs": 334.571,
+      "heapAfter": 29153376
+    },
+    "candidate": {
+      "frameP50": 0.6,
+      "frameP95": 1.7,
+      "taskMs": 336.071,
+      "heapAfter": 28422860
+    },
+    "p95Ranges": {
+      "baseline": [
+        1.6,
+        1.9
+      ],
+      "candidate": [
+        1.6,
+        1.8
+      ]
+    }
+  },
+  "high load (60 spawns)": {
+    "baseline": {
+      "frameP50": 0.6,
+      "frameP95": 1.8,
+      "taskMs": 455.805,
+      "heapAfter": 55439884
+    },
+    "candidate": {
+      "frameP50": 0.5,
+      "frameP95": 1.7,
+      "taskMs": 430.21,
+      "heapAfter": 54345188
+    },
+    "p95Ranges": {
+      "baseline": [
+        1.7,
+        1.9
+      ],
+      "candidate": [
+        1.7,
+        1.9
+      ]
+    }
+  },
+  "paused": {
+    "baseline": {
+      "frameP50": 1.6,
+      "frameP95": 2.7,
+      "taskMs": 365.914,
+      "heapAfter": 52524888
+    },
+    "candidate": {
+      "frameP50": 1.3,
+      "frameP95": 2.2,
+      "taskMs": 341.844,
+      "heapAfter": 32051084
+    },
+    "p95Ranges": {
+      "baseline": [
+        2.4,
+        2.8
+      ],
+      "candidate": [
+        2.1,
+        2.5
+      ]
+    }
+  },
+  "allocationGC": {
+    "baseline": {
+      "sampleBytes": 691518672,
+      "gcCount": 44,
+      "gcMs": 93.92099999999998
+    },
+    "candidate": {
+      "sampleBytes": 665437716,
+      "gcCount": 42,
+      "gcMs": 78.95600000000002
+    }
+  }
+}
