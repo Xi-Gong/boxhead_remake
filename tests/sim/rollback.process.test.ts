@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const scenarios = [
+  { name: 'personal growth under correction and recovery', growth: true, rtt: 100, jitter: 20, reconnect: true, total: 360 },
   { name: 'asymmetric jitter' }, { name: 'shared pause', pause: true }, { name: 'history recovery', reconnect: true },
   { name: 'renderer gap catches up', rtt: 60, renderGap: true },
   ...[0,30,60,100,200].map(rtt => ({ name: `RTT ${rtt}ms`, rtt })),
@@ -81,6 +82,10 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
     expect(final[0].digest).toEqual(final[1].digest);
     expect(final[0].events).toEqual(final[1].events);
     expect(final[0].decals).toEqual(final[1].decals);
+    if (scenario.growth) {
+      expect(final[0].growth).toEqual(final[1].growth);
+      expect(final[0].growth.players.some((p:any)=>p.level>1)).toBe(true);
+    }
     for (const r of final) {
       if (scenario.rtt === undefined || scenario.rtt > 0) expect(r.stats.corrections).toBeGreaterThan(0);
       expect(r.errors).toEqual([]);

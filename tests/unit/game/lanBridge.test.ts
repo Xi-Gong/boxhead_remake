@@ -7,6 +7,17 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([{features:[]},{features:['personal-growth-v1']}])('negotiates personal growth from advertised features $features',({features})=>{
+  const b=lanBridge(), previous=CMain.mSaveData;
+  CMain.mSaveData={} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  try {
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',sid:'qa',char:0,features});
+   b.phase='setup';b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');
+   expect(start.cfg.progression).toBe(features.length?'personal-growth-v1':undefined);
+  } finally {CMain.mSaveData=previous;launch.mockRestore();}
+ });
  it('a restarted client without history rejects in-place recovery',()=>{
   lanBridge();
   lan.onMessage.mock.calls[0]![0]({t:'recover',stage:'offer',generation:3,seed:7,need:90,head:95});

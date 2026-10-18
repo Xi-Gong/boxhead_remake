@@ -4,6 +4,7 @@ import { applyCorrections } from '../../src/game/local/Net/Rollback.ts';
 import { captureWorldSnap, makeSnapCtx } from '../../src/game/local/Net/WorldSnap.ts';
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 import { advanceVirtual } from '../../src/engine/flash/clock.ts';
+import { Thing } from '../../src/game/packages.ts';
 
 const role = Number(process.argv[2]) as 0 | 1;
 const options = JSON.parse(process.argv[3] ?? '{}');
@@ -11,13 +12,27 @@ const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: tru
 let sent: unknown[] = [];
 const session = new NetSession(role, { send: message => sent.push(message) });
 session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, netcode: 'rollback-v2',
-  cfg: { difficulty: 0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: true,
+  cfg: { ...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), difficulty: 0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: true,
     gameAmount: 3, detail: options.detail ?? true, charP1: 0, charP2: 0 } }, game.main());
 if (!game.waitRunning(3000)) throw new Error('boot failed');
 if (options.weapons) for (const player of game.players()) for (const name of Object.keys(player.mWeapons)) player.NewWeapon(name);
 process.send?.({ ready: true, sent });
 sent = [];
 const originalWorld = game.world();
+if (options.growth) {
+  const processWorld = originalWorld.Process;
+  originalWorld.Process = function (this: any) {
+    const tick = session.tickIndex(this);
+    if (tick > 0 && tick % 19 === 0) {
+      const owner = game.players()[Math.floor(tick / 19) % 2];
+      const victim = new Thing.Creature.CThing_Creature_Zombie(owner.mPosition.Clone(), owner.mAngle.Clone());
+      this.mThing_Collection.AddThing(victim); victim.Process_Init(); victim.mLife = 1;
+      new Thing.Affect.CThing_Affect_Bullet(owner,owner,1,owner.mAngle).AffectThing(victim);
+      victim.SetState('State_Dying'); // Exercise the original death bookkeeping inside this simulated step.
+    }
+    return processWorld.call(this);
+  };
+}
 const weapons = new Set<string>();
 process.on('message', (m: any) => {
   try {
@@ -40,6 +55,7 @@ process.on('message', (m: any) => {
       desync: session.desyncDetail, complete: world.mCompleteState, state: game.state(), endReason: session.endReason,
       errors: game.errors, stats: session.rollbackStats, weapons: [...weapons],
       checkpoint: session.netCheckpoint?.tick, startTick: world.mTick - session.tickIndex(world),
+      growth: world.mUpgrades.lanGrowth,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash],
         decals: [session.decals.confirmedCount, session.decals.confirmedHash] } : {}) });

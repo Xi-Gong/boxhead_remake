@@ -105,6 +105,8 @@ export interface SetupSelection {
 
 /** The CSaveData fields the host's StartGame imposes on the client (they shape the simulation; see PARITY §9). */
 export interface GameConfig {
+  /** Optional, enabled only after the joining peer advertises the same growth rules. */
+  progression?: 'personal-growth-v1';
   difficulty: number;
   gameSpeed: number; // 0 slow / 1 normal / 2 fast - CMain.mFPS = 25 * (0.5, 1, 2), read by sim code
   devils: boolean;
@@ -135,7 +137,7 @@ export type LanMessage =
   | { t: 'pause-barrier'; stage: 'freeze' | 'ready' | 'commit' | 'resume'; id: number; tick: number }
   | { t: 'input-path'; version: 1; port: number; token: string }
   // client -> host, first frame on the wire (transport-level handshake; main process replies `welcome`).
-  | { t: 'hello'; proto: number; app: string; name: string; sid?: string; char: number; capTick?: number; netcodes?: string[] }
+  | { t: 'hello'; proto: number; app: string; name: string; sid?: string; char: number; capTick?: number; netcodes?: string[]; features?: string[] }
   // host -> client handshake reply. `ok:false` + reason closes the connection (version mismatch, busy).
   | { t: 'welcome'; ok: boolean; reason?: string; proto: number; app: string; name: string; sid: string }
   // host -> client: (back) in the room view (also right after a successful connect; sent after backing out of

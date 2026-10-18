@@ -44,6 +44,7 @@ import { recordWaveReached } from '../WaveUnlock.ts';
 import { EventJournal } from './Events.ts';
 import { NetPresentation } from './Presentation.ts';
 import { PauseBarrier } from './PauseBarrier.ts';
+import { GROWTH_RULE, newGrowth, copyGrowth, growthOf, type GrowthState } from './Growth.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -160,6 +161,9 @@ export class NetSession {
   /** Prediction+rollback enabled for this game (start.rollback from the host). */
   rollback = false;
   confirmedThrough = -1;
+  /** Presentation-only confirmed values; authoritative state is included in WorldSnap.upgrades. */
+  confirmedGrowth: GrowthState | undefined;
+  confirmedWave = 1;
   events = new EventJournal();
   decals = new EventJournal();
   presentation = new NetPresentation();
@@ -463,6 +467,12 @@ export class NetSession {
   /** CWorld.InitFinished wrapper: the world is built (and a pending snapshot applied) - enter lockstep. */
   onWorldReady(world: any): void {
     this.world = world;
+    if (this.mode === 'Coop' && this.startOpts?.cfg.progression === GROWTH_RULE) {
+      world.mUpgrades.lanGrowth ??= newGrowth(world.mUpgrades.mMultiplierIndex);
+      this.confirmedGrowth = copyGrowth(world.mUpgrades.lanGrowth);
+      this.confirmedWave = world.mUpgrades.mLevelIndex;
+      if (this.startOpts.resumeTick === undefined) this.captureCheckpoint(world);
+    } else this.confirmedGrowth = undefined;
     this.phase = 'playing';
     this.shadow = newShadow(); // v0.2.1 L3: every world starts unpredicted
     this.presentation = new NetPresentation();
@@ -637,6 +647,10 @@ export class NetSession {
 
   /** After the tick ran (world.mTick already advanced): advance the virtual clock, sample + send, checkpoint. */
   afterTick(world: any): void {
+    if (!this.rollbackV2 && growthOf(world)) {
+      this.confirmedGrowth = copyGrowth(growthOf(world)!);
+      this.confirmedWave = world.mUpgrades.mLevelIndex;
+    }
     const t = world.mTick - this.startTick;
     this.virtualTimeMs += 1000 / CMain.mFPS;
     // v0.1.7: the sample taken right after the executed tick (t-1) is the frame for t-1+D - one tick less input
@@ -703,6 +717,10 @@ export class NetSession {
     this.soundRecordingTick = tick;
     try { world.Process(); } finally { this.soundRecordingTick = undefined; }
     meta.endState = world.mCompleteState;
+    if (growthOf(world)) {
+      meta.growth = copyGrowth(growthOf(world)!);
+      meta.wave = world.mUpgrades.mLevelIndex;
+    }
     if (this.mode === 'DeathMatch' && (tick + 1) % DM_CHECKPOINT_EVERY === 0) {
       const snap = capture(world);
       meta.checkpoint = { tick: world.mTick, snap, digest: fnv(JSON.stringify(snap)) };
@@ -720,6 +738,7 @@ export class NetSession {
         this.netCheckpoint = meta.checkpoint;
         if (this.mode !== 'DeathMatch') recordWaveReached(meta.checkpoint.snap.wave);
       }
+      if (meta.growth) { this.confirmedGrowth = meta.growth; this.confirmedWave = meta.wave; }
       this.events.confirm(t);
       this.decals.confirm(t);
       this.pendingSounds.delete(t);

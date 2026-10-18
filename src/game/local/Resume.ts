@@ -20,6 +20,7 @@ import { forIn } from '../../engine/runtime.ts';
 import { getRandomState, setRandomState } from '../../engine/flash/rng.ts';
 import { CSaveData, Thing, World } from '../packages.ts';
 import { CThing_Object_WeaponCrate, type CrateWeapon } from './WeaponCrate.ts';
+import { copyGrowth, type GrowthState } from './Net/Growth.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -68,6 +69,8 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  /** LAN-only optional extension; local version2 saves retain their existing shape. */
+  growth?: GrowthState;
   version: number;
   gameMode: string;
   roomLibLink: string;
@@ -211,6 +214,7 @@ export function capture(world: any): RunSnapshot {
     .filter((t: any) => t != undefined && OBJECT_CLASSES.has(t._CLASSID_) && !t.mDeleteOnPickup)
     .map(captureObject);
   return {
+    ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
     version: RESUME_VERSION,
     gameMode: World.CWorld.mGameMode,
     roomLibLink: world.mWorldLibLink,
@@ -271,6 +275,8 @@ function applyPlayer(world: any, s: PlayerState): void {
     const entry = p.mWeapons?.[name];
     if (!entry) continue;
     if (ws.active && !entry.mActive) p.NewWeapon(name);
+    // Apply personal stats before restoring ammo; the first Update must not refill a restored magazine.
+    if (world.mUpgrades.lanGrowth && entry.mThing) world.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
     if (ws.ammo != undefined && entry.mThing != undefined) entry.mThing.mAmmo = ws.ammo;
     if (ws.totalAmmo != undefined && entry.mThing != undefined) entry.mThing.mTotalAmmo = ws.totalAmmo;
   }
@@ -350,6 +356,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if (snap.roomLibLink !== world.mWorldLibLink || snap.gameMode !== World.CWorld.mGameMode) return false;
   const u = world.mUpgrades;
   const hud = world.mHud;
+  if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);
   hud.mSilentMessages = true;
   suppress = true;
   try {
