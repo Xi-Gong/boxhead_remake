@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
-import { mkdirSync, copyFileSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, copyFileSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import asar from '@electron/asar';
 import { chromium } from 'playwright-core';
@@ -35,6 +35,11 @@ try{
  const archive=join(dirname(executable),'resources/app.asar');
  const version=JSON.parse(asar.extractFile(archive,'package.json').toString()).version;
  assert.equal(version,expected,'version inside the portable extraction');
+ if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
+  for(const file of [join('dist-electron','main.cjs'),...readdirSync('dist/bundle').filter(n=>n.endsWith('.js')).map(n=>join('dist','bundle',n))]){
+   assert.ok(asar.extractFile(archive,file).equals(readFileSync(file)),'portable contains current built code: '+file);
+  }
+ }
  if(process.env.BOXHEAD_QA_CAPTURE_ASAR){const target=resolve(process.env.BOXHEAD_QA_CAPTURE_ASAR);mkdirSync(dirname(target),{recursive:true});copyFileSync(archive,target);}
  assert.ok(await g.waitExpr('g.ready',120000));await toMainMenu(g);
  if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
