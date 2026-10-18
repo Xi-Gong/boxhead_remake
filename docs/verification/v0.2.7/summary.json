@@ -1,0 +1,65 @@
+{
+  "workload": "20s alternating movement with held semi-automatic pistol; 3 alternating repetitions at 60ms RTT, same build and seed",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.2.6 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+    "dpr": 1.25,
+    "width": 1299,
+    "height": 1006,
+    "canvas": [
+      1624,
+      1258
+    ],
+    "selection": {
+      "mode": "Coop",
+      "charP1": 3,
+      "charP2": 0,
+      "levelIdx": 0,
+      "difficulty": 0,
+      "gameAmount": 1,
+      "wave": 1,
+      "maxWave": 1
+    }
+  },
+  "modes": {
+    "legacy": {
+      "host": {
+        "appliedInputMs": 110,
+        "frameWorkP50Ms": 0.5,
+        "frameWorkP95Ms": 2.5,
+        "presentationHz": 50.03239148851348,
+        "mainThreadBusyPercent": 9.027044401255793,
+        "heapAfterGCMB": 27.437057495117188,
+        "estimatedAllocationMBps": 3.050562629433477
+      },
+      "client": {
+        "appliedInputMs": 94,
+        "frameWorkP50Ms": 0.5999999642372131,
+        "frameWorkP95Ms": 2.399999976158142,
+        "presentationHz": 50.03734129947722,
+        "mainThreadBusyPercent": 8.98285956091004,
+        "heapAfterGCMB": 27.531017303466797,
+        "estimatedAllocationMBps": 3.0698162365049924
+      }
+    },
+    "rollback-v2": {
+      "host": {
+        "appliedInputMs": 16,
+        "frameWorkP50Ms": 1.300000011920929,
+        "frameWorkP95Ms": 2.800000011920929,
+        "presentationHz": 120.4010122639673,
+        "mainThreadBusyPercent": 22.733823243138016,
+        "heapAfterGCMB": 34.38944625854492,
+        "estimatedAllocationMBps": 43.57619060021048
+      },
+      "client": {
+        "appliedInputMs": 33,
+        "frameWorkP50Ms": 1.300000011920929,
+        "frameWorkP95Ms": 2.599999964237213,
+        "presentationHz": 120.36768263183357,
+        "mainThreadBusyPercent": 21.692597968069663,
+        "heapAfterGCMB": 33.57820129394531,
+        "estimatedAllocationMBps": 32.58898268454631
+      }
+    }
+  }
+}
