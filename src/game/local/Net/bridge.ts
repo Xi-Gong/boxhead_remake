@@ -62,6 +62,7 @@ class LanBridge {
   private deadlineTimer: number | undefined;
   private uiCbs = new Set<() => void>();
   private started = false;
+  private operation = 0;
 
   constructor() {
     const lan = desktop?.lan;
@@ -86,7 +87,9 @@ class LanBridge {
 
   refresh(): void {
     if (!this.available) return;
+    const operation = this.operation;
     void desktop!.lan.discoverStart().then((r) => {
+      if (operation !== this.operation) return;
       if (!r.ok) {
         // v0.2.5: two instances on ONE machine share the fixed discovery port (47630) - the raw EADDRINUSE bind
         // error read like a crash. Name the real situation instead; real LANs are unaffected (each machine binds).
@@ -101,25 +104,33 @@ class LanBridge {
 
   host(): void {
     if (!this.available) return;
+    const operation = ++this.operation;
     this.isHost = true;
     this.phase = 'hosting';
     this.message = 'HOSTING - waiting for player 2...';
     this.notify();
     void desktop!.lan.hostStart().then(async (r) => {
+      if (operation !== this.operation) return;
       if (!r.ok) { this.phase = 'error'; this.message = `cannot host: ${r.reason}`; }
-      else if (desktop!.lan.addresses) this.hostAddrs = await desktop!.lan.addresses().catch(() => []);
+      else if (desktop!.lan.addresses) {
+        const addresses = await desktop!.lan.addresses().catch(() => []);
+        if (operation !== this.operation) return;
+        this.hostAddrs = addresses;
+      }
       this.notify();
     });
   }
 
   join(ip: string, port?: number): void {
     if (!this.available) return;
+    const operation = ++this.operation;
     this.isHost = false;
     this.hostIp = ip;
     this.phase = 'joining';
     this.message = `connecting to ${ip}...`;
     this.notify();
     void desktop!.lan.connect(ip, port, { name: 'player', sid: this.sid, char: 0 }).then((r) => {
+      if (operation !== this.operation || this.phase !== 'joining') return;
       if (r.ok) {
         this.phase = 'lobby';
         this.message = '';
@@ -133,6 +144,7 @@ class LanBridge {
   }
 
   leaveLobby(): void {
+    ++this.operation;
     this.stopTimers();
     if (this.session) {
       this.session.dispose();
