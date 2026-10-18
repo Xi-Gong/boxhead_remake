@@ -1039,3 +1039,7 @@ Chrome真实点击开局、四尺寸三色箱几何/像素、满医疗箱保留�
 ### 21.14 输入清理回归适配新增波次字段
 
 旧added-ui测试要求从大厅进入客机设置页后所有text输入数量为零，新版设置页有一个只读波次输入，因此该旧断言失败。现在保留原大厅IP输入的ElementHandle，明确断言它已从DOM移除，同时断言设置页恰好一个Start wave且readOnly，没有多余输入；不是放宽清理要求。完整added-ui实际点击、四尺寸、DPR2、主菜单/大厅/房主/客机/暂停和存档继续通过，直接复核客机截图。原失败日志保留于generated/reports/v029/gates-from-ui/added-ui.log，通过日志位于gates-from-added-ui/added-ui.log。
+
+### 21.15 版本与双语说明
+
+package与lockfile根版本同步0.2.9，README及中英文功能说明更新个人成长、血盾、三类永久补给、红箱频率、波次文本、房间设置、飘分和音频恢复；死亡竞赛与旧能力协商规则单独说明。英文Release Notes已准备，发行标签仍等待全部门禁。离线Markdown预览检查中英文1024/390宽度无横向溢出、图片可加载及新验证链接，并直接复核截图；此为本地CSS预览，不冒充GitHub页面。证据readme-layout.json与artifact.json记录当前便携版，SHA256为7e35b68e9ae09b8f39e660b5105e7cd82683d940379e4dc3071c8e9729b8c68d，大小101633755字节。

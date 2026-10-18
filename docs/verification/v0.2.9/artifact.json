@@ -1,0 +1,26 @@
+{
+  "version": "0.2.9",
+  "releaseUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.2.9",
+  "unpackedAsarSha256": "d56222ff408fbdb5fb9e80f1e691e2df97bde99564cfd65877e57cd0c8bd8cf2",
+  "verifiedRuntimeFiles": [
+    "dist-electron/main.cjs",
+    "dist-electron/preload.cjs",
+    "dist/bundle/gallery-CmDtL4W7.js",
+    "dist/bundle/main-xd6W9J2R.js",
+    "dist/bundle/Player-o3pII7gY.js"
+  ],
+  "portable": {
+    "name": "Boxhead 2Play Rooms-0.2.9-portable.exe",
+    "bytes": 101633755,
+    "sha256": "7e35b68e9ae09b8f39e660b5105e7cd82683d940379e4dc3071c8e9729b8c68d",
+    "extractedAsarSha256": "d56222ff408fbdb5fb9e80f1e691e2df97bde99564cfd65877e57cd0c8bd8cf2",
+    "actualSingleFileLaunch": {
+      "ok": true,
+      "verifiedExtractedVersion": "0.2.9",
+      "currentRuntimeBytes": true,
+      "gameplay": true,
+      "saveContinue": true,
+      "audio": true
+    }
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "method": "Offline PowerShell Markdown conversion with local preview CSS; not a GitHub screenshot",
+  "rows": [
+    {
+      "lang": "en",
+      "width": 1024,
+      "overflow": false,
+      "images": [
+        {
+          "width": 130,
+          "height": 20,
+          "naturalWidth": 130
+        },
+        {
+          "width": 103,
+          "height": 20,
+          "naturalWidth": 103
+        },
+        {
+          "width": 124,
+          "height": 20,
+          "naturalWidth": 124
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 960
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 960
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 960
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 960
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 640
+        }
+      ],
+      "featureLink": true
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "overflow": false,
+      "images": [
+        {
+          "width": 130,
+          "height": 20,
+          "naturalWidth": 130
+        },
+        {
+          "width": 103,
+          "height": 20,
+          "naturalWidth": 103
+        },
+        {
+          "width": 124,
+          "height": 20,
+          "naturalWidth": 124
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 960
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 960
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 960
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 960
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 640
+        }
+      ],
+      "featureLink": true
+    },
+    {
+      "lang": "zh",
+      "width": 1024,
+      "overflow": false,
+      "images": [
+        {
+          "width": 130,
+          "height": 20,
+          "naturalWidth": 130
+        },
+        {
+          "width": 103,
+          "height": 20,
+          "naturalWidth": 103
+        },
+        {
+          "width": 124,
+          "height": 20,
+          "naturalWidth": 124
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 960
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 960
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 960
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 960
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "naturalWidth": 640
+        }
+      ],
+      "featureLink": true
+    },
+    {
+      "lang": "zh",
+      "width": 390,
+      "overflow": false,
+      "images": [
+        {
+          "width": 130,
+          "height": 20,
+          "naturalWidth": 130
+        },
+        {
+          "width": 103,
+          "height": 20,
+          "naturalWidth": 103
+        },
+        {
+          "width": 124,
+          "height": 20,
+          "naturalWidth": 124
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 960
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 960
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 960
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 960
+        },
+        {
+          "width": 342,
+          "height": 257,
+          "naturalWidth": 640
+        }
+      ],
+      "featureLink": true
+    }
+  ]
+}

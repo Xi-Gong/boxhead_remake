@@ -4,27 +4,38 @@
 
 <p align="center"><img src="../assets/readme/coop-crate.png" alt="Coop death weapon crate" width="640"></p>
 
-- **Save & resume** — pause-menu **SAVE & QUIT**, main-menu **CONTINUE**; death **RETRY** restarts at the failed
-  wave (wave-start checkpoint, or the run's starting wave when none exists yet — score/weapons reset as in the
-  original retry).
+- **Save & resume** — pause-menu **SAVE & QUIT**, main-menu **CONTINUE**; death **RETRY** restores the failed
+  wave's starting checkpoint, or the run's starting state when no wave checkpoint exists yet, including its
+  progression, score and inventory.
 - **Coop death weapon crate** — a fallen player drops their whole arsenal with live ammo; pickup restores the
   owner exactly and gives the teammate the best of both.
-- **Devil supplies** — in single-player and co-op, devils can drop blue armor crates (20%) or olive ammunition
-  crates (20%). Armor fills to 100 and absorbs damage before health; its blue fill overlays the original life
-  bar, exposing actual health as armor shrinks. Armor pickups never heal, and normal health regeneration
-  continues. Ammunition refills every owned weapon to that player's upgraded capacity, including empty weapons.
-  LAN peers negotiate support before enabling these drops.
-- **Start-wave selector with progression** — the level-select `START WAVE` cycler lets you jump straight back to
-  the best wave you have fought up to (shown as `BEST` beside it), with the loadout the original's difficulty
-  curve would have granted by then. A fresh save can only start at wave 1 — the historical best persists in the
-  save and caps the cycler; in LAN the host's best is the cap.
-- **Personal LAN co-op progression** — separate last-hit scores, permanent levels and original weapon upgrades
+- **Devil supplies** — every devil drops one equally likely blue armor, olive ammunition or bright green medical
+  crate. These crates stay across waves and saves until a living player can benefit. Armor fills only armor,
+  medical fills only health, and ammunition fills all owned weapons without unlocking new ones. Full players
+  leave the crate for later or for their teammate. Modern LAN peers negotiate these rules; older peers retain
+  their supported rules.
+- **Red boxes** — 10% armor, 10% ammunition, 10% medical effects, otherwise the original weighted pool of owned
+  weapons without its old healing entry. A full or empty reward still consumes the box, with no reroll.
+  Fixed boxes return after 24 seconds. Every 20 simulation seconds, 1 solo or 2 co-op boxes appear on reachable,
+  empty floor, up to 3/6 active random boxes. These last 45 seconds; pausing stops the timer.
+- **Start-wave input** — type an ASCII decimal number or use the arrows; the range is 1 through the historical
+  `BEST` wave, capped at 100. Leading zeros are normalized. Invalid text opens an in-game prompt and cancels
+  starting or switching; Enter/blur commits, Escape restores the last valid value. Each visit starts at wave 1,
+  and typing never unlocks waves. The LAN host edits against their own save cap; the guest sees a readonly value.
+- **Personal PvE progression** — solo, local co-op and LAN share last-hit scores, permanent levels and weapon upgrades
   for each player. Zombies award 1 XP and devils 5 XP; level requirements begin at 5 XP and rise by 5 every ten
   levels, up to level 125. Top corner
   score/level/XP panels flank the current wave and its remaining zombie/devil totals (including pending spawns),
   with individual upgrade summaries while paused. Retry restores the current wave's starting growth and
   inventory; a fresh selected-wave run grants its baseline level from the same earned-wave curve, respecting
-  the difficulty head start. Local co-op retains original kill-multiplier growth; death match retains its rules.
+  the difficulty head start. Kill scores use the level before that kill's upgrade. Local co-op keeps its shared
+  camera and controls; death match retains its rules. Old v2 local saves convert once while preserving total
+  score, current health/armor, weapons and ammo; co-op splits old score equally, with any odd point going to P1.
+- **Growing survivability** — health and armor caps are both `200 + 4 × (level − 1)` (200/396/696 at levels
+  1/50/125). A living level-up adds only the health-cap difference; armor does not refill. Enemy melee and
+  fireballs do not interrupt or knock back a player who had armor before the hit, even if that hit breaks it.
+  Damage still spills into health, and lethal hits still kill. Co-op respawn keeps level, fills health and
+  clears armor; natural health regeneration is unchanged.
 - **Four PvE difficulty curves** — Single and co-op tune spawn pacing, active enemy caps and speed ceilings for
   Beginner, Intermediate, Expert and Nightmare. Per-wave kill budgets, enemy health/damage and weapon upgrades
   stay intact, so stronger weapons keep their impact. LAN enables the tuning only after capability negotiation.
@@ -35,6 +46,13 @@
   reliable fallback. Short disconnects recover from input history; a restarted peer resumes from a checkpoint
   within the 30 s reconnect window. Either player can RETRY from the debrief. Confirmed gameplay remains
   deterministic; prediction may visibly correct under poor links. See the [measurements and tradeoffs](verification/v0.2.7/README.md).
+- **Room settings** — the host can edit difficulty, speed, devils, player collisions, friendly fire and applicable
+  victory conditions in the waiting room and setup; the guest sees changes immediately. Rules are fixed once
+  play starts and retained on resume. With co-op friendly fire disabled, player shots pass through teammates;
+  movement collision remains a separate option.
+- **Presentation and audio** — confirmed kill scores animate once toward the owner's actual score panel, with
+  pause and resize support. Explosion screen flashes are softened while blast art and gameplay remain intact.
+  Audio retries startup and recovers stalled or failed output automatically, retaining the mute setting.
 - **One data folder** — every build (the portable exe included) keeps all user game data — saves and settings —
   in `%USERPROFILE%\.boxhead`, migrated there automatically on first run: one folder to manage and back up.
 

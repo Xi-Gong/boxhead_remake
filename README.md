@@ -47,12 +47,13 @@ Gamepads work throughout (stick to move, RT/A to shoot, START to pause); keys ar
 
 - **Save, resume & retry** — continue a saved run, retry the failed wave, or select a previously reached wave.
 - **LAN co-op & death match** — discover rooms or join by IP in the desktop app, with rollback and reconnect support.
-- **Personal LAN co-op growth** — separate scores, permanent levels and weapon upgrades; corner XP panels flank the wave and remaining enemy counts.
-- **Devil supplies** — distinctive armor and ammunition crates. Blue armor overlays green health and absorbs damage first; pickups leave health and regeneration intact. Ammo refills all owned weapons.
+- **Permanent PvE growth** — solo, local co-op and LAN share personal scores, levels and weapon upgrades, with health and armor capacity rising together. Score popups fly to their owner's panel.
+- **More supplies** — devils drop equally likely blue armor, olive ammo or green medical crates, which remain until needed. Random red boxes replenish the floor during play.
+- **Comfort and setup** — type an unlocked starting wave directly, change LAN room rules as host, and enjoy softer explosion flashes and automatic audio recovery.
 - **Four survival difficulties** — tuned spawn pacing and enemy speed ceilings support progression while preserving original enemy health, damage and per-wave totals.
 - **Co-op weapon crates** — fallen players drop their arsenal and remaining ammunition for recovery.
 
-[Feature details](docs/features.md) · [Balance and performance evidence](docs/verification/v0.2.8/README.md)
+[Feature details](docs/features.md) · [Verification and performance evidence](docs/verification/v0.2.9/README.md)
 
 <p align="center"><img src="assets/readme/coop-crate.png" alt="Co-op weapon recovery" width="640"></p>
 
