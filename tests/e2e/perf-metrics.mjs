@@ -45,7 +45,8 @@ export async function startMetrics(page, {samplingInterval = 32768} = {}) {
  const finish=()=>finishedPromise??=(async()=>{
   const {result,after,elapsedMs,estimatedAllocatedBytes,allocationSamples,sampleEndedAt}=await freeze();
   const collectionStartedAt=Date.now();await cdp.send('HeapProfiler.collectGarbage');const collected=await metrics();
-  await cdp.detach();return {...result,elapsedMs,samplingInterval,estimatedAllocatedBytes,allocationSamples,sampleEndedAt,collectionStartedAt,heapAfterGC:collected.JSHeapUsedSize,
+  const collectionElapsedMs=Date.now()-collectionStartedAt;
+  await cdp.detach();return {...result,elapsedMs,samplingInterval,estimatedAllocatedBytes,allocationSamples,sampleEndedAt,collectionStartedAt,collectionElapsedMs,heapAfterGC:collected.JSHeapUsedSize,
    taskMs:(after.TaskDuration-before.TaskDuration)*1000,scriptMs:(after.ScriptDuration-before.ScriptDuration)*1000,
    heapBefore:before.JSHeapUsedSize,heapAfter:after.JSHeapUsedSize,nodesBefore:before.Nodes,nodesAfter:after.Nodes};
  })();

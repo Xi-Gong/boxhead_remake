@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 import { startMetrics } from '../e2e/perf-metrics.mjs';
 import { explosionBurst } from './explosionFixture.ts';
+import { installResponseFixture, responseActions } from '../e2e/response-probes.mjs';
 
 const DELAY_MS = Number(process.argv[2] ?? 30);
 const MODERN = process.env.BOXHEAD_NETCODE === 'rollback-v2';
@@ -25,6 +26,9 @@ const COMBAT = process.env.BOXHEAD_NET_COMBAT === '1';
 const RECOVERY = process.env.BOXHEAD_NET_RECOVERY === '1';
 const RESPONSE_TRACE = process.env.BOXHEAD_RESPONSE_TRACE === '1';
 const CLIENT_FIRST = process.env.BOXHEAD_CLIENT_FIRST === '1';
+const ALL_RESPONSE = process.env.BOXHEAD_ALL_RESPONSE === '1';
+const HIDDEN = process.env.BOXHEAD_QA_HIDDEN === '1';
+const SUPPLY_STRESS = Number(process.env.BOXHEAD_NET_SUPPLY_STRESS ?? 0);
 const EXPLOSIONS = Number(process.env.BOXHEAD_NET_EXPLOSIONS ?? 0);
 // User-approved practical acceptance: keep the ordinary one-tick-plus-frame target, allow a bounded
 // peak during 256 simultaneous explosive roots. Correctness and sustained-stall gates are unchanged.
@@ -51,20 +55,49 @@ async function launchApp(dirName) {
     executablePath: process.env.BOXHEAD_QA_EXE ?? join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
-    args: [...NO_THROTTLE, '--boxhead-multi', `--boxhead-net-delay=${DELAY_MS}`, `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
+    args: [...NO_THROTTLE, '--boxhead-multi', `--boxhead-net-delay=${DELAY_MS}`, HIDDEN ? '--boxhead-hidden' : `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
+  try {
   const page = await app.firstWindow();
+  const jitter=Number(process.env.BOXHEAD_QA_JITTER??0),tcpOnly=process.env.BOXHEAD_QA_TCP_ONLY==='1';
+  if(jitter||tcpOnly)await app.evaluate(async(_,{jitter,tcpOnly})=>{
+    const udp=process.getBuiltinModule('dgram'),net=process.getBuiltinModule('net'),send=udp.Socket.prototype.send,write=net.Socket.prototype.write;
+    const due=new WeakMap(),stats=globalThis.__qaTransport={udpSuppressed:0,udpCancelled:0,tcpDelayed:0,jitter,errors:[]};let sequence=0;
+    udp.Socket.prototype.send=function(...args){
+      const input=Buffer.isBuffer(args[0])&&args[0].toString().includes('"frames":');
+      if(input&&tcpOnly){stats.udpSuppressed++;const cb=args.at(-1);if(typeof cb==='function')setTimeout(()=>cb(null),0);return;}
+      if(input&&jitter){setTimeout(()=>{
+        try{send.apply(this,args);}catch(error){
+          // The fixture introduces a SECOND delayed send after FastInputPath's own lifetime guard.
+          // A reconnect can close the old socket in that interval; discard its obsolete test packet.
+          if(error?.code==='ERR_SOCKET_DGRAM_NOT_RUNNING')stats.udpCancelled++;
+          else stats.errors.push(String(error));
+        }
+      },++sequence%(jitter+1));return;}
+      return send.apply(this,args);
+    };
+    net.Socket.prototype.write=function(...args){
+      const peer=(this.remotePort>=47631&&this.remotePort<=47640)||(this.localPort>=47631&&this.localPort<=47640);
+      if(peer&&jitter){const at=Math.max(Date.now()+(++sequence%(jitter+1)),due.get(this)??0);due.set(this,at);stats.tcpDelayed++;
+        setTimeout(()=>{if(!this.destroyed)write.apply(this,args);},Math.max(0,at-Date.now()));return true;}
+      return write.apply(this,args);
+    };
+  },{jitter,tcpOnly});
   await page.addInitScript(() => { Math.random = () => 0.424242; });
   await page.reload();
-  await app.evaluate(({ BrowserWindow }, [x, y]) => {
+  await app.evaluate(({ BrowserWindow, screen }, {offscreen,hidden}) => {
     const w = BrowserWindow.getAllWindows()[0];
-    w.setPosition(x, y);
+    const [x,y]=hidden?[screen.getPrimaryDisplay().workArea.x+40,screen.getPrimaryDisplay().workArea.y+40]:offscreen;
+    if(hidden&& (w.getOpacity()!==0||w.isFocusable()))throw new Error('QA window must be transparent and non-focusable');
+    w.setPosition(x,y);
+    if(hidden)w.setContentSize(960,720); // Set size AFTER changing displays/DPI.
     w.setAlwaysOnTop(false);
-  }, OFFSCREEN).catch(() => {});
+  }, {offscreen:OFFSCREEN,hidden:HIDDEN});
   page.on('console', (m) => { if (m.type() === 'error') report.errors.push(`[${dirName}] ${m.text().slice(0, 300)}`); });
   page.on('pageerror', (e) => report.errors.push(`[${dirName} pageerror] ${e.message}`));
   return { app, page };
+  }catch(error){await app.close();throw error;}
 }
 
 function helpers(page) {
@@ -110,11 +143,15 @@ const START_ROOM_BTN = READY_BTN;
 const START_GAME_BTN = [320, legacy ? 452 : 444];
 
 let H, C;
+const deadline=setTimeout(()=>{
+  report.errors.push('test harness deadline exceeded');
+  H?.app.process().kill();C?.app.process().kill();
+},Number(process.env.BOXHEAD_NET_WINDOW_MS??20000)+180000);
 try {
   step(`launching host + client with --boxhead-net-delay=${DELAY_MS} (one-way)`);
-  H = await launchApp('netsmooth-host');
+  if(CLIENT_FIRST){C=await launchApp('netsmooth-client');H=await launchApp('netsmooth-host');}
+  else{H=await launchApp('netsmooth-host');C=await launchApp('netsmooth-client');}
   const h = helpers(H.page);
-  C = await launchApp('netsmooth-client');
   const c = helpers(C.page);
   for (const [n, x] of [['host', h], ['client', c]]) {
     if (!(await x.waitFor(() => window.__game?.ready, null, 120000))) throw new Error(`${n} boot failed`);
@@ -146,6 +183,10 @@ try {
     window.__game.__setRollbackV2?.(modern);
     await window.__game.__setInfiniteLife(true);
   }, MODERN);
+  if(ALL_RESPONSE){
+    await H.page.evaluate(()=>{const s=window.__game.main().mcScreen.mcSubScreen.mcLevel_Selection;s.bLeft.onRelease.call(s.bLeft);});
+    if(!await c.waitFor(()=>window.__game.lan().sel.levelIdx===17,null,10000))throw new Error('large response map did not synchronize');
+  }
   await h.click(...START_GAME_BTN);
   for (const [n, x] of [['host', h], ['client', c]]) {
     if (!(await x.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) {
@@ -159,11 +200,33 @@ try {
   const lanH0 = await h.lan();
   report.environment = await H.page.evaluate(() => ({userAgent:navigator.userAgent,dpr:devicePixelRatio,width:innerWidth,height:innerHeight,
     canvas:[window.__game.platform.presenter.canvas.width,window.__game.platform.presenter.canvas.height],selection:window.__game.lan().sel}));
+  report.clientEnvironment = await C.page.evaluate(() => ({dpr:devicePixelRatio,width:innerWidth,height:innerHeight,
+    canvas:[window.__game.platform.presenter.canvas.width,window.__game.platform.presenter.canvas.height]}));
+  if(HIDDEN&& (report.environment.width!==960||report.environment.height!==720))throw new Error('unexpected fixed rendering size');
+  if(HIDDEN&&['dpr','width','height','canvas'].some(k=>JSON.stringify(report.environment[k])!==JSON.stringify(report.clientEnvironment[k])))throw new Error('peer rendering geometry differs');
   const lanC0 = await c.lan();
   if ((MODERN ? lanH0.inputDelay !== 0 : lanH0.inputDelay < 1) || lanH0.inputDelay !== lanC0.inputDelay) throw new Error(`rollback inputDelay not agreed: ${lanH0.inputDelay}/${lanC0.inputDelay}`);
   if (MODERN && [lanH0,lanC0].some(s=>s.netcode!=='rollback-v2')) throw new Error('modern mode was not negotiated');
   if (!lanH0.rollback || !lanC0.rollback) throw new Error(`rollback not enabled: host=${JSON.stringify(lanH0.rollback)} client=${JSON.stringify(lanC0.rollback)}`);
   const dH = lanH0.inputDelay;
+  if(ALL_RESPONSE)for(const P of [H,C])await installResponseFixture(P.page);
+  if(SUPPLY_STRESS){
+    if(!Number.isInteger(SUPPLY_STRESS)||SUPPLY_STRESS<1||SUPPLY_STRESS>2000)throw new Error('invalid supply stress count');
+    for(const P of [H,C])await P.page.evaluate(count=>{
+      const g=window.__game,w=g.main().mcWorld,P=g.pkg,start=g.lan().startTick,process=w.Process;
+      w.Process=function(...args){
+        if(this.mTick-start===200)for(let i=0;i<count;i++){
+          const modern=!!this.mUpgrades.supplyState,kind=(modern?['armor','ammo','medical']:['armor','ammo'])[i%(modern?3:2)];
+          const id=modern?'s'+this.mUpgrades.supplyState.nextId++:'qa'+i;
+          const box=this.mThing_Collection.AddThing(new P.Thing.Object.CThing_Object_SupplyCrate(new P.Thing.Math.CThing_Position(5.5,5.5,0),kind,id));
+          // v0.2.8 lacks permanent special crates: use its original normal pickup process for a matched
+          // persistent workload. No boxes are deleted to limit pressure in either build.
+          if(!modern){box.mSupplyId=id;box.Process=box.Process_Init;}
+        }
+        return process.apply(this,args);
+      };
+    },SUPPLY_STRESS);
+  }
   if(EXPLOSIONS){
     if(!MODERN||!Number.isInteger(EXPLOSIONS)||EXPLOSIONS<1||EXPLOSIONS>256)throw new Error('invalid explosion stress configuration');
     for(const P of [H,C])await P.page.evaluate(({source,count})=>{
@@ -236,6 +299,10 @@ try {
   const last = samples[samples.length - 1];
   await Promise.all([finishHost.freeze(),finishClient.freeze()]);
   report.performance = { host:await finishHost(),client:await finishClient() };
+  if(SUPPLY_STRESS){
+    report.permanentSupplies=await Promise.all([H,C].map(P=>P.page.evaluate(()=>Object.values(window.__game.main().mcWorld.mThing_Collection.mThings).filter(t=>t.mSupplyId&&t.Process).length)));
+    if(report.permanentSupplies.some(n=>n<SUPPLY_STRESS))throw new Error('permanent supply accumulation did not survive the measurement');
+  }
   if(Math.max(...Object.values(report.performance).map(p=>p.sampleEndedAt))>Math.min(...Object.values(report.performance).map(p=>p.collectionStartedAt)))throw new Error('forced GC overlapped a measured peer window');
   if(EXPLOSIONS){
     report.explosionStress=await Promise.all([H,C].map(P=>P.page.evaluate(()=>window.__explosionStress)));
@@ -277,6 +344,11 @@ try {
     if (!a || a.state !== 'running' || a.decoded !== 31 || a.failed.length !== 0) throw new Error(`${n} audio gate failed: ${JSON.stringify(a)}`);
   }
   step('smoothness window clean: stalls bounded, lockstep intact, audio healthy on both');
+  if(process.env.BOXHEAD_RENDER_GAP_ROLE!==undefined){
+    const role=Number(process.env.BOXHEAD_RENDER_GAP_ROLE);if(role!==0&&role!==1)throw new Error('invalid renderer gap role');
+    await (role?C:H).page.evaluate(()=>{const end=performance.now()+200;while(performance.now()<end){/* deliberate renderer-only test stall */}});
+    await H.page.waitForTimeout(1000);report.renderGap={role,milliseconds:200};
+  }
   if(RECOVERY){
     if(!MODERN)throw new Error('history recovery gate requires modern mode');
     for(const P of [H,C])await P.page.evaluate(()=>{window.__recoveryWorld=window.__game.main().mcWorld;});
@@ -404,7 +476,7 @@ try {
     const cycles=Number(process.env.BOXHEAD_NET_PROBE_CYCLES??1);
     if(!Number.isInteger(cycles)||cycles<1||cycles>8)throw new Error('invalid probe cycles');
     report.inputProbeCycles=cycles;
-    for(const [pg,key,p]of [[H.page,'ArrowRight',probeH],[C.page,'KeyD',probeC]]){
+    for(const [pg,key,p]of(CLIENT_FIRST?[[C.page,'KeyD',probeC],[H.page,'ArrowRight',probeH]]:[[H.page,'ArrowRight',probeH],[C.page,'KeyD',probeC]])){
       const samples=[{...p}];
       for(let cycle=0;cycle<cycles;cycle++)for(const phase of [0,10,20,30])samples.push(await probeWithRetry(pg,key,phase));
       p.samples=samples;
@@ -435,8 +507,23 @@ try {
     step(`${n} sim followed at ${p.simAtMs ?? '>3000'} ms (D=${dH} ticks - the designed input delay)`);
   }
   step(`operation latency accepted on both peers (limit ${RESPONSE_LIMIT_MS} ms${EXPLOSIONS?' under mixed-explosion stress':''})`);
+  if(ALL_RESPONSE){
+    report.actionResponses={};
+    for(const [name,P,role]of(CLIENT_FIRST?[['client',C,1],['host',H,0]]:[['host',H,0],['client',C,1]]))
+      report.actionResponses[name]=await responseActions(P.page,role,{limit:RESPONSE_LIMIT_MS});
+    await H.page.keyboard.press('KeyP');
+    for(const x of [h,c])if(!await x.waitFor(()=>window.__game.lan().paused,null,10000))throw new Error('action pause did not settle');
+    report.actionConfirmed=await Promise.all([H,C].map(P=>P.page.evaluate(()=>({digest:window.__game.__netDigest(),events:window.__game.lan().confirmedEvents}))));
+    if(JSON.stringify(report.actionConfirmed[0])!==JSON.stringify(report.actionConfirmed[1]))throw new Error('actions changed confirmed equivalence');
+  }
   await shot('03_host_after_window', H.page);
   await shot('04_client_after_window', C.page);
+  if(process.env.BOXHEAD_QA_TCP_ONLY==='1'||Number(process.env.BOXHEAD_QA_JITTER??0)){
+    report.transportFaults=await Promise.all([H,C].map(P=>P.app.evaluate(()=>globalThis.__qaTransport)));
+    if(report.transportFaults.some(s=>s.errors.length))throw new Error('unexpected transport fixture error: '+JSON.stringify(report.transportFaults));
+    if(process.env.BOXHEAD_QA_TCP_ONLY==='1'&&report.transportFaults.some(s=>!s.udpSuppressed))throw new Error('TCP fallback fixture never suppressed a UDP input');
+    if(Number(process.env.BOXHEAD_QA_JITTER??0)&&report.transportFaults.some(s=>!s.tcpDelayed))throw new Error('jitter fixture never delayed a TCP write');
+  }
 
   report.ok = report.errors.length === 0;
 } catch (e) {
@@ -445,6 +532,7 @@ try {
   writeFileSync(join(OUT, 'net_smooth_report.json'), JSON.stringify(report, null, 2));
   try { await H?.app.close(); } catch {}
   try { await C?.app.close(); } catch {}
+  clearTimeout(deadline);
 }
 console.log(report.ok ? `PACKAGED NET-SMOOTH PLAYTEST PASSED (${DELAY_MS} ms one-way)` : `PACKAGED NET-SMOOTH PLAYTEST FAILED: ${report.errors.join(' | ')}`);
 process.exit(report.ok ? 0 : 1);
