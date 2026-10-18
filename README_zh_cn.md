@@ -68,6 +68,8 @@ npm run dev         # http://localhost:5173/
 
 ![联机合作独立成长](assets/readme/lan-growth.png)
 
+![蓝色护甲箱与军绿弹药箱](assets/readme/devil-supplies.png)
+
 ## 开发
 
 ```bash

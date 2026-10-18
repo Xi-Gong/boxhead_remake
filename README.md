@@ -92,6 +92,8 @@ npm run dev         # http://localhost:5173/
 
 ![Personal LAN co-op progression](assets/readme/lan-growth.png)
 
+![Blue armor and olive ammunition supplies](assets/readme/devil-supplies.png)
+
 Intentional deviations are registered in [`src/game/deviations.ts`](src/game/deviations.ts) and audited in
 [`PARITY.md`](PARITY.md): sponsor content (CMG logo, online scores, external links) is replaced by local
 highscores; timing stays at the original 50 fps logic on any refresh rate.
