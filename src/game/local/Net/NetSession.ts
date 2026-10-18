@@ -846,6 +846,7 @@ export class NetSession {
 
   private endWorld(dmWinnerState: string): void {
     if (this.phase === 'ended') return;
+    this.releaseSchedule();
     this.phase = 'ended';
     const w = this.world;
     if (w && !w.mCompleteState) w.mCompleteState = this.mode === 'DeathMatch' ? dmWinnerState : 'player dead';
@@ -862,6 +863,7 @@ export class NetSession {
   markEnded(): void {
     if (this.phase === 'ended') return;
     if (this.phase !== 'playing' && this.phase !== 'starting') return;
+    this.releaseSchedule();
     this.phase = 'ended';
     this.onStateChange?.();
   }
@@ -881,6 +883,7 @@ export class NetSession {
   }
 
   dispose(): void {
+    this.releaseSchedule();
     if (active === this) active = null;
     this.phase = 'ended';
     this.world = undefined;
@@ -902,6 +905,10 @@ export class NetSession {
   }
 
   // ---------------------------------------------------------------------------------------------- internals
+
+  private releaseSchedule(): void {
+    if (active === this && CMain._this) (CMain._this as any).mFrameCap = 1;
+  }
 
   private applyPlayer(role: LanRole, bits: number, tick: number): void {
     const table = this.slots[role];

@@ -63,6 +63,16 @@ function run(delay: number, modern = false) {
 }
 
 describe('actual rollback prediction', () => {
+  it.each(['markEnded','forfeit','dispose'] as const)('%s restores the ordinary scheduler cap', action => {
+    const game = createHeadlessGame({menuOnly:'Main'});
+    const s = new NetSession(0,{send(){}});
+    s.startLocalGame({mode:'Coop',roomLink:'ROOM_Single_0001',cfg,seed:4242,netcode:'rollback-v2'},game.main());
+    expect(game.waitRunning(3000)).toBe(true);
+    game.main().mFrameCap=2;
+    s[action]();
+    expect(game.main().mFrameCap).toBe(1);
+    game.quit();
+  });
   it('a peer with confirmed future inputs catches up at a bounded rate', () => {
     const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: true } });
     const s = new NetSession(1, { send() {} });
