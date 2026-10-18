@@ -32,7 +32,7 @@ export type SV =
   // mAnimationPosition, bmObject index into bmList, sharedIdx(bmList)
   | ['mcanim', number, number, number]
   // mItems index, mCurrentFrameID, mAnimEnd, mPreUpdate, mID, direction idx, frame idx, sharedIdx(mCollection)
-  | ['xsi', number, number, number, number, number, number, number, number]
+  | ['xsi', number, number, number, number, number, number, number, number, string?]
   // class name, own props, sharedIdx(prototype)
   | ['obj', string, [string, SV][], number]
   | ['shared', number]
@@ -185,7 +185,8 @@ const protos = (): Map<any, (v: any, ctx: SnapCtx, path: string, memoSet: (t: SV
         const dirIdx = v.mCurrentDirection && v.mAnimationObject ? v.mAnimationObject.mDirections.indexOf(v.mCurrentDirection) : -1;
         const frameIdx = v.mCurrentDirection && dirIdx >= 0 ? v.mCurrentDirection.mFrames.indexOf(v.mCurrentFrame) : -1;
         const tri = (x: any): number => (x === undefined ? 2 : x ? 1 : 0);
-        return memoSet(['xsi', animObjIdx, v.mCurrentFrameID, tri(v.mAnimEnd), tri(v.mPreUpdate), v.mID ?? 0, dirIdx, frameIdx, v.mCollection !== undefined ? sharedIdx(ctx, v.mCollection) : -1]);
+        const animationKey = Object.keys(v.mCollection?.mItems ?? {}).find(key => v.mCollection.mItems[key].mAnimationObject === v.mAnimationObject);
+        return memoSet(['xsi', animObjIdx, v.mCurrentFrameID, tri(v.mAnimEnd), tri(v.mPreUpdate), v.mID ?? 0, dirIdx, frameIdx, v.mCollection !== undefined ? sharedIdx(ctx, v.mCollection) : -1, animationKey]);
       }],
     [(World.Map as any).CMap_Cell.prototype, (v: any) => ['cell', v.mID.x, v.mID.y] as SV],
   ]);
@@ -263,7 +264,7 @@ function captureOwnProps(o: any, ctx: SnapCtx, path: string): [string, SV][] {
   return out;
 }
 
-export function captureWorldSnap(world: any, ctx: SnapCtx): WorldSnap {
+export function captureWorldSnap(world: any, ctx: SnapCtx, copyFloor = true): WorldSnap {
   ctx.instances = new Map();
   // Each ring slot owns its registry. Reusing the growing array retained every expired bitmap/thing.
   ctx.sharedObjs = [];
@@ -347,7 +348,7 @@ export function captureWorldSnap(world: any, ctx: SnapCtx): WorldSnap {
     floor: undefined,
   };
   const bm = world.bmFloor;
-  if (bm && bm.width * bm.height * 4 <= 4 * 1024 * 1024) {
+  if (copyFloor && bm && bm.width * bm.height * 4 <= 4 * 1024 * 1024) {
     s.floor = { sharedIdx: sharedIdx(ctx, bm.clone()), w: bm.width, h: bm.height };
   }
   ctx.privateMemo = undefined;

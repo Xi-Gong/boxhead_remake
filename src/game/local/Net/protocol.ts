@@ -124,6 +124,8 @@ export interface LanChecksum {
   zombies: number;
   /** [p1x, p1y, p1life, p2x, p2y, p2life] quantised (floor(v * 16)). */
   q: number[];
+  /** v2 exact gameplay sections; legacy quantised fields remain unchanged. */
+  full?: Record<string, string>;
 }
 
 export type LanMessage =

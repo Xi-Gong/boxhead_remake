@@ -9,12 +9,15 @@ import { applyCorrections } from '../../src/game/local/Net/Rollback.ts';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
 import { CSound, World } from '../../src/game/packages.ts';
 import type { GameConfig } from '../../src/game/local/Net/protocol.ts';
+import { captureWorldSnap, makeSnapCtx } from '../../src/game/local/Net/WorldSnap.ts';
+import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 
 const cfg: GameConfig = { difficulty: 0, gameSpeed: 1, devils: true, collisions: true,
   damage: true, gameAmount: 0, detail: true, charP1: 0, charP2: 0 };
 const input = (t: number): number => (t < 2 ? 0 : ((t % 17 < 8 ? 8 : 1) | (t % 7 < 4 ? 16 : 0)));
 
 function run(delay: number, modern = false) {
+  World.Map.CMap_Cell.mCurrentSessionID = 0;
   const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: true } });
   const session = new NetSession(1, { send() {} });
   session.startLocalGame({ mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg, seed: 4242, rollback: true,
@@ -48,6 +51,7 @@ function run(delay: number, modern = false) {
   })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   const nav = World.Map.CMap_Cell;
   const result = { rows, rng: getRandomState(), score: w.mHud.nTotalScore,
+    full: simulationDigest(captureWorldSnap(w, makeSnapCtx(w, (session as any).slots))),
     events: modern ? [session.events.confirmedCount, session.events.confirmedHash] : undefined,
     navigationClock: [nav.nSTimer, nav.nSID, nav.nState, nav.nSDist] };
   const stats = { ...session.rollbackStats };

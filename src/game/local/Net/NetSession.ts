@@ -38,7 +38,8 @@ import {
   LAN_CHECKSUM_EVERY, LAN_INPUT_DELAY, PREDICT_MAX_LAG_TICKS, ROLLBACK_WINDOW_TICKS, type GameConfig, type LanChecksum, type LanMessage, type LanMode, type LanRole,
 } from './protocol.ts';
 import { mayPredict, onRemoteFrame as rollbackOnRemoteFrame, predictedRemoteBits, pushSlot as rollbackPushSlot, resetRollback } from './Rollback.ts';
-import { makeSnapCtx } from './WorldSnap.ts';
+import { captureWorldSnap, makeSnapCtx } from './WorldSnap.ts';
+import { simulationDigest } from './StateDigest.ts';
 import { recordWaveReached } from '../WaveUnlock.ts';
 import { EventJournal } from './Events.ts';
 
@@ -385,6 +386,13 @@ export class NetSession {
     // peers. mTick itself is unread by game logic - only the relative index matters.
     this.startTick = world.mTick;
     this.virtualTimeMs = 0;
+    if (this.rollbackV2) {
+      World.Map.CMap_Cell.Nav_Reset();
+      World.Map.CMap_Cell.mCurrentSessionID = 0;
+      for (const row of world.mMap.mCells) for (const cell of row) {
+        cell.nID = -1; cell.nDist = undefined; cell.nVD = undefined; cell.mSessionIDCheck = undefined;
+      }
+    }
     this.localFrames.clear();
     // Prime the input-delay window so the very first tick can run: frames 0..D-1 (v0.1.7; v0.1.4 primed 0..D).
     // Frame D belongs to tick 0's afterTick - priming it too would double-write the index (we would consume our
@@ -814,6 +822,7 @@ export class NetSession {
     }
     return {
       tick,
+      ...(this.rollbackV2 ? { full: simulationDigest(captureWorldSnap(world, this.snapCtx, false)) } : {}),
       score: world.mHud.nTotalScore,
       things,
       zombies,
