@@ -6,7 +6,7 @@
 // generated/disasm/button_<id>_1.txt + clip_sprite<id>_f1_d<depth>_1.txt (their getURL targets) and the gallery
 // renders generated/reports/gallery/Screen_Main.png, Screen_SelectWorld.png, Screen_Debrief.png, LevelIcons_Single_f7.png.
 import { Mouse } from '../engine/flash/input.ts';
-import { Button, MovieClip, _global, forIn } from '../engine/runtime.ts';
+import { Button, MovieClip, _global } from '../engine/runtime.ts';
 import { getFrameScript, registerFrameScript, setInstanceHook } from '../engine/swf/Player.ts';
 import { CMain, CSaveData, CSound, External, Screen, World } from './packages.ts';
 import { hasTable, roomIndexOfLibLink, showHighscoreTable, submitLocalScore } from './local/Highscores.ts';
@@ -385,20 +385,12 @@ export function applyScope(): void {
       }
       return;
     }
-    // v0.2.2 restyle (UiStyle): the original pause QUIT's own language - red Calibri text, brightening on hover -
-    // instead of the old dark plate. Centred below QUIT on the same axis. v0.2.5 (list overlap): with 64+ upgrades
-    // unlocked the ported 3-column list runs past the fixed y=452 slot - measure the duplicated rows' actual bottom
-    // (they are laid out at column._y + row*17 in this same parent) and place the button below it.
-    let listBottom = 0;
-    for (const k of forIn(this.mcScreenPause)) {
-      if (!/^upgrade_/.test(k)) continue;
-      const row: any = this.mcScreenPause[k];
-      if (typeof row?._y === 'number') listBottom = Math.max(listBottom, row._y + 16);
-    }
+    // Both actions live in the original header. They remain reachable regardless of upgrade-list height.
+    this.mcScreenPause._Quit._x = 230;
     const btn = this.mcScreenPause.createEmptyMovieClip('_SaveQuit', this.mcScreenPause.getNextHighestDepth());
-    btn._x = 320;
-    btn._y = Math.max(452, listBottom + 12);
-    const tf = text(btn, '_Label', -160, -16, 320, 32, 'Calibri', 26, 0xff0000, true, 'center', 'SAVE & QUIT');
+    btn._x = 365;
+    btn._y = 46.3;
+    const tf = text(btn, '_Label', -85, -13, 170, 26, 'Calibri', 20, 0xff0000, true, 'center', 'SAVE & QUIT');
     btn.onRollOver = function (): void { tf.textColor = 0xfe5f5f; };
     btn.onRollOut = function (): void { tf.textColor = 0xff0000; };
     btn.pWorld = this.mWorld;

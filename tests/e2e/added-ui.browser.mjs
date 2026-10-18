@@ -27,6 +27,23 @@ try {
   {ip:'192.168.1.4',name:'IN PROGRESS',status:'playing',players:2,port:47631}]));
  await g.page.waitForTimeout(500);await g.shot(`${out}/lan-discovery.png`,false);
  assert.equal(await g.expr('m.mcScreen.hostRows.filter(r=>r._visible).length'),3);
+ await g.expr('m.SetState("State_SelectWorld_Single")');
+ assert.ok(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
+ await g.expr('m.mcScreen.LoadLevel(0)');
+ assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state() === "State_RunWorld"'));
+ await g.page.keyboard.press('p');
+ assert.ok(await g.waitExpr('!!m.mcWorld?.mHud?.mcScreenPause?._SaveQuit'));
+ const bounds=await g.expr('(()=>{const p=m.mcWorld.mHud.mcScreenPause;return {save:p._SaveQuit.getBounds(p),quit:p._Quit.getBounds(p)};})()');
+ assert.ok(bounds.save.yMax<=65.75,'save action stays inside header');
+ assert.ok(bounds.save.xMin>=bounds.quit.xMax+8,'pause actions have separate hit areas');
+ for(const [w,h] of [[640,480],[1280,720]]){
+  await g.page.setViewportSize({width:w,height:h});await g.page.waitForTimeout(750);await g.shot(`${out}/pause-${w}x${h}.png`,false);
+ }
+ await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');
+ assert.ok(await g.waitScreen('State_Main','Screen_Main'));
+ assert.ok(await g.expr('!!m.mcScreen.mcContinue'));
+ await g.clickClip('m.mcScreen.mcContinue');
+ assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state() === "State_RunWorld"'));
  assert.deepEqual(await g.scriptErrors(),[]);
  console.log('PASS: main menu with all entries, four aspect ratios, LAN entry and controlled discovery');
  await g.close();

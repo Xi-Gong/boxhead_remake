@@ -128,7 +128,7 @@ try {
   if (!(await waitFor(() => window.__game.main().mcWorld?.mPaused, null, 10000))) throw new Error('no pause');
   if (!before.pauseBtn && !(await worldInfo()).pauseBtn) throw new Error('no SAVE & QUIT button on the pause screen');
   await shot('03_paused');
-  await click(320, 452);
+  await click(365, 46.3);
   if (!(await waitScreen('State_Main', 'Screen_Main', 30000))) throw new Error(`SAVE & QUIT did not reach the main menu (state ${await state()})`);
   await page.waitForTimeout(800); // the ~700ms screen-transition settle
   let cont = await centreOf('m.mcScreen.mcContinue');
