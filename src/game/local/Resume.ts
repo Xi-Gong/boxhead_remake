@@ -18,12 +18,13 @@
 // the weapon things exist again.
 import { forIn } from '../../engine/runtime.ts';
 import { getRandomState, setRandomState } from '../../engine/flash/rng.ts';
-import { CSaveData, Thing, World } from '../packages.ts';
+import { CMain, CSaveData, Thing, World } from '../packages.ts';
 import { CThing_Object_WeaponCrate, type CrateWeapon } from './WeaponCrate.ts';
 import { copyGrowth, type GrowthState } from './Net/Growth.ts';
-import { armorValue, armorMaximum, suppliesEnabled } from './Supplies.ts';
+import { armorValue, armorMaximum, suppliesEnabled, CThing_Object_SupplyCrate, type SupplyKind } from './Supplies.ts';
 import { initializeLocalGrowth, localGrowthEnabled } from './LocalGrowth.ts';
 import { SURVIVAL_RULE, survivalEnabled, settleVitals } from './SurvivalRules.ts';
+import { LOOT_RULE, modernLoot, type SupplyState } from './LootRules.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -57,7 +58,7 @@ export interface PlayerState {
  * (mDeleteOnPickup) are excluded.
  */
 export interface ObjectState {
-  classID: 'CThing_Object_Barrel' | 'CThing_Object_Wall' | 'CThing_Object_Mine' | 'CThing_Object_ChargePack' | 'CThing_Object_Pickup' | 'CThing_Object_WeaponCrate';
+  classID: 'CThing_Object_Barrel' | 'CThing_Object_Wall' | 'CThing_Object_Mine' | 'CThing_Object_ChargePack' | 'CThing_Object_Pickup' | 'CThing_Object_WeaponCrate' | 'CThing_Object_SupplyCrate';
   x: number; y: number; angle: number;
   origin: 'marker' | 'placed';
   /** Placed: playerIndex of the owner (kill credit when they explode later). */
@@ -71,10 +72,14 @@ export interface ObjectState {
   reappearCount?: number;
   /** Weapon crate only: the dead player's restorable inventory. */
   crate?: { weapons: CrateWeapon[]; currentWeapon?: string };
+  /** Permanent supply identity is independent of the rebuilt world's thing allocation IDs. */
+  supply?: { kind: SupplyKind; id: string };
+  randomRed?: { id: string; remainingTicks: number; alpha: number };
 }
 
 export interface RunSnapshot {
   survival?: typeof SURVIVAL_RULE;
+  loot?: { rule: typeof LOOT_RULE; state: SupplyState };
   /** Optional v2 extension shared by local and LAN permanent progression. */
   growth?: GrowthState;
   version: number;
@@ -108,6 +113,7 @@ export interface RunSnapshot {
 const OBJECT_CLASSES = new Set([
   'CThing_Object_Barrel', 'CThing_Object_Wall', 'CThing_Object_Pickup', 'CThing_Object_Mine', 'CThing_Object_ChargePack',
   'CThing_Object_WeaponCrate',
+  'CThing_Object_SupplyCrate',
 ]);
 const EPS = 1e-6;
 
@@ -185,7 +191,7 @@ function capturePlayer(p: any): PlayerState {
 function captureObject(t: any): ObjectState {
   // The weapon crate is run-created (never in a room's init list) but ownerless - force 'placed' anyway, or the
   // apply pass would match it against the fresh build's markers, find nothing, and silently drop the inventory.
-  const placed = t.mParent != undefined || t._CLASSID_ === 'CThing_Object_WeaponCrate';
+  const placed = t.mParent != undefined || t._CLASSID_ === 'CThing_Object_WeaponCrate' || !!t.mSupplyId || !!t.mRandomRedId;
   const o: ObjectState = {
     classID: t._CLASSID_,
     x: t.mPosition.mX, y: t.mPosition.mY,
@@ -204,7 +210,16 @@ function captureObject(t: any): ObjectState {
   if (t._CLASSID_ === 'CThing_Object_WeaponCrate') {
     o.crate = { weapons: t.mPayload.weapons, currentWeapon: t.mPayload.currentWeapon };
   }
+  if (t.mSupplyId) o.supply = { kind: t.mSupplyKind, id: t.mSupplyId };
+  if (t.mRandomRedId) o.randomRed = { id: t.mRandomRedId, remainingTicks: t.mDeleteCounter, alpha: t.mAlpha };
   return o;
+}
+
+function restorableObject(t: any): boolean {
+  if (!t || !OBJECT_CLASSES.has(t._CLASSID_)) return false;
+  if (t._CLASSID_ === 'CThing_Object_SupplyCrate') return !!t.mSupplyId && !!t.Process && !t.mSupplyConsumed;
+  if (t.mRandomRedId) return !!t.Process && !t.mRedConsumed;
+  return !t.mDeleteOnPickup;
 }
 
 /** Pure read of a live (running or paused) world. */
@@ -218,11 +233,12 @@ export function capture(world: any): RunSnapshot {
     .map(capturePlayer);
   const objects: ObjectState[] = forIn(tc.mThings)
     .map((k) => tc.mThings[k])
-    .filter((t: any) => t != undefined && OBJECT_CLASSES.has(t._CLASSID_) && !t.mDeleteOnPickup)
+    .filter(restorableObject)
     .map(captureObject);
   return {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
     ...(survivalEnabled(world) ? { survival: SURVIVAL_RULE } : {}),
+    ...(modernLoot(world) ? { loot: { rule: LOOT_RULE, state: { ...u.supplyState } } } : {}),
     version: RESUME_VERSION,
     gameMode: World.CWorld.mGameMode,
     roomLibLink: world.mWorldLibLink,
@@ -320,10 +336,24 @@ function recreatePlaced(world: any, s: ObjectState): void {
       t = new Thing.Object.CThing_Object_ChargePack(pos, angle, owner, s.damage); break;
     case 'CThing_Object_WeaponCrate':
       t = new CThing_Object_WeaponCrate(pos, { weapons: s.crate?.weapons ?? [], currentWeapon: s.crate?.currentWeapon }); break;
+    case 'CThing_Object_SupplyCrate':
+      if (!modernLoot(world) || !s.supply) return;
+      t = new CThing_Object_SupplyCrate(pos, s.supply.kind, s.supply.id); break;
+    case 'CThing_Object_Pickup':
+      if (!modernLoot(world) || !s.randomRed) return;
+      t = new Thing.Object.CThing_Object_Pickup(pos);
+      t.mRandomRedId = s.randomRed.id; t.mDeleteOnPickup = true;
+      t.SetDeleteCounter(s.randomRed.remainingTicks); t.mAlpha = s.randomRed.alpha; break;
     default:
       return;
   }
   world.mThing_Collection.AddThing(t);
+  if (s.supply || s.randomRed) {
+    // Reattach without processing a pickup during restore, and without spending a remaining lifetime tick.
+    world.mMap.mMapwho.AddThing(t);
+    t.mCurrentCell = world.mMap.GetCell(s.x,s.y);
+    t.Process = s.randomRed ? t.Process_DeleteCounter : t.Process_Normal;
+  }
   if (s.classID === 'CThing_Object_Wall' && s.life != undefined) {
     t.mLife = s.life;
     t.mcDrawObject.GotoToFrame(Math.floor((1 - t.mLife / t.mMaxLife) * t.mcDrawObject.__get__mFrameAmount()));
@@ -334,9 +364,10 @@ function applyObjects(world: any, snap: RunSnapshot): void {
   const tc = world.mThing_Collection;
   const fresh = forIn(tc.mThings)
     .map((k) => tc.mThings[k])
-    .filter((t: any) => t != undefined && OBJECT_CLASSES.has(t._CLASSID_) && !t.mDeleteOnPickup);
+    .filter(restorableObject);
   const savedMarkers = snap.objects.filter((o) => o.origin === 'marker');
   for (const t of fresh) {
+    if (t.mSupplyId || t.mRandomRedId) { t.Delete(); continue; }
     const s = savedMarkers.find((o) => o.classID === t._CLASSID_ && Math.abs(o.x - t.mPosition.mX) < EPS && Math.abs(o.y - t.mPosition.mY) < EPS);
     if (!s) {
       // Absent from the snapshot = destroyed before capture (destroyed things are removed from mThings).
@@ -356,7 +387,12 @@ function applyObjects(world: any, snap: RunSnapshot): void {
     }
   }
   for (const s of snap.objects) {
-    if (s.origin === 'placed') recreatePlaced(world, s);
+    if (s.origin === 'placed' && !s.supply && !s.randomRed) recreatePlaced(world, s);
+  }
+  // Capture uses Flash's reverse insertion order. Rebuild new supplies in creation order so stacked
+  // pickups keep the same processing priority across repeated saves; legacy placed-object order stays intact.
+  for (const s of [...snap.objects].reverse()) {
+    if (s.origin === 'placed' && (s.supply || s.randomRed)) recreatePlaced(world, s);
   }
 }
 
@@ -371,6 +407,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);
   else delete u.lanGrowth; // Old saves must replay their original multiplier before one-time conversion.
+  if (modernLoot(world)) u.supplyState = snap.loot?.rule === LOOT_RULE ? { ...snap.loot.state } : { nextDropTicks: CMain.mFPS * 20, nextId: 1 };
   hud.mSilentMessages = true;
   suppress = true;
   try {

@@ -123,7 +123,7 @@ function* soakSteps(opts: SoakOptions): Generator<void, SoakReport, void> {
       const transient = dropped || c.startsWith('CThing_Effect') || c.startsWith('CThing_Shot')
         || ((c === 'CThing_Creature_Zombie' || c === 'CThing_Creature_Devil') && th.mFlags & DEAD);
       if (!transient) continue;
-      const key = dropped ? 'CThing_Object_Pickup(dropped)' : c;
+      const key = th.mRandomRedId ? 'CThing_Object_Pickup(random)' : dropped ? 'CThing_Object_Pickup(dropped)' : c;
       alive.add(th);
       if (!born.has(th)) born.set(th, t);
       const age = t - born.get(th)!;

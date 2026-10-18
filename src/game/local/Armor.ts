@@ -4,20 +4,24 @@ import {Thing,World} from '../packages.ts';
 import {netActive,netSession} from './Net/NetSession.ts';
 import {crateDropPosition} from './WeaponCrate.ts';
 import {SUPPLY_RULE,armorValue,armorMaximum,CThing_Object_SupplyCrate,devilSupply,suppliesEnabled,setSuppliesEnabled} from './Supplies.ts';
-import { SURVIVAL_RULE, setSurvivalEnabled, syncVitals } from './SurvivalRules.ts';
+import { SURVIVAL_RULE, setSurvivalEnabled, syncVitals, survivalEnabled } from './SurvivalRules.ts';
 import { localGrowthEnabled } from './LocalGrowth.ts';
 import { installShieldResilience, protectEnemyHit } from './ShieldResilience.ts';
+import { LOOT_RULE, SUPPLY_KINDS, modernLoot, setModernLoot, supplyIdentity } from './LootRules.ts';
+import { installSupplyDrops } from './SupplyDrops.ts';
 
 const bars=new WeakMap<object,any>();
 const fills=new WeakMap<object,any>();
 export function installArmorScope():void{
   installShieldResilience();
+  installSupplyDrops();
   const world=World.CWorld.prototype as any,ready=world.InitFinished,logKill=world.LogKill;
   world.InitFinished=function(this:any):any{
     setSuppliesEnabled(this,World.CWorld.mGameMode!=='DeathMatch'&&(!netActive()||netSession()?.startOpts?.cfg.supplies===SUPPLY_RULE));
     setSurvivalEnabled(this,World.CWorld.mGameMode!=='DeathMatch'&&(netActive()
       ? netSession()?.startOpts?.cfg.survival===SURVIVAL_RULE && suppliesEnabled(this) && netSession()?.startOpts?.cfg.progression==='personal-growth-v1'
       : localGrowthEnabled()));
+    setModernLoot(this,survivalEnabled(this)&&(!netActive()||netSession()?.startOpts?.cfg.loot===LOOT_RULE));
     return ready.call(this);
   };
   world.LogKill=function(this:any,victim:any):any{
@@ -26,10 +30,10 @@ export function installArmorScope():void{
     victim.supplyDropLogged=true;
     const create=this._CreatePickup,own=Object.getOwnPropertyDescriptor(this,'_CreatePickup');
     this._CreatePickup=function(this:any,position:any):void{
-      const kind=devilSupply(random(100));
+      const modern=modernLoot(this),kind=modern?SUPPLY_KINDS[random(3)]:devilSupply(random(100));
       if(!kind){create.call(this,position);return;}
       const at=crateDropPosition(this,position);
-      if(at)this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(at,kind));
+      if(at)this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(at,kind,modern?supplyIdentity(this,'s'):undefined));
     };
     try{return logKill.call(this,victim);}
     finally{if(own)Object.defineProperty(this,'_CreatePickup',own);else delete this._CreatePickup;}

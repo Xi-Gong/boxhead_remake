@@ -7,6 +7,7 @@ import { advanceVirtual } from '../../src/engine/flash/clock.ts';
 import { Thing } from '../../src/game/packages.ts';
 import { explosionBurst } from './explosionFixture.ts';
 import {CThing_Object_SupplyCrate,armorValue,armorMaximum} from '../../src/game/local/Supplies.ts';
+import { supplyIdentity, SUPPLY_KINDS } from '../../src/game/local/LootRules.ts';
 
 const role = Number(process.argv[2]) as 0 | 1;
 const options = JSON.parse(process.argv[3] ?? '{}');
@@ -14,7 +15,7 @@ const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: tru
 let sent: unknown[] = [];
 const session = new NetSession(role, { send: message => sent.push(message) });
 session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, wave:options.wave, netcode: 'rollback-v2',
-  cfg: { ...(options.survival?{survival:'survival-v1' as const}:{}),...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
+  cfg: { ...(options.loot?{loot:'supply-crates-v2' as const}:{}),...(options.survival?{survival:'survival-v1' as const}:{}),...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
     gameAmount: 3, detail: options.detail ?? true, charP1: 0, charP2: 0 } }, game.main());
 if (!game.waitRunning(3000)) throw new Error('boot failed');
 if (options.weapons||options.supplies) for (const player of game.players()) for (const name of Object.keys(player.mWeapons)) player.NewWeapon(name);
@@ -23,14 +24,21 @@ sent = [];
 const originalWorld = game.world();
 let peakExplosions = 0;
 let peakArmor=0,ammoGrants=0,protectedHits=0;
+const deliveredRedIds=new Set<string>();
 if (options.growth || options.explosions || options.supplies) {
   const processWorld = originalWorld.Process;
   originalWorld.Process = function (this: any) {
     const tick = session.tickIndex(this);
+    // The original infinite-life option prevents terminal death, but permits nonpositive health.
+    // Keep this delivery scenario alive so reachability has a valid player seed throughout its 27 seconds.
+    if(options.loot)for(const player of game.players())player.mLife=player.mMaxLife;
     if(options.supplies&&tick>0&&tick%31===0){
       const player=game.players()[Math.floor(tick/31)%2];
-      const crate=this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(player.mPosition.Clone(),Math.floor(tick/31)%2?'armor':'ammo'));
-      crate.Process_DeleteCounter_Init();crate.PickedUp();
+      const kind=options.loot?SUPPLY_KINDS[Math.floor(tick/31)%3]!:Math.floor(tick/31)%2?'armor':'ammo';
+      if(options.loot&&kind==='ammo')player.mWeapons.uzi.mThing.mAmmo=0;
+      const crate=this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(player.mPosition.Clone(),kind,options.loot?supplyIdentity(this,'s'):undefined));
+      if(options.loot)crate.Process_Init();else crate.Process_DeleteCounter_Init();
+      crate.PickedUp();
       peakArmor=Math.max(peakArmor,...game.players().map(p=>armorValue(p.mArmor,armorMaximum(p))));
       if(crate.mSupplyConsumed&&crate.mSupplyKind==='ammo'){
         if(!game.players().some(p=>p.mWeaponList.every((e:any)=>!e.mActive||e.mThing.mAmmo===e.mThing.mTotalAmmo)))throw new Error('ammo crate did not refill an entire inventory');
@@ -62,6 +70,7 @@ if (options.growth || options.explosions || options.supplies) {
       victim.SetState('State_Dying'); // Exercise the original death bookkeeping inside this simulated step.
     }
     const result = processWorld.call(this);
+    if(options.loot)for(const t of Object.values(this.mThing_Collection.mThings) as any[])if(t.mRandomRedId)deliveredRedIds.add(t.mRandomRedId);
     if (options.explosions) peakExplosions = Math.max(peakExplosions, this.mThing_Collection.mThingCounters.CThing_Effect_Explosion ?? 0);
     return result;
   };
@@ -91,7 +100,8 @@ process.on('message', (m: any) => {
       growth: world.mUpgrades.lanGrowth,
       confirmedEnemies: session.confirmedEnemies,
       armor:game.players().map(p=>armorValue(p.mArmor,armorMaximum(p))),
-      peakArmor,ammoGrants,protectedHits,
+      peakArmor,ammoGrants,protectedHits,deliveredRedIds:[...deliveredRedIds],
+      ...(options.loot?{supplyState:world.mUpgrades.supplyState,supplyBoxes:Object.values(world.mThing_Collection.mThings).filter((t:any)=>t.Process&&(t.mSupplyId||t.mRandomRedId)).map((t:any)=>[t.mSupplyId??t.mRandomRedId,t.mSupplyKind,t.mDeleteCounter])}:{}),
       peakExplosions,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),
         events: [session.events.confirmedCount, session.events.confirmedHash],

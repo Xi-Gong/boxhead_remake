@@ -54,7 +54,8 @@ export function expectHealthySoak(r: SoakReport, exp: SoakExpect = {}): void {
   // growth: transient things go away, totals stay bounded
   // (lifetimes in seconds scale with the world tick rate: x2 ticks at the fast game speed)
   const ageLimit = MAX_TRANSIENT_AGE * Math.max(1, r.fps / 25);
-  for (const [cls, age] of Object.entries(r.maxAge)) expect(age, `${where}: ${cls} lifetime`).toBeLessThanOrEqual(ageLimit);
+  for (const [cls, age] of Object.entries(r.maxAge)) expect(age, `${where}: ${cls} lifetime`)
+    .toBeLessThanOrEqual(cls === 'CThing_Object_Pickup(random)' ? 45*r.fps+2 : ageLimit);
   expect(r.max.things, `${where}: things`).toBeLessThan(r.start.things + 400);
   // spawn caps (HIGH quality)
   expect(r.max.zombies, `${where}: zombie cap`).toBeLessThanOrEqual(60);

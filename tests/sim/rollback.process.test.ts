@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const scenarios = [
+  {name:'permanent supplies and timed red deliveries under correction and recovery',loot:true,survival:true,balance:true,supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:680},
   {name:'scaled vitals and protected fireballs under correction and recovery',survival:true,balance:true,supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:360},
   {name:'teammate pass-through with weapons, correction and recovery',teamPass:true,weapons:true,rtt:100,jitter:20,reconnect:true,total:360},
   ...[0,1,2,3].map(difficulty=>({name:`balanced difficulty ${difficulty} with supplies and recovery`,balance:true,difficulty,supplies:true,growth:true,allowEnd:true,wave:[1,10,20,35][difficulty],rtt:100,jitter:20,reconnect:true,total:360})),
@@ -104,6 +105,13 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
         else expect(peer.peakArmor).toBe(100);
         expect(peer.ammoGrants).toBeGreaterThan(0);
       }
+    }
+    if(scenario.loot){
+      expect(final[0].supplyState).toEqual(final[1].supplyState);
+      expect(final[0].supplyBoxes).toEqual(final[1].supplyBoxes);
+      expect(final[0].supplyState.nextId).toBeGreaterThan(10);
+      for(const peer of final)expect(peer.deliveredRedIds.length,JSON.stringify(peer.supplyState)).toBeGreaterThan(0);
+      expect(final[0].supplyBoxes.some((box:any[])=>box[0].startsWith('s'))).toBe(true);
     }
     for (const r of final) {
       if (scenario.rtt === undefined || scenario.rtt > 0) expect(r.stats.corrections).toBeGreaterThan(0);

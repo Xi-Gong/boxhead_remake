@@ -234,7 +234,7 @@ describe('claymore (CThing_Object_Mine)', () => {
 describe('pickups', () => {
   it('map pickup: random refill, Object.Pickup, hidden 30 s (Death Match: 10 s)', () => {
     for (const [mode, secs] of [['Single', 30], ['DeathMatch', 10]] as const) {
-      const g = createHeadlessGame({ mode, room: 1, seed: 4 });
+      const g = createHeadlessGame({ classicGrowth: true, mode, room: 1, seed: 4 });
       noSpawn(g);
       const sounds = recordSounds(g);
       const pk = things(g, 'CThing_Object_Pickup')[0];

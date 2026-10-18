@@ -97,7 +97,7 @@ describe('level progression and scoring (Single BOXY, Beginner)', () => {
 
 describe('pickups (BOXY: two pickup markers)', () => {
   it('a player walking onto a pickup gets a random refill; the pickup reappears after 30 s', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 4, difficulty: 1, options: { infiniteLife: true } });
+    const g = createHeadlessGame({ classicGrowth: true, mode: 'Single', room: 1, seed: 4, difficulty: 1, options: { infiniteLife: true } });
     const pk = thingList(g.world()).filter((t) => t._CLASSID_ === 'CThing_Object_Pickup')
       .sort((a, b) => Math.abs(a.mPosition.mY - 8.5) - Math.abs(b.mPosition.mY - 8.5))[0];
     expect(pk).toBeDefined();

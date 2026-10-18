@@ -115,6 +115,8 @@ export interface GameConfig {
   supplies?: 'armor-ammo-v1';
   /** Level-scaled health/armor and protected enemy-hit resilience; requires growth and supplies. */
   survival?: 'survival-v1';
+  /** Permanent three-way devil supplies and scheduled/red-box rewards; requires modern survival. */
+  loot?: 'supply-crates-v2';
   /** Optional difficulty/growth curve; requires personal growth and supply capabilities. */
   balance?: 'pve-balance-v1';
   difficulty: number;

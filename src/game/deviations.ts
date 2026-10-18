@@ -14,6 +14,19 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'PERSISTENT_SUPPLIES',
+    file: 'local/LootRules.ts, SupplyDrops.ts, Supplies.ts, Armor.ts, Resume.ts; local/Net/bridge.ts, protocol.ts; electron/lan.ts',
+    description: 'v0.2.9 modern PvE devils use one seeded roll for equal armor/ammo/medical crates. Stable '+
+      'identities survive waves, v2 saves, checkpoints and rollback without expiry or count-based removal. '+
+      'Only living players who benefit consume them. Medical art uses the original cached bitmap silhouette '+
+      'with a bright green finish and white cross. Red boxes consume one roll: 10% each supply effect, otherwise '+
+      'the original ordered/weighted owned-weapon pool without healing; full/empty rewards still consume the '+
+      'box. Fixed boxes respawn after 24 simulated seconds. Every 20 simulated seconds, current-geometry BFS '+
+      'selects reachable empty ground for 1/2 random boxes, capped at 3/6, with 45-second lifetimes. Timers and '+
+      'identities are simulation/snapshot data. supply-crates-v2 requires survival, growth and armor-ammo-v1; '+
+      'old peers keep their exact transient drops, reward pool, timers and random calls. Death Match is unchanged.',
+  },
+  {
     id: 'GROWING_SURVIVAL',
     file: 'local/SurvivalRules.ts, ShieldResilience.ts, Armor.ts, Supplies.ts, Resume.ts; local/Net/Growth.ts, NetSession.ts, bridge.ts, protocol.ts',
     description: 'v0.2.9 modern PvE health and armor caps are 200 + 4*(personal level-1). Living level-ups add '+
