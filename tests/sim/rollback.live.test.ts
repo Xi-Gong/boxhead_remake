@@ -11,6 +11,7 @@ import { CSound, World } from '../../src/game/packages.ts';
 import type { GameConfig } from '../../src/game/local/Net/protocol.ts';
 import { captureWorldSnap, makeSnapCtx } from '../../src/game/local/Net/WorldSnap.ts';
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
+import { NetSlot, SLOT_ORDER } from '../../src/game/local/Net/NetSlot.ts';
 
 const cfg: GameConfig = { difficulty: 0, gameSpeed: 1, devils: true, collisions: true,
   damage: true, gameAmount: 0, detail: true, charP1: 0, charP2: 0 };
@@ -126,6 +127,21 @@ describe('actual rollback prediction', () => {
     s.beginTick(game.world());
     expect(s.endReason).toBe('timeout');
     expect(s.diagnostics.some(d => d.event === 'input-timeout')).toBe(true);
+    game.quit();
+  });
+  it('checkpoint restart resets reused input edges and timestamps to match a fresh peer', () => {
+    const game = createHeadlessGame({ menuOnly: 'Main' });
+    const s = new NetSession(0, { send() {} });
+    const start = { mode: 'Coop' as const, roomLink: 'ROOM_Single_0001', cfg, seed: 4242, netcode: 'rollback-v2' as const };
+    s.startLocalGame(start, game.main());
+    expect(game.waitRunning(3000)).toBe(true);
+    for (const role of [0, 1]) for (const name of SLOT_ORDER) {
+      s.slot(role, name).setHeld(true, 200, 8000);
+      s.slot(role, name).setHeld(false, 201, 8040);
+    }
+    s.captureCheckpoint(game.world());
+    s.startLocalGame({ ...start, resumeTick: s.netCheckpoint!.tick }, game.main());
+    for (const role of [0, 1]) for (const name of SLOT_ORDER) expect(s.slot(role, name)).toEqual(new NetSlot());
     game.quit();
   });
   it('rejected history recovery falls back to a checkpoint with rollback mode preserved', () => {

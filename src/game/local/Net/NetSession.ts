@@ -406,6 +406,9 @@ export class NetSession {
     // world builds (whichever peer is ready first), so onWorldReady must never clear them again.
     this.localFrames.clear();
     this.remoteFrames.clear();
+    // A checkpoint rebuild starts a new input clock. The surviving peer must have the same
+    // neutral slots as a restarted process; Renew() alone retains timestamps and pressTick.
+    for (const table of this.slots) for (const slot of Object.values(table)) Object.assign(slot, new NetSlot());
     this.ourSums.clear();
     this.remoteSums.clear();
     main.mWorldLibLink = start.roomLink;
