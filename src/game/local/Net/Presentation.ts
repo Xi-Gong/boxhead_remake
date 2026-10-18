@@ -4,8 +4,13 @@ import { predictCollide } from './Predict.ts';
 import type { NetSession } from './NetSession.ts';
 
 interface Pose { x: number; y: number; z: number }
-const poses = (world: any): Map<any, Pose> => new Map(Object.values(world.mThing_Collection.mThings)
-  .filter((t: any) => t?.mPosition).map((t: any) => [t, { x: t.mPosition.mX, y: t.mPosition.mY, z: t.mPosition.mZ }]));
+const poses = (world: any): Map<any, Pose> => {
+  const result = new Map<any, Pose>();
+  for (const thing of Object.values(world.mThing_Collection.mThings) as any[]) {
+    if (thing?.mPosition) result.set(thing, { x: thing.mPosition.mX, y: thing.mPosition.mY, z: thing.mPosition.mZ });
+  }
+  return result;
+};
 
 /** Session-owned render history. Never supplies positions back to collision/AI or the snapshot engine. */
 export class NetPresentation {
@@ -19,6 +24,7 @@ export class NetPresentation {
   private offset = { x: 0, y: 0 };
   private camera: any;
   private brightnessFilters: any[] = [];
+  private clusterPositions = new WeakMap<object, any>();
   advancing = false;
   get displayedLocal(): Readonly<Pose> | undefined { return this.localDisplay; }
 
@@ -63,6 +69,10 @@ export class NetPresentation {
       if (!world.mThing_Collection.mThings[thing.sUniqueID]) continue;
       const previous = this.previous.get(thing) ?? current;
       const position = thing.mPosition, alias = thing.mP;
+      // Explosion.Draw only reads position. A stationary explosion needs neither interpolation nor
+      // a temporary CThing_Position/restore closure at every display refresh (often >1000 at once).
+      if (thing._CLASSID_ === 'CThing_Effect_Explosion' && current.x === previous.x && current.y === previous.y && current.z === previous.z
+        && current.x === position.mX && current.y === position.mY && current.z === position.mZ) continue;
       let x = current.x, y = current.y, z = current.z;
       if (thing.mPlayerIndex === session.role && thing.mStateID === 'State_PlayerControl') {
         const collide = world.mMap.mCollide, flag = collide.mCollideFlag;
@@ -81,7 +91,15 @@ export class NetPresentation {
         y = previous.y + (current.y - previous.y) * alpha;
         z = previous.z + (current.z - previous.z) * alpha;
       }
-      thing.mPosition = new (Thing.Math as any).CThing_Position(x, y, z);
+      if (thing._CLASSID_ === 'CThing_Shot_ClusterShell') {
+        // ClusterShell.Draw is read-only too. Reuse its display-only position between refreshes.
+        let display = this.clusterPositions.get(thing);
+        if (!display) {
+          display = new (Thing.Math as any).CThing_Position(x, y, z);
+          this.clusterPositions.set(thing, display);
+        } else { display.mX = x; display.mY = y; display.mZ = z; }
+        thing.mPosition = display;
+      } else thing.mPosition = new (Thing.Math as any).CThing_Position(x, y, z);
       if (alias === position) thing.mP = thing.mPosition;
       restore.push(() => { thing.mPosition = position; if (alias === position) thing.mP = alias; });
     }
