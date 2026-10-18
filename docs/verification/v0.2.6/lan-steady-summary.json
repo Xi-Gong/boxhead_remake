@@ -1,0 +1,42 @@
+{
+  "baseline": {
+    "host": {
+      "frameP50": 0.40000003576278687,
+      "frameP95": 1.800000011920929,
+      "taskMs": 1552.243,
+      "heapBefore": 29420976,
+      "heapAfter": 41074896,
+      "filterCaches": 6,
+      "disposedBitmapRefs": 0
+    },
+    "client": {
+      "frameP50": 0.5,
+      "frameP95": 1.800000011920929,
+      "taskMs": 1554.021,
+      "heapBefore": 28746416,
+      "heapAfter": 41322612,
+      "filterCaches": 6,
+      "disposedBitmapRefs": 0
+    }
+  },
+  "candidate": {
+    "host": {
+      "frameP50": 0.5,
+      "frameP95": 1.699999988079071,
+      "taskMs": 1499.3180000000002,
+      "heapBefore": 29458084,
+      "heapAfter": 40083272,
+      "filterCaches": 6,
+      "disposedBitmapRefs": 0
+    },
+    "client": {
+      "frameP50": 0.5,
+      "frameP95": 1.899999976158142,
+      "taskMs": 1559.2489999999998,
+      "heapBefore": 29061076,
+      "heapAfter": 40685736,
+      "filterCaches": 6,
+      "disposedBitmapRefs": 0
+    }
+  }
+}
