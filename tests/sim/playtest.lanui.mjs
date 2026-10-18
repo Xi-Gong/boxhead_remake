@@ -20,13 +20,13 @@ const OFFSCREEN = ['-32000', '0'];
 const report = { ok: false, steps: [], errors: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
 
-const LAN_BTN = [320, 392.4];
+const LAN_BTN = [320, 346];
 /** The input's logical rectangle (top-left x/y + w/h in the 640x480 content space; panel coords + 320/240). */
-const IP_BOX = { x: 95, y: 318, w: 165, h: 24 };
+const IP_BOX = { x: 332, y: 338, w: 146, h: 24 };
 /** Panel-space buttons mapped to content space (the panel is centred on 320,240). */
 const CREATE_ROOM_BTN = [320 - 117, 240 - 6];
-const CLOSE_ROOM_BTN = [320 + 110, 240 + 100];
-const BACK_BTN = [320, 240 + 132];
+const CLOSE_ROOM_BTN = [430, 330];
+const BACK_BTN = [320, 388];
 
 let app;
 try {

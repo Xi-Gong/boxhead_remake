@@ -123,8 +123,9 @@ export function pillButton(parent: any, name: string, x: number, y: number, w: n
   const wash = washCapsule(contents, '_Wash', 0, 0, w, h);
   const tf = text(contents, '_Label', 0, (h - size) / 2 - 2, w, h, BODY_FONT, size, PILL_LABEL, true, 'center', label);
   const setHover = (on: boolean, selected: boolean): void => {
-    wash._visible = on || selected;
-    if (tf) tf.textColor = on ? RED : PILL_LABEL;
+    const enabled = mc.enabled !== false;
+    wash._visible = enabled && (on || selected);
+    if (tf) tf.textColor = enabled && on ? RED : PILL_LABEL;
   };
   const selected = !!opts.selected;
   wash._visible = selected;
@@ -132,6 +133,17 @@ export function pillButton(parent: any, name: string, x: number, y: number, w: n
   mc.onRollOut = (): void => setHover(false, selected);
   mc.onDragOut = (): void => setHover(false, selected);
   return mc;
+}
+
+/** Keep visual disabled state and actual hit testing together. */
+export function setButtonEnabled(button: any, enabled: boolean, disabledAlpha = 45): void {
+  button.enabled = enabled;
+  button._alpha = enabled ? 100 : disabledAlpha;
+  if (!enabled) button.onRollOut?.();
+}
+
+export function setButtonLabel(button: any, value: string): void {
+  if (button?._Contents?._Label) button._Contents._Label.text = value;
 }
 
 /** A capsule path (pill = radius h/2) from (x, y) to (x+w, y+h). */

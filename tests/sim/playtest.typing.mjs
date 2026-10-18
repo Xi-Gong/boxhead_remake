@@ -56,7 +56,7 @@ try {
     await page.waitForTimeout(150);
   };
 
-  await click(320, 392.4); // LAN GAME
+  await click(320, 346); // LAN GAME
   if (!(await onScreen('State_LanLobby', 'Screen_LanLobby'))) throw new Error('no lobby');
 
   // Click the DOM IP input (real mouse -> real focus), then type with REAL key events.
@@ -71,7 +71,7 @@ try {
 
   // ---- Part 2: the debrief NAME entry (SWF input TextField on the canvas) with real keys -------------
   await page.keyboard.press('Escape'); // blur the DOM input (no game key; safe)
-  await click(320, 372); // BACK TO MENU (v0.2.2 panel layout: 240 + 132)
+  await click(320, 388); // BACK TO MENU (v0.2.2 panel layout: 240 + 132)
   if (!(await onScreen('State_Main', 'Screen_Main'))) throw new Error('no main menu (2)');
   await page.waitForTimeout(300);
   await click(320.15, 259.25); // CO-OP PLAY

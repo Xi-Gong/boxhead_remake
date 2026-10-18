@@ -108,15 +108,15 @@ function helpers(page) {
   return { state, waitFor, waitScreen, click, worldInfo, overlayText, pingText };
 }
 
-const LAN_BTN = [320, 392.4];
+const LAN_BTN = [320, 346];
 // v0.2.2 lobby (the options-window panel, centred on 320/240) and setup screen button centres (640x480 coords).
 const CREATE_ROOM_BTN = [320 - 117, 240 - 6];
-const JOIN_BTN = [320 - 17, 240 + 90];
-const READY_BTN = [320 - 110, 240 + 100]; // client, room view
-const START_ROOM_BTN = [320 - 110, 240 + 100]; // host, room view (gated on player 2 being ready)
+const JOIN_BTN = [520, 350];
+const READY_BTN = [210, 330]; // client, room view
+const START_ROOM_BTN = [210, 330]; // host, room view (gated on player 2 being ready)
 const RESUME_BTN = [320, 240 + 36]; // host, room view (after a finished game with a checkpoint)
 const P2_CHAR_RIGHT = [160, 276]; // the P2 character card's > arrow on the setup screen
-const START_GAME_BTN = [320, 452]; // setup screen
+const START_GAME_BTN = [320, 444]; // setup screen
 
 const lanState = async (name, page) => step(`[lan ${name}] ${JSON.stringify(await page.evaluate(() => window.__game?.lan?.()))}`);
 

@@ -65,12 +65,12 @@ function helpers(page) {
   return { waitFor, waitScreen, click };
 }
 
-const LAN_BTN = [320, 392.4];
+const LAN_BTN = [320, 346];
 const CREATE_ROOM_BTN = [320 - 117, 240 - 6];
-const JOIN_BTN = [320 - 17, 240 + 90];
-const READY_BTN = [320 - 110, 240 + 100];
-const START_ROOM_BTN = [320 - 110, 240 + 100];
-const START_GAME_BTN = [320, 452];
+const JOIN_BTN = [520, 350];
+const READY_BTN = [210, 330];
+const START_ROOM_BTN = [210, 330];
+const START_GAME_BTN = [320, 444];
 
 let H, C;
 try {

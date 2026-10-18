@@ -63,7 +63,6 @@ export function buildLocalSymbols(json: LibraryJson): SpriteDef[] {
   const lanSetup = sprite(SCREEN_LAN_SETUP_ID, [
     copyPlace(json, 376, 1),                    // #198 menu background
     copyPlace(json, 376, 4),                    // #56 _Size
-    { op: 'place', depth: 6, move: false, id: 10, m: { ...I, a: 0.42, d: 0.42, tx: 466, ty: 6 } }, // #10 logo, small
   ]);
   // v0.2.2 the shared options-window card (no CLOSE): the restyled added panels attach it and place content in its
   // centred coordinate space, so their chrome is the original window's, pixel for pixel.
@@ -83,4 +82,3 @@ export function installLocalSymbols(json: LibraryJson): void {
   json.exports[SCREEN_LAN_SETUP_LINKAGE] = SCREEN_LAN_SETUP_ID;
   json.exports[LOCAL_PANEL_CARD_LINKAGE] = LOCAL_PANEL_CARD_ID;
 }
-

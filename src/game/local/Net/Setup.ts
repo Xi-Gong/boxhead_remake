@@ -10,7 +10,7 @@ import { CScreen_SelectWorld } from '../../Screen/CScreen_SelectWorld.ts';
 import { CSound } from '../../packages.ts';
 import { lanBridge } from './bridge.ts';
 import { SCREEN_LAN_SETUP_LINKAGE } from '../localSymbols.ts';
-import { BODY_FONT, GREY, INK, glow, pillButton, text } from '../UiStyle.ts';
+import { BODY_FONT, GREY, INK, glow, pillButton, setButtonEnabled, setButtonLabel, text } from '../UiStyle.ts';
 
 
 const DIFFICULTY = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'NIGHTMARE'];
@@ -22,6 +22,7 @@ export class CScreen_LanSetup extends CScreen {
   private dirty!: boolean;
   private unregisterUi: (() => void) | undefined;
   private mcSubScreen: any;
+  private widgets: any;
   private subMode!: string;
   private bMode: any;
   private bDiff: any;
@@ -44,6 +45,9 @@ export class CScreen_LanSetup extends CScreen {
     // to getNextHighestDepth() allocation, and with the art attached after Build() the difficulty plate
     // landed exactly on depth 10 and was evicted by insertChild (label survived, value vanished).
     this.attachSubScreen();
+    // Authored SubScreen masks occupy depths beyond 10. Keep added controls in their own layer above that
+    // range: a mode switch must not mask individual labels/plates that happen to share authored depths.
+    this.widgets = this.createEmptyMovieClip('_SetupControls', 100);
     this.Build();
     this.unregisterUi = lanBridge().onUi(() => { this.dirty = true; });
     this.Refresh();
@@ -74,13 +78,13 @@ export class CScreen_LanSetup extends CScreen {
 
   Text(x: number, y: number, w: number, h: number, font: string, size: number, color: number, bold: boolean,
     align: 'left' | 'right' | 'center', value: string): any {
-    return text(this, 'tf' + this.mDepth, x, y, w, h, font, size, color, bold, align, value);
+    return text(this.widgets, 'tf' + this.mDepth++, x, y, w, h, font, size, color, bold, align, value);
   }
 
   /** A UiStyle pill button centred on (x, y) (v0.2.2 restyle - the select screens' control language). */
   Button(x: number, y: number, w: number, h: number, label: string, size: number, onPress: () => void,
     opts: { selected?: boolean } = {}): any {
-    const b = pillButton(this, 'b' + this.mDepth, x, y, w, h, label, size, opts);
+    const b = pillButton(this.widgets, 'b' + this.mDepth, x, y, w, h, label, size, opts);
     this.mDepth++;
     b.onRelease = function (this: any): void {
       onPress();
@@ -93,39 +97,39 @@ export class CScreen_LanSetup extends CScreen {
   private Build(): void {
     // MODE sits alone in the free top-left band (the SubScreen's own baked headings own the y55..135 centre);
     // DIFFICULTY / FRAGS live in the band between the level-name plate (~y372) and the bottom buttons (y440).
-    // Labels sit LEFT of their value plates with a clear gap - never overlapping them.
+    // Labels sit above their value plates, leaving the level preview and footer unobstructed.
     const modeLabel = this.Text(30, 12, 55, 16, 'Calibri', 12, INK, true, 'left', 'MODE');
     modeLabel.filters = glow();
     this.bMode = this.Button(165, 24, 140, 22, '', 12, () => this.cycleMode());
-    const diffLabel = this.Text(195, 380, 92, 16, 'Calibri', 12, INK, true, 'left', 'DIFFICULTY');
+    const diffLabel = this.Text(230, 369, 180, 16, 'Calibri', 12, INK, true, 'center', 'DIFFICULTY');
     diffLabel.filters = glow();
-    this.bDiff = this.Button(372, 394, 160, 24, '', 12, () => {
+    this.bDiff = this.Button(320, 399, 180, 24, '', 12, () => {
       const b = lanBridge();
       b.setSel({ ...b.sel, difficulty: (b.sel.difficulty + 1) % 4 });
     });
-    this.fragsLabel = this.Text(462, 380, 44, 16, 'Calibri', 12, INK, true, 'left', 'FRAGS');
+    this.fragsLabel = this.Text(472, 369, 128, 16, 'Calibri', 12, INK, true, 'center', 'FRAGS');
     this.fragsLabel.filters = glow();
-    this.bFrags = this.Button(556, 394, 88, 24, '', 12, () => {
+    this.bFrags = this.Button(536, 399, 128, 24, '', 12, () => {
       const b = lanBridge();
       b.setSel({ ...b.sel, gameAmount: (b.sel.gameAmount + 1) % 4 });
     });
     // START_WAVE_SELECTOR (v0.1.9): the wave plate shares the frags slot - Coop shows the wave, Death Match the
     // frag limit (the only mode-dependent control of that band, like the local screen's DM-hidden cycler).
-    this.bWaveLabel = this.Text(462, 380, 44, 16, 'Calibri', 12, INK, true, 'left', 'WAVE');
+    this.bWaveLabel = this.Text(472, 369, 128, 16, 'Calibri', 12, INK, true, 'center', 'WAVE');
     this.bWaveLabel.filters = glow();
-    this.bWave = this.Button(556, 394, 88, 24, '', 12, () => this.cycleWave(1));
+    this.bWave = this.Button(536, 399, 128, 24, '', 12, () => this.cycleWave(1));
     // START_WAVE_SELECTOR (v0.2.4): the host's historical best wave = the cycler's cap, mirrored to the client with
     // every setup change - small grey copy centred under the plate, in the gap above the bottom button row.
-    this.bBest = this.Text(512, 420, 88, 14, BODY_FONT, 11, GREY, true, 'center', 'BEST 1');
+    this.bBest = this.Text(472, 414, 128, 14, BODY_FONT, 11, GREY, true, 'center', 'BEST 1');
     this.bBest.filters = glow();
 
     // The client only waits (or leaves); the host starts or goes back to the room. START GAME carries the
     // options-window selected wash (the primary action); WAITING uses the body ink like the original status copy.
-    this.waitText = this.Text(170, 446, 300, 18, BODY_FONT, 14, INK, true, 'center', 'WAITING FOR HOST...');
+    this.waitText = this.Text(170, 436, 300, 18, BODY_FONT, 14, INK, true, 'center', 'WAITING FOR HOST...');
     this.waitText.filters = glow();
-    this.bStart = this.Button(320, 452, 180, 28, 'START GAME', 15, () => lanBridge().startGame(false), { selected: true });
-    this.bBack = this.Button(90, 452, 140, 24, 'BACK', 13, () => lanBridge().backToRoom());
-    this.bLeave = this.Button(550, 452, 140, 24, 'LEAVE', 13, () => lanBridge().leaveLobby());
+    this.bStart = this.Button(320, 444, 180, 28, 'START GAME', 15, () => lanBridge().startGame(false), { selected: true });
+    this.bBack = this.Button(90, 444, 140, 24, 'BACK', 13, () => lanBridge().backToRoom());
+    this.bLeave = this.Button(550, 444, 140, 24, 'LEAVE', 13, () => lanBridge().leaveLobby());
   }
 
   /** Attach the original SubScreen for the current mode (its art = the traditional select screen). */
@@ -199,11 +203,10 @@ export class CScreen_LanSetup extends CScreen {
     const sel = b.sel;
     if (sel.mode !== this.subMode) this.attachSubScreen();
 
-    const setLabel = (btn: any, text: string): void => { if (btn?._Contents?._Label) btn._Contents._Label.text = text; };
-    setLabel(this.bMode, sel.mode === 'Coop' ? 'CO-OP' : 'DEATHMATCH');
-    setLabel(this.bDiff, DIFFICULTY[sel.difficulty]!);
-    setLabel(this.bFrags, String(FRAGS[sel.gameAmount]!));
-    setLabel(this.bWave, 'WAVE ' + (sel.wave ?? 1));
+    setButtonLabel(this.bMode, sel.mode === 'Coop' ? 'CO-OP' : 'DEATHMATCH');
+    setButtonLabel(this.bDiff, DIFFICULTY[sel.difficulty]!);
+    setButtonLabel(this.bFrags, String(FRAGS[sel.gameAmount]!));
+    setButtonLabel(this.bWave, 'WAVE ' + (sel.wave ?? 1));
     this.bBest.text = 'BEST ' + Math.max(1, Math.floor(sel.maxWave ?? 1));
     const showFrags = sel.mode === 'DeathMatch';
     this.bFrags._visible = showFrags;
@@ -227,10 +230,7 @@ export class CScreen_LanSetup extends CScreen {
     this.bStart._visible = host;
     this.bBack._visible = host;
     this.bLeave._visible = !host;
-    this.bMode._alpha = host ? 100 : 55;
-    this.bDiff._alpha = host ? 100 : 55;
-    this.bFrags._alpha = host ? 100 : 55;
-    this.bWave._alpha = host ? 100 : 55;
+    for (const button of [this.bMode, this.bDiff, this.bFrags, this.bWave]) setButtonEnabled(button, host, 55);
   }
 }
 proto(CScreen_LanSetup, { _CLASSID_: 'CScreen_LanSetup' });

@@ -145,7 +145,7 @@ try {
   await shot('04_continue');
 
   // CONTINUE -> the run is back. The menu's fly-in is a staggered scale tween around the menu centre: while it
-  // runs, the LAN GAME item (final y 392.4) passes EXACTLY through CONTINUE's slot (at scale .6: 309+83.3*.6 =
+  // runs, the LAN GAME item (final y 346) passes EXACTLY through CONTINUE's slot (at scale .6: 309+83.3*.6 =
   // 359) - a click there mid-intro lands on LAN GAME (observed: State_LanLobby) or a disabled item. Wait until
   // BOTH appended items' bounds are stable across samples, then re-measure and click.
   const boundsOf = () => page.evaluate(() => {

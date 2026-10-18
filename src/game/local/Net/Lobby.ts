@@ -13,10 +13,10 @@ import { lanBridge } from './bridge.ts';
 import { getRunStartWave } from '../StartWave.ts';
 import { SCREEN_LAN_LOBBY_LINKAGE } from '../localSymbols.ts';
 import { inputSummary } from '../InputBadge.ts';
-import { BODY_FONT, GREEN, GREY, INK, MENU_FONT, RED, glow, panelCard, pillButton, text } from '../UiStyle.ts';
+import { BODY_FONT, GREEN, GREY, INK, MENU_FONT, RED, glow, panelCard, pillButton, setButtonEnabled, setButtonLabel, text } from '../UiStyle.ts';
 
 /** The manual-IP input's logical rectangle (top-left x/y, width, height in 640x480 stage units). */
-const IP_BOX = { x: 95, y: 318, w: 165, h: 24 };
+const IP_BOX = { x: 332, y: 338, w: 146, h: 24 };
 
 /** Loose IPv4 / IPv4:port check - the port scan on the main side does the real work. */
 function looksLikeAddress(raw: string): boolean {
@@ -106,7 +106,7 @@ export class CScreen_LanLobby extends CScreen {
 
   Text(x: number, y: number, w: number, h: number, font: string, size: number, color: number, bold: boolean,
     align: 'left' | 'right' | 'center', value: string, multiline = false): any {
-    return text(this.panel ?? this, 'tf' + this.mDepth, x, y, w, h, font, size, color, bold, align, value, multiline);
+    return text(this.panel ?? this, 'tf' + this.mDepth++, x, y, w, h, font, size, color, bold, align, value, multiline);
   }
 
   /** A UiStyle pill button centred on (x, y) INSIDE the panel; the unique-name rule still applies (see ctor note). */
@@ -143,16 +143,16 @@ export class CScreen_LanLobby extends CScreen {
     entry(heading('CREATE A ROOM', -222));
     entry(this.Text(-222, -74, 200, 34, BODY_FONT, 11, INK, false, 'left', 'Set up a room on this machine - player 2 joins from theirs.', true));
     entry(this.Button(-117, -6, 150, 30, 'CREATE ROOM', 15, () => lanBridge().host()));
-    entry(this.Text(-225, 62, 210, 14, BODY_FONT, 11, INK, true, 'left', 'OR JOIN BY IP ADDRESS'));
+    entry(this.Text(12, 80, 210, 14, BODY_FONT, 11, INK, true, 'left', 'OR JOIN BY IP ADDRESS'));
     // the DOM input sits over (-225..-60, 78..102); JOIN sits right of it
-    entry(this.Button(-17, 90, 60, 26, 'JOIN', 13, () => this.joinByIp()));
+    entry(this.Button(200, 110, 60, 26, 'JOIN', 13, () => this.joinByIp()));
 
     entry(heading('JOIN A ROOM', 12));
     this.searchingText = this.Text(12, -74, 208, 16, BODY_FONT, 11, GREY, false, 'left', 'searching for games on your network...');
     entry(this.searchingText);
     for (let i = 0; i < 5; i++) {
       const idx = i;
-      const row = this.Button(115, -40 + i * 32, 210, 26, '', 11, () => {
+      const row = this.Button(115, -60 + i * 30, 210, 24, '', 11, () => {
         const b = lanBridge();
         const h = b.hosts[idx] as any;
         if (h && h.status === 'lobby' && h.players === 1) b.join(h.ip, h.port);
@@ -163,8 +163,8 @@ export class CScreen_LanLobby extends CScreen {
 
     // ---- ROOM view (hosting / connected / during a reconnect window)
     room((() => { const t = this.Text(-230, -152, 460, 30, MENU_FONT, 24, INK, false, 'center', 'GAME ROOM'); t.filters = glow(); return t; })());
-    this.statusText = this.Text(-165, -122, 330, 16, BODY_FONT, 12, RED, true, 'center', '');
-    this.pingText = this.Text(30, -122, 195, 16, BODY_FONT, 12, GREEN, true, 'right', '');
+    this.statusText = this.Text(-230, -122, 460, 16, BODY_FONT, 11, RED, true, 'center', '');
+    this.pingText = this.Text(100, -20, 125, 16, BODY_FONT, 11, GREEN, true, 'right', '');
     room(this.pingText);
     this.addrText = this.Text(-230, -104, 460, 16, BODY_FONT, 11, INK, true, 'center', '');
     room(this.addrText);
@@ -174,7 +174,7 @@ export class CScreen_LanLobby extends CScreen {
     room(this.p2Row);
     this.p2Badge = this.Text(15, -48, 200, 18, BODY_FONT, 13, GREY, true, 'right', 'WAITING');
     room(this.p2Badge);
-    this.inputsText = this.Text(-222, -20, 420, 16, BODY_FONT, 11, GREY, false, 'left', 'YOUR INPUTS: KEYBOARD');
+    this.inputsText = this.Text(-222, -20, 290, 16, BODY_FONT, 11, GREY, false, 'left', 'YOUR INPUTS: KEYBOARD');
     room(this.inputsText);
 
     this.resumeText = this.Text(-230, 8, 460, 16, BODY_FONT, 12, INK, true, 'center', 'LAST GAME AVAILABLE');
@@ -182,19 +182,19 @@ export class CScreen_LanLobby extends CScreen {
     this.resumeBtn = this.Button(0, 36, 190, 28, 'RESUME GAME', 14, () => lanBridge().requestRetry());
     room(this.resumeBtn);
 
-    this.readyBtn = this.Button(-110, 100, 150, 28, 'READY', 15, () => lanBridge().setReady(!lanBridge().ready), { selected: true });
+    this.readyBtn = this.Button(-110, 90, 150, 28, 'READY', 15, () => lanBridge().setReady(!lanBridge().ready), { selected: true });
     room(this.readyBtn);
-    this.leaveBtn = this.Button(110, 100, 150, 28, 'LEAVE', 15, () => lanBridge().leaveLobby());
+    this.leaveBtn = this.Button(110, 90, 150, 28, 'LEAVE', 15, () => lanBridge().leaveLobby());
     room(this.leaveBtn);
-    this.startBtn = this.Button(-110, 100, 150, 28, 'START', 15, () => lanBridge().enterSetup(), { selected: true });
+    this.startBtn = this.Button(-110, 90, 150, 28, 'START', 15, () => lanBridge().enterSetup(), { selected: true });
     room(this.startBtn);
-    this.startHint = this.Text(-230, 134, 460, 14, BODY_FONT, 11, GREY, false, 'center', 'waiting for player 2 to get ready');
+    this.startHint = this.Text(-230, 115, 460, 14, BODY_FONT, 11, GREY, false, 'center', 'waiting for player 2 to get ready');
     room(this.startHint);
-    this.closeBtn = this.Button(110, 100, 150, 28, 'CLOSE ROOM', 14, () => lanBridge().leaveLobby());
+    this.closeBtn = this.Button(110, 90, 150, 28, 'CLOSE ROOM', 14, () => lanBridge().leaveLobby());
     room(this.closeBtn);
 
     // shared (both views): the status line under the title + BACK at the panel's lower edge
-    this.bBack = this.Button(0, 132, 170, 28, 'BACK TO MENU', 14, () => {
+    this.bBack = this.Button(0, 148, 170, 28, 'BACK TO MENU', 14, () => {
       lanBridge().leaveLobby();
       this.nState = 'State_Main';
     });
@@ -217,6 +217,8 @@ export class CScreen_LanLobby extends CScreen {
       e.stopPropagation();
       if (e.key === 'Enter') this.joinByIp();
     });
+    input.addEventListener('focus', () => { input.style.borderColor = '#ef1304'; });
+    input.addEventListener('blur', () => { input.style.borderColor = '#d8d8d8'; });
     stage.appendChild(input);
     this.ipInput = input;
     this.unresize = lanBridge().presenter?.onResize(() => this.placeInput());
@@ -291,7 +293,6 @@ export class CScreen_LanLobby extends CScreen {
     if (this.ipInput) this.ipInput.style.display = entry ? 'block' : 'none';
     this.placeInput();
 
-    const setLabel = (btn: any, text: string): void => { if (btn?._Contents?._Label) btn._Contents._Label.text = text; };
     // Entry: the discovery list (empty rows are HIDDEN, not blank plates - the searching hint then takes the
     // space; joinable rooms bright, full / in-game dim).
     this.searchingText._visible = entry && b.hosts.length === 0;
@@ -301,8 +302,8 @@ export class CScreen_LanLobby extends CScreen {
       row._visible = entry && !!h; // no host on this slot -> no plate at all
       if (!h) continue;
       const name = String(h.name ?? '?').slice(0, 16);
-      setLabel(row, `${name} · ${h.players}/2 · ${h.status === 'lobby' ? 'WAITING' : 'IN GAME'}`);
-      row._alpha = h.status === 'lobby' && h.players === 1 ? 100 : 45;
+      setButtonLabel(row, `${name} · ${h.players}/2 · ${h.status === 'lobby' ? 'WAITING' : 'IN GAME'}`);
+      setButtonEnabled(row, h.status === 'lobby' && h.players === 1);
     }
 
     // Room: players, ready states, ping, the host's own address (join-by-IP for player 2).
@@ -349,7 +350,7 @@ export class CScreen_LanLobby extends CScreen {
     if (this.leaveBtn) this.leaveBtn._visible = room && !b.isHost && b.phase !== 'playing';
     if (this.startBtn) {
       this.startBtn._visible = room && b.isHost && b.phase === 'lobby';
-      this.startBtn._alpha = bothReady ? 100 : 40;
+      setButtonEnabled(this.startBtn, bothReady, 40);
     }
     if (this.startHint) this.startHint._visible = room && b.isHost && b.phase === 'lobby' && !bothReady;
     if (this.closeBtn) this.closeBtn._visible = room && b.isHost && b.phase !== 'playing';
