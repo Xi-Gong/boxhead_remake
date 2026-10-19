@@ -47,11 +47,13 @@
   chargers and one priest active. The charger warns for 0.6 seconds, then rushes at most four cells along a
   locked direction; hits interrupt it. The priest replaces player fireballs with visible ground marks,
   warning for 0.9 seconds before four damage pulses. Walls block the flames and overlapping pulses do not stack.
-- **Enchanted ammunition** — chargers independently roll 50% for a red box, merged with the combo guarantee.
+- **Enchanted weapons** — chargers independently roll 50% for a red box, merged with the combo guarantee.
   Priests always drop one crate: 30% purple enchantment, otherwise equal armor/ammo/medical odds.
-  Purple crates enchant the held stock for +35% damage; bullets hit up to three enemies, railguns retain
+  Purple crates enchant the held weapon for +35% damage without adding ammo; bullets hit up to three enemies, railguns retain
   unlimited enemy piercing, and blasts retain at least 75% damage at the edge while physical walls block them.
-  Refills add ordinary rounds; switching, death crates, saves and rollback preserve the enchanted remainder.
+  Red-box and Devil ammo refills, upgrades, switching, death crates, saves and rollback preserve the enchantment
+  while the weapon still has ammo. The last round remains enchanted; later refills or replacements after depletion are ordinary.
+  Surviving enchanted stock in older saves becomes a weapon enchantment without granting ammo. LAN requires both peers to support persistent-enchantment-v1.
   Authored infinite ammunition stays enchanted. Fake walls leave the crate available for an offensive weapon.
 - **Reliable pickups and spacing** — supply effects synchronize personal maxima and preserve higher inherited
   capacities. Red single-weapon rewards fill only the selected weapon. P1/P2 notices use three evenly spaced

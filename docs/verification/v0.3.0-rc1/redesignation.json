@@ -1,0 +1,24 @@
+{
+  "tag": "v0.3.0-rc1",
+  "commit": "7d8673d7e9303ba527ee839b8c599141b37116c6",
+  "releaseId": 417056951,
+  "prerelease": true,
+  "embeddedVersion": "0.3.0",
+  "originalAssetsUnchanged": true,
+  "assets": [
+    {
+      "id": 655676549,
+      "name": "Boxhead.2Play.Rooms-0.3.0-portable.exe",
+      "bytes": 101725973,
+      "sha256": "sha256:efa75ea69c61135eec646e06795b2930c84b6f43181d9d86ab27e616e57e8983"
+    },
+    {
+      "id": 655676550,
+      "name": "SHA256SUMS-v0.3.0.txt",
+      "bytes": 105,
+      "sha256": "sha256:6f7947718906e77f5b3ac9be654d321024197e91da0788b37d617c595e4428f1"
+    }
+  ],
+  "oldV030TagRemoved": true,
+  "latestStable": "v0.2.9"
+}

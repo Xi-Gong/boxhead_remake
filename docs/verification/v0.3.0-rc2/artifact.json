@@ -1,0 +1,34 @@
+{
+  "version": "0.3.0-rc2",
+  "ok": true,
+  "implementationCommit": "1b28af09cca1f375b3de0212ac07ace3b81feb58",
+  "runtimeSourceSha256": "f8bdbcbda78167d29674e168bac31b63ac7f5f4a0823b2a341b24196b7754d1a",
+  "exe": {
+    "path": "release/Boxhead 2Play Rooms-0.3.0-rc2-portable.exe",
+    "bytes": 101644773,
+    "sha256": "99a961e903bb8ab204b24872b7dd3afd0fc01e8c89f8e9aef813e995cce02035"
+  },
+  "asarSha256": "a29c6d2ec25c89bd9118ccaaf5b4ebf1039b297622848d4f745d01ec72e1cd6f",
+  "verifiedRuntimeFiles": [
+    "dist-electron/main.cjs",
+    "dist-electron/preload.cjs",
+    "dist/index.html",
+    "dist/bundle/gallery-CmDtL4W7.js",
+    "dist/bundle/main-Dl0IQ-dO.js",
+    "dist/bundle/Player-o3pII7gY.js"
+  ],
+  "renderer": [
+    {
+      "path": "dist/bundle/gallery-CmDtL4W7.js",
+      "sha256": "fa7cad13576282267de84bc2be8a37bb2a6578ac1b5721edba4f83391e9fed42"
+    },
+    {
+      "path": "dist/bundle/main-Dl0IQ-dO.js",
+      "sha256": "5cb91a7a048f183b313bfab0e793c36a82a15086c8f31e77230fef4b2ab27ab7"
+    },
+    {
+      "path": "dist/bundle/Player-o3pII7gY.js",
+      "sha256": "6b3844a973e7c31df7b6d9b053c12c7cafa4b4f05970e74c2c737cad98186cc5"
+    }
+  ]
+}

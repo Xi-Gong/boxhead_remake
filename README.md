@@ -17,6 +17,7 @@ gamepads and LAN multiplayer. Intentional additions are documented in [PARITY.md
 ## Quick Start
 
 **Windows portable:** download the single-file exe from [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest).
+For the current release candidate, use [v0.3.0-rc2](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.0-rc2). The latest stable release is v0.2.9.
 Saves and settings live in `%USERPROFILE%\.boxhead`.
 
 **Run from source:**
@@ -49,14 +50,14 @@ Gamepads work throughout (stick to move, RT/A to shoot, START to pause); keys ar
 - **LAN co-op & death match** — discover rooms or join by IP in the desktop app, with rollback and reconnect support.
 - **Endless PvE growth** — continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Enemy strength keeps rising while wave budgets stay bounded; wave selection follows your best progress beyond wave 100.
 - **Two enemy variants** — Bone Chargers telegraph a locked-direction rush; Ember Priests mark the ground with delayed flames. Both have distinct modeled parts and animated skill poses.
-- **Purple enchantment crates** — priests have a 30% purple-drop chance. Enchant your held ammunition for +35% damage and two extra bullet penetrations; purple ammo text tracks the remaining enchanted stock. Refills add ordinary rounds.
+- **Purple enchantment crates** — priests have a 30% purple-drop chance. Enchant your held weapon for +35% damage and two extra bullet penetrations. Refills, upgrades and weapon switching retain the enchantment until ammunition runs out; later refills do not restore a depleted enchantment. Enchanted ammo text stays purple.
 - **More supplies** — devils drop equally likely blue armor, olive ammo or green medical crates, which remain until needed. Random red boxes replenish the floor during play.
 - **Comfort and setup** — type an unlocked starting wave directly, change LAN room rules as host, and enjoy softer explosion flashes and automatic audio recovery.
 - **Four survival difficulties** — tuned pacing, concurrency and speed ceilings, with increasingly strong enemies and at most 200 zombies and 10 devils per wave.
 - **Reliable supplies and clearer UI** — refills preserve inherited weapon capacity; confirmed P1/P2 pickup messages remain evenly spaced, and conditional lobby actions have room to breathe.
 - **Co-op weapon crates** — fallen players drop their arsenal and remaining ammunition for recovery.
 
-[Feature details](docs/features.md) · [v0.3.0 verification](docs/verification/v0.3.0/README.md)
+[Feature details](docs/features.md) · [v0.3.0-rc2 targeted verification](docs/verification/v0.3.0-rc2/README.md) · [rc1 original-build verification](docs/verification/v0.3.0/README.md)
 
 <p align="center"><img src="assets/readme/coop-crate.png" alt="Co-op weapon recovery" width="640"></p>
 

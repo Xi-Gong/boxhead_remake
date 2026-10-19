@@ -1,0 +1,353 @@
+{
+  "version": "0.3.0-rc2",
+  "ok": true,
+  "implementationCommit": "1b28af09cca1f375b3de0212ac07ace3b81feb58",
+  "runtimeSourceSha256": "f8bdbcbda78167d29674e168bac31b63ac7f5f4a0823b2a341b24196b7754d1a",
+  "asarSha256": "a29c6d2ec25c89bd9118ccaaf5b4ebf1039b297622848d4f745d01ec72e1cd6f",
+  "scope": {
+    "targetedOnly": true,
+    "serial": true,
+    "maxGameInstances": 1,
+    "viewport": {
+      "width": 640,
+      "height": 480,
+      "dpr": 1
+    },
+    "hidden": true,
+    "isolatedSaves": true,
+    "fullReleaseGates": "not run",
+    "twoInstanceLan": "not run",
+    "performanceBenchmarks": "not run",
+    "stress": "not run"
+  },
+  "regression": {
+    "files": 12,
+    "passed": 200,
+    "skipped": 0,
+    "failed": 0,
+    "workers": 1,
+    "fileParallelism": false,
+    "log": {
+      "path": "generated/reports/v030-rc2/targeted-tests.log",
+      "bytes": 2794,
+      "sha256": "8c6a8a0b2e7f479ea33494dfc4370d7c538b2358a5681f68d960ebd5c42eeefc"
+    },
+    "beforeFix": {
+      "failed": 3,
+      "passed": 1,
+      "log": {
+        "path": "generated/reports/v030-rc2/before-fix.log",
+        "bytes": 1928,
+        "sha256": "c3e28547557da87ec422e89aded687d88dde4a893cdd8e8f048b76b14c85a20b"
+      }
+    }
+  },
+  "build": {
+    "typecheckConfigurations": 3,
+    "log": {
+      "path": "generated/reports/v030-rc2/build.log",
+      "bytes": 1539,
+      "sha256": "a2a993a8e4526d15b41bad847df7f4739672edde5757bf76795986e59432642d"
+    },
+    "packageLog": {
+      "path": "generated/reports/v030-rc2/package.log",
+      "bytes": 1483,
+      "sha256": "54236e43bcaf8bb34e9c7db73e388e90cb0c8510c99c02620f8b7b0005345d7c"
+    }
+  },
+  "audit": {
+    "modules": 512,
+    "portedModules": 117,
+    "changedPorts": []
+  },
+  "browser": {
+    "ok": true,
+    "shots": [
+      "generated\\reports\\v030-rc2\\browser\\replenished-purple-ammo.png",
+      "generated\\reports\\v030-rc2\\browser\\depleted-refilled-ordinary-ammo.png"
+    ],
+    "checks": [
+      {
+        "step": "replenished-and-fired-beyond-old-stock",
+        "ammo": 95,
+        "capacity": 100,
+        "enchanted": true,
+        "selected": "uzi",
+        "shots": [
+          {
+            "enchanted": true,
+            "damage": 47.25
+          },
+          {
+            "enchanted": true,
+            "damage": 47.25
+          },
+          {
+            "enchanted": true,
+            "damage": 47.25
+          },
+          {
+            "enchanted": true,
+            "damage": 47.25
+          },
+          {
+            "enchanted": true,
+            "damage": 47.25
+          },
+          {
+            "enchanted": true,
+            "damage": 47.25
+          }
+        ]
+      },
+      {
+        "step": "save-continue",
+        "ammo": 95,
+        "capacity": 100,
+        "enchanted": true,
+        "selected": "uzi",
+        "shots": []
+      },
+      {
+        "step": "empty-refill-is-ordinary",
+        "ammo": 99,
+        "capacity": 100,
+        "enchanted": false,
+        "selected": "uzi",
+        "shots": [
+          {
+            "enchanted": true,
+            "damage": 47.25
+          },
+          {
+            "enchanted": true,
+            "damage": 47.25
+          },
+          {
+            "enchanted": false,
+            "damage": 26
+          },
+          {
+            "enchanted": false,
+            "damage": 35
+          }
+        ]
+      }
+    ],
+    "hud": {
+      "text": "UZI:95",
+      "color": 13537279,
+      "bounds": {
+        "xMin": 123.4,
+        "xMax": 216.6,
+        "yMin": 88.95,
+        "yMax": 107.25
+      },
+      "left": 0,
+      "top": 0,
+      "scale": 1,
+      "purplePixels": 103
+    },
+    "buildPackageVersion": "0.3.0",
+    "provenance": "Feature acceptance before the metadata-only rc2 version bump; both builds emitted main-Dl0IQ-dO.js. The actual rc2 portable independently repeats the same scenario.",
+    "buildLog": {
+      "path": "generated/reports/v030-rc2/build-before-version.log",
+      "bytes": 1527,
+      "sha256": "b2c6c9fc12c00b0a7d734993bcf8e4887dea09a6548731ce3063e5e4b7ef7794"
+    },
+    "log": {
+      "path": "generated/reports/v030-rc2/browser-functional.log",
+      "bytes": 39,
+      "sha256": "5525403ff7bc6ceae1b1f6c32044d15a6c730f2950d506e679f4fec9f7d21bd7"
+    },
+    "finalPreview": {
+      "url": "http://127.0.0.1:5311",
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/html",
+        "date": "Mon, 19 Oct 2026 13:02:22 GMT",
+        "etag": "W/\"2ad-1dc591j9savnkrGdoYv23LeuvFA\"",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "vary": "Origin"
+      },
+      "bundle": "./bundle/main-Dl0IQ-dO.js",
+      "sha256": "5cb91a7a048f183b313bfab0e793c36a82a15086c8f31e77230fef4b2ab27ab7",
+      "matchesCurrentBuild": true
+    }
+  },
+  "portable": {
+    "version": "0.3.0-rc2",
+    "exe": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\release\\Boxhead 2Play Rooms-0.3.0-rc2-portable.exe",
+    "executable": "C:\\Users\\royxg\\AppData\\Local\\Temp\\3KukGxzCMpyT2oGsAgXPIifi7Fs\\Boxhead 2Play Rooms.exe",
+    "archive": "C:\\Users\\royxg\\AppData\\Local\\Temp\\3KukGxzCMpyT2oGsAgXPIifi7Fs\\resources\\app.asar",
+    "extractedAsarSha256": "a29c6d2ec25c89bd9118ccaaf5b4ebf1039b297622848d4f745d01ec72e1cd6f",
+    "verifiedRuntimeFiles": [
+      "dist-electron/main.cjs",
+      "dist-electron/preload.cjs",
+      "dist/bundle/gallery-CmDtL4W7.js",
+      "dist/bundle/main-Dl0IQ-dO.js",
+      "dist/bundle/Player-o3pII7gY.js"
+    ],
+    "viewport": {
+      "width": 640,
+      "height": 480,
+      "dpr": 1
+    },
+    "ok": true,
+    "enchantment": {
+      "ok": true,
+      "shots": [
+        "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030-rc2\\portable\\enchantment\\replenished-purple-ammo.png",
+        "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030-rc2\\portable\\enchantment\\depleted-refilled-ordinary-ammo.png"
+      ],
+      "checks": [
+        {
+          "step": "replenished-and-fired-beyond-old-stock",
+          "ammo": 95,
+          "capacity": 100,
+          "enchanted": true,
+          "selected": "uzi",
+          "shots": [
+            {
+              "enchanted": true,
+              "damage": 47.25
+            },
+            {
+              "enchanted": true,
+              "damage": 47.25
+            },
+            {
+              "enchanted": true,
+              "damage": 47.25
+            },
+            {
+              "enchanted": true,
+              "damage": 47.25
+            },
+            {
+              "enchanted": true,
+              "damage": 47.25
+            },
+            {
+              "enchanted": true,
+              "damage": 47.25
+            }
+          ]
+        },
+        {
+          "step": "save-continue",
+          "ammo": 95,
+          "capacity": 100,
+          "enchanted": true,
+          "selected": "uzi",
+          "shots": []
+        },
+        {
+          "step": "empty-refill-is-ordinary",
+          "ammo": 99,
+          "capacity": 100,
+          "enchanted": false,
+          "selected": "uzi",
+          "shots": [
+            {
+              "enchanted": true,
+              "damage": 47.25
+            },
+            {
+              "enchanted": true,
+              "damage": 47.25
+            },
+            {
+              "enchanted": false,
+              "damage": 26
+            },
+            {
+              "enchanted": false,
+              "damage": 35
+            }
+          ]
+        }
+      ],
+      "hud": {
+        "text": "UZI:95",
+        "color": 13537279,
+        "bounds": {
+          "xMin": 123.4,
+          "xMax": 216.6,
+          "yMin": 93.95,
+          "yMax": 112.25
+        },
+        "left": 0,
+        "top": 0,
+        "scale": 1,
+        "purplePixels": 103
+      }
+    },
+    "audio": {
+      "decoded": 31,
+      "state": "running"
+    },
+    "log": {
+      "path": "generated/reports/v030-rc2/portable.log",
+      "bytes": 67,
+      "sha256": "23d3a66efb84de1f17b9baad3f173106e5aa7f2950388c129318cc22c90a832c"
+    }
+  },
+  "visualReview": {
+    "method": "Direct screenshot review plus pixel, geometry and real-click/keyboard checks; no zai.",
+    "reviewed": [
+      "generated\\reports\\v030-rc2\\browser\\replenished-purple-ammo.png",
+      "generated\\reports\\v030-rc2\\browser\\depleted-refilled-ordinary-ammo.png",
+      "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030-rc2\\portable\\enchantment\\replenished-purple-ammo.png",
+      "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030-rc2\\portable\\enchantment\\depleted-refilled-ordinary-ammo.png"
+    ]
+  },
+  "environmentFailures": [
+    {
+      "reason": "Sandbox denied Chrome localhost access",
+      "log": {
+        "path": "generated/reports/v030-rc2/browser.log",
+        "bytes": 542,
+        "sha256": "01d5db4c21e59b63330ec4f0b455f55605dad8b820819be332beda44e42be073"
+      }
+    },
+    {
+      "reason": "Permitted Chrome could not reach sandbox preview; rerun with permitted preview passed",
+      "log": {
+        "path": "generated/reports/v030-rc2/browser-permitted.log",
+        "bytes": 541,
+        "sha256": "c4adc4f42720510840583de6587f489d5117f5f671d031bed33343d9257be91d"
+      }
+    }
+  ],
+  "cleanup": {
+    "ownedGameProcessesRemaining": 0,
+    "ownedPreviewStopped": true
+  },
+  "rc1": {
+    "tag": "v0.3.0-rc1",
+    "commit": "7d8673d7e9303ba527ee839b8c599141b37116c6",
+    "releaseId": 417056951,
+    "prerelease": true,
+    "embeddedVersion": "0.3.0",
+    "originalAssetsUnchanged": true,
+    "assets": [
+      {
+        "id": 655676549,
+        "name": "Boxhead.2Play.Rooms-0.3.0-portable.exe",
+        "bytes": 101725973,
+        "sha256": "sha256:efa75ea69c61135eec646e06795b2930c84b6f43181d9d86ab27e616e57e8983"
+      },
+      {
+        "id": 655676550,
+        "name": "SHA256SUMS-v0.3.0.txt",
+        "bytes": 105,
+        "sha256": "sha256:6f7947718906e77f5b3ac9be654d321024197e91da0788b37d617c595e4428f1"
+      }
+    ],
+    "oldV030TagRemoved": true,
+    "latestStable": "v0.2.9"
+  }
+}

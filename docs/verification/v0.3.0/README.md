@@ -1,5 +1,9 @@
 # v0.3.0 verification
 
+This original build was redesignated [v0.3.0-rc1](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.0-rc1).
+Its executable, embedded version `0.3.0`, checksums and historical evidence remain unchanged.
+See [rc2 targeted verification](../v0.3.0-rc2/README.md) for the subsequent weapon-enchantment change.
+
 Development evidence is recorded per independent commit:
 
 - [Reliable pickups, confirmed HUD messages and burst-entry correction](hud-messages.json)

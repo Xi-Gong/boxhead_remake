@@ -1,0 +1,14 @@
+{
+  "version": "0.3.0-rc2",
+  "exe": {
+    "path": "C:\\Users\\royxg\\boxhead-exe-archive\\Boxhead 2Play Rooms-0.3.0-rc2-portable.exe",
+    "sha256": "99a961e903bb8ab204b24872b7dd3afd0fc01e8c89f8e9aef813e995cce02035"
+  },
+  "evidence": {
+    "path": "C:\\Users\\royxg\\boxhead-exe-archive\\v0.3.0-rc2-evidence.zip",
+    "files": 37,
+    "sha256": "1556484cd742ae7680b1f24f7f679e0775ea55305e06aca0745c5457c1fbdcb4"
+  },
+  "excluded": "Isolated browser/Electron user data and caches",
+  "ok": true
+}
