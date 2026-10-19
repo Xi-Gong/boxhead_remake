@@ -89,18 +89,36 @@ function drawZones(w:any):void{
  const zones=emberZones(w),chargers=things(w).filter(e=>e.Process&&e.mStateID==='State_VariantCharge'&&e.mVariantPhase==='warning');if(!zones.length&&!chargers.length)return;
  let mc=drawViews.get(w);if(!mc){mc=w.createEmptyMovieClip('_EmberArt',w.getNextHighestDepth());mc._visible=false;drawViews.set(w,mc);}
  for(const z of zones){
-  const warning=w.mTick-z.born<z.warning,c=warning?0xd54d21:0xdb6a20;mc.clear();mc.lineStyle(warning?2:1.5,warning?0xffcf70:0x7e1d12,100);
-  mc.beginFill(c,warning?13:27);
+  const age=w.mTick-z.born,warning=age<z.warning,pulse=warning?0:Math.sin((age-z.warning)*Math.PI/z.interval)**2;
+  mc.clear();mc.lineStyle(warning?2:1.5,warning?0xffcf70:0x7e1d12,100);
+  mc.beginFill(warning?0x6e3428:0x8a311c,warning?15:24);
   for(let i=0;i<=32;i++){const a=i*Math.PI/16,x=Math.cos(a)*32,y=Math.sin(a)*32;i?mc.lineTo(x,y):mc.moveTo(x,y);}mc.endFill();
   const progress=warning?Math.max(0,Math.min(1,(w.mTick-z.born)/z.warning)):1;
   mc.lineStyle(2,warning?0xffe3a1:0xf7b751,95);
   for(let i=0;i<=24*progress;i++){const a=i*Math.PI/12-Math.PI/2,x=Math.cos(a)*25,y=Math.sin(a)*25;i?mc.lineTo(x,y):mc.moveTo(x,y);}
-  if(!warning)for(let i=0;i<5;i++){const x=(i-2)*8,h=8+4*((i+Math.floor((w.mTick-z.born)/3))%3);mc.beginFill(0xf49c37,55);mc.moveTo(x-4,5);mc.lineTo(x,5-h);mc.lineTo(x+4,5);mc.endFill();}
+  // Four broken seal marks share the priest's angular molten inlays; never flash the screen.
+  mc.lineStyle(1.5,warning?0xd89a52:0xf5b85d,warning?75:65+pulse*15);
+  for(let i=0;i<4;i++){
+   const a=i*Math.PI/2,c=Math.cos(a),s=Math.sin(a),at=(x:number,y:number):number[]=>[c*x-s*y,s*x+c*y];
+   mc.moveTo(...at(17,-4));mc.lineTo(...at(21,0));mc.lineTo(...at(17,4));mc.moveTo(...at(25,0));mc.lineTo(...at(29,0));
+  }
+  if(warning){
+   mc.lineStyle(1,0xffd18b,65);const r=3+4*progress;
+   mc.moveTo(0,-r);mc.lineTo(r,0);mc.lineTo(0,r);mc.lineTo(-r,0);mc.lineTo(0,-r);
+  }else for(let i=0;i<5;i++){
+   const x=(i-2)*8,y=7+Math.abs(i-2)*2,h=11+5*Math.sin(age*.42+i*1.4),bend=2*Math.sin(age*.28+i);
+   mc.lineStyle(1,0x733020,60);mc.beginFill(0xe57628,70);
+   mc.moveTo(x-4,y);mc.curveTo(x-6,y-h*.45,x+bend,y-h);mc.curveTo(x+1,y-h*.35,x+4,y);mc.lineTo(x-4,y);mc.endFill();
+   mc.lineStyle();mc.beginFill(0xffd581,75);mc.moveTo(x-2,y-1);mc.lineTo(x+bend*.4,y-h*.55);mc.lineTo(x+2,y-1);mc.endFill();
+  }
   const p=w.GetScreenPosition(z.mPosition),m=new flash.geom.Matrix(1,0,0,1,p.x,p.y);w.bmCurrentDraw.draw(mc,m,undefined,'normal',undefined,true);
  }
  for(const e of chargers){
-  mc.clear();mc.lineStyle(1.5,0xf1ce82,100);mc.beginFill(0xd8a050,18);mc.moveTo(0,-4);
-  for(const [x,y]of [[100,-4],[100,-10],[124,0],[100,10],[100,4],[0,4],[0,-4]])mc.lineTo(x,y);mc.endFill();
+  const progress=1-e.mVariantTicks/ticks(.6);
+  mc.clear();mc.lineStyle(1.5,0xf1ce82,95);mc.beginFill(0x9e7444,12);mc.moveTo(8,-4);
+  for(const [x,y]of [[104,-4],[104,-10],[124,0],[104,10],[104,4],[8,4],[8,-4]])mc.lineTo(x,y);mc.endFill();
+  mc.lineStyle(2,0xe5bd76,65+progress*25);
+  for(let i=0;i<3;i++){const x=34+i*25;mc.moveTo(x-5,-6);mc.lineTo(x+2,0);mc.lineTo(x-5,6);}
   const p=w.GetScreenPosition(e.mPosition);w.bmCurrentDraw.draw(mc,new flash.geom.Matrix(e.mChargeX,e.mChargeY,-e.mChargeY,e.mChargeX,p.x,p.y),undefined,'normal',undefined,true);
  }
 }

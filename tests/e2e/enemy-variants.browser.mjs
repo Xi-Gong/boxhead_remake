@@ -4,11 +4,12 @@ import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
 const out='generated/reports/v030/enemy-variants';mkdirSync(out,{recursive:true});
 const browser=await launch(),report={ok:false,art:[],shots:[]};let g;
-const repaint=async()=>g.eval(()=>{const w=window.__game.main().mcWorld;w.mPaused=false;w.Draw();w.mPaused=true;});
+const repaint=async()=>{await g.eval(()=>{const w=window.__game.main().mcWorld;w.mPaused=false;w.Draw();w.mPaused=true;});await g.page.waitForTimeout(100);};
 try{
  g=await openGame(browser);await toMainMenu(g);await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
  await g.expr('(P.CMain.mSaveData.mLevelIndex_Single=0,m.mcScreen.ChangeLevel(m.mcScreen.mcSubScreen.mcLevel_Selection,0))');await g.click(380,230);
  assert(await g.waitExpr('g.state()==="State_RunWorld" && m.mcWorld?.mLoaded'));
+ await g.page.waitForTimeout(700);
  await g.eval(()=>{
   const P=window.__game.pkg,w=window.__game.main().mcWorld;w.Spawn_Zombie=()=>false;w.Spawn_Devil=()=>false;
   for(const e of Object.values(w.mThing_Collection.mThings))if(['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(e._CLASSID_))e.Delete();
@@ -19,19 +20,29 @@ try{
  const sheets=await g.eval(()=>{
   const rows=[],q=window.__variantsQA;
   for(const [kind,e]of Object.entries(q.enemies)){
-   const items=e.mXSI_Animation.mCollection.mItems,keys=Object.keys(items),c=document.createElement('canvas');c.width=96+16*88;c.height=keys.length*100+24;const ctx=c.getContext('2d');ctx.fillStyle='#e7e2d9';ctx.fillRect(0,0,c.width,c.height);ctx.font='12px Arial';ctx.fillStyle='#252525';
+   const items=e.mXSI_Animation.mCollection.mItems,keys=Object.keys(items),c=document.createElement('canvas'),nativeFrames=keys.flatMap(key=>items[key].mAnimationObject.mDirections.flatMap(d=>d.mFrames)),nativeTop=Math.max(...nativeFrames.map(f=>-f.mDisp.y)),nativeBottom=Math.max(...nativeFrames.map(f=>f.mDisp.y+f.sBMD.height)),nativeRow=Math.ceil(nativeTop+nativeBottom)+24;c.width=96+16*88;c.height=keys.length*nativeRow+24;const ctx=c.getContext('2d');ctx.fillStyle='#e7e2d9';ctx.fillRect(0,0,c.width,c.height);ctx.font='12px Arial';ctx.fillStyle='#252525';
    const metrics=[];
    for(let row=0;row<keys.length;row++){
-    const key=keys[row],a=items[key].mAnimationObject;ctx.fillText(key,5,row*100+60);
+    const key=keys[row],a=items[key].mAnimationObject;ctx.fillText(key,5,row*nativeRow+nativeRow/2);
     for(let d=0;d<a.mDirections.length;d++){
-     const frames=a.mDirections[d].mFrames,f=frames[Math.floor(frames.length/2)],x=96+d*88+44,y=row*100+84,img=f.sBMD.toImageSource();
-     ctx.strokeStyle='#b8b0a4';ctx.beginPath();ctx.moveTo(x-8,y);ctx.lineTo(x+8,y);ctx.stroke();ctx.drawImage(img,x+f.mDisp.x,y+f.mDisp.y,f.sBMD.width,f.sBMD.height);ctx.fillStyle='#252525';ctx.fillText(String(d),x-4,row*100+98);
+     const frames=a.mDirections[d].mFrames,f=frames[Math.floor(frames.length/2)],x=96+d*88+44,y=row*nativeRow+12+nativeTop,img=f.sBMD.toImageSource();
+     ctx.strokeStyle='#b8b0a4';ctx.beginPath();ctx.moveTo(x-8,y);ctx.lineTo(x+8,y);ctx.stroke();ctx.drawImage(img,x+f.mDisp.x,y+f.mDisp.y,f.sBMD.width,f.sBMD.height);ctx.fillStyle='#252525';ctx.fillText(String(d),x-4,(row+1)*nativeRow-2);
      for(const frame of frames){if(!frame.sBMD?.toImageSource())throw new Error('unbaked frame');if(!Number.isFinite(frame.mDisp.x)||!Number.isFinite(frame.mDisp.y))throw new Error('invalid anchor');}
     }metrics.push({key,directions:a.mDirections.length,frames:a.mFrameCount});
-   }rows.push({kind,png:c.toDataURL('image/png'),metrics});
+   }
+   const detail=document.createElement('canvas'),actions=['stand','walk','attack','warning','charge','cast','recovery','dying'];
+   const all=actions.flatMap(key=>items[key].mAnimationObject.mDirections.flatMap(d=>d.mFrames)),top=Math.max(...all.map(f=>-f.mDisp.y)),bottom=Math.max(...all.map(f=>f.mDisp.y+f.sBMD.height)),rowHeight=Math.ceil((top+bottom)*2.5)+40;
+   detail.width=840;detail.height=actions.length*rowHeight+24;const dc=detail.getContext('2d');dc.fillStyle='#e7e2d9';dc.fillRect(0,0,detail.width,detail.height);dc.imageSmoothingEnabled=false;dc.font='13px Arial';
+   for(let row=0;row<actions.length;row++){
+    const key=actions[row],a=items[key].mAnimationObject;dc.fillStyle='#252525';dc.fillText(key,5,row*rowHeight+rowHeight/2);
+    for(let j=0;j<4;j++){
+     const d=Math.floor(j*a.mDirections.length/4),frames=a.mDirections[d].mFrames,f=frames[Math.floor(frames.length/2)],x=120+j*180+70,y=row*rowHeight+20+top*2.5;
+     dc.strokeStyle='#b8b0a4';dc.beginPath();dc.moveTo(x-12,y);dc.lineTo(x+12,y);dc.stroke();dc.save();dc.translate(x,y);dc.scale(2.5,2.5);dc.drawImage(f.sBMD.toImageSource(),f.mDisp.x,f.mDisp.y,f.sBMD.width,f.sBMD.height);dc.restore();
+    }
+   }rows.push({kind,png:c.toDataURL('image/png'),detail:detail.toDataURL('image/png'),metrics});
   }return rows;
  });
- for(const sheet of sheets){const file=`${out}/${sheet.kind}-all-directions.png`;writeFileSync(file,Buffer.from(sheet.png.split(',')[1],'base64'));report.shots.push(file);report.art.push({kind:sheet.kind,metrics:sheet.metrics});}
+ for(const sheet of sheets){for(const [suffix,data]of [['all-directions',sheet.png],['closeups',sheet.detail]]){const file=`${out}/${sheet.kind}-${suffix}.png`;writeFileSync(file,Buffer.from(data.split(',')[1],'base64'));report.shots.push(file);}report.art.push({kind:sheet.kind,metrics:sheet.metrics});}
  const video=await g.eval(async()=>{
   const c=document.createElement('canvas');c.width=320;c.height=180;const ctx=c.getContext('2d'),stream=c.captureStream(15),recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9'}),chunks=[];
   recorder.ondataavailable=e=>chunks.push(e.data);const done=new Promise(resolve=>recorder.onstop=async()=>{const b=new Blob(chunks,{type:'video/webm'}),reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsDataURL(b);});recorder.start();

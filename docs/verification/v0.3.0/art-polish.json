@@ -1,0 +1,373 @@
+{
+  "status": "art-feature-accepted-release-gates-pending",
+  "scope": "User-requested cohesive model and skill-effect polish; original source assets and mechanical ports remain unchanged.",
+  "changes": [
+    "Dark-green charger torso with attached bone harness, leather backing and faceted shoulder/bracer geometry.",
+    "Ember priest horn sockets, tapered 3D horns, layered cuffs and molten torso inlays.",
+    "Native 45-degree XSI camera and lighting; projected-area visibility avoids missing/degenerate side faces.",
+    "Coordinated ground seals, countdown arcs, nested curve flames and segmented charge guide."
+  ],
+  "checks": {
+    "testsPassed": 34,
+    "typechecks": 3,
+    "build": true,
+    "mechanicalPortsChanged": [],
+    "geometry": "Native feet preserved in every base/skill frame and direction; aligned face arrays, finite vertices/lighting and non-degenerate added faces.",
+    "browser": {
+      "ok": true,
+      "art": [
+        {
+          "kind": "charger",
+          "metrics": [
+            {
+              "key": "stand",
+              "directions": 16,
+              "frames": 1
+            },
+            {
+              "key": "walk",
+              "directions": 8,
+              "frames": 5
+            },
+            {
+              "key": "attack",
+              "directions": 8,
+              "frames": 4
+            },
+            {
+              "key": "shothit_1",
+              "directions": 8,
+              "frames": 2
+            },
+            {
+              "key": "shothit_2",
+              "directions": 8,
+              "frames": 2
+            },
+            {
+              "key": "dying",
+              "directions": 4,
+              "frames": 5
+            },
+            {
+              "key": "dead",
+              "directions": 4,
+              "frames": 1
+            },
+            {
+              "key": "warning",
+              "directions": 16,
+              "frames": 6
+            },
+            {
+              "key": "charge",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "cast",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "recovery",
+              "directions": 16,
+              "frames": 6
+            }
+          ]
+        },
+        {
+          "kind": "priest",
+          "metrics": [
+            {
+              "key": "stand",
+              "directions": 16,
+              "frames": 1
+            },
+            {
+              "key": "walk",
+              "directions": 8,
+              "frames": 5
+            },
+            {
+              "key": "attack",
+              "directions": 8,
+              "frames": 4
+            },
+            {
+              "key": "shothit_1",
+              "directions": 8,
+              "frames": 2
+            },
+            {
+              "key": "shothit_2",
+              "directions": 8,
+              "frames": 2
+            },
+            {
+              "key": "dying",
+              "directions": 4,
+              "frames": 5
+            },
+            {
+              "key": "dead",
+              "directions": 4,
+              "frames": 1
+            },
+            {
+              "key": "warning",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "charge",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "cast",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "recovery",
+              "directions": 16,
+              "frames": 6
+            }
+          ]
+        }
+      ],
+      "shots": [
+        "generated/reports/v030/enemy-variants/charger-all-directions.png",
+        "generated/reports/v030/enemy-variants/charger-closeups.png",
+        "generated/reports/v030/enemy-variants/priest-all-directions.png",
+        "generated/reports/v030/enemy-variants/priest-closeups.png",
+        "generated/reports/v030/enemy-variants/warning-640x480.png",
+        "generated/reports/v030/enemy-variants/warning-960x720.png",
+        "generated/reports/v030/enemy-variants/warning-1280x720.png",
+        "generated/reports/v030/enemy-variants/warning-640x889.png",
+        "generated/reports/v030/enemy-variants/burn-640x480.png",
+        "generated/reports/v030/enemy-variants/burn-low-640x480.png"
+      ],
+      "warning": {
+        "charger": "warning",
+        "priest": "State_VariantCast",
+        "zones": 1
+      },
+      "geometry": [
+        {
+          "width": 640,
+          "height": 480,
+          "ring": 404,
+          "scale": 1,
+          "left": 0,
+          "top": 0,
+          "zone": {
+            "x": 272,
+            "y": 240
+          },
+          "enemies": [
+            {
+              "x": 131,
+              "y": 200,
+              "w": 38,
+              "h": 50
+            },
+            {
+              "x": 124,
+              "y": 244,
+              "w": 40,
+              "h": 71
+            }
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "ring": 925,
+          "scale": 1.5,
+          "left": 0,
+          "top": 0,
+          "zone": {
+            "x": 272,
+            "y": 240
+          },
+          "enemies": [
+            {
+              "x": 131,
+              "y": 200,
+              "w": 38,
+              "h": 50
+            },
+            {
+              "x": 124,
+              "y": 244,
+              "w": 40,
+              "h": 71
+            }
+          ]
+        },
+        {
+          "width": 853,
+          "height": 480,
+          "ring": 925,
+          "scale": 1.5005861664712778,
+          "left": 0,
+          "top": 0,
+          "zone": {
+            "x": 378.5,
+            "y": 240
+          },
+          "enemies": [
+            {
+              "x": 237.5,
+              "y": 200,
+              "w": 38,
+              "h": 50
+            },
+            {
+              "x": 230.5,
+              "y": 244,
+              "w": 40,
+              "h": 71
+            }
+          ]
+        },
+        {
+          "width": 640,
+          "height": 889,
+          "ring": 399,
+          "scale": 1,
+          "left": 0,
+          "top": 0,
+          "zone": {
+            "x": 272,
+            "y": 444.5
+          },
+          "enemies": [
+            {
+              "x": 131,
+              "y": 404.5,
+              "w": 38,
+              "h": 50
+            },
+            {
+              "x": 124,
+              "y": 448.5,
+              "w": 40,
+              "h": 71
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "visualReview": {
+    "method": "Direct screenshot review, geometry and actual pixels; no zai service.",
+    "reviewed": [
+      "Before/after direction contact sheets",
+      "Both enlarged detail sheets including lying poses",
+      "Four viewport warning scenes",
+      "LOW burning zone"
+    ],
+    "animation": "Eight-second cached native-action animation generated; whole-frame geometric continuity checked separately."
+  },
+  "artifacts": {
+    "generated/reports/v030/enemy-variants-before-polish/actions.webm": {
+      "bytes": 462754,
+      "sha256": "49b29b2488ac52de370ba2d6156a26318c6ed602787436d768ab4d5c274dc897"
+    },
+    "generated/reports/v030/enemy-variants-before-polish/burn-640x480.png": {
+      "bytes": 43617,
+      "sha256": "d6272a4950604f533fb4c8e48f2c3162db6b0afe500ef63ea7b9258a332ab551"
+    },
+    "generated/reports/v030/enemy-variants-before-polish/burn-low-640x480.png": {
+      "bytes": 43342,
+      "sha256": "c1f9aa3041766fc3d1d877dbd056e1111a8b9f396c5af7fc72a9e8ee1a78aac1"
+    },
+    "generated/reports/v030/enemy-variants-before-polish/charger-all-directions.png": {
+      "bytes": 447319,
+      "sha256": "e21ffc3fa099ff7ed08ec1d64d044e5dac44cec088016e3b5dbebed0043374be"
+    },
+    "generated/reports/v030/enemy-variants-before-polish/priest-all-directions.png": {
+      "bytes": 522517,
+      "sha256": "d0c2fb1e4b674949694735f03e2a8010498ea05274163b0cf0410f8059dff383"
+    },
+    "generated/reports/v030/enemy-variants-before-polish/warning-1280x720.png": {
+      "bytes": 85325,
+      "sha256": "eac019490fadb2476f11059e5e5d7b1faeb9278dc3bc14fa08475c6b0a9d48c5"
+    },
+    "generated/reports/v030/enemy-variants-before-polish/warning-640x480.png": {
+      "bytes": 42673,
+      "sha256": "0119546b0560176b2bff2cc528625763d2d01ef6df73549425eb56b14b19492e"
+    },
+    "generated/reports/v030/enemy-variants-before-polish/warning-640x889.png": {
+      "bytes": 45732,
+      "sha256": "eb504d57c67f59c50d198289a2ba749401a8245257b24cee55d881d3d5110bdc"
+    },
+    "generated/reports/v030/enemy-variants-before-polish/warning-960x720.png": {
+      "bytes": 76044,
+      "sha256": "1a9ea2b678ca577403d11fd96099f6446039d6d480e86e2055418b2539087663"
+    },
+    "generated/reports/v030/enemy-variants/charger-all-directions.png": {
+      "bytes": 461647,
+      "sha256": "adc05001e7843fb47273cc42ef3a65e9a4f2d29b45ebbef59049f18b177089fd"
+    },
+    "generated/reports/v030/enemy-variants/charger-closeups.png": {
+      "bytes": 394544,
+      "sha256": "d636b8dc58e3dc4b5f31084df90b9ad1a9290bf6aa1ea29b23f748040c69afea"
+    },
+    "generated/reports/v030/enemy-variants/priest-all-directions.png": {
+      "bytes": 568377,
+      "sha256": "692b47c309d1ea3d8fa2d0e5552adc0306a70899b692153875f759598560c6ad"
+    },
+    "generated/reports/v030/enemy-variants/priest-closeups.png": {
+      "bytes": 496948,
+      "sha256": "5ad0d4d3a0256035714d4171201f94a957761c969ea2d3a6d71801268a1ba578"
+    },
+    "generated/reports/v030/enemy-variants/warning-640x480.png": {
+      "bytes": 42450,
+      "sha256": "71bcd2353dbddd7288c5a7dca7775917d46aa8baf57cdfae3dfff21d4657a8df"
+    },
+    "generated/reports/v030/enemy-variants/warning-960x720.png": {
+      "bytes": 77285,
+      "sha256": "347b72fccaf3af161490918ae23cacc22ace87fdc97ed0bada429944fdd8caa9"
+    },
+    "generated/reports/v030/enemy-variants/warning-1280x720.png": {
+      "bytes": 86305,
+      "sha256": "6d27a88e157593836a5688bdd5d65a739a9e325e16c2a4db6780d2b8508fd049"
+    },
+    "generated/reports/v030/enemy-variants/warning-640x889.png": {
+      "bytes": 47755,
+      "sha256": "386c5c29385feb5896c2e136e2baf2f4a0075c4eb694025d5c9dc1f8409e92c2"
+    },
+    "generated/reports/v030/enemy-variants/burn-640x480.png": {
+      "bytes": 44337,
+      "sha256": "27cfb1e14bed2fd62748c2401b49038a54490112ed50e8901fa830a8fa58ee8c"
+    },
+    "generated/reports/v030/enemy-variants/burn-low-640x480.png": {
+      "bytes": 44063,
+      "sha256": "ed7778337c97ae3d5dac5cd8475063ba8571898acc704e00fb34aa278877abfc"
+    },
+    "generated/reports/v030/enemy-variants/actions.webm": {
+      "bytes": 472184,
+      "sha256": "80e54ebb25887060fc600a3735de1a07e4a913beb78e339997162eff57450a3a"
+    },
+    "dist/bundle/gallery-CmDtL4W7.js": {
+      "bytes": 8735,
+      "sha256": "fa7cad13576282267de84bc2be8a37bb2a6578ac1b5721edba4f83391e9fed42"
+    },
+    "dist/bundle/main-srVURTYE.js": {
+      "bytes": 560992,
+      "sha256": "eda68b2b82de7032171d225ef13ef3e4d6d932900de4c37df19262061de3b3dc"
+    },
+    "dist/bundle/Player-o3pII7gY.js": {
+      "bytes": 139368,
+      "sha256": "6b3844a973e7c31df7b6d9b053c12c7cafa4b4f05970e74c2c737cad98186cc5"
+    }
+  },
+  "pending": [
+    "Rebuild/repackage the superseded unpublished portable candidate",
+    "Final functional release gates and publication"
+  ]
+}

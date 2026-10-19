@@ -109,3 +109,26 @@ it('bakes independent collections for every original direction/action without mo
  for(const kind of ['charger','priest']as const){const c=variantCollection(kind);for(const key of ['stand','walk','attack','shothit_1','shothit_2','dying','dead','warning','charge','cast','recovery']){const a=c.mItems[key].mAnimationObject;expect(a.mDirections.length).toBe(['dying','dead'].includes(key)?4:['stand','recovery'].includes(key)||(key==='warning'&&kind==='charger')?16:8);for(const d of a.mDirections)for(const f of d.mFrames)expect(f.sBMD).toBeDefined();}}
  expect(JSON.stringify(base.mDirections)).toBe(source);g.quit();
 });
+it('keeps native feet and aligned face arrays throughout every base action and direction',()=>{
+ const g=boot(),DI=DrawPrimitive.XSI.CDrawPrimitive_XSI_DI;
+ for(const kind of ['charger','priest']as const)for(const [key,link]of Object.entries({stand:kind==='charger'?'Zombie_Zombie_Stand':'Player_Stand',walk:kind==='charger'?'Zombie_Zombie_Walk':'Player_Walk',attack:kind==='charger'?'Zombie_Zombie_Attack':'Devil_Devil_Attack',shothit_1:'Player_HitRear',shothit_2:'Player_HitFront',dying:'Player_Dying',dead:'Player_Dead',warning:kind==='charger'?'Zombie_Zombie_Stand':'Devil_Devil_Attack',charge:kind==='charger'?'Zombie_Zombie_Walk':'Player_Walk',cast:kind==='charger'?'Zombie_Zombie_Attack':'Devil_Devil_Attack',recovery:kind==='charger'?'Zombie_Zombie_Stand':'Player_Stand'})){
+  const original=DI.mAnimationSets[link],derived=DI.mAnimationSets['Variant_'+kind+'_'+key];
+  for(let d=0;d<original.mDirections.length;d++)for(let i=0;i<derived.mDirections[d].length;i++){
+   const phase=i%original.mDirections[d].length,source=original.mDirections[d][phase],models=derived.mDirections[d][i].Models;
+   for(const name of ['Foot_Left','Foot_Right']){
+    const foot=source.Models[name]?.Empty?DI.mGroups[source.rPartner]?.[source.mAnimID]?.mDirections[d]?.[phase]?.Models[name]:source.Models[name];
+    expect(models[name]?.Shape_vList).toEqual(foot?.Shape_vList);
+   }
+   for(const model of Object.values(models)as any[])if(model.Shape_vList?.length){
+    expect(model.Shape_Matrix.length).toBe(model.Shape_vList.length);expect(model.Shape_Material.length).toBe(model.Shape_vList.length);expect(model.Shape_Brightness.length).toBe(model.Shape_vList.length);
+    for(let f=0;f<model.Shape_vList.length;f++){
+     const face=model.Shape_vList[f];expect(face.every(Number.isFinite)).toBe(true);
+     if(String(model.Shape_Material[f]).startsWith('Variant')){
+      let area=0;for(let p=0;p<face.length;p+=2){const next=(p+2)%face.length;area+=face[p]*face[next+1]-face[next]*face[p+1];}
+      expect(Math.abs(area)).toBeGreaterThan(1e-6);expect(Number.isFinite(model.Shape_Brightness[f])).toBe(true);
+     }
+    }
+   }
+  }
+ }g.quit();
+});
