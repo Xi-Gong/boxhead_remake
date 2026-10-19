@@ -1,0 +1,43 @@
+{
+  "version": "0.3.0",
+  "ok": true,
+  "exe": {
+    "path": "release/Boxhead 2Play Rooms-0.3.0-portable.exe",
+    "bytes": 101725973,
+    "sha256": "efa75ea69c61135eec646e06795b2930c84b6f43181d9d86ab27e616e57e8983"
+  },
+  "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+  "verifiedRuntimeFiles": [
+    "dist-electron/main.cjs",
+    "dist-electron/preload.cjs",
+    "dist/index.html",
+    "dist/bundle/gallery-CmDtL4W7.js",
+    "dist/bundle/main-BQnBMVcj.js",
+    "dist/bundle/Player-o3pII7gY.js"
+  ],
+  "portable": {
+    "version": "0.3.0",
+    "exe": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\release\\Boxhead 2Play Rooms-0.3.0-portable.exe",
+    "executable": "C:\\Users\\royxg\\AppData\\Local\\Temp\\3Ku3A2P6JTtXuo8bjiCoTiuNQcg\\Boxhead 2Play Rooms.exe",
+    "archive": "C:\\Users\\royxg\\AppData\\Local\\Temp\\3Ku3A2P6JTtXuo8bjiCoTiuNQcg\\resources\\app.asar",
+    "extractedAsarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+    "verifiedRuntimeFiles": [
+      "dist-electron/main.cjs",
+      "dist-electron/preload.cjs",
+      "dist/bundle/gallery-CmDtL4W7.js",
+      "dist/bundle/main-BQnBMVcj.js",
+      "dist/bundle/Player-o3pII7gY.js"
+    ],
+    "viewport": {
+      "width": 640,
+      "height": 480,
+      "dpr": 1
+    },
+    "ok": true
+  },
+  "portableLog": {
+    "path": "generated/reports/v030/portable.log",
+    "bytes": 63,
+    "sha256": "472297dc7a18cf5283645e428f0f9aeea724de54353cea4a1e879f7ee5da0790"
+  }
+}

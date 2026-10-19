@@ -1,0 +1,325 @@
+{
+  "version": "0.3.0",
+  "ok": true,
+  "sourceSha256": "71fb57c2201527c1b615a19a7030364e2289efecd9e94711ce2394eac750ca1e",
+  "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+  "scope": {
+    "functionalGates": 42,
+    "serialized": true,
+    "hidden": true,
+    "isolatedSaves": true,
+    "qaLanPorts": "48630 / 48631..48640",
+    "priority": "BelowNormal",
+    "logicalProcessors": {
+      "maximumOrdinary": 2,
+      "maximumNative": 4,
+      "perGate": "gates.json"
+    },
+    "gameplayLanPerformanceBenchmarks": "not run",
+    "incidentalEngineSmokeTimings": "Small built-in renderer smoke timings retained; no comparative performance claim.",
+    "cpuAllocationProfiling": "not collected",
+    "extremeStress": "not run",
+    "excludedStressCases": 4,
+    "performanceImprovementClaim": false
+  },
+  "checks": {
+    "build": {
+      "path": "generated/reports/v030/finite-pose-build.log",
+      "bytes": 1527,
+      "sha256": "84edae59b953eaef5c7fc3dda0b4249696eff120ea00cd1fdeda84545fcb6379"
+    },
+    "typechecks": 3,
+    "vitest": {
+      "passed": 1572,
+      "skipped": 75,
+      "preexistingConditionalSkips": 71,
+      "excludedStressCases": 4,
+      "total": 1647,
+      "workers": 1,
+      "fileParallelism": false
+    },
+    "audit": {
+      "modules": 511,
+      "portedModules": 117,
+      "changedPorts": [],
+      "evidence": {
+        "path": "generated/reports/v026/code-inventory.json",
+        "bytes": 198208,
+        "sha256": "70bae3315039b855f9e3a53ae13b99560d33b15cbc7abf652564294ee6b8ef5b"
+      }
+    },
+    "gates": "gates.json",
+    "portable": "artifact.json",
+    "network": [
+      {
+        "delayMs": 30,
+        "confirmed": {
+          "digest": {
+            "tick": 104,
+            "full": {
+              "things": "18d936616b3259a5",
+              "cells": "f3b12860d459676c",
+              "collection": "ff655de1db6ca285",
+              "navigation": "b217c224193b5a90",
+              "upgrades": "d14a494c9265cd88",
+              "slots": "19271d4b67050de7",
+              "random": "1fed4f0547b47401",
+              "outcome": "97edbfaaf8c4c77e"
+            },
+            "score": 0,
+            "things": 20,
+            "zombies": 4,
+            "q": [
+              136,
+              136,
+              3200,
+              216,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            15,
+            2799112704
+          ],
+          "decals": [
+            {
+              "kind": "scorch",
+              "direction": 1,
+              "frame": 0,
+              "x": 323.20000000000005,
+              "y": 272
+            }
+          ]
+        },
+        "audio": [
+          {
+            "state": "running",
+            "decoded": 31,
+            "total": 31,
+            "failed": [],
+            "voices": 0,
+            "recoveries": 0,
+            "muted": false
+          },
+          {
+            "state": "running",
+            "decoded": 31,
+            "total": 31,
+            "failed": [],
+            "voices": 0,
+            "recoveries": 0,
+            "muted": false
+          }
+        ],
+        "evidence": {
+          "path": "generated/reports/v030/netsmooth-functional-30/net_smooth_report.json",
+          "bytes": 4633,
+          "sha256": "355e67a67d49e8bf5edd5ef8d2d70fe0d65e1a30a8637b1b434e470c7212befa"
+        }
+      },
+      {
+        "delayMs": 60,
+        "confirmed": {
+          "digest": {
+            "tick": 104,
+            "full": {
+              "things": "73b4e9a9da6fa53d",
+              "cells": "a211e1139d0031d7",
+              "collection": "1adc247dd8e39d41",
+              "navigation": "366adc2af1c745c6",
+              "upgrades": "d14a494c9265cd88",
+              "slots": "b388f7e3f7b6109f",
+              "random": "1fed4f0547b47401",
+              "outcome": "97edbfaaf8c4c77e"
+            },
+            "score": 0,
+            "things": 20,
+            "zombies": 4,
+            "q": [
+              128,
+              136,
+              3200,
+              218,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            15,
+            4070918905
+          ],
+          "decals": [
+            {
+              "kind": "scorch",
+              "direction": 1,
+              "frame": 0,
+              "x": 312.96000000000004,
+              "y": 272
+            }
+          ]
+        },
+        "audio": [
+          {
+            "state": "running",
+            "decoded": 31,
+            "total": 31,
+            "failed": [],
+            "voices": 0,
+            "recoveries": 0,
+            "muted": false
+          },
+          {
+            "state": "running",
+            "decoded": 31,
+            "total": 31,
+            "failed": [],
+            "voices": 0,
+            "recoveries": 0,
+            "muted": false
+          }
+        ],
+        "evidence": {
+          "path": "generated/reports/v030/netsmooth-functional-60/net_smooth_report.json",
+          "bytes": 4633,
+          "sha256": "863d3a3006045554a9e6620a5496d6eacdc90d82b507d06cd5f4d149ca949218"
+        }
+      },
+      {
+        "delayMs": 100,
+        "confirmed": {
+          "digest": {
+            "tick": 104,
+            "full": {
+              "things": "04b0405c75f9e918",
+              "cells": "52db5ba5e1cffb11",
+              "collection": "1adc247dd8e39d41",
+              "navigation": "b217c224193b5a90",
+              "upgrades": "d14a494c9265cd88",
+              "slots": "daf0001ff656d103",
+              "random": "4cfe124ec5ad1cca",
+              "outcome": "97edbfaaf8c4c77e"
+            },
+            "score": 0,
+            "things": 20,
+            "zombies": 4,
+            "q": [
+              138,
+              136,
+              3200,
+              218,
+              136,
+              3200
+            ]
+          },
+          "events": [
+            14,
+            1707011794
+          ],
+          "decals": [
+            {
+              "kind": "scorch",
+              "direction": 1,
+              "frame": 0,
+              "x": 328.32000000000005,
+              "y": 272
+            }
+          ]
+        },
+        "audio": [
+          {
+            "state": "running",
+            "decoded": 31,
+            "total": 31,
+            "failed": [],
+            "voices": 0,
+            "recoveries": 0,
+            "muted": false
+          },
+          {
+            "state": "running",
+            "decoded": 31,
+            "total": 31,
+            "failed": [],
+            "voices": 0,
+            "recoveries": 0,
+            "muted": false
+          }
+        ],
+        "evidence": {
+          "path": "generated/reports/v030/netsmooth-functional-100/net_smooth_report.json",
+          "bytes": 4642,
+          "sha256": "645e4e786e77be64410ceefc5c06344aeb1f3742ef4b488613ab62f14f24c089"
+        }
+      }
+    ],
+    "typecheckLog": {
+      "path": "generated/reports/v030/final-typecheck.log",
+      "bytes": 176,
+      "sha256": "85dfe3c872ddeb9be2a8918156f8e3fccebb423036dae67ed2ab15a1dc5e5a15"
+    },
+    "processCleanup": {
+      "scope": "Owned isolated QA game children only, after actual portable exit",
+      "remaining": [],
+      "ok": true,
+      "evidence": {
+        "path": "generated/reports/v030/lan-process-cleanup.json",
+        "bytes": 120,
+        "sha256": "8955030cbcf1a0c316b818ca24cdc373f46180928bab18f23920731784e1c42a"
+      }
+    }
+  },
+  "historicalFailures": {
+    "supersededInitialCandidateAsarSha256": "534a8b131713ecafd5ef6aa4af8440bdbeb82ee8dac86c03cf3841cab0f2f829",
+    "initialFullSuite": {
+      "path": "generated/reports/v030/gates-before-fixture-and-animation/vitest.log",
+      "bytes": 46767,
+      "sha256": "30fd653867b0ea5eb8023ce29d6e49174ec7784141c676c882781d7f0bbd454f"
+    },
+    "windowsAudioDevice": "lan-audio-device-failure.json",
+    "animationSequence": {
+      "path": "generated/reports/v030/animation-before.log",
+      "bytes": 2929,
+      "sha256": "00275065950c484d1b2d73b5ea38e9989afdcaa586ef50a288694dcf084543ca"
+    },
+    "finitePoseTiming": {
+      "path": "generated/reports/v030/finite-pose-before.log",
+      "bytes": 3312,
+      "sha256": "a6ef25770af3ed03b95ba02cae8f81af5c3869c36bac5d96a76bf3f53d76b817"
+    },
+    "historicalLanInput": {
+      "path": "generated/reports/v030/v023-initial-failure.json",
+      "bytes": 475,
+      "sha256": "7f3b529f2996c613f6c4505ec7bf2b021e0ca092d07c9e49dda0a53d11516f85"
+    },
+    "historicalNaturalRetry": {
+      "path": "generated/reports/v030/netretry-initial-failure.json",
+      "bytes": 1868,
+      "sha256": "ac299f094327a38f06adffdbd38b567e6852917930343eeda4c47f4c4748e609"
+    },
+    "resumeCoordinate": {
+      "path": "generated/reports/v030/net-resume-coordinate-failure.json",
+      "bytes": 6890,
+      "sha256": "685492431eaa02fc89da4e3e78d7f20711e75f6ecdd8c7e8a6b4ede1c10c09a4"
+    },
+    "fixtureEvidence": "lan-fixture.json"
+  },
+  "visualReview": {
+    "method": "Direct screenshots plus pixel/geometry/real-click checks; no zai service.",
+    "viewports": [
+      "640x480",
+      "960x720",
+      "1280x720",
+      "640x889"
+    ],
+    "art": "Integrated native XSI geometry and lighting, full-direction action contact sheets and short animation.",
+    "evidence": [
+      "hud-messages.json",
+      "menu-spacing.json",
+      "endless-progress.json",
+      "enemy-variants.json",
+      "art-polish.json",
+      "animation-continuity.json"
+    ]
+  }
+}

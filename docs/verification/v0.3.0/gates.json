@@ -1,0 +1,584 @@
+{
+  "version": "0.3.0",
+  "sourceSha256": "71fb57c2201527c1b615a19a7030364e2289efecd9e94711ce2394eac750ca1e",
+  "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+  "scope": "Serial functional acceptance; four mixed explosive burst stress cases excluded by the user working-hours constraint.",
+  "cases": [
+    {
+      "name": "vitest",
+      "code": 0,
+      "started": "2026-10-19T07:05:20.406Z",
+      "finished": "2026-10-19T07:11:23.880Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/vitest.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "6730c3208f4c5889ae169af2fc72b2ab407ea57ca457688b9f30991e3ceba7a8"
+    },
+    {
+      "name": "bitmap-blit",
+      "code": 0,
+      "started": "2026-10-19T07:11:23.881Z",
+      "finished": "2026-10-19T07:11:45.962Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/bitmap-blit.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "585be5a1b4fa80603d54cb7ad1b59ce1b0220e4b1405202f74965699ea3d7100"
+    },
+    {
+      "name": "masked-copy",
+      "code": 0,
+      "started": "2026-10-19T07:11:45.962Z",
+      "finished": "2026-10-19T07:12:16.777Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/masked-copy.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "2a2aebe07a600025f7b12f78069ce6f392906cf3ade00b85a782bef1ce45ea73"
+    },
+    {
+      "name": "engine-browser",
+      "code": 0,
+      "started": "2026-10-19T07:12:16.778Z",
+      "finished": "2026-10-19T07:12:26.309Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/engine-browser.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "a0b0c649f79aa93789338c6fee32a3981b58e465f86a5ba80522cfb83227cede"
+    },
+    {
+      "name": "ui",
+      "code": 0,
+      "started": "2026-10-19T07:12:26.309Z",
+      "finished": "2026-10-19T07:17:02.082Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/ui.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "c6193604616f0ec3b0a033b6af1a0e4a739e8956cf45fbe1a277da0dab47e074"
+    },
+    {
+      "name": "audio",
+      "code": 0,
+      "started": "2026-10-19T07:17:02.082Z",
+      "finished": "2026-10-19T07:18:04.838Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/audio.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "eddac660ab1341121eade4eb2b819ace50ef693994358ca81cb9d758048fa102"
+    },
+    {
+      "name": "wave-input",
+      "code": 0,
+      "started": "2026-10-19T07:18:04.839Z",
+      "finished": "2026-10-19T07:19:27.700Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/wave-input.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "7224dc4fe882c9c0f8fbb0371dff2c34ce4ec2ff39189a50033ece697d9176ab"
+    },
+    {
+      "name": "room-settings",
+      "code": 0,
+      "started": "2026-10-19T07:19:27.700Z",
+      "finished": "2026-10-19T07:20:10.275Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/room-settings.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "01d829fcf2afee6fc6f1f4fe2c1aeb8725bde10a65fd7c47092bd1ac814343dc"
+    },
+    {
+      "name": "menu-spacing",
+      "code": 0,
+      "started": "2026-10-19T07:20:10.276Z",
+      "finished": "2026-10-19T07:20:40.662Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/menu-spacing.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "1de4f09934dea064f1ef7ef783470913e509c89bb2fe541086964acb9bf184fd"
+    },
+    {
+      "name": "floating-scores",
+      "code": 0,
+      "started": "2026-10-19T07:20:40.663Z",
+      "finished": "2026-10-19T07:21:07.758Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/floating-scores.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "fcf7793276403a43528984b277446cb3cecd1cc6030aef45c1a57dfe18fe97ec"
+    },
+    {
+      "name": "hud-messages",
+      "code": 0,
+      "started": "2026-10-19T07:21:07.759Z",
+      "finished": "2026-10-19T07:22:04.520Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/hud-messages.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "2af2cd938e7888ef10f449274d877cb10bf95c5cfc441ec07833d296a684d570"
+    },
+    {
+      "name": "explosion-flash",
+      "code": 0,
+      "started": "2026-10-19T07:22:04.520Z",
+      "finished": "2026-10-19T07:22:25.414Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/explosion-flash.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "83034464679def58392d34c26f2970ba3f0281d458ba63b5fabf6bcbcb4042b6"
+    },
+    {
+      "name": "local-growth",
+      "code": 0,
+      "started": "2026-10-19T07:22:25.414Z",
+      "finished": "2026-10-19T07:23:28.320Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/local-growth.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "d819b53fa489f03e5512a41519916cf63b4a526218be1cfa5fd653a3fdfb3bb0"
+    },
+    {
+      "name": "modern-supplies",
+      "code": 0,
+      "started": "2026-10-19T07:23:28.321Z",
+      "finished": "2026-10-19T07:23:55.685Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/modern-supplies.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "c490bc1aa16d22987bdbdfbaa69e770f10305c4bac76c34ebf058b91d70ef119"
+    },
+    {
+      "name": "endless",
+      "code": 0,
+      "started": "2026-10-19T07:23:55.685Z",
+      "finished": "2026-10-19T07:24:28.077Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/endless.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "b1b737ea60051028298604048dbe3b82b23ccd0787a502585bfb61619f418887"
+    },
+    {
+      "name": "enemy-variants",
+      "code": 0,
+      "started": "2026-10-19T07:24:28.077Z",
+      "finished": "2026-10-19T07:25:02.434Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/enemy-variants.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "2df344ebe104b983330ef2df94970f7c4e529691809ee54da732ae7179c64c2d"
+    },
+    {
+      "name": "enchantment",
+      "code": 0,
+      "started": "2026-10-19T07:25:02.434Z",
+      "finished": "2026-10-19T07:25:27.449Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/enchantment.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "ee90fa28bf5541f0db6a5b35b6b797aeb8a0ca36a772557aa67541173f28ded9"
+    },
+    {
+      "name": "survival-ui",
+      "code": 0,
+      "started": "2026-10-19T07:25:27.450Z",
+      "finished": "2026-10-19T07:25:54.723Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/survival-ui.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "6a1dd1c686e3acc0bc7992d82ec7049a260421b8044fd3d0f8c6ecf7ee8c1e99"
+    },
+    {
+      "name": "growth-ui",
+      "code": 0,
+      "started": "2026-10-19T07:25:54.724Z",
+      "finished": "2026-10-19T07:26:21.315Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/growth-ui.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "00ccb5d72bb4b1635ec2301495851fc7f5e53063a9b449bed85b9b46be02d405"
+    },
+    {
+      "name": "balance-ui",
+      "code": 0,
+      "started": "2026-10-19T07:26:21.316Z",
+      "finished": "2026-10-19T07:26:47.984Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/balance-ui.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "00ccb5d72bb4b1635ec2301495851fc7f5e53063a9b449bed85b9b46be02d405"
+    },
+    {
+      "name": "supplies-ui",
+      "code": 0,
+      "started": "2026-10-19T07:26:47.984Z",
+      "finished": "2026-10-19T07:27:15.129Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/supplies-ui.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "6a1dd1c686e3acc0bc7992d82ec7049a260421b8044fd3d0f8c6ecf7ee8c1e99"
+    },
+    {
+      "name": "added-ui",
+      "code": 0,
+      "started": "2026-10-19T07:27:15.130Z",
+      "finished": "2026-10-19T07:28:23.641Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/added-ui.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "d8d70edacff12e97ba82670ffab4967661af03895a04e96ea5f008b5ba1d5efc"
+    },
+    {
+      "name": "input-badge",
+      "code": 0,
+      "started": "2026-10-19T07:28:23.641Z",
+      "finished": "2026-10-19T07:28:42.806Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/input-badge.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "b35bd76fa6cb8f942f9dc1aa8f17c89b6260c0c6f3941757602472291d074108"
+    },
+    {
+      "name": "viewport-pause",
+      "code": 0,
+      "started": "2026-10-19T07:28:42.807Z",
+      "finished": "2026-10-19T07:29:07.546Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/viewport-pause.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "56dd3439a067bb812f6ce4650caeaf37c6300be394c75c15884ad32367a7d590"
+    },
+    {
+      "name": "browser",
+      "code": 0,
+      "started": "2026-10-19T07:29:07.546Z",
+      "finished": "2026-10-19T07:31:27.031Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/browser.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "0f7777b8441c15ed9b6be5add6d76dc28445ea7660d7b79971ad0134dccc9b12"
+    },
+    {
+      "name": "electron-play",
+      "code": 0,
+      "started": "2026-10-19T07:31:27.031Z",
+      "finished": "2026-10-19T07:33:49.514Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates/electron-play.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "9a75a87add920e8a4558977df0ad16a7239ee37ddfcb98bb55eca66dcca2aa84"
+    },
+    {
+      "name": "packaged-play",
+      "code": 0,
+      "started": "2026-10-19T07:33:49.515Z",
+      "finished": "2026-10-19T07:36:11.453Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates/packaged-play.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "aa42a4cdb219e6ecc9fd9946ad439ed523193b80c869a65dc3b0c7f4bf189bcf"
+    },
+    {
+      "name": "v012",
+      "code": 0,
+      "started": "2026-10-19T07:36:11.453Z",
+      "finished": "2026-10-19T07:36:59.624Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/v012.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "86ac54ac320a602e9ae5651530d1049e4850b224f043e319e7968c38d17bcbf3"
+    },
+    {
+      "name": "v019",
+      "code": 0,
+      "started": "2026-10-19T07:36:59.624Z",
+      "finished": "2026-10-19T07:37:43.008Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/v019.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "2fa6eae745bad27ed6395d4daaa2ccb7e1c8afc021ab0166a0381913999c2b67"
+    },
+    {
+      "name": "v020",
+      "code": 0,
+      "started": "2026-10-19T07:37:43.008Z",
+      "finished": "2026-10-19T07:38:38.085Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates/v020.log",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "run": "gates",
+      "sha256": "02dce7f6d99f2a7a3c2e02d45a111d7aa1f71e3d35a1648b0ca4c6c4235e2ddd"
+    },
+    {
+      "name": "v023",
+      "code": 0,
+      "started": "2026-10-19T07:46:46.002Z",
+      "finished": "2026-10-19T07:48:08.525Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates-from-v023/v023.log",
+      "sourceSha256": "270809389c97d1aac208f6c8244f2a2763ad674d6ef0016ec42ab2bfd7b85593",
+      "run": "gates-from-v023",
+      "sha256": "a787cdfdab6f586261c4f7e8a58a870d425149aafc76cb13a6f5199e0eecb520"
+    },
+    {
+      "name": "v024",
+      "code": 0,
+      "started": "2026-10-19T07:48:08.526Z",
+      "finished": "2026-10-19T07:51:47.981Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates-from-v023/v024.log",
+      "sourceSha256": "270809389c97d1aac208f6c8244f2a2763ad674d6ef0016ec42ab2bfd7b85593",
+      "run": "gates-from-v023",
+      "sha256": "94b9d326b34635267089a09020b395415060e3452a09ea8f536dcd5c61de47c9"
+    },
+    {
+      "name": "typing",
+      "code": 0,
+      "started": "2026-10-19T07:51:47.981Z",
+      "finished": "2026-10-19T07:52:13.846Z",
+      "affinityMask": 3,
+      "log": "generated/reports/v030/gates-from-v023/typing.log",
+      "sourceSha256": "270809389c97d1aac208f6c8244f2a2763ad674d6ef0016ec42ab2bfd7b85593",
+      "run": "gates-from-v023",
+      "sha256": "b8be3769543de711c5968aa8778237bdafadaeb3558a702a771e999c6862ee3e"
+    },
+    {
+      "name": "lanui",
+      "code": 0,
+      "started": "2026-10-19T07:52:13.846Z",
+      "finished": "2026-10-19T07:52:39.510Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-from-v023/lanui.log",
+      "sourceSha256": "270809389c97d1aac208f6c8244f2a2763ad674d6ef0016ec42ab2bfd7b85593",
+      "run": "gates-from-v023",
+      "sha256": "a83b3da78323adddf18339ca08aa47308d5580a0faea701877d294a64c9eceaa"
+    },
+    {
+      "name": "netretry",
+      "code": 0,
+      "started": "2026-10-19T07:58:39.492Z",
+      "finished": "2026-10-19T07:59:19.790Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-from-netretry/netretry.log",
+      "sourceSha256": "04240e5ea6ba02cd630efa3d68d348bdc1f2ac85f53c2a91059fc7b0b1cd9267",
+      "run": "gates-from-netretry",
+      "sha256": "5eff5cc2797d6960dbab18a454e01ffda905c4cff165946b91b3165872e4e95e"
+    },
+    {
+      "name": "net",
+      "code": 0,
+      "started": "2026-10-19T08:07:48.564Z",
+      "finished": "2026-10-19T08:09:35.695Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-net-cleanup/net.log",
+      "sourceSha256": "71fb57c2201527c1b615a19a7030364e2289efecd9e94711ce2394eac750ca1e",
+      "run": "gates-net-cleanup",
+      "sha256": "52ef771380bf848029398b9748b897d8036b28c1f38fcad4bb5fa74c975d4ba8"
+    },
+    {
+      "name": "netsmooth-functional-30",
+      "code": 0,
+      "started": "2026-10-19T08:04:35.675Z",
+      "finished": "2026-10-19T08:05:05.591Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-from-net/netsmooth-functional-30.log",
+      "sourceSha256": "09e3eba0b92e260632b71a75b655aad6f65ad8d839aca7130288915cd5e57583",
+      "run": "gates-from-net",
+      "sha256": "6706b28ce29e83ff2d31f27cbae9810ee2f3122a5f93a10698cd4ca3fefa2ab8"
+    },
+    {
+      "name": "netsmooth-functional-60",
+      "code": 0,
+      "started": "2026-10-19T08:05:05.592Z",
+      "finished": "2026-10-19T08:05:35.700Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-from-net/netsmooth-functional-60.log",
+      "sourceSha256": "09e3eba0b92e260632b71a75b655aad6f65ad8d839aca7130288915cd5e57583",
+      "run": "gates-from-net",
+      "sha256": "b8e826ba185e3ad78f856266a8448af595be436683bf6f8874cf712c0acb13a1"
+    },
+    {
+      "name": "netsmooth-functional-100",
+      "code": 0,
+      "started": "2026-10-19T08:05:35.700Z",
+      "finished": "2026-10-19T08:06:05.926Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-from-net/netsmooth-functional-100.log",
+      "sourceSha256": "09e3eba0b92e260632b71a75b655aad6f65ad8d839aca7130288915cd5e57583",
+      "run": "gates-from-net",
+      "sha256": "ce1547447550e9c580aa6f62a64520badcd72e837ae9fcf49790fc8ae264104b"
+    },
+    {
+      "name": "electron-smoke",
+      "code": 0,
+      "started": "2026-10-19T08:06:05.927Z",
+      "finished": "2026-10-19T08:06:23.437Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-from-net/electron-smoke.log",
+      "sourceSha256": "09e3eba0b92e260632b71a75b655aad6f65ad8d839aca7130288915cd5e57583",
+      "run": "gates-from-net",
+      "sha256": "f19062a78695e2427d1f73c9915df333694a9d2d6bd85320427453662f89f07a"
+    },
+    {
+      "name": "packaged-smoke",
+      "code": 0,
+      "started": "2026-10-19T08:06:23.438Z",
+      "finished": "2026-10-19T08:06:26.777Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-from-net/packaged-smoke.log",
+      "sourceSha256": "09e3eba0b92e260632b71a75b655aad6f65ad8d839aca7130288915cd5e57583",
+      "run": "gates-from-net",
+      "sha256": "7518df98f468932af370eb73ee7d6f77dde17e139857525ad17dc6e75af29f12"
+    },
+    {
+      "name": "old-save",
+      "code": 0,
+      "started": "2026-10-19T08:06:26.778Z",
+      "finished": "2026-10-19T08:07:03.917Z",
+      "affinityMask": 15,
+      "log": "generated/reports/v030/gates-from-net/old-save.log",
+      "sourceSha256": "09e3eba0b92e260632b71a75b655aad6f65ad8d839aca7130288915cd5e57583",
+      "run": "gates-from-net",
+      "sha256": "b7a8c7fb4065ec694a1f9919dba191c6bea36acfc28ea2b49f0a95df7c4ecc30"
+    }
+  ],
+  "ok": true,
+  "method": "Passed cases reused only for the identical verified packaged runtime. Resumed segments change historical QA input/window paths, simulation-fixture timing and cleanup only; original gameplay assertions remain. Each segment retains its start-source fingerprint.",
+  "runs": [
+    {
+      "directory": "gates",
+      "sourceSha256": "d70a4a2e09f0f20dcd1c9208ffe353f1c99b48a03e3aa02d64051ad37417cce5",
+      "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+      "cases": [
+        "vitest",
+        "bitmap-blit",
+        "masked-copy",
+        "engine-browser",
+        "ui",
+        "audio",
+        "wave-input",
+        "room-settings",
+        "menu-spacing",
+        "floating-scores",
+        "hud-messages",
+        "explosion-flash",
+        "local-growth",
+        "modern-supplies",
+        "endless",
+        "enemy-variants",
+        "enchantment",
+        "survival-ui",
+        "growth-ui",
+        "balance-ui",
+        "supplies-ui",
+        "added-ui",
+        "input-badge",
+        "viewport-pause",
+        "browser",
+        "electron-play",
+        "packaged-play",
+        "v012",
+        "v019",
+        "v020"
+      ]
+    },
+    {
+      "directory": "gates-from-v023",
+      "sourceSha256": "270809389c97d1aac208f6c8244f2a2763ad674d6ef0016ec42ab2bfd7b85593",
+      "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+      "cases": [
+        "v023",
+        "v024",
+        "typing",
+        "lanui"
+      ]
+    },
+    {
+      "directory": "gates-from-netretry",
+      "sourceSha256": "04240e5ea6ba02cd630efa3d68d348bdc1f2ac85f53c2a91059fc7b0b1cd9267",
+      "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+      "cases": [
+        "netretry"
+      ]
+    },
+    {
+      "directory": "gates-from-net",
+      "sourceSha256": "09e3eba0b92e260632b71a75b655aad6f65ad8d839aca7130288915cd5e57583",
+      "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+      "cases": [
+        "net",
+        "netsmooth-functional-30",
+        "netsmooth-functional-60",
+        "netsmooth-functional-100",
+        "electron-smoke",
+        "packaged-smoke",
+        "old-save"
+      ]
+    },
+    {
+      "directory": "gates-net-cleanup",
+      "sourceSha256": "71fb57c2201527c1b615a19a7030364e2289efecd9e94711ce2394eac750ca1e",
+      "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+      "cases": [
+        "net"
+      ]
+    }
+  ],
+  "fixtureChanges": [
+    {
+      "path": "tests/e2e/lan-user-input.mjs",
+      "bytes": 1380,
+      "sha256": "aa65d3118f3fbde521c0b4d1531058e5fc8df34caa1656a554ed7bdad7b70102"
+    },
+    {
+      "path": "tests/sim/playtest.v023.mjs",
+      "bytes": 16650,
+      "sha256": "a0789cfb0a2dbb23e16a5452489ea60a86df2997bfd1bb30470baf11f440d203"
+    },
+    {
+      "path": "tests/sim/playtest.v024.mjs",
+      "bytes": 13969,
+      "sha256": "7b1557dd6d712a3a8b6c507dd0d4f62a9fa35760eb9e21d82f3d37f6c2429689"
+    },
+    {
+      "path": "tests/sim/playtest.lanui.mjs",
+      "bytes": 9691,
+      "sha256": "1884a30b70fdc7bc7f408b9fb4b0190250f7051a3f62f1f619ef9b12619ca607"
+    },
+    {
+      "path": "tests/sim/playtest.netretry.mjs",
+      "bytes": 17135,
+      "sha256": "798ffdca45315532f26d5b19063f4da2a2c144669f9bc2e2541c3488751ca8c7"
+    },
+    {
+      "path": "tests/sim/playtest.net.mjs",
+      "bytes": 25290,
+      "sha256": "e480c2de83533d1117f4d9e789df1bb35aa2d6143f2131ef4cb5b156c8d0a0f1"
+    }
+  ]
+}

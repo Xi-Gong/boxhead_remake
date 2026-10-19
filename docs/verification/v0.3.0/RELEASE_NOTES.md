@@ -4,6 +4,7 @@
 
 - **Bone Chargers** join the zombie family from wave 8. Their bone shoulder armor and rusted bracers accompany a visible warning, a straight rush and a recovery window. Hits interrupt the charge.
 - **Ember Priests** join the devil family from wave 20. A modeled horn crown, molten chest markings and wrist armor distinguish their ground-flame spell from the base devil's fireballs.
+- Armor, horn sockets, clothing and molten inlays share the native model's lighting, outlines and moving body parts. Complete walk return frames and visible skill end poses keep the animation cycles coherent.
 - Variants replace existing spawn slots. Active limits and clear warnings keep their skills readable, including at LOW detail.
 
 ## 💜 Enchant the ammunition you are holding
@@ -28,7 +29,7 @@
 New PvE rules apply to solo, local co-op and compatible LAN peers. Death match and older peers retain their supported rules.
 
 Windows portable: **Boxhead 2Play Rooms-0.3.0-portable.exe**. Saves remain in `%USERPROFILE%\.boxhead`.
-Release verification is functional and serialized; performance benchmarks and extreme stress are outside this release's authorized QA scope.
+Release verification is functional and serialized; gameplay/LAN performance benchmarks and extreme stress are outside this release's authorized QA scope.
 
 [Detailed changes and verification (Chinese)](https://github.com/Xi-Gong/boxhead_remake/blob/v0.3.0/PARITY.md)
 

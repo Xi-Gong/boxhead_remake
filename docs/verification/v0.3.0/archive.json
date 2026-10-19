@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "version": "0.3.0",
+  "sourceSha256": "71fb57c2201527c1b615a19a7030364e2289efecd9e94711ce2394eac750ca1e",
+  "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+  "exe": "C:\\Users\\royxg\\boxhead-exe-archive\\Boxhead 2Play Rooms-0.3.0-portable.exe",
+  "exeSha256": "efa75ea69c61135eec646e06795b2930c84b6f43181d9d86ab27e616e57e8983",
+  "archive": "C:\\Users\\royxg\\boxhead-exe-archive\\v0.3.0-verification-9075cf6d.zip",
+  "archiveBytes": 63744611,
+  "archiveSha256": "5999e92e5ca8e1e5290c1dcf92ddede34d5b295e757ddff569e1015f136fe286",
+  "verifiedEntries": 536,
+  "compression": "Fastest",
+  "priority": "BelowNormal",
+  "logicalProcessors": 2,
+  "note": "archive.json is the external checksum record and is not included in its own archive."
+}
