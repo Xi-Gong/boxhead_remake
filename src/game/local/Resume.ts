@@ -27,6 +27,8 @@ import { SURVIVAL_RULE, survivalEnabled, settleVitals } from './SurvivalRules.ts
 import { LOOT_RULE, modernLoot, type SupplyState } from './LootRules.ts';
 import { ENDLESS_RULE } from './EndlessRules.ts';
 import { endlessWorld } from './Endless.ts';
+import {VARIANTS_RULE,captureVariants,restoreVariants,variantsWorld,type VariantSave} from './EnemyVariants.ts';
+import {enchantedAmmo} from './EnchantmentRules.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -38,6 +40,7 @@ export interface WeaponState {
   /** Undefined while the weapon was never picked up (no mThing). */
   ammo?: number;
   totalAmmo?: number;
+  enchantedAmmo?: number;
 }
 
 export interface PlayerState {
@@ -67,6 +70,7 @@ export interface ObjectState {
   owner?: number;
   /** Placed barrel / mine / charge pack damage. */
   damage?: number;
+  enchanted?: boolean;
   /** Walls only (marker + placed). */
   life?: number;
   /** Marker pickups only: taken and counting down to reappear. */
@@ -80,6 +84,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  variants?: VariantSave;
   endless?: typeof ENDLESS_RULE;
   survival?: typeof SURVIVAL_RULE;
   loot?: { rule: typeof LOOT_RULE; state: SupplyState };
@@ -176,6 +181,7 @@ function capturePlayer(p: any): PlayerState {
       active: !!w.mActive,
       ammo: w.mThing != undefined ? w.mThing.mAmmo : undefined,
       totalAmmo: w.mThing != undefined ? w.mThing.mTotalAmmo : undefined,
+      ...(enchantedAmmo(w.mThing)!==0?{enchantedAmmo:enchantedAmmo(w.mThing)}:{}),
     };
   }
   return {
@@ -214,6 +220,7 @@ function captureObject(t: any): ObjectState {
     o.crate = { weapons: t.mPayload.weapons, currentWeapon: t.mPayload.currentWeapon };
   }
   if (t.mSupplyId) o.supply = { kind: t.mSupplyKind, id: t.mSupplyId };
+  if(t.mEnchanted)o.enchanted=true;
   if (t.mRandomRedId) o.randomRed = { id: t.mRandomRedId, remainingTicks: t.mDeleteCounter, alpha: t.mAlpha };
   return o;
 }
@@ -241,6 +248,7 @@ export function capture(world: any): RunSnapshot {
   return {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
     ...(endlessWorld(world)?{endless:ENDLESS_RULE}:{}),
+    ...(variantsWorld(world)?{variants:captureVariants(world)}:{}),
     ...(survivalEnabled(world) ? { survival: SURVIVAL_RULE } : {}),
     ...(modernLoot(world) ? { loot: { rule: LOOT_RULE, state: { ...u.supplyState } } } : {}),
     version: RESUME_VERSION,
@@ -312,6 +320,7 @@ function applyPlayer(world: any, s: PlayerState): void {
     if (world.mUpgrades.lanGrowth && entry.mThing) world.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
     if (ws.ammo != undefined && entry.mThing != undefined) entry.mThing.mAmmo = ws.ammo;
     if (ws.totalAmmo != undefined && entry.mThing != undefined) entry.mThing.mTotalAmmo = ws.totalAmmo;
+    if(entry.mThing){if(ws.enchantedAmmo!==undefined&&variantsWorld(world))entry.mThing.mEnchantedAmmo=ws.enchantedAmmo;else delete entry.mThing.mEnchantedAmmo;}
   }
   if (s.currentWeapon != undefined) {
     p.SelectWeapon(s.currentWeapon);
@@ -352,6 +361,7 @@ function recreatePlaced(world: any, s: ObjectState): void {
       return;
   }
   world.mThing_Collection.AddThing(t);
+  if(s.enchanted&&variantsWorld(world))t.mEnchanted=true;
   if (s.supply || s.randomRed) {
     // Reattach without processing a pickup during restore, and without spending a remaining lifetime tick.
     world.mMap.mMapwho.AddThing(t);
@@ -410,6 +420,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if (!Number.isSafeInteger(snap.wave) || snap.wave < 1) return false;
   // Never reinterpret an endless checkpoint using an older negotiated simulation.
   if ((snap.endless === ENDLESS_RULE || snap.growth?.players.some(p => p.endless)) && !endlessWorld(world)) return false;
+  if(snap.variants?.rule===VARIANTS_RULE&&!variantsWorld(world))return false;
   const u = world.mUpgrades;
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);
@@ -449,6 +460,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     u.Level.mDevilCount = 0;
     u.Level.mPlayerCount = c.playerCount;
     for (const s of snap.players) applyPlayer(world, s);
+    restoreVariants(world,snap.variants);
     applyObjects(world, snap);
     hud.nTotalScore = snap.score;
     if (snap.deaths) {

@@ -9,12 +9,14 @@
 import { proto } from '../../engine/runtime.ts';
 import { CSound, DrawPrimitive, Thing, World } from '../packages.ts';
 import { CThing_Object } from '../Thing/Object/CThing_Object.ts';
+import {enchantedAmmo} from './EnchantmentRules.ts';
 
 /** One restorable weapon (subset of Resume's WeaponState in transport form). */
 export interface CrateWeapon {
   nameID: string;
   ammo: number;
   totalAmmo: number;
+  enchantedAmmo?: number;
 }
 
 /** What the crate holds; currentWeapon = the weapon the player DIED holding (for the auto-switch on pickup). */
@@ -32,7 +34,8 @@ export function captureCratePayload(p: any): CratePayload | null {
   for (const entry of p?.mWeaponList ?? []) {
     if (!entry?.mActive || !entry.mThing || entry.mNameID === 'pistol') continue; // pistol has infinite ammo
     if (!(entry.mThing.mAmmo > 0)) continue; // empty slots are not restorable payload
-    weapons.push({ nameID: entry.mNameID, ammo: entry.mThing.mAmmo, totalAmmo: entry.mThing.mTotalAmmo });
+    weapons.push({ nameID: entry.mNameID, ammo: entry.mThing.mAmmo, totalAmmo: entry.mThing.mTotalAmmo,
+      ...(enchantedAmmo(entry.mThing)!==0?{enchantedAmmo:enchantedAmmo(entry.mThing)}:{}) });
   }
   if (!weapons.length) return null;
   const cur = p.mWeapon_Current?.mNameID;
@@ -55,6 +58,7 @@ export function applyCratePayload(p: any, payload: CratePayload): void {
     if (!thing) continue;
     thing.mAmmo = Math.max(thing.mAmmo, cw.ammo);
     thing.mTotalAmmo = Math.max(thing.mTotalAmmo, cw.totalAmmo);
+    if(cw.enchantedAmmo!==undefined)thing.mEnchantedAmmo=thing.mEnchantedAmmo===-1||cw.enchantedAmmo===-1?-1:Math.min(thing.mAmmo,Math.max(enchantedAmmo(thing),cw.enchantedAmmo));
   }
   const cur = payload.currentWeapon;
   if (cur != undefined && p.mWeapon_Current?.mNameID === 'pistol') {

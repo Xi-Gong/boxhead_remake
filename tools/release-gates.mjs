@@ -20,13 +20,13 @@ for(const file of [path.join('dist-electron','main.cjs'),...readdirSync('dist/bu
  if(!extractFile(asar,file).equals(readFileSync(file)))throw new Error('stale packaged code: '+file);
 }
 const identity={sourceSha256:hash.digest('hex'),asarSha256:createHash('sha256').update(readFileSync(asar)).digest('hex'),version};
-const saved=path.join(out,'report.json'),report={...identity,cases:[]};
+const saved=path.join(out,'report.json'),report={...identity,scope:'Serial functional acceptance; four mixed explosive burst stress cases excluded by the user working-hours constraint.',cases:[]};
 if(existsSync(saved)){const old=JSON.parse(readFileSync(saved));if(old.sourceSha256===identity.sourceSha256&&old.asarSha256===identity.asarSha256)report.cases=old.cases;}
 const cases=[
- ['vitest','node_modules/vitest/vitest.mjs','run'],
+ ['vitest','node_modules/vitest/vitest.mjs','run','--maxWorkers=1','--no-file-parallelism','--testNamePattern=^(?!.*mixed explosive burst)'],
  ['bitmap-blit','tests/e2e/bitmap-blit.browser.mjs'],['masked-copy','tests/e2e/masked-copy.browser.mjs'],['engine-browser','tests/browser/run-engine.ts'],
  ['ui','tests/e2e/ui.browser.mjs'],['audio','tests/e2e/audio.browser.mjs'],
- ...['wave-input','room-settings','menu-spacing','floating-scores','hud-messages','explosion-flash','local-growth','modern-supplies','endless'].map(name=>[name,`tests/e2e/${name}.browser.mjs`]),
+ ...['wave-input','room-settings','menu-spacing','floating-scores','hud-messages','explosion-flash','local-growth','modern-supplies','endless','enemy-variants','enchantment'].map(name=>[name,`tests/e2e/${name}.browser.mjs`]),
  ['survival-ui','tests/e2e/supplies-ui.browser.mjs'],
  ['growth-ui','tests/e2e/growth-ui.browser.mjs'],['balance-ui','tests/e2e/growth-ui.browser.mjs'],['supplies-ui','tests/e2e/supplies-ui.browser.mjs'],['added-ui','tests/e2e/added-ui.browser.mjs'],
  ['input-badge','tests/e2e/inputBadge.browser.mjs'],['viewport-pause','tests/e2e/viewportPause.browser.mjs'],

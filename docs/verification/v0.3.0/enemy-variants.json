@@ -1,0 +1,626 @@
+{
+  "status": "feature-accepted-release-gates-pending",
+  "scope": "Development functional acceptance. No benchmark or extreme stress.",
+  "rules": {
+    "priest": "30% one purple enchantment crate; otherwise one equal armor/ammo/medical roll",
+    "enchantment": "35% damage; bullets hit at most three enemies; railgun retains unlimited enemy piercing; blast edge minimum 75%; walls block enchanted blasts; replenished ammunition stays ordinary"
+  },
+  "checks": {
+    "relatedRegressionTests": 103,
+    "finalVariantAndEnchantmentTests": 33,
+    "typechecks": 3,
+    "build": true,
+    "mechanicalPortsChanged": [],
+    "independentPeers": {
+      "ok": true,
+      "scenario": {
+        "name": "enemy variants skills and drops under correction and recovery",
+        "variants": true,
+        "endless": true,
+        "loot": true,
+        "survival": true,
+        "balance": true,
+        "supplies": true,
+        "growth": true,
+        "wave": 20,
+        "rtt": 100,
+        "jitter": 20,
+        "reconnect": true,
+        "total": 240
+      },
+      "peers": [
+        {
+          "tick": 240,
+          "digest": {
+            "things": "1cf5e58579611231",
+            "cells": "01f1d7b7614fc51b",
+            "collection": "76ac701dd56c1ba9",
+            "navigation": "7ce53ddb7faf1e87",
+            "upgrades": "b21fa05d39c00559",
+            "slots": "55d29c67ac275823",
+            "random": "ed69808f2ade5f33",
+            "outcome": "716e97ab4e0ad83f"
+          },
+          "events": [
+            279,
+            1603433824
+          ],
+          "decals": [
+            441,
+            119242416
+          ],
+          "growth": {
+            "version": 1,
+            "players": [
+              {
+                "score": 309800,
+                "level": 47,
+                "xp": 10,
+                "curve": "pve-balance-v1",
+                "endless": true
+              },
+              {
+                "score": 27600,
+                "level": 46,
+                "xp": 6,
+                "curve": "pve-balance-v1",
+                "endless": true
+              }
+            ]
+          },
+          "armor": [
+            0,
+            0
+          ],
+          "stats": {
+            "predictions": 239,
+            "corrections": 77,
+            "replayedTicks": 196,
+            "maxDepth": 3,
+            "captureMs": 0
+          },
+          "variantPhases": [
+            "charger:warning",
+            "priest:State_VariantCast",
+            "charger:charge",
+            "priest:State_GotoPlayer",
+            "priest:State_Turn",
+            "priest:State_CellToCell",
+            "charger:recovery",
+            "charger:State_GotoPlayer",
+            "charger:State_CellToCell",
+            "charger:State_Turn",
+            "charger:State_ExplosionHit",
+            "charger:State_Sleep",
+            "charger:undefined",
+            "charger:State_EnterMap",
+            "priest:State_Sleep",
+            "charger:State_Dying",
+            "priest:State_Dying",
+            "charger:State_Dead",
+            "priest:State_Dead"
+          ],
+          "enchantedShots": [
+            "CThing_Shot_Bullet",
+            "CThing_Shot_Grenade",
+            "CThing_Shot_ClusterShell"
+          ],
+          "errors": []
+        },
+        {
+          "tick": 240,
+          "digest": {
+            "things": "1cf5e58579611231",
+            "cells": "01f1d7b7614fc51b",
+            "collection": "76ac701dd56c1ba9",
+            "navigation": "7ce53ddb7faf1e87",
+            "upgrades": "b21fa05d39c00559",
+            "slots": "55d29c67ac275823",
+            "random": "ed69808f2ade5f33",
+            "outcome": "716e97ab4e0ad83f"
+          },
+          "events": [
+            279,
+            1603433824
+          ],
+          "decals": [
+            441,
+            119242416
+          ],
+          "growth": {
+            "version": 1,
+            "players": [
+              {
+                "score": 309800,
+                "level": 47,
+                "xp": 10,
+                "curve": "pve-balance-v1",
+                "endless": true
+              },
+              {
+                "score": 27600,
+                "level": 46,
+                "xp": 6,
+                "curve": "pve-balance-v1",
+                "endless": true
+              }
+            ]
+          },
+          "armor": [
+            0,
+            0
+          ],
+          "stats": {
+            "predictions": 172,
+            "corrections": 58,
+            "replayedTicks": 67,
+            "maxDepth": 2,
+            "captureMs": 0
+          },
+          "variantPhases": [
+            "charger:warning",
+            "priest:State_VariantCast",
+            "charger:charge",
+            "priest:State_GotoPlayer",
+            "priest:State_Turn",
+            "priest:State_CellToCell",
+            "charger:recovery",
+            "charger:State_GotoPlayer",
+            "charger:State_CellToCell",
+            "charger:State_Turn",
+            "charger:State_ExplosionHit",
+            "charger:State_Sleep",
+            "charger:undefined",
+            "charger:State_EnterMap",
+            "priest:State_Sleep",
+            "charger:State_Dying",
+            "priest:State_Dying",
+            "charger:State_Dead",
+            "priest:State_Dead"
+          ],
+          "enchantedShots": [
+            "CThing_Shot_Bullet",
+            "CThing_Shot_Grenade",
+            "CThing_Shot_ClusterShell"
+          ],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "browser": {
+    "art": {
+      "ok": true,
+      "art": [
+        {
+          "kind": "charger",
+          "metrics": [
+            {
+              "key": "stand",
+              "directions": 16,
+              "frames": 1
+            },
+            {
+              "key": "walk",
+              "directions": 8,
+              "frames": 5
+            },
+            {
+              "key": "attack",
+              "directions": 8,
+              "frames": 4
+            },
+            {
+              "key": "shothit_1",
+              "directions": 8,
+              "frames": 2
+            },
+            {
+              "key": "shothit_2",
+              "directions": 8,
+              "frames": 2
+            },
+            {
+              "key": "dying",
+              "directions": 4,
+              "frames": 5
+            },
+            {
+              "key": "dead",
+              "directions": 4,
+              "frames": 1
+            },
+            {
+              "key": "warning",
+              "directions": 16,
+              "frames": 6
+            },
+            {
+              "key": "charge",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "cast",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "recovery",
+              "directions": 16,
+              "frames": 6
+            }
+          ]
+        },
+        {
+          "kind": "priest",
+          "metrics": [
+            {
+              "key": "stand",
+              "directions": 16,
+              "frames": 1
+            },
+            {
+              "key": "walk",
+              "directions": 8,
+              "frames": 5
+            },
+            {
+              "key": "attack",
+              "directions": 8,
+              "frames": 4
+            },
+            {
+              "key": "shothit_1",
+              "directions": 8,
+              "frames": 2
+            },
+            {
+              "key": "shothit_2",
+              "directions": 8,
+              "frames": 2
+            },
+            {
+              "key": "dying",
+              "directions": 4,
+              "frames": 5
+            },
+            {
+              "key": "dead",
+              "directions": 4,
+              "frames": 1
+            },
+            {
+              "key": "warning",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "charge",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "cast",
+              "directions": 8,
+              "frames": 6
+            },
+            {
+              "key": "recovery",
+              "directions": 16,
+              "frames": 6
+            }
+          ]
+        }
+      ],
+      "shots": [
+        "generated/reports/v030/enemy-variants/charger-all-directions.png",
+        "generated/reports/v030/enemy-variants/priest-all-directions.png",
+        "generated/reports/v030/enemy-variants/warning-640x480.png",
+        "generated/reports/v030/enemy-variants/warning-960x720.png",
+        "generated/reports/v030/enemy-variants/warning-1280x720.png",
+        "generated/reports/v030/enemy-variants/warning-640x889.png",
+        "generated/reports/v030/enemy-variants/burn-640x480.png",
+        "generated/reports/v030/enemy-variants/burn-low-640x480.png"
+      ],
+      "warning": {
+        "charger": "warning",
+        "priest": "State_VariantCast",
+        "zones": 1
+      },
+      "geometry": [
+        {
+          "width": 640,
+          "height": 480,
+          "ring": 417,
+          "scale": 1,
+          "left": 0,
+          "top": 0,
+          "zone": {
+            "x": 272,
+            "y": 240
+          },
+          "enemies": [
+            {
+              "x": 131,
+              "y": 200,
+              "w": 38,
+              "h": 50
+            },
+            {
+              "x": 124,
+              "y": 242,
+              "w": 40,
+              "h": 73
+            }
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "ring": 966,
+          "scale": 1.5,
+          "left": 0,
+          "top": 0,
+          "zone": {
+            "x": 272,
+            "y": 240
+          },
+          "enemies": [
+            {
+              "x": 131,
+              "y": 200,
+              "w": 38,
+              "h": 50
+            },
+            {
+              "x": 124,
+              "y": 242,
+              "w": 40,
+              "h": 73
+            }
+          ]
+        },
+        {
+          "width": 853,
+          "height": 480,
+          "ring": 963,
+          "scale": 1.5005861664712778,
+          "left": 0,
+          "top": 0,
+          "zone": {
+            "x": 378.5,
+            "y": 240
+          },
+          "enemies": [
+            {
+              "x": 237.5,
+              "y": 200,
+              "w": 38,
+              "h": 50
+            },
+            {
+              "x": 230.5,
+              "y": 242,
+              "w": 40,
+              "h": 73
+            }
+          ]
+        },
+        {
+          "width": 640,
+          "height": 889,
+          "ring": 424,
+          "scale": 1,
+          "left": 0,
+          "top": 0,
+          "zone": {
+            "x": 272,
+            "y": 444.5
+          },
+          "enemies": [
+            {
+              "x": 131,
+              "y": 404.5,
+              "w": 38,
+              "h": 50
+            },
+            {
+              "x": 124,
+              "y": 446.5,
+              "w": 40,
+              "h": 73
+            }
+          ]
+        }
+      ]
+    },
+    "enchantment": {
+      "ok": true,
+      "shots": [
+        "generated/reports/v030/enchantment/purple-crate.png",
+        "generated/reports/v030/enchantment/ammo-640x480.png",
+        "generated/reports/v030/enchantment/ammo-960x720.png",
+        "generated/reports/v030/enchantment/ammo-1280x720.png",
+        "generated/reports/v030/enchantment/ammo-640x889.png",
+        "generated/reports/v030/enchantment/enchanted-blast.png"
+      ],
+      "geometry": [
+        {
+          "width": 640,
+          "height": 480,
+          "purple": 73,
+          "text": "UZI:7",
+          "color": 13537279,
+          "bounds": {
+            "xMin": 123.4,
+            "xMax": 216.6,
+            "yMin": 164.95,
+            "yMax": 183.25
+          },
+          "left": 0,
+          "top": 0,
+          "scale": 1
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "purple": 184,
+          "text": "UZI:7",
+          "color": 13537279,
+          "bounds": {
+            "xMin": 123.4,
+            "xMax": 216.6,
+            "yMin": 164.95,
+            "yMax": 183.25
+          },
+          "left": 0,
+          "top": 0,
+          "scale": 1.5
+        },
+        {
+          "width": 853,
+          "height": 480,
+          "purple": 183,
+          "text": "UZI:7",
+          "color": 13537279,
+          "bounds": {
+            "xMin": 123.4,
+            "xMax": 216.6,
+            "yMin": 164.95,
+            "yMax": 183.25
+          },
+          "left": 0,
+          "top": 0,
+          "scale": 1.5005861664712778
+        },
+        {
+          "width": 640,
+          "height": 889,
+          "purple": 73,
+          "text": "UZI:7",
+          "color": 13537279,
+          "bounds": {
+            "xMin": 123.4,
+            "xMax": 216.6,
+            "yMin": 164.95,
+            "yMax": 183.25
+          },
+          "left": 0,
+          "top": 0,
+          "scale": 1
+        }
+      ],
+      "crate": {
+        "x": 153,
+        "y": 213,
+        "width": 44,
+        "height": 42,
+        "purplePixels": 377
+      }
+    },
+    "review": "Direct screenshot review plus geometry/pixel/real-mouse/keyboard checks. No zai vision service used.",
+    "viewports": [
+      [
+        640,
+        480
+      ],
+      [
+        960,
+        720
+      ],
+      [
+        1280,
+        720
+      ],
+      [
+        640,
+        889
+      ]
+    ],
+    "fixtureCorrections": [
+      "Set explicit Z=0 on controlled test actors.",
+      "Repaint paused world and wait for opening transition/canvas submission.",
+      "Center camera and allow the real post-pickup deletion tick."
+    ]
+  },
+  "artifacts": {
+    "generated/reports/v030/enemy-variants/charger-all-directions.png": {
+      "bytes": 447319,
+      "sha256": "e21ffc3fa099ff7ed08ec1d64d044e5dac44cec088016e3b5dbebed0043374be"
+    },
+    "generated/reports/v030/enemy-variants/priest-all-directions.png": {
+      "bytes": 522517,
+      "sha256": "d0c2fb1e4b674949694735f03e2a8010498ea05274163b0cf0410f8059dff383"
+    },
+    "generated/reports/v030/enemy-variants/warning-640x480.png": {
+      "bytes": 42673,
+      "sha256": "0119546b0560176b2bff2cc528625763d2d01ef6df73549425eb56b14b19492e"
+    },
+    "generated/reports/v030/enemy-variants/warning-960x720.png": {
+      "bytes": 76044,
+      "sha256": "1a9ea2b678ca577403d11fd96099f6446039d6d480e86e2055418b2539087663"
+    },
+    "generated/reports/v030/enemy-variants/warning-1280x720.png": {
+      "bytes": 85325,
+      "sha256": "eac019490fadb2476f11059e5e5d7b1faeb9278dc3bc14fa08475c6b0a9d48c5"
+    },
+    "generated/reports/v030/enemy-variants/warning-640x889.png": {
+      "bytes": 45732,
+      "sha256": "eb504d57c67f59c50d198289a2ba749401a8245257b24cee55d881d3d5110bdc"
+    },
+    "generated/reports/v030/enemy-variants/burn-640x480.png": {
+      "bytes": 43617,
+      "sha256": "d6272a4950604f533fb4c8e48f2c3162db6b0afe500ef63ea7b9258a332ab551"
+    },
+    "generated/reports/v030/enemy-variants/burn-low-640x480.png": {
+      "bytes": 43342,
+      "sha256": "c1f9aa3041766fc3d1d877dbd056e1111a8b9f396c5af7fc72a9e8ee1a78aac1"
+    },
+    "generated/reports/v030/enchantment/purple-crate.png": {
+      "bytes": 41461,
+      "sha256": "704dbba176bceb5e11865d3aba39fbc06b53d456305819c9c35942dfddcc4cec"
+    },
+    "generated/reports/v030/enchantment/ammo-640x480.png": {
+      "bytes": 43439,
+      "sha256": "b26e6a54716cf0b5013752de1d1536eb99b5269e808485dd6561bfe6f97ed0af"
+    },
+    "generated/reports/v030/enchantment/ammo-960x720.png": {
+      "bytes": 73415,
+      "sha256": "9fb120d7cfa4c27fc8499e224cdf8a1927c0f435243adc7ccbcd244ca28f4cc7"
+    },
+    "generated/reports/v030/enchantment/ammo-1280x720.png": {
+      "bytes": 87122,
+      "sha256": "698475d44220ddc66800b6a51bf57b336ec5023e6e0103b74d19b11a548f8966"
+    },
+    "generated/reports/v030/enchantment/ammo-640x889.png": {
+      "bytes": 55695,
+      "sha256": "aa7be02fb8f1a8c0f20e42b57bb80f2529b8f67f64abc283b1cc456e6546f8a5"
+    },
+    "generated/reports/v030/enchantment/enchanted-blast.png": {
+      "bytes": 54223,
+      "sha256": "9b423e5c424da66c42d1253f075e56aed7b02548e530e4247ce05dd9cf57de4d"
+    },
+    "generated/reports/v030/enemy-variants/actions.webm": {
+      "bytes": 462754,
+      "sha256": "49b29b2488ac52de370ba2d6156a26318c6ed602787436d768ab4d5c274dc897"
+    },
+    "dist/bundle/gallery-CmDtL4W7.js": {
+      "bytes": 8735,
+      "sha256": "fa7cad13576282267de84bc2be8a37bb2a6578ac1b5721edba4f83391e9fed42"
+    },
+    "dist/bundle/main-Br3S41Lh.js": {
+      "bytes": 558243,
+      "sha256": "e80b0aeec621ede58787cbb00679932f9092026cc97560976d284d9cde238d34"
+    },
+    "dist/bundle/Player-o3pII7gY.js": {
+      "bytes": 139368,
+      "sha256": "6b3844a973e7c31df7b6d9b053c12c7cafa4b4f05970e74c2c737cad98186cc5"
+    }
+  },
+  "followup": "Screenshot review found simultaneous HUD message entry overlap; tracked for a separate correction before release.",
+  "cleanup": "Browser contexts closed and peer processes killed in finally. Owned preview server retained for final QA.",
+  "pending": [
+    "Final functional release gates, portable packaging, tag and publication"
+  ]
+}

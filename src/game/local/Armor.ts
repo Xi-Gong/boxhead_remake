@@ -10,6 +10,7 @@ import { installShieldResilience, protectEnemyHit } from './ShieldResilience.ts'
 import { LOOT_RULE, SUPPLY_KINDS, modernLoot, setModernLoot, supplyIdentity } from './LootRules.ts';
 import { installSupplyDrops } from './SupplyDrops.ts';
 import { REFILL_RULE, setReliableSupplies } from './ReliableSupplies.ts';
+import {dropPriestSupplies} from './VariantLoot.ts';
 
 const bars=new WeakMap<object,any>();
 const fills=new WeakMap<object,any>();
@@ -32,6 +33,7 @@ export function installArmorScope():void{
     victim.supplyDropLogged=true;
     const create=this._CreatePickup,own=Object.getOwnPropertyDescriptor(this,'_CreatePickup');
     this._CreatePickup=function(this:any,position:any):void{
+      if(modernLoot(this)&&victim.mEnemyVariant==='priest'){dropPriestSupplies(this,position);return;}
       const modern=modernLoot(this),kind=modern?SUPPLY_KINDS[random(3)]:devilSupply(random(100));
       if(!kind){create.call(this,position);return;}
       const at=crateDropPosition(this,position);

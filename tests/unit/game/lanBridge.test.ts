@@ -7,6 +7,17 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([true,false])('negotiates enemy variants and refuses incompatible modern recovery: %s',enabled=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{}),features=['endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1',...(enabled?['enemy-variants-v1']:[])];
+  try{
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});b.phase='setup';b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.variants).toBe(enabled?'enemy-variants-v1':undefined);
+   const onHello=vi.fn();b.session={phase:'reconnecting',startOpts:{cfg:{endless:'endless-pve-v1',variants:'enemy-variants-v1'}},onHello} as any;
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});expect(onHello).toHaveBeenCalledTimes(enabled?1:0);
+   if(!enabled)expect(b.message).toContain('v0.3.0');
+  }finally{b.session=null;CMain.mSaveData=previous;launch.mockRestore();}
+ });
  it.each([undefined,...['endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1']])('negotiates endless waves only with every prerequisite; missing %s',missing=>{
   const b=lanBridge(),previous=CMain.mSaveData,shared=CSaveData.mSharedObject;CMain.mSaveData={} as any;
   CSaveData.mSharedObject={data:{mMaxWaveReached:1000}} as any;

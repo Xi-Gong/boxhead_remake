@@ -4,10 +4,11 @@ import {CMain,CSound,Thing,registerGameClass} from '../packages.ts';
 import {CThing_Object_Pickup} from '../Thing/Object/CThing_Object_Pickup.ts';
 import { playerMaximum, survivalEnabled } from './SurvivalRules.ts';
 import { reliableSupplies, syncSupplyWeapon, syncSupplyVitals } from './ReliableSupplies.ts';
+import {canEnchant,enchantHeldWeapon} from './EnchantmentRules.ts';
 
 export const SUPPLY_RULE='armor-ammo-v1';
 export const ARMOR_MAX=100;
-export type SupplyKind='armor'|'ammo'|'medical';
+export type SupplyKind='armor'|'ammo'|'medical'|'enchant';
 export function devilSupply(roll:number):SupplyKind|undefined{return roll<20?'armor':roll<40?'ammo':undefined;}
 // Immutable per-world rules derived from the negotiated config, not mutable gameplay/snapshot data.
 const enabledWorlds=new WeakSet<object>();
@@ -27,6 +28,7 @@ export function refillAmmo(player:any):void{
 }
 export function supplyCanBenefit(player:any,kind:SupplyKind):boolean{
   if(!player||player.mLife<=0||player.mFlags&Thing.CThing.mFlag_DEAD)return false;
+  if(kind==='enchant')return canEnchant(player);
   if(reliableSupplies(player.mWorld)){
     syncSupplyVitals(player);
     if(kind==='ammo')for(const entry of player.mWeaponList??[])if(entry.mActive&&entry.mThing)syncSupplyWeapon(player,entry.mThing);
@@ -37,6 +39,7 @@ export function supplyCanBenefit(player:any,kind:SupplyKind):boolean{
 }
 export function applySupplyEffect(player:any,kind:SupplyKind):boolean{
   if(!supplyCanBenefit(player,kind))return false;
+  if(kind==='enchant')return enchantHeldWeapon(player);
   if(kind==='armor')refillArmor(player);
   else if(kind==='ammo')refillAmmo(player);
   else player.mLife=player.mMaxLife;
@@ -70,19 +73,29 @@ export class CThing_Object_SupplyCrate extends CThing_Object_Pickup {
       // Refinish the original three shaded faces rather than painting a flat icon over a red box.
       // Zero offsets preserve its black keyline and transparent pixels. Bake once per library/kind,
       // so the live render path remains the original bitmap blit with no per-frame filter cost.
-      const palette=kind==='armor'
+      const palette=kind==='enchant'
+        ?[.56,.30,0,0,0, .18,.18,0,0,0, .74,.46,0,0,0, 0,0,0,1,0]
+        :kind==='armor'
         ?[.16,.30,0,0,0, .30,.60,0,0,0, .48,.65,0,0,0, 0,0,0,1,0]
         :kind==='medical'
           ?[.10,.15,0,0,0, .65,.60,0,0,0, .20,.25,0,0,0, 0,0,0,1,0]
           :[.36,.28,0,0,0, .40,.34,0,0,0, .20,.16,0,0,0, 0,0,0,1,0];
       bitmap.applyFilter(bitmap,bitmap.rectangle,new flash.geom.Point(0,0),new flash.filters.ColorMatrixFilter(palette));
-      const hardware=kind==='armor'?0xffa8c4d3:kind==='medical'?0xffc5e6d5:0xffbcbb8b;
+      const hardware=kind==='enchant'?0xffe0b7ff:kind==='armor'?0xffa8c4d3:kind==='medical'?0xffc5e6d5:0xffbcbb8b;
       // Short corner guards and their dark fixings stay inside the authored front faces.
       for(const dx of [-6,13]){
         bitmap.fillRect(new flash.geom.Rectangle(x+dx,y-3,2,4),hardware);
         bitmap.fillRect(new flash.geom.Rectangle(x+dx,y-1,1,1),0xff263039);
       }
-      if(kind==='armor'){
+      if(kind==='enchant'){
+        // Faceted amethyst rune; preserve the original crate's shaded faces and black outline.
+        for(let row=0;row<11;row++){
+          const width=1+2*Math.min(row,10-row,4);
+          bitmap.fillRect(new flash.geom.Rectangle(x+(9-width)/2,y+row,width,1),0xff291538);
+          if(width>2)bitmap.fillRect(new flash.geom.Rectangle(x+(11-width)/2,y+row,width-2,1),row<5?0xffedcbff:0xff9d58db);
+        }
+        bitmap.fillRect(new flash.geom.Rectangle(x+4,y+2,1,6),0xfffaf0ff);
+      }else if(kind==='armor'){
         // Nine-pixel shield: original black keyline, blue plate and a small light reflection.
         for(let row=0;row<10;row++){
           const width=row<6?9:9-2*(row-5);
@@ -122,7 +135,7 @@ export class CThing_Object_SupplyCrate extends CThing_Object_Pickup {
     this.mSupplyConsumed=true;
     if(this.mSupplyId)applySupplyEffect(player,this.mSupplyKind);
     else if(this.mSupplyKind==='armor')refillArmor(player);else if(this.mSupplyKind==='ammo')refillAmmo(player);else player.mLife=player.mMaxLife;
-    this.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${this.mSupplyKind==='armor'?'Armor':this.mSupplyKind==='ammo'?'All ammo':'Health'} full!`);
+    this.mWorld.mHud.AddMessage_Info(this.mSupplyKind==='enchant'?`P${player.mPlayerIndex+1}: ${player.mWeapon_Current.mName} enchanted!`:`P${player.mPlayerIndex+1}: ${this.mSupplyKind==='armor'?'Armor':this.mSupplyKind==='ammo'?'All ammo':'Health'} full!`);
     this.PlaySound(CSound.mSamples.Object_Pickup_wav);
     this.Delete();
   }

@@ -14,6 +14,24 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'ENEMY_VARIANTS',
+    file:'local/EnemyVariants.ts, VariantArt.ts, VariantLoot.ts, Enchantment.ts, EnchantmentRules.ts, Supplies.ts, WeaponCrate.ts, Armor.ts, Resume.ts; local/Net/NetScope.ts, bridge.ts, protocol.ts; electron/lan.ts',
+    description:'v0.3.0 enemy-variants-v1 depends on endless PvE and adds deterministic ordinal replacements '+
+      'within original Zombies/Devil budgets and family identities: at most four Bone Chargers and one Ember '+
+      'Priest. Charges lock direction, telegraph, stop on players/geometry and recover; priest player fireballs '+
+      'become bounded ground marks with simulated warning, four player-only pulses, line-of-sight and shared '+
+      'damage-cycle guards. Obstacle clearing remains original. Skill fields/zones are snapshot-owned; optional '+
+      'run saves restore live variant skills, voice samples, ordinals and independently identified crates. '+
+      'Charger 50% red drops merge with combo guarantees. Priests drop one crate: 30% purple enchantment, '+
+      'otherwise one equal armor/ammo/medical roll. Enchantment boosts the held ammunition batch by 35%, '+
+      'lets bullets hit three enemies, retains railgun piercing, strengthens blast-edge damage to 75% and '+
+      'respects physical walls. Refills add ordinary rounds, authored infinite ammo stays enchanted, fake '+
+      'walls cannot consume the crate, and death crates/saves retain enchanted stock. Purple ammo/tracers '+
+      'and cached violet blasts are render-only. Original '+
+      'art data stays immutable: derived XSI solids/materials articulate per part/direction, preserve foot '+
+      'geometry, include skill poses and bake in loading. Replacement older peers cannot resume a modern run.',
+  },
+  {
     id:'ENDLESS_PVE',
     file:'local/Endless.ts, EndlessRules.ts, LocalGrowth.ts, Resume.ts, SurvivalRules.ts, StartWave.ts, WaveUnlock.ts; local/Net/Growth.ts, GrowthHud.ts, bridge.ts, NetSession.ts',
     description:'v0.3.0 optional endless-pve-v1 requires the existing personal growth, armor, survival, loot and '+

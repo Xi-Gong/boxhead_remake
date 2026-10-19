@@ -15,7 +15,7 @@ const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: tru
 let sent: unknown[] = [];
 const session = new NetSession(role, { send: message => sent.push(message) });
 session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, wave:options.wave, netcode: 'rollback-v2',
-  cfg: { ...(options.endless?{endless:'endless-pve-v1' as const,refill:'reliable-supplies-v1' as const}:{}),...(options.loot?{loot:'supply-crates-v2' as const}:{}),...(options.survival?{survival:'survival-v1' as const}:{}),...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
+  cfg: { ...(options.variants?{variants:'enemy-variants-v1' as const}:{}),...(options.endless?{endless:'endless-pve-v1' as const,refill:'reliable-supplies-v1' as const}:{}),...(options.loot?{loot:'supply-crates-v2' as const}:{}),...(options.survival?{survival:'survival-v1' as const}:{}),...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
     gameAmount: 3, detail: options.detail ?? true, charP1: 0, charP2: 0 } }, game.main());
 if (!game.waitRunning(3000)) throw new Error('boot failed');
 if (options.weapons||options.supplies) for (const player of game.players()) for (const name of Object.keys(player.mWeapons)) player.NewWeapon(name);
@@ -27,6 +27,8 @@ if(options.endless)originalWorld.mUpgrades.supplyState.nextDropTicks=50;
 let peakExplosions = 0;
 let peakArmor=0,ammoGrants=0,protectedHits=0;
 const deliveredRedIds=new Set<string>();
+const variantPhases=new Set<string>();
+const enchantedShots=new Set<string>();
 if (options.growth || options.explosions || options.supplies) {
   const processWorld = originalWorld.Process;
   originalWorld.Process = function (this: any) {
@@ -71,7 +73,24 @@ if (options.growth || options.explosions || options.supplies) {
       new Thing.Affect.CThing_Affect_Bullet(owner,owner,1,owner.mAngle).AffectThing(victim);
       victim.SetState('State_Dying'); // Exercise the original death bookkeeping inside this simulated step.
     }
+    if(options.variants&&tick===20){
+      for(const kind of ['charger','priest']){
+        const C=kind==='charger'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil,e:any=new C(new Thing.Math.CThing_Position(6.5,kind==='charger'?8.5:9.5,0));
+        e.mEnemyVariant=kind;this.mThing_Collection.AddThing(e);e.Process_Init();e.Move(e.mPosition);e.mFlags|=Thing.CThing.mFlag_Collidable;
+        e.Affect_Setup(Thing.Affect.CThing_Affect.mAffect_Bullet|Thing.Affect.CThing_Affect.mAffect_Explosion|Thing.Affect.CThing_Affect.mAffect_FireBall);
+        e.mLife=e.mMaxLife=1000000;e.SetState('State_GotoPlayer');
+        if(kind==='charger')this.mUpgrades.Level.mZombieCount++;else this.mUpgrades.Level.mDevilCount++;
+      }
+    }
+    if(options.variants&&tick===150)for(const e of Object.values(this.mThing_Collection.mThings)as any[])if(e.mEnemyVariant&&e.Process&&e.mLife>0){e.mLife=0;e.lanFatalSlot=0;e.SetState('State_Dying');}
+    if(options.variants&&(tick===30||tick===55)){
+      const p=game.players()[0],name=tick===30?'uzi':'grenade';p.NewWeapon(name);p.SelectWeapon(name);p.mWeapon_Current.mAmmo=7;
+      const crate=this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(p.mPosition.Clone(),'enchant',supplyIdentity(this,'s')));crate.Process_Init();
+      p.mWeapon_Current.Fire(p.mPosition.Clone(),p.mAngle.Clone(),0);
+    }
     const result = processWorld.call(this);
+    if(options.variants)for(const e of Object.values(this.mThing_Collection.mThings)as any[])if(e.mEnemyVariant)variantPhases.add(e.mEnemyVariant+':'+(e.mVariantPhase||e.mStateID));
+    if(options.variants)for(const e of Object.values(this.mThing_Collection.mThings)as any[])if(e.mEnchanted&&e._CLASSID_.startsWith('CThing_Shot_'))enchantedShots.add(e._CLASSID_);
     if(options.loot)for(const t of Object.values(this.mThing_Collection.mThings) as any[])if(t.mRandomRedId)deliveredRedIds.add(t.mRandomRedId);
     if (options.explosions) peakExplosions = Math.max(peakExplosions, this.mThing_Collection.mThingCounters.CThing_Effect_Explosion ?? 0);
     return result;
@@ -102,7 +121,7 @@ process.on('message', (m: any) => {
       growth: world.mUpgrades.lanGrowth,
       confirmedEnemies: session.confirmedEnemies,
       armor:game.players().map(p=>armorValue(p.mArmor,armorMaximum(p))),
-      peakArmor,ammoGrants,protectedHits,deliveredRedIds:[...deliveredRedIds],
+      enchantedShots:[...enchantedShots],variantPhases:[...variantPhases],peakArmor,ammoGrants,protectedHits,deliveredRedIds:[...deliveredRedIds],
       ...(options.loot?{supplyState:world.mUpgrades.supplyState,supplyBoxes:Object.values(world.mThing_Collection.mThings).filter((t:any)=>t.Process&&(t.mSupplyId||t.mRandomRedId)).map((t:any)=>[t.mSupplyId??t.mRandomRedId,t.mSupplyKind,t.mDeleteCounter])}:{}),
       peakExplosions,
       ...(m.settle ? { digest: simulationDigest(captureWorldSnap(world, makeSnapCtx(world, (session as any).slots), false)),

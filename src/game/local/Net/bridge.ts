@@ -67,8 +67,13 @@ class LanBridge {
   private peerLoot = false;
   private peerRefill = false;
   private peerEndless = false;
+  private peerVariants = false;
   private supportsEndless():boolean{return this.peerEndless&&this.peerGrowth&&this.peerSupplies&&this.peerSurvival&&this.peerLoot&&this.peerBalance;}
   private waveMaximum():number{return this.supportsEndless()?maxUnlockedWave():Math.min(100,maxUnlockedWave());}
+  private peerSupportsRun():boolean{
+    const c=this.session?.startOpts?.cfg;
+    return !(c?.endless&&!this.supportsEndless()||c?.variants&&(!this.supportsEndless()||!this.peerVariants)||c?.refill&&!this.peerRefill);
+  }
   session: NetSession | null = null;
   sid: string | undefined;
   /** Client: the host ip it joined (reconnects go there). */
@@ -266,6 +271,7 @@ class LanBridge {
    * surviving checkpoint - reuses the original start options wholesale so both peers rebuild identically).
    */
   startGame(resume: boolean): void {
+    if(resume&&!this.peerSupportsRun())return;
     if (!this.available || !this.isHost) return;
     const sd: any = CMain.mSaveData;
     if (resume) {
@@ -288,6 +294,7 @@ class LanBridge {
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival && this.peerLoot ? {loot:'supply-crates-v2' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival && this.peerLoot && this.peerRefill ? {refill:'reliable-supplies-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()?{endless:'endless-pve-v1' as const}:{}),
+      ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerVariants?{variants:'enemy-variants-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerBalance ? {balance:'pve-balance-v1' as const}:{}),
       difficulty: sel.difficulty,
       ...settings,
@@ -379,6 +386,7 @@ class LanBridge {
       this.peerLoot = Array.isArray(msg.features) && msg.features.includes('supply-crates-v2');
       this.peerRefill = Array.isArray(msg.features) && msg.features.includes('reliable-supplies-v1');
       this.peerEndless = Array.isArray(msg.features) && msg.features.includes('endless-pve-v1');
+      this.peerVariants = Array.isArray(msg.features) && msg.features.includes('enemy-variants-v1');
       if(this.isHost){const maxWave=this.waveMaximum();this.sel={...this.sel,maxWave,wave:Math.min(this.sel.wave,maxWave)};}
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.
       this.sid = this.sid ?? msg.sid;
@@ -390,7 +398,10 @@ class LanBridge {
         this.ready = false; // a fresh hello = a fresh room member (mid-game reconnects go through session.onHello)
         this.send({ t: 'lobby', sel: this.sel }); // (back) in the room view
       }
-      if (this.session) this.session.onHello(msg); // a reconnect mid-game resumes
+      if (this.session) {
+        if(this.peerSupportsRun())this.session.onHello(msg);
+        else this.message='This saved game requires v0.3.0 gameplay features on both players.';
+      } // A replacement older peer must never reinterpret an active modern checkpoint.
       this.notify();
       return;
     }

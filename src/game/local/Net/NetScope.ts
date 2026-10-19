@@ -26,9 +26,11 @@ import { installGrowthScope } from './Growth.ts';
 import { installGrowthHud } from './GrowthHud.ts';
 import { installFloatingScores } from './FloatingScores.ts';
 import { installHudMessages } from './HudMessages.ts';
+import { installEnchantmentScope } from '../Enchantment.ts';
 
 export function installNetScope(): void {
   installGrowthScope();
+  installEnchantmentScope();
   installGrowthHud();
   installFloatingScores();
   installHudMessages();
