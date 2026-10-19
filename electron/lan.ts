@@ -75,6 +75,7 @@ export class LanTransport {
   private serverPort = 0;
   private beaconSock: UdpSocket | undefined;
   private beaconTimer: NodeJS.Timeout | undefined;
+  private beaconErrorReported = false;
   private beaconStatus: 'lobby' | 'playing' = 'lobby';
   private hostGeneration = 0;
   private startingHost: Promise<number> | undefined;
@@ -186,8 +187,18 @@ export class LanTransport {
     }
     this.server = server;
     this.serverPort = port;
-    this.beaconSock = createSocket({ type: 'udp4' });
-    this.beaconTimer = setInterval(() => this.sendBeacon(), LAN_HEARTBEAT_MS);
+    const socket = createSocket({ type: 'udp4' });
+    this.beaconSock = socket;
+    this.beaconErrorReported = false;
+    socket.on('error', error => this.reportBeaconError(socket, error));
+    // send() binds implicitly. Enable directed broadcasts as soon as that bind completes.
+    socket.on('listening', () => {
+      if (this.beaconSock !== socket || generation !== this.hostGeneration) return;
+      try { socket.setBroadcast(true); } catch (error) { this.reportBeaconError(socket, error); }
+    });
+    this.beaconTimer = setInterval(() => {
+      if (this.beaconSock === socket && generation === this.hostGeneration) this.sendBeacon();
+    }, LAN_HEARTBEAT_MS);
     this.sendBeacon();
     return port;
   }
@@ -211,7 +222,8 @@ export class LanTransport {
   }
 
   private sendBeacon(): void {
-    if (!this.beaconSock) return;
+    const socket = this.beaconSock;
+    if (!socket) return;
     const payload = Buffer.from(encodeBeacon(this.beaconBody()), 'utf8');
     const targets = new Set<string>(['127.0.0.1']);
     for (const list of Object.values(os.networkInterfaces())) {
@@ -225,22 +237,42 @@ export class LanTransport {
         targets.add(broadcast);
       }
     }
-    for (const target of targets) this.beaconSock.send(payload, LAN_DISCOVERY_PORT, target);
+    for (const target of targets) {
+      // A send/error/quit callback may re-enter room shutdown. Never use a cleared or replacement socket.
+      if (this.beaconSock !== socket) return;
+      try {
+        socket.send(payload, LAN_DISCOVERY_PORT, target, error => {
+          if (error) this.reportBeaconError(socket, error);
+        });
+      } catch (error) { this.reportBeaconError(socket, error); }
+    }
+  }
+
+  private reportBeaconError(socket: UdpSocket, error: unknown): void {
+    if (this.beaconSock !== socket || this.beaconErrorReported) return;
+    this.beaconErrorReported = true;
+    // Discovery is best-effort: one unavailable interface must not terminate an established TCP room.
+    this.emit({ kind: 'error', message: `LAN discovery: ${error instanceof Error ? error.message : String(error)}` });
   }
 
   stopHost(): void {
     ++this.hostGeneration;
     this.startingHost = undefined;
-    this.closePeer();
-    for (const socket of this.handshakes) socket.destroy();
-    this.handshakes.clear();
     if (this.beaconTimer) { clearInterval(this.beaconTimer); this.beaconTimer = undefined; }
-    if (this.beaconSock) { this.beaconSock.close(); this.beaconSock = undefined; }
+    const beacon = this.beaconSock;
+    this.beaconSock = undefined; // Invalidate before close can run callbacks.
+    if (beacon) {
+      try { beacon.close(); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ERR_SOCKET_DGRAM_NOT_RUNNING') throw error; }
+    }
     if (this.server) {
       const s = this.server;
       this.server = undefined;
       s.close();
     }
+    this.closePeer();
+    for (const socket of this.handshakes) socket.destroy();
+    this.handshakes.clear();
   }
 
   private onServerConnection(socket: TcpSocket): void {

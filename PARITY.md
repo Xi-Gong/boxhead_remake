@@ -1065,3 +1065,9 @@ v019旧浏览器断言仍按第25波原倍率36只期待六把武器，复现与
 ### 21.19 响应夹具可重复性
 
 离线响应夹具重复使用隔离目录时会记住上次地图，原“点一次左箭头”下一轮可能选到Room 17。夹具现明确清空自己的旧localStorage并断言实际Room 18，记录是否清除了已有测试档；不接触玩家存档。三轮均在已有测试档上重跑，通过两角色移动/转向/射击/切枪/镜头/声音调度60ms门槛。原十组联机对比使用的初始正确数据与功能门禁数据分别保留initial-matched-report.json和gate-matched-report.json，不被此次复测替换；追加证据offline-repeat.json。响应矩阵的脚本身份同时纳入端口隔离依赖，避免其变更后错误复用旧测量。
+
+### 21.20 房间广播退出期间的主进程异常
+
+用户截图报告sendBeacon定时器抛出Cannot read properties of undefined (reading 'send')。发送过程中重入stopHost的回归在旧代码复现同类异常：发送循环每个目标都重新读取可被清理的beaconSock。修复为捕获socket身份、逐目标检查是否仍属当前房间，定时器检查建房代次；退出先清空socket字段，再关闭socket及其他连接，过期发送完成/错误/监听回调均不影响新房间。UDP绑定后启用定向广播，发送回调、socket错误及同步异常统一接住，每个房间只报告一次发现错误，不终止仍可用的TCP联机。
+
+六项模拟生命周期回归修改前全部失败，修改后全部通过；真实UDP发现、状态广播、TCP连接、退出重建及已有协议合计26项通过，三套类型检查通过。原始日志beacon-before.log、beacon-after.log、beacon-real-transport.log、beacon-typecheck.log保留在generated/reports/v029。此前已通过的候选二进制尚未包含此修复，最终发行必须重新build、打包并验证，不以旧便携版结果替代。

@@ -328,6 +328,8 @@ export const DEVIATIONS: Deviation[] = [
     id: 'LAN_MULTIPLAYER',
     file: 'local/Net/* (NetSlot, NetSession, NetScope, Lobby, overlay), electron/lan.ts + lanIpc.ts, scope.ts (net guards), Thing/Weapon/CThing_Weapon_Grenade.ts (Fire wrapper), World/Map/CMap_Cell.ts (nav budget in net sessions)',
     description:
+      'v0.2.9: discovery beacons retain their socket identity across sends, reject stale room callbacks, enable ' +
+      'directed UDP broadcasts after bind and contain discovery errors without terminating the TCP room. ' +
       'v0.2.8: rollback-v2 retains up to three scheduler slots actually dropped by a renderer gap only when ' +
       'received remote inputs prove a live, unpaused peer is behind; catch-up stays at two ticks per enterFrame. ' +
       'The original has no network play (2P is same-keyboard only). v0.1.3 adds LAN Coop / Death Match between two ' +
