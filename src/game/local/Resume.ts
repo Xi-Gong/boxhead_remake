@@ -28,7 +28,7 @@ import { LOOT_RULE, modernLoot, type SupplyState } from './LootRules.ts';
 import { ENDLESS_RULE } from './EndlessRules.ts';
 import { endlessWorld } from './Endless.ts';
 import {VARIANTS_RULE,captureVariants,restoreVariants,variantsWorld,type VariantSave} from './EnemyVariants.ts';
-import {enchantedAmmo} from './EnchantmentRules.ts';
+import {ENCHANTMENT_RULE,persistentEnchantment,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -41,6 +41,7 @@ export interface WeaponState {
   ammo?: number;
   totalAmmo?: number;
   enchantedAmmo?: number;
+  enchanted?: true;
 }
 
 export interface PlayerState {
@@ -84,6 +85,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  enchantment?: typeof ENCHANTMENT_RULE;
   variants?: VariantSave;
   endless?: typeof ENDLESS_RULE;
   survival?: typeof SURVIVAL_RULE;
@@ -181,7 +183,7 @@ function capturePlayer(p: any): PlayerState {
       active: !!w.mActive,
       ammo: w.mThing != undefined ? w.mThing.mAmmo : undefined,
       totalAmmo: w.mThing != undefined ? w.mThing.mTotalAmmo : undefined,
-      ...(enchantedAmmo(w.mThing)!==0?{enchantedAmmo:enchantedAmmo(w.mThing)}:{}),
+      ...captureEnchantment(w.mThing),
     };
   }
   return {
@@ -249,6 +251,7 @@ export function capture(world: any): RunSnapshot {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
     ...(endlessWorld(world)?{endless:ENDLESS_RULE}:{}),
     ...(variantsWorld(world)?{variants:captureVariants(world)}:{}),
+    ...(persistentEnchantment(world)?{enchantment:ENCHANTMENT_RULE}:{}),
     ...(survivalEnabled(world) ? { survival: SURVIVAL_RULE } : {}),
     ...(modernLoot(world) ? { loot: { rule: LOOT_RULE, state: { ...u.supplyState } } } : {}),
     version: RESUME_VERSION,
@@ -320,7 +323,7 @@ function applyPlayer(world: any, s: PlayerState): void {
     if (world.mUpgrades.lanGrowth && entry.mThing) world.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
     if (ws.ammo != undefined && entry.mThing != undefined) entry.mThing.mAmmo = ws.ammo;
     if (ws.totalAmmo != undefined && entry.mThing != undefined) entry.mThing.mTotalAmmo = ws.totalAmmo;
-    if(entry.mThing){if(ws.enchantedAmmo!==undefined&&variantsWorld(world))entry.mThing.mEnchantedAmmo=ws.enchantedAmmo;else delete entry.mThing.mEnchantedAmmo;}
+    if(entry.mThing)restoreEnchantment(entry.mThing,ws);
   }
   if (s.currentWeapon != undefined) {
     p.SelectWeapon(s.currentWeapon);
@@ -421,6 +424,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   // Never reinterpret an endless checkpoint using an older negotiated simulation.
   if ((snap.endless === ENDLESS_RULE || snap.growth?.players.some(p => p.endless)) && !endlessWorld(world)) return false;
   if(snap.variants?.rule===VARIANTS_RULE&&!variantsWorld(world))return false;
+  if(snap.enchantment===ENCHANTMENT_RULE&&!persistentEnchantment(world))return false;
   const u = world.mUpgrades;
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);

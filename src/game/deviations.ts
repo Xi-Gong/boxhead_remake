@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'PERSISTENT_ENCHANTMENT',
+    file:'local/EnchantmentRules.ts, Enchantment.ts, Resume.ts, WeaponCrate.ts; local/Net/protocol.ts, bridge.ts; electron/lan.ts',
+    description:'v0.3.0-rc2 optional persistent-enchantment-v1 requires enemy variants. Purple crates enchant '+
+      'the held weapon until ammunition is exhausted, including later supplies and upgrade/rebuild grants. '+
+      'The last emission remains enchanted; an emptied weapon never regains the marker from a refill. '+
+      'Optional v2 weapon/crate fields and exact snapshots preserve the marker; surviving old enchanted stock '+
+      'migrates without granting ammunition. Legacy enemy-variants-v1 keeps its original finite-stock semantics.',
+  },
+  {
     id:'ENEMY_VARIANTS',
     file:'local/EnemyVariants.ts, VariantArt.ts, VariantLoot.ts, Enchantment.ts, EnchantmentRules.ts, Supplies.ts, WeaponCrate.ts, Armor.ts, Resume.ts; local/Net/NetScope.ts, bridge.ts, protocol.ts; electron/lan.ts',
     description:'v0.3.0 enemy-variants-v1 depends on endless PvE and adds deterministic ordinal replacements '+

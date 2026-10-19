@@ -1,4 +1,4 @@
-import {expect,it} from 'vitest';
+import {describe,expect,it} from 'vitest';
 import {createHeadlessGame} from './harness.ts';
 import {noSpawn,placePlayer,pos,addZombie} from './fxkit.ts';
 import {Thing,World} from '../../src/game/packages.ts';
@@ -9,16 +9,20 @@ import {captureCratePayload,applyCratePayload} from '../../src/game/local/Weapon
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,makeSnapCtx,restoreWorldSnap} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
+describe.each([true,false])('enchantment: classic stock=%s',classic=>{
 function boot(mode:'Single'|'Coop'='Single'){
- const g=createHeadlessGame({mode});noSpawn(g);const p=placePlayer(g,5.5,8.5);p.NewWeapon('uzi');p.SelectWeapon('uzi');return {g,p,w:g.world(),gun:p.mWeapon_Current};
+ const g=createHeadlessGame({mode,classicEnchantment:classic});noSpawn(g);const p=placePlayer(g,5.5,8.5);p.NewWeapon('uzi');p.SelectWeapon('uzi');return {g,p,w:g.world(),gun:p.mWeapon_Current};
 }
 function fire(p:any){p.mWeapon_Current.Fire(p.mPosition.Clone(),p.mAngle.Clone(),0);}
-it('enchants only the held stock, consumes one per trigger, and leaves refills ordinary',()=>{
+it('retains the negotiated refill semantics after consuming the original enchanted stock',()=>{
  const {g,p,gun}=boot();gun.mAmmo=3;expect(enchantHeldWeapon(p)).toBe(true);expect(canEnchant(p)).toBe(false);
  const damage=gun.mDamage;fire(p);expect([gun.mAmmo,gun.mEnchantedAmmo,gun.mDamage]).toEqual([2,2,damage]);
  expect(g.things().find(t=>t._CLASSID_==='CThing_Shot_Bullet').mDamage).toBeCloseTo(damage*1.35);
- refillAmmo(p);expect(enchantedAmmo(gun)).toBe(2);fire(p);fire(p);expect(enchantedAmmo(gun)).toBe(0);
- const before=new Set(g.things());fire(p);const normal=g.things().find(t=>!before.has(t)&&t._CLASSID_==='CThing_Shot_Bullet');expect(normal.mEnchanted).toBeUndefined();expect(normal.mDamage).toBe(damage);g.quit();
+ refillAmmo(p);expect(enchantedAmmo(gun)).toBe(classic?2:gun.mAmmo);fire(p);fire(p);expect(enchantedAmmo(gun)).toBe(classic?0:gun.mAmmo);
+ const before=new Set(g.things());fire(p);const normal=g.things().find(t=>!before.has(t)&&t._CLASSID_==='CThing_Shot_Bullet');
+ if(classic){expect(normal.mEnchanted).toBeUndefined();expect(normal.mDamage).toBe(damage);}
+ else {expect(normal.mEnchanted).toBe(true);expect(normal.mDamage).toBeCloseTo(damage*1.35);}
+ g.quit();
 });
 it('red weapon refills preserve enchanted stock and do not switch the held gun',()=>{
  const {g,p,gun}=boot();gun.mAmmo=7;enchantHeldWeapon(p);expect(redBoxReward(p,.5)).toBe(true);
@@ -72,4 +76,5 @@ it('retains the railgun unlimited enemy piercing and lets P2 claim a crate P1 ca
  const foes=[6.5,7.5,8.5,9.5].map(x=>{const e=addZombie(g,x,8.5);e.Process_Init();e.Move(e.mPosition);e.Affect_Setup(1);return e;});fire(p);g.things().find(t=>t._CLASSID_==='CThing_Shot_Railgun').Process_Init();expect(foes.every(e=>e.mAffectors.length===1)).toBe(true);
  const p2=placePlayer(g,5.5,8.5,0,1);p2.NewWeapon('uzi');p2.SelectWeapon('uzi');p2.mWeapon_Current.mAmmo=4;
  const crate=w.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(p.mPosition.Clone(),'enchant','s900'));crate.Process_Init();expect(crate.mSupplyConsumed).toBe(true);expect(p2.mWeapon_Current.mEnchantedAmmo).toBe(4);g.quit();
+});
 });

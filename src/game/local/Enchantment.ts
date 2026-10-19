@@ -1,7 +1,7 @@
 // ENEMY_VARIANTS: source ports remain unchanged. All authoritative state lives on snapshot-owned things.
 import {DrawPrimitive,Thing,World} from '../packages.ts';
 import {flash} from '../../engine/runtime.ts';
-import {ENCHANT_COLOR,ENCHANT_DAMAGE,enchantedAmmo,enchantedWeapon} from './EnchantmentRules.ts';
+import {ENCHANT_COLOR,ENCHANT_DAMAGE,enchantedAmmo,enchantedWeapon,persistentWeapon} from './EnchantmentRules.ts';
 import {variantsWorld} from './EnemyVariants.ts';
 interface Emission {weapon?:any;things:any[]}
 const emission=new WeakMap<object,Emission>();
@@ -40,14 +40,19 @@ export function installEnchantmentScope():void{
  const weapon=Thing.Weapon.CThing_Weapon.prototype as any,decrement=weapon.DecrementAmmo,empty=weapon.EmptyWeapon;
  weapon.DecrementAmmo=function(this:any):any{
   const count=enchantedAmmo(this),result=decrement.call(this);
-  if(count>0)this.mEnchantedAmmo=count-1;return result;
+  if(count>0)this.mEnchantedAmmo=count-1;
+  if(this.mAmmo<=0)delete this.mPersistentEnchantment;
+  return result;
  };
- weapon.EmptyWeapon=function(this:any):any{const result=empty.call(this);if(this.mAmmo<=0)delete this.mEnchantedAmmo;return result;};
- // Refilled/rebuilt guns retain only the old enchanted stock; freshly supplied rounds are ordinary.
+ weapon.EmptyWeapon=function(this:any):any{const result=empty.call(this);if(this.mAmmo<=0){delete this.mEnchantedAmmo;delete this.mPersistentEnchantment;}return result;};
+ // A red reward/upgrade replaces the thing, but a nonempty enchanted weapon keeps its identity.
+ // Legacy peers still transfer only the recorded stock.
  const player=Thing.Creature.CThing_Creature_Player.prototype as any,addWeapon=player.AddWeapon;
  player.AddWeapon=function(this:any,name:any,...args:any[]):any{
-  const old=this.mWeapons?.[name]?.mThing,count=enchantedAmmo(old),result=addWeapon.call(this,name,...args),w=this.mWeapons?.[name]?.mThing;
-  if(w&&count!==0)w.mEnchantedAmmo=count;return result;
+  const old=this.mWeapons?.[name]?.mThing,count=enchantedAmmo(old),persistent=persistentWeapon(old),result=addWeapon.call(this,name,...args),w=this.mWeapons?.[name]?.mThing;
+  if(w&&count!==0)w.mEnchantedAmmo=count;
+  if(w&&persistent)w.mPersistentEnchantment=true;
+  return result;
  };
  // Children already inherit the scaled parent damage. Propagate identity without scaling it again.
  const sources:[any,string[]][]=[

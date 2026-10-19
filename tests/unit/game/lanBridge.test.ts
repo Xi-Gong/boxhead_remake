@@ -7,6 +7,17 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([undefined,'persistent-enchantment-v1','enemy-variants-v1','endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1'])('negotiates persistent enchantment and guards recovery; missing %s',missing=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{}),features=['persistent-enchantment-v1','enemy-variants-v1','endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1'].filter(f=>f!==missing);
+  try{
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});b.phase='setup';b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.enchantment).toBe(missing?undefined:'persistent-enchantment-v1');
+   const onHello=vi.fn();b.session={phase:'reconnecting',startOpts:{cfg:{endless:'endless-pve-v1',variants:'enemy-variants-v1',enchantment:'persistent-enchantment-v1'}},onHello} as any;
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});expect(onHello).toHaveBeenCalledTimes(missing?0:1);
+   if(missing)expect(b.message).toContain('v0.3.0-rc2');
+  }finally{b.session=null;CMain.mSaveData=previous;launch.mockRestore();}
+ });
  it.each([true,false])('negotiates enemy variants and refuses incompatible modern recovery: %s',enabled=>{
   const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{}),features=['endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1',...(enabled?['enemy-variants-v1']:[])];

@@ -110,6 +110,8 @@ export interface GameConfig {
   /** Unlimited personal progression and stat-scaled bounded wave budgets; requires modern PvE rules. */
   endless?: 'endless-pve-v1';
   variants?: 'enemy-variants-v1';
+  /** Weapon enchantment survives replenishment until empty; requires enemy variants. */
+  enchantment?: 'persistent-enchantment-v1';
   /** Preserve inherited weapon capacity and synchronize supply eligibility; requires modern loot. */
   refill?: 'reliable-supplies-v1';
   /** Player-owned shots skip teammates in cooperative games; old peers keep original hit selection. */

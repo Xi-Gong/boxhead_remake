@@ -8,6 +8,7 @@ import { dirname, join, resolve } from 'node:path';
 import asar from '@electron/asar';
 import { chromium } from 'playwright-core';
 import { Game, toMainMenu } from './lib.mjs';
+import { verifyPersistentEnchantment } from './persistent-enchantment.mjs';
 
 const expected=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
 const root=process.cwd(),out=resolve(process.env.BOXHEAD_QA_OUT??`generated/reports/v${expected.replaceAll('.','')}/portable`);
@@ -59,6 +60,7 @@ try{
   await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert.ok(await g.waitScreen('State_Main','Screen_Main'));
   await g.clickClip('m.mcScreen.mcContinue');assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
   const audio=await g.expr('g.audio()');assert.equal(audio.decoded,31);assert.equal(audio.state,'running');
+  if(process.env.BOXHEAD_QA_ENCHANTMENT==='1')await verifyPersistentEnchantment(g,join(out,'enchantment'));
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
  }
