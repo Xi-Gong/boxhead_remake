@@ -26,7 +26,7 @@ const cases=[
  ['vitest','node_modules/vitest/vitest.mjs','run'],
  ['bitmap-blit','tests/e2e/bitmap-blit.browser.mjs'],['masked-copy','tests/e2e/masked-copy.browser.mjs'],['engine-browser','tests/browser/run-engine.ts'],
  ['ui','tests/e2e/ui.browser.mjs'],['audio','tests/e2e/audio.browser.mjs'],
- ...['wave-input','room-settings','floating-scores','explosion-flash','local-growth','modern-supplies'].map(name=>[name,`tests/e2e/${name}.browser.mjs`]),
+ ...['wave-input','room-settings','floating-scores','hud-messages','explosion-flash','local-growth','modern-supplies'].map(name=>[name,`tests/e2e/${name}.browser.mjs`]),
  ['survival-ui','tests/e2e/supplies-ui.browser.mjs'],
  ['growth-ui','tests/e2e/growth-ui.browser.mjs'],['balance-ui','tests/e2e/growth-ui.browser.mjs'],['supplies-ui','tests/e2e/supplies-ui.browser.mjs'],['added-ui','tests/e2e/added-ui.browser.mjs'],
  ['input-badge','tests/e2e/inputBadge.browser.mjs'],['viewport-pause','tests/e2e/viewportPause.browser.mjs'],

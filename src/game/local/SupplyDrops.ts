@@ -10,7 +10,7 @@ export function redBoxReward(player: any, roll: number): boolean {
   if (roll < .3) {
     const kind = SUPPLY_KINDS[roll < .1 ? 0 : roll < .2 ? 1 : 2]!;
     const granted = applySupplyEffect(player,kind);
-    if (granted) player.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${kind==='armor'?'Armor':kind==='ammo'?'Ammo':'Health'} full!`);
+    if (granted) player.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${kind==='armor'?'Armor':kind==='ammo'?'All ammo':'Health'} full!`);
     return granted;
   }
   const pool: { name: string; end: number }[] = [];
@@ -30,7 +30,7 @@ export function redBoxReward(player: any, roll: number): boolean {
     syncSupplyWeapon(player,weapon,capacity);
     weapon.mAmmo=weapon.mTotalAmmo;
   }
-  player.mWorld.mHud.AddMessage_Info('Picked up ' + weapon.mName, player.mPlayerIndex);
+  player.mWorld.mHud.AddMessage_Info(weapon.mName+' ammo full!', player.mPlayerIndex);
   return true;
 }
 

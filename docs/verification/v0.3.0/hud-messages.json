@@ -1,0 +1,485 @@
+{
+  "ok": true,
+  "cases": [
+    {
+      "width": 640,
+      "height": 480,
+      "last": [
+        {
+          "text": "P1: All ammo full!",
+          "at": 22948.600000023842,
+          "x": 320,
+          "y": 352,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 352,
+            "w": 326,
+            "h": 24
+          }
+        },
+        {
+          "text": "P2: Rocket Launcher ammo full!",
+          "at": 22948.600000023842,
+          "x": 320,
+          "y": 374,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 374,
+            "w": 326,
+            "h": 24
+          }
+        },
+        {
+          "text": "P1: Health full!",
+          "at": 22948.600000023842,
+          "x": 320,
+          "y": 396,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 396,
+            "w": 326,
+            "h": 24
+          }
+        }
+      ],
+      "samples": 79
+    },
+    {
+      "width": 960,
+      "height": 720,
+      "last": [
+        {
+          "text": "P1: All ammo full!",
+          "at": 28107,
+          "x": 320,
+          "y": 352,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 352,
+            "w": 326,
+            "h": 24
+          }
+        },
+        {
+          "text": "P2: Rocket Launcher ammo full!",
+          "at": 28107,
+          "x": 320,
+          "y": 374,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 374,
+            "w": 326,
+            "h": 24
+          }
+        },
+        {
+          "text": "P1: Health full!",
+          "at": 28107,
+          "x": 320,
+          "y": 396,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 396,
+            "w": 326,
+            "h": 24
+          }
+        }
+      ],
+      "samples": 79
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "last": [
+        {
+          "text": "P1: All ammo full!",
+          "at": 33306.60000002384,
+          "x": 426.5,
+          "y": 352,
+          "alpha": 100,
+          "bounds": {
+            "x": 263.5,
+            "y": 352,
+            "w": 326,
+            "h": 24
+          }
+        },
+        {
+          "text": "P2: Rocket Launcher ammo full!",
+          "at": 33306.60000002384,
+          "x": 426.5,
+          "y": 374,
+          "alpha": 100,
+          "bounds": {
+            "x": 263.5,
+            "y": 374,
+            "w": 326,
+            "h": 24
+          }
+        },
+        {
+          "text": "P1: Health full!",
+          "at": 33306.60000002384,
+          "x": 426.5,
+          "y": 396,
+          "alpha": 100,
+          "bounds": {
+            "x": 263.5,
+            "y": 396,
+            "w": 326,
+            "h": 24
+          }
+        }
+      ],
+      "samples": 80
+    },
+    {
+      "width": 640,
+      "height": 889,
+      "last": [
+        {
+          "text": "P1: All ammo full!",
+          "at": 38465,
+          "x": 320,
+          "y": 761,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 761,
+            "w": 326,
+            "h": 24
+          }
+        },
+        {
+          "text": "P2: Rocket Launcher ammo full!",
+          "at": 38465.10000002384,
+          "x": 320,
+          "y": 783,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 783,
+            "w": 326,
+            "h": 24
+          }
+        },
+        {
+          "text": "P1: Health full!",
+          "at": 38465.10000002384,
+          "x": 320,
+          "y": 805,
+          "alpha": 100,
+          "bounds": {
+            "x": 157,
+            "y": 805,
+            "w": 326,
+            "h": 24
+          }
+        }
+      ],
+      "samples": 79
+    }
+  ],
+  "shots": [
+    "generated/reports/v030/hud-messages/640x480.png",
+    "generated/reports/v030/hud-messages/960x720.png",
+    "generated/reports/v030/hud-messages/1280x720.png",
+    "generated/reports/v030/hud-messages/640x889.png"
+  ],
+  "review": "Direct screenshot review of all four images plus real canvas pixel, geometry and consecutive-frame checks; zai was not used.",
+  "initial_failure": "A 250ms sample window produced fewer than 11 draws on the local 25Hz path. Increased sampling to 750ms without changing animation or assertions.",
+  "environment": "Sandbox localhost was denied; reran the unchanged test with permitted localhost networking.",
+  "related_pickup_gate": {
+    "ok": true,
+    "shots": [
+      "generated/reports/v029/modern-supplies/boxes-640x480.png",
+      "generated/reports/v029/modern-supplies/boxes-960x720.png",
+      "generated/reports/v029/modern-supplies/boxes-1280x720.png",
+      "generated/reports/v029/modern-supplies/boxes-640x889.png",
+      "generated/reports/v029/modern-supplies/picked-up.png"
+    ],
+    "geometry": [
+      {
+        "width": 640,
+        "height": 480,
+        "boxes": [
+          {
+            "kind": "armor",
+            "id": "s1",
+            "alpha": 100,
+            "x": 84,
+            "y": 59,
+            "width": 44,
+            "height": 42
+          },
+          {
+            "kind": "medical",
+            "id": "s2",
+            "alpha": 100,
+            "x": 148,
+            "y": 59,
+            "width": 44,
+            "height": 42
+          },
+          {
+            "kind": "ammo",
+            "id": "s3",
+            "alpha": 100,
+            "x": 212,
+            "y": 59,
+            "width": 44,
+            "height": 42
+          }
+        ]
+      },
+      {
+        "width": 960,
+        "height": 720,
+        "boxes": [
+          {
+            "kind": "armor",
+            "id": "s1",
+            "alpha": 100,
+            "x": 157.5,
+            "y": 127.5,
+            "width": 66,
+            "height": 63
+          },
+          {
+            "kind": "medical",
+            "id": "s2",
+            "alpha": 100,
+            "x": 253.5,
+            "y": 127.5,
+            "width": 66,
+            "height": 63
+          },
+          {
+            "kind": "ammo",
+            "id": "s3",
+            "alpha": 100,
+            "x": 349.5,
+            "y": 127.5,
+            "width": 66,
+            "height": 63
+          }
+        ]
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "boxes": [
+          {
+            "kind": "armor",
+            "id": "s1",
+            "alpha": 100,
+            "x": 229.5896834701055,
+            "y": 127.54982415005861,
+            "width": 66.02579132473622,
+            "height": 63.02461899179367
+          },
+          {
+            "kind": "medical",
+            "id": "s2",
+            "alpha": 100,
+            "x": 325.6271981242673,
+            "y": 127.54982415005861,
+            "width": 66.02579132473622,
+            "height": 63.02461899179367
+          },
+          {
+            "kind": "ammo",
+            "id": "s3",
+            "alpha": 100,
+            "x": 421.6647127784291,
+            "y": 127.54982415005861,
+            "width": 66.02579132473622,
+            "height": 63.02461899179367
+          }
+        ]
+      },
+      {
+        "width": 640,
+        "height": 889,
+        "boxes": [
+          {
+            "kind": "armor",
+            "id": "s1",
+            "alpha": 100,
+            "x": 105,
+            "y": 213,
+            "width": 44,
+            "height": 42
+          },
+          {
+            "kind": "medical",
+            "id": "s2",
+            "alpha": 100,
+            "x": 169,
+            "y": 213,
+            "width": 44,
+            "height": 42
+          },
+          {
+            "kind": "ammo",
+            "id": "s3",
+            "alpha": 100,
+            "x": 233,
+            "y": 213,
+            "width": 44,
+            "height": 42
+          }
+        ]
+      }
+    ],
+    "pixels": [
+      {
+        "width": 640,
+        "height": 480,
+        "kind": "armor",
+        "white": 0,
+        "green": 0,
+        "blue": 402,
+        "gold": 0,
+        "black": 48
+      },
+      {
+        "width": 640,
+        "height": 480,
+        "kind": "medical",
+        "white": 33,
+        "green": 415,
+        "blue": 0,
+        "gold": 0,
+        "black": 47
+      },
+      {
+        "width": 640,
+        "height": 480,
+        "kind": "ammo",
+        "white": 0,
+        "green": 0,
+        "blue": 0,
+        "gold": 30,
+        "black": 105
+      },
+      {
+        "width": 960,
+        "height": 720,
+        "kind": "armor",
+        "white": 0,
+        "green": 0,
+        "blue": 917,
+        "gold": 0,
+        "black": 99
+      },
+      {
+        "width": 960,
+        "height": 720,
+        "kind": "medical",
+        "white": 74,
+        "green": 937,
+        "blue": 0,
+        "gold": 0,
+        "black": 97
+      },
+      {
+        "width": 960,
+        "height": 720,
+        "kind": "ammo",
+        "white": 0,
+        "green": 0,
+        "blue": 0,
+        "gold": 69,
+        "black": 228
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "kind": "armor",
+        "white": 0,
+        "green": 0,
+        "blue": 898,
+        "gold": 0,
+        "black": 102
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "kind": "medical",
+        "white": 64,
+        "green": 948,
+        "blue": 0,
+        "gold": 0,
+        "black": 100
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "kind": "ammo",
+        "white": 0,
+        "green": 0,
+        "blue": 0,
+        "gold": 69,
+        "black": 238
+      },
+      {
+        "width": 640,
+        "height": 889,
+        "kind": "armor",
+        "white": 0,
+        "green": 0,
+        "blue": 402,
+        "gold": 0,
+        "black": 48
+      },
+      {
+        "width": 640,
+        "height": 889,
+        "kind": "medical",
+        "white": 33,
+        "green": 415,
+        "blue": 0,
+        "gold": 0,
+        "black": 47
+      },
+      {
+        "width": 640,
+        "height": 889,
+        "kind": "ammo",
+        "white": 0,
+        "green": 0,
+        "blue": 0,
+        "gold": 30,
+        "black": 105
+      }
+    ],
+    "restored": [
+      "s1",
+      "s2",
+      "s3"
+    ],
+    "final": {
+      "life": 200,
+      "armor": 200,
+      "ammo": [
+        [
+          "pistol",
+          999999,
+          999999
+        ],
+        [
+          "uzi",
+          100,
+          100
+        ]
+      ]
+    }
+  }
+}

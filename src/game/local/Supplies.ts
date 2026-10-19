@@ -122,7 +122,7 @@ export class CThing_Object_SupplyCrate extends CThing_Object_Pickup {
     this.mSupplyConsumed=true;
     if(this.mSupplyId)applySupplyEffect(player,this.mSupplyKind);
     else if(this.mSupplyKind==='armor')refillArmor(player);else if(this.mSupplyKind==='ammo')refillAmmo(player);else player.mLife=player.mMaxLife;
-    this.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${this.mSupplyKind==='armor'?'Armor':this.mSupplyKind==='ammo'?'Ammo':'Health'} full!`);
+    this.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${this.mSupplyKind==='armor'?'Armor':this.mSupplyKind==='ammo'?'All ammo':'Health'} full!`);
     this.PlaySound(CSound.mSamples.Object_Pickup_wav);
     this.Delete();
   }

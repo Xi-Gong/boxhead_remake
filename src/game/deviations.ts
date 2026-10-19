@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'STABLE_HUD_MESSAGES',
+    file: 'local/Net/HudMessages.ts, NetSession.ts, NetScope.ts; local/SupplyDrops.ts, Supplies.ts',
+    description: 'v0.3.0 modern HUD messages are a bounded three-row display queue, outside rollback snapshots. '+
+      'Confirmed tick/emitter/message identities play once; 160ms smooth row transitions and 3s lifetime '+
+      'with a final 500ms fade use display time, freeze during pause and release glyphs on world disposal. '+
+      'Pickup notices distinguish P1/P2 and backpack versus named-weapon ammunition. Legacy fixtures and '+
+      'legacy netcode keep the original message path; simulation, scores and RNG are unchanged.',
+  },
+  {
     id: 'RELIABLE_SUPPLIES',
     file: 'local/ReliableSupplies.ts, Supplies.ts, SupplyDrops.ts, Armor.ts; local/Net/protocol.ts, bridge.ts; electron/lan.ts',
     description: 'v0.3.0 supplies synchronize derived player limits before eligibility and refill. Weapon '+
