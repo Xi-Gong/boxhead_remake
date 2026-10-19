@@ -1,0 +1,227 @@
+{
+  "ok": true,
+  "asarSha256": "d56222ff408fbdb5fb9e80f1e691e2df97bde99564cfd65877e57cd0c8bd8cf2",
+  "sourceSha256": "1c38d1d015992be9017ce6d676224f76a7bdd392f4d10bc0a51b18a33535fae4",
+  "rawSha256": "2f8bba910d5cc2e688165033d8c9cd89e318b1cc9e69a40f406c664113dd0e0b",
+  "environments": [
+    {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.2.9 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+      "dpr": 1.5,
+      "width": 960,
+      "height": 720,
+      "room": "ROOM_Single_0018",
+      "resetPreviousSave": true,
+      "canvas": [
+        1440,
+        1080
+      ]
+    },
+    {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.2.9 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+      "dpr": 1.5,
+      "width": 960,
+      "height": 720,
+      "room": "ROOM_Single_0018",
+      "resetPreviousSave": true,
+      "canvas": [
+        1440,
+        1080
+      ]
+    },
+    {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.2.9 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+      "dpr": 1.5,
+      "width": 960,
+      "height": 720,
+      "room": "ROOM_Single_0018",
+      "resetPreviousSave": true,
+      "canvas": [
+        1440,
+        1080
+      ]
+    }
+  ],
+  "maximumMs": 41.200000047683716,
+  "actions": [
+    [
+      [
+        {
+          "action": "move",
+          "role": 0,
+          "simulation": 11.299999952316284,
+          "display": 11.299999952316284,
+          "facing": 11.299999952316284,
+          "camera": 11.299999952316284,
+          "audio": null
+        },
+        {
+          "action": "fire",
+          "role": 0,
+          "simulation": 22,
+          "display": 22,
+          "facing": null,
+          "camera": null,
+          "audio": 21.100000023841858
+        },
+        {
+          "action": "switch",
+          "role": 0,
+          "simulation": 9.899999976158142,
+          "display": 9.899999976158142,
+          "facing": null,
+          "camera": null,
+          "audio": null
+        }
+      ],
+      [
+        {
+          "action": "move",
+          "role": 1,
+          "simulation": 12,
+          "display": 12,
+          "facing": 12,
+          "camera": 12,
+          "audio": null
+        },
+        {
+          "action": "fire",
+          "role": 1,
+          "simulation": 41.200000047683716,
+          "display": 41.200000047683716,
+          "facing": null,
+          "camera": null,
+          "audio": 40.200000047683716
+        },
+        {
+          "action": "switch",
+          "role": 1,
+          "simulation": 35.30000001192093,
+          "display": 35.30000001192093,
+          "facing": null,
+          "camera": null,
+          "audio": null
+        }
+      ]
+    ],
+    [
+      [
+        {
+          "action": "move",
+          "role": 0,
+          "simulation": 6.199999988079071,
+          "display": 6.099999964237213,
+          "facing": 6.199999988079071,
+          "camera": 6.099999964237213,
+          "audio": null
+        },
+        {
+          "action": "fire",
+          "role": 0,
+          "simulation": 13.300000011920929,
+          "display": 13.300000011920929,
+          "facing": null,
+          "camera": null,
+          "audio": 12.699999988079071
+        },
+        {
+          "action": "switch",
+          "role": 0,
+          "simulation": 34.39999997615814,
+          "display": 34.39999997615814,
+          "facing": null,
+          "camera": null,
+          "audio": null
+        }
+      ],
+      [
+        {
+          "action": "move",
+          "role": 1,
+          "simulation": 37.90000003576279,
+          "display": 37.90000003576279,
+          "facing": 37.90000003576279,
+          "camera": 37.90000003576279,
+          "audio": null
+        },
+        {
+          "action": "fire",
+          "role": 1,
+          "simulation": 6.199999988079071,
+          "display": 6.199999988079071,
+          "facing": null,
+          "camera": null,
+          "audio": 5.099999964237213
+        },
+        {
+          "action": "switch",
+          "role": 1,
+          "simulation": 26.5,
+          "display": 26.5,
+          "facing": null,
+          "camera": null,
+          "audio": null
+        }
+      ]
+    ],
+    [
+      [
+        {
+          "action": "move",
+          "role": 0,
+          "simulation": 2.300000011920929,
+          "display": 2.300000011920929,
+          "facing": 2.300000011920929,
+          "camera": 2.300000011920929,
+          "audio": null
+        },
+        {
+          "action": "fire",
+          "role": 0,
+          "simulation": 7.699999988079071,
+          "display": 7.699999988079071,
+          "facing": null,
+          "camera": null,
+          "audio": 6.699999988079071
+        },
+        {
+          "action": "switch",
+          "role": 0,
+          "simulation": 25.700000047683716,
+          "display": 25.700000047683716,
+          "facing": null,
+          "camera": null,
+          "audio": null
+        }
+      ],
+      [
+        {
+          "action": "move",
+          "role": 1,
+          "simulation": 30.599999964237213,
+          "display": 30.5,
+          "facing": 30.599999964237213,
+          "camera": 30.5,
+          "audio": null
+        },
+        {
+          "action": "fire",
+          "role": 1,
+          "simulation": 27.799999952316284,
+          "display": 27.799999952316284,
+          "facing": null,
+          "camera": null,
+          "audio": 26.69999998807907
+        },
+        {
+          "action": "switch",
+          "role": 1,
+          "simulation": 16.100000023841858,
+          "display": 16.100000023841858,
+          "facing": null,
+          "camera": null,
+          "audio": null
+        }
+      ]
+    ]
+  ]
+}

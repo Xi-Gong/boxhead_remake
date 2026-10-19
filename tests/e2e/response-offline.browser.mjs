@@ -7,7 +7,7 @@ import {installResponseFixture,responseActions} from './response-probes.mjs';
 const packaged=process.argv.includes('--electron'),out='generated/reports/v029/response-offline'+(packaged?'-electron':'');mkdirSync(out,{recursive:true});
 const browser=packaged?undefined:await launch(),report={ok:false,packaged,runs:[],environments:[]};let g,app;
 const seed=(.424242*2**32)>>>0;
-const initialize=seed=>{Math.random=()=>seed/0xffffffff;};
+const initialize=seed=>{window.__qaHadPreviousSave=localStorage.getItem('SO:BXHD_2PLAY_6')!==null;localStorage.clear();Math.random=()=>seed/0xffffffff;};
 try{for(let run=0;run<3;run++){
  if(packaged){
   app=await _electron.launch({executablePath:resolve('release/win-unpacked/Boxhead 2Play Rooms.exe'),cwd:process.cwd(),timeout:60000,
@@ -19,9 +19,10 @@ try{for(let run=0;run<3;run++){
  await toMainMenu(g);await g.clickClip('m.mcScreen.mcCoopPlay');assert(await g.waitScreen('State_SelectWorld_Coop','Screen_SelectWorld'));
  await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.bLeft');
  await g.click(380,230);assert(await g.waitExpr('g.state()==="State_RunWorld" && m.mcWorld?.mLoaded'));
+ const room=await g.expr('m.mcWorld.mWorldLibLink');assert.equal(room,'ROOM_Single_0018','every repeated response fixture uses the same large map');
  await installResponseFixture(g.page,false);await g.page.waitForTimeout(10000);
- report.environments.push(await g.eval(()=>({userAgent:navigator.userAgent,dpr:devicePixelRatio,width:innerWidth,height:innerHeight,canvas:[window.__game.platform.presenter.canvas.width,window.__game.platform.presenter.canvas.height]})));
- const rows={seed};for(const role of(run===1?[1,0]:[0,1]))rows[role]=await responseActions(g.page,role,{network:false});
+ report.environments.push(await g.eval(()=>({userAgent:navigator.userAgent,dpr:devicePixelRatio,width:innerWidth,height:innerHeight,room:window.__game.main().mcWorld.mWorldLibLink,resetPreviousSave:window.__qaHadPreviousSave,canvas:[window.__game.platform.presenter.canvas.width,window.__game.platform.presenter.canvas.height]})));
+ const rows={seed,room};for(const role of(run===1?[1,0]:[0,1]))rows[role]=await responseActions(g.page,role,{network:false});
  report.runs.push(rows);assert.deepEqual(await g.expr('g.errors'),[]);
  if(packaged){await app.close();app=undefined;}else await g.close();g=undefined;
  }report.ok=true;

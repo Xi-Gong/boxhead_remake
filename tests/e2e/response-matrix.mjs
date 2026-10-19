@@ -6,7 +6,7 @@ import path from 'node:path';
 const version=JSON.parse(readFileSync('package.json')).version,out=path.resolve(`generated/reports/v${version.replaceAll('.','')}/network`);
 mkdirSync(out,{recursive:true});
 const hash=createHash('sha256').update(readFileSync('release/win-unpacked/resources/app.asar')).digest('hex');
-const harnessSha256=createHash('sha256').update(readFileSync('tests/sim/playtest.netsmooth.mjs')).update(readFileSync('tests/e2e/response-probes.mjs')).digest('hex');
+const harnessSha256=createHash('sha256').update(readFileSync('tests/sim/playtest.netsmooth.mjs')).update(readFileSync('tests/e2e/response-probes.mjs')).update(readFileSync('tests/e2e/lan-isolation.mjs')).digest('hex');
 const report={version,asarSha256:hash,harnessSha256,cases:[],ok:false};
 const cases=[... [0,30,60,100].flatMap(delay=>[false,true].map(clientFirst=>({delay,clientFirst}))),
  {delay:30,clientFirst:true,jitter:20,tcpOnly:true,recovery:true,gapRole:0},
