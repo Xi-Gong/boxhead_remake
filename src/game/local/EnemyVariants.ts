@@ -12,6 +12,11 @@ export function variantOrdinal(kind:EnemyVariant,wave:number,ordinal:number):boo
 const things=(w:any):any[]=>Object.values(w.mThing_Collection?.mThings??{});
 const players=(w:any):any[]=>Object.values(w.mThing_Collection.mPlayerThings).filter((p:any)=>p.mLife>0&&!(p.mFlags&Thing.CThing.mFlag_DEAD)).sort((a:any,b:any)=>a.mPlayerIndex-b.mPlayerIndex);
 const ticks=(seconds:number):number=>Math.ceil(CMain.mFPS*seconds);
+function skillPose(enemy:any,total:number):void{
+ const a=enemy.mXSI_Animation;
+ // Allocate all pose frames across the phase ticks, leaving time to display the final pose before transition.
+ a.mCurrentFrameID=Math.min(a.mFrameCount-1,(1-enemy.mVariantTicks/total)*a.mFrameCount);
+}
 const position=(x:number,y:number):any=>new Thing.Math.CThing_Position(x,y,0);
 function blocked(w:any,x:number,y:number,r=0,objects=true):boolean{
  const mask=World.Map.CMap_Cell.mCollide_StaticImpassable|(objects?World.Map.CMap_Cell.mCollide_Object:0);
@@ -151,8 +156,8 @@ export function installEnemyVariantsScope():void{
  devil.State_Attack_Decision=function(this:any):boolean{return this.mEnemyVariant==='priest'?false:decision.call(this);};
  creature.State_VariantCharge_Init=function(this:any):void{this.ClearCollideCell();this.SetCollideDirection(this.mPosition,World.Map.CMap_Cell.mCollide_Creature);this.mBaseStateID='State_GotoPlayer';this.mVariantPhase='warning';this.mVariantTicks=ticks(.6);this.mChargeDistance=0;this.mXSI_Animation.SetAnimation('warning');};
  creature.State_VariantCharge=function(this:any):void{
-  if(this.mVariantPhase==='warning'){this.mXSI_Animation.mCurrentFrameID=(1-this.mVariantTicks/ticks(.6))*(this.mXSI_Animation.mFrameCount-1);if(--this.mVariantTicks<=0){this.mVariantPhase='charge';this.mXSI_Animation.SetAnimation('charge');}return;}
-  if(this.mVariantPhase==='recovery'){this.mXSI_Animation.mCurrentFrameID=(1-this.mVariantTicks/ticks(.8))*(this.mXSI_Animation.mFrameCount-1);if(--this.mVariantTicks<=0)this.SetState('State_GotoPlayer');return;}
+  if(this.mVariantPhase==='warning'){skillPose(this,ticks(.6));if(--this.mVariantTicks<=0){this.mVariantPhase='charge';this.mXSI_Animation.SetAnimation('charge');}return;}
+  if(this.mVariantPhase==='recovery'){skillPose(this,ticks(.8));if(--this.mVariantTicks<=0)this.SetState('State_GotoPlayer');return;}
   let stop=false;const w=this.mWorld;
   for(let i=0;i<3;i++){
    const step=Math.min(.08,4-this.mChargeDistance),x=this.mPosition.mX+this.mChargeX*step,y=this.mPosition.mY+this.mChargeY*step;
@@ -166,7 +171,7 @@ export function installEnemyVariantsScope():void{
   if(stop){this.mVariantPhase='recovery';this.mVariantTicks=ticks(.8);this.mXSI_Animation.SetAnimation('recovery');}
  };
  creature.State_VariantCast_Init=function(this:any):void{this.mBaseStateID='State_GotoPlayer';this.mVariantTicks=ticks(.9);this.mXSI_Animation.SetAnimation('cast');};
- creature.State_VariantCast=function(this:any):void{this.mXSI_Animation.mCurrentFrameID=(1-this.mVariantTicks/ticks(.9))*(this.mXSI_Animation.mFrameCount-1);if(--this.mVariantTicks<=0)this.SetState('State_GotoPlayer');};
+ creature.State_VariantCast=function(this:any):void{skillPose(this,ticks(.9));if(--this.mVariantTicks<=0)this.SetState('State_GotoPlayer');};
  const kill=world.LogKill;world.LogKill=function(this:any,victim:any):any{
   if(!variantsWorld(this)||!victim?.mEnemyVariant)return kill.call(this,victim);
   if(victim.mVariantDropLogged)return;victim.mVariantDropLogged=true;

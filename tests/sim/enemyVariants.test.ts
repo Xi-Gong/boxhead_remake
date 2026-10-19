@@ -119,6 +119,18 @@ it('retains the native eight-frame walk return without a truncated loop seam',()
   for(const d of c.mItems.walk.mAnimationObject.mDirections){expect(d.mFrames[5]).toBe(d.mFrames[3]);expect(d.mFrames[6]).toBe(d.mFrames[2]);expect(d.mFrames[7]).toBe(d.mFrames[1]);}
  }g.quit();
 });
+it.each(['warning','cast','recovery']as const)('shows the final %s pose before leaving its simulation phase',key=>{
+ const g=boot(),e=enemy(g,key==='cast'?'priest':'charger');
+ if(key==='cast')expect(beginEmberCast(e)).toBe(true);else{expect(beginCharge(e)).toBe(true);if(key==='recovery'){e.mVariantPhase='recovery';e.mVariantTicks=Math.ceil(CMain.mFPS*.8);e.mXSI_Animation.SetAnimation('recovery');}}
+ const animation=e.mXSI_Animation.mAnimationObject,frames:number[]=[];
+ for(let n=0;n<30;n++){
+  if(key==='cast')e.State_VariantCast();else e.State_VariantCharge();
+  if(e.mXSI_Animation.mAnimationObject!==animation)break;
+  frames.push(Math.floor(e.mXSI_Animation.mCurrentFrameID));
+ }
+ expect(frames.at(-1)).toBe(animation.mFrameCount-1);expect(frames).toEqual([...frames].sort((a,b)=>a-b));
+ expect(frames.every(f=>f>=0&&f<animation.mFrameCount)).toBe(true);g.quit();
+});
 it('keeps native feet and aligned face arrays throughout every base action and direction',()=>{
  const g=boot(),DI=DrawPrimitive.XSI.CDrawPrimitive_XSI_DI;
  for(const kind of ['charger','priest']as const)for(const [key,link]of Object.entries({stand:kind==='charger'?'Zombie_Zombie_Stand':'Player_Stand',walk:kind==='charger'?'Zombie_Zombie_Walk':'Player_Walk',attack:kind==='charger'?'Zombie_Zombie_Attack':'Devil_Devil_Attack',shothit_1:'Player_HitRear',shothit_2:'Player_HitFront',dying:'Player_Dying',dead:'Player_Dead',warning:kind==='charger'?'Zombie_Zombie_Stand':'Devil_Devil_Attack',charge:kind==='charger'?'Zombie_Zombie_Walk':'Player_Walk',cast:kind==='charger'?'Zombie_Zombie_Attack':'Devil_Devil_Attack',recovery:kind==='charger'?'Zombie_Zombie_Stand':'Player_Stand'})){
