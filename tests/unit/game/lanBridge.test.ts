@@ -7,6 +7,16 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([false,true])('negotiates reliable supplies only with all prerequisites: %s',enabled=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  try{
+   const features=['personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2',...(enabled?['reliable-supplies-v1']:[])];
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});b.phase='setup';b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');
+   expect(start.cfg.refill).toBe(enabled?'reliable-supplies-v1':undefined);
+  }finally{CMain.mSaveData=previous;launch.mockRestore();}
+ });
  it('never publishes an invalid wave and rechecks the host save cap before starting',()=>{
   const b=lanBridge(),previous=CMain.mSaveData,oldShared=CSaveData.mSharedObject;CMain.mSaveData={} as any;
   CSaveData.mSharedObject={data:{mMaxWaveReached:7}} as any;

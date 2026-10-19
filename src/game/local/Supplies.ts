@@ -3,6 +3,7 @@ import {flash,proto,forIn} from '../../engine/runtime.ts';
 import {CMain,CSound,Thing,registerGameClass} from '../packages.ts';
 import {CThing_Object_Pickup} from '../Thing/Object/CThing_Object_Pickup.ts';
 import { playerMaximum, survivalEnabled } from './SurvivalRules.ts';
+import { reliableSupplies, syncSupplyWeapon, syncSupplyVitals } from './ReliableSupplies.ts';
 
 export const SUPPLY_RULE='armor-ammo-v1';
 export const ARMOR_MAX=100;
@@ -19,12 +20,17 @@ export function refillAmmo(player:any):void{
   for(const entry of player.mWeaponList??[]){
     if(!entry.mActive||!entry.mThing)continue;
     const weapon=entry.mThing;
-    player.mWorld.mUpgrades.ApplyUpgrade_Weapon(weapon);
+    if(reliableSupplies(player.mWorld))syncSupplyWeapon(player,weapon);
+    else player.mWorld.mUpgrades.ApplyUpgrade_Weapon(weapon);
     weapon.mAmmo=weapon.mTotalAmmo;
   }
 }
 export function supplyCanBenefit(player:any,kind:SupplyKind):boolean{
   if(!player||player.mLife<=0||player.mFlags&Thing.CThing.mFlag_DEAD)return false;
+  if(reliableSupplies(player.mWorld)){
+    syncSupplyVitals(player);
+    if(kind==='ammo')for(const entry of player.mWeaponList??[])if(entry.mActive&&entry.mThing)syncSupplyWeapon(player,entry.mThing);
+  }
   if(kind==='armor')return armorValue(player.mArmor,armorMaximum(player))<armorMaximum(player);
   if(kind==='medical')return player.mLife<player.mMaxLife;
   return (player.mWeaponList??[]).some((entry:any)=>entry.mActive&&entry.mThing&&entry.mThing.mAmmo<entry.mThing.mTotalAmmo);

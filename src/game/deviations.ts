@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'RELIABLE_SUPPLIES',
+    file: 'local/ReliableSupplies.ts, Supplies.ts, SupplyDrops.ts, Armor.ts; local/Net/protocol.ts, bridge.ts; electron/lan.ts',
+    description: 'v0.3.0 supplies synchronize derived player limits before eligibility and refill. Weapon '+
+      'rewards and backpack refills preserve larger capacities inherited from cooperative weapon crates; '+
+      'queries retain actual ammunition instead of accidentally refilling. One red reward roll and the '+
+      'original ordered weapon pool remain. reliable-supplies-v1 requires modern loot and preserves old '+
+      'peer behavior when absent.',
+  },
+  {
     id: 'PERSISTENT_SUPPLIES',
     file: 'local/LootRules.ts, SupplyDrops.ts, Supplies.ts, Armor.ts, Resume.ts; local/Net/bridge.ts, protocol.ts; electron/lan.ts',
     description: 'v0.2.9 modern PvE devils use one seeded roll for equal armor/ammo/medical crates. Stable '+

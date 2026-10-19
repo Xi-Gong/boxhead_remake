@@ -65,6 +65,7 @@ class LanBridge {
   private peerTeamPass = false;
   private peerSurvival = false;
   private peerLoot = false;
+  private peerRefill = false;
   session: NetSession | null = null;
   sid: string | undefined;
   /** Client: the host ip it joined (reconnects go there). */
@@ -282,6 +283,7 @@ class LanBridge {
       ...(sel.mode === 'Coop' && this.peerSupplies ? { supplies: 'armor-ammo-v1' as const } : {}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival ? {survival:'survival-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival && this.peerLoot ? {loot:'supply-crates-v2' as const}:{}),
+      ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival && this.peerLoot && this.peerRefill ? {refill:'reliable-supplies-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerBalance ? {balance:'pve-balance-v1' as const}:{}),
       difficulty: sel.difficulty,
       ...settings,
@@ -371,6 +373,7 @@ class LanBridge {
       this.peerTeamPass = Array.isArray(msg.features) && msg.features.includes('team-pass-v1');
       this.peerSurvival = Array.isArray(msg.features) && msg.features.includes('survival-v1');
       this.peerLoot = Array.isArray(msg.features) && msg.features.includes('supply-crates-v2');
+      this.peerRefill = Array.isArray(msg.features) && msg.features.includes('reliable-supplies-v1');
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.
       this.sid = this.sid ?? msg.sid;
       this.peerName = String(msg.name ?? 'player 2');

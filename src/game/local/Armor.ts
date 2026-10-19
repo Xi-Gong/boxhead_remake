@@ -9,6 +9,7 @@ import { localGrowthEnabled } from './LocalGrowth.ts';
 import { installShieldResilience, protectEnemyHit } from './ShieldResilience.ts';
 import { LOOT_RULE, SUPPLY_KINDS, modernLoot, setModernLoot, supplyIdentity } from './LootRules.ts';
 import { installSupplyDrops } from './SupplyDrops.ts';
+import { REFILL_RULE, setReliableSupplies } from './ReliableSupplies.ts';
 
 const bars=new WeakMap<object,any>();
 const fills=new WeakMap<object,any>();
@@ -22,6 +23,7 @@ export function installArmorScope():void{
       ? netSession()?.startOpts?.cfg.survival===SURVIVAL_RULE && suppliesEnabled(this) && netSession()?.startOpts?.cfg.progression==='personal-growth-v1'
       : localGrowthEnabled()));
     setModernLoot(this,survivalEnabled(this)&&(!netActive()||netSession()?.startOpts?.cfg.loot===LOOT_RULE));
+    setReliableSupplies(this,modernLoot(this)&&(!netActive()||netSession()?.startOpts?.cfg.refill===REFILL_RULE));
     return ready.call(this);
   };
   world.LogKill=function(this:any,victim:any):any{

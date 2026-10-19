@@ -107,6 +107,8 @@ export interface SetupSelection {
 
 /** The CSaveData fields the host's StartGame imposes on the client (they shape the simulation; see PARITY §9). */
 export interface GameConfig {
+  /** Preserve inherited weapon capacity and synchronize supply eligibility; requires modern loot. */
+  refill?: 'reliable-supplies-v1';
   /** Player-owned shots skip teammates in cooperative games; old peers keep original hit selection. */
   teamPass?: 'team-pass-v1';
   /** Optional, enabled only after the joining peer advertises the same growth rules. */

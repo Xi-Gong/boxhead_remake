@@ -3,6 +3,7 @@ import { forIn, mathRandom, random } from '../../engine/runtime.ts';
 import { CMain, CSound, Thing, World } from '../packages.ts';
 import { modernLoot, supplyIdentity, SUPPLY_KINDS, type SupplyState } from './LootRules.ts';
 import { applySupplyEffect, livingPicker } from './Supplies.ts';
+import { reliableSupplies, syncSupplyWeapon } from './ReliableSupplies.ts';
 
 /** One roll partitions the reward, then the remaining 70% preserves the original weapon pool's order/weights. */
 export function redBoxReward(player: any, roll: number): boolean {
@@ -23,7 +24,13 @@ export function redBoxReward(player: any, roll: number): boolean {
   const selected = (roll - .3) / .7 * total;
   const reward = pool.find(item => selected < item.end);
   if (!reward) return false;
-  player.mWorld.mHud.AddMessage_Info('Picked up ' + player.AddWeapon(reward.name).mThing.mName, player.mPlayerIndex);
+  const capacity = player.mWeapons[reward.name].mThing.mTotalAmmo;
+  const weapon = player.AddWeapon(reward.name).mThing;
+  if(reliableSupplies(player.mWorld)){
+    syncSupplyWeapon(player,weapon,capacity);
+    weapon.mAmmo=weapon.mTotalAmmo;
+  }
+  player.mWorld.mHud.AddMessage_Info('Picked up ' + weapon.mName, player.mPlayerIndex);
   return true;
 }
 
