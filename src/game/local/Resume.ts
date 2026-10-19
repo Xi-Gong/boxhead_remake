@@ -25,6 +25,8 @@ import { armorValue, armorMaximum, suppliesEnabled, CThing_Object_SupplyCrate, t
 import { initializeLocalGrowth, localGrowthEnabled } from './LocalGrowth.ts';
 import { SURVIVAL_RULE, survivalEnabled, settleVitals } from './SurvivalRules.ts';
 import { LOOT_RULE, modernLoot, type SupplyState } from './LootRules.ts';
+import { ENDLESS_RULE } from './EndlessRules.ts';
+import { endlessWorld } from './Endless.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -78,6 +80,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  endless?: typeof ENDLESS_RULE;
   survival?: typeof SURVIVAL_RULE;
   loot?: { rule: typeof LOOT_RULE; state: SupplyState };
   /** Optional v2 extension shared by local and LAN permanent progression. */
@@ -237,6 +240,7 @@ export function capture(world: any): RunSnapshot {
     .map(captureObject);
   return {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
+    ...(endlessWorld(world)?{endless:ENDLESS_RULE}:{}),
     ...(survivalEnabled(world) ? { survival: SURVIVAL_RULE } : {}),
     ...(modernLoot(world) ? { loot: { rule: LOOT_RULE, state: { ...u.supplyState } } } : {}),
     version: RESUME_VERSION,
@@ -403,6 +407,9 @@ function applyObjects(world: any, snap: RunSnapshot): void {
 export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if (snap?.version !== RESUME_VERSION) return false;
   if (snap.roomLibLink !== world.mWorldLibLink || snap.gameMode !== World.CWorld.mGameMode) return false;
+  if (!Number.isSafeInteger(snap.wave) || snap.wave < 1) return false;
+  // Never reinterpret an endless checkpoint using an older negotiated simulation.
+  if ((snap.endless === ENDLESS_RULE || snap.growth?.players.some(p => p.endless)) && !endlessWorld(world)) return false;
   const u = world.mUpgrades;
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);
@@ -413,7 +420,8 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   try {
     // Waves: replay __set__mLevel one step at a time (identical to the natural Process advance), which re-applies
     // every crossed wave's upgrade table entries and resets the live spawn counters.
-    while (u.mLevelIndex < snap.wave) u.__set__mLevel(u.mLevelIndex + 1);
+    if(endlessWorld(world))u.__set__mLevel(snap.wave);
+    else while (u.mLevelIndex < snap.wave) u.__set__mLevel(u.mLevelIndex + 1);
     // Multiplier: climb step by step so tier upgrades activate at every crossed index (the LogKills path); a single
     // call would only activate the tiers of the final index. Decay below the built value is a plain set.
     if (snap.growth) u.mMultiplierIndex = snap.multiplierIndex;

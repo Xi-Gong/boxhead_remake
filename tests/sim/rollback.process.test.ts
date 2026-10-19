@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const scenarios = [
+  {name:'endless high-wave growth and supplies under correction and recovery',endless:true,loot:true,survival:true,balance:true,supplies:true,growth:true,wave:1000,rtt:100,jitter:20,reconnect:true,total:240},
   {name:'permanent supplies and timed red deliveries under correction and recovery',loot:true,survival:true,balance:true,supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:680},
   {name:'scaled vitals and protected fireballs under correction and recovery',survival:true,balance:true,supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:360},
   {name:'teammate pass-through with weapons, correction and recovery',teamPass:true,weapons:true,rtt:100,jitter:20,reconnect:true,total:360},
@@ -59,7 +60,7 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
         writeFileSync('generated/reports/netcode/divergence.json', JSON.stringify({ scenario, tick, evidence }, null, 2));
       }
       for (let i = 0; i < 2; i++) {
-        expect(responses[i].errors).toEqual([]);
+        expect(responses[i].errors,JSON.stringify(responses[i].enemyDiagnostics)).toEqual([]);
         if (reconnect && frame >= 80 && frame < 160) expect(['playing','reconnecting']).toContain(responses[i].phase);
         else if ((scenario.weapons||scenario.allowEnd) && responses[i].phase === 'ended') {
           expect(responses[i].complete).toBe('player dead');
@@ -97,6 +98,10 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
       expect(final[0].confirmedEnemies).toEqual(final[1].confirmedEnemies);
       expect(final[0].growth.players.some((p:any)=>p.level>1)).toBe(true);
     }
+    if(scenario.endless)for(const peer of final){
+      expect(peer.growth.players.every((p:any)=>p.endless&&p.level>125)).toBe(true);
+      expect(peer.peakArmor).toBeGreaterThan(696);
+    }
     if (scenario.explosions) for (const peer of final) expect(peer.peakExplosions).toBeGreaterThanOrEqual(scenario.explosions);
     if(scenario.supplies){
       expect(final[0].armor).toEqual(final[1].armor);
@@ -118,6 +123,10 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
       expect(r.errors).toEqual([]);
       if (scenario.weapons) expect(r.weapons).toHaveLength(10);
       if (scenario.total === 1550) expect(r.checkpoint - r.startTick).toBe(1500);
+    }
+    if(scenario.endless){
+      mkdirSync('generated/reports/v030/endless',{recursive:true});
+      writeFileSync('generated/reports/v030/endless/peers.json',JSON.stringify({ok:true,scenario,peers:final.map(r=>({tick:r.tick,digest:r.digest,events:r.events,decals:r.decals,growth:r.growth,armor:r.armor,stats:r.stats,errors:r.errors}))},null,2));
     }
   } finally { for (const child of children) child.kill(); }
 }, 120000);

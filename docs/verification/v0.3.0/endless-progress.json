@@ -1,0 +1,366 @@
+{
+  "ok": true,
+  "scenario": {
+    "name": "endless high-wave growth and supplies under correction and recovery",
+    "endless": true,
+    "loot": true,
+    "survival": true,
+    "balance": true,
+    "supplies": true,
+    "growth": true,
+    "wave": 1000,
+    "rtt": 100,
+    "jitter": 20,
+    "reconnect": true,
+    "total": 240
+  },
+  "peers": [
+    {
+      "tick": 240,
+      "digest": {
+        "things": "b5d20a305d9a73a4",
+        "cells": "2692b57d34cecdf1",
+        "collection": "80697d52bc86d606",
+        "navigation": "89e569a483510e60",
+        "upgrades": "19c081c577454f99",
+        "slots": "55d29c67ac275823",
+        "random": "ea2d0bc451b96e00",
+        "outcome": "14087cab5b02f95f"
+      },
+      "events": [
+        171,
+        490684458
+      ],
+      "decals": [
+        324,
+        2521315819
+      ],
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 3897600,
+            "level": 696,
+            "xp": 31,
+            "curve": "pve-balance-v1",
+            "endless": true
+          },
+          {
+            "score": 417600,
+            "level": 696,
+            "xp": 6,
+            "curve": "pve-balance-v1",
+            "endless": true
+          }
+        ]
+      },
+      "armor": [
+        0,
+        0
+      ],
+      "stats": {
+        "predictions": 239,
+        "corrections": 77,
+        "replayedTicks": 196,
+        "maxDepth": 3,
+        "captureMs": 0
+      },
+      "errors": []
+    },
+    {
+      "tick": 240,
+      "digest": {
+        "things": "b5d20a305d9a73a4",
+        "cells": "2692b57d34cecdf1",
+        "collection": "80697d52bc86d606",
+        "navigation": "89e569a483510e60",
+        "upgrades": "19c081c577454f99",
+        "slots": "55d29c67ac275823",
+        "random": "ea2d0bc451b96e00",
+        "outcome": "14087cab5b02f95f"
+      },
+      "events": [
+        171,
+        490684458
+      ],
+      "decals": [
+        324,
+        2521315819
+      ],
+      "growth": {
+        "version": 1,
+        "players": [
+          {
+            "score": 3897600,
+            "level": 696,
+            "xp": 31,
+            "curve": "pve-balance-v1",
+            "endless": true
+          },
+          {
+            "score": 417600,
+            "level": 696,
+            "xp": 6,
+            "curve": "pve-balance-v1",
+            "endless": true
+          }
+        ]
+      },
+      "armor": [
+        0,
+        0
+      ],
+      "stats": {
+        "predictions": 172,
+        "corrections": 58,
+        "replayedTicks": 67,
+        "maxDepth": 2,
+        "captureMs": 0
+      },
+      "errors": []
+    }
+  ],
+  "status": "feature-accepted-release-gates-pending",
+  "scope": "Development evidence only; not release acceptance.",
+  "checks": {
+    "targetedTests": {
+      "files": 13,
+      "passed": 156,
+      "additionalDevilsOffRegression": true,
+      "endlessSuitePassed": 10
+    },
+    "independentPeerScenario": {
+      "passed": 1,
+      "ticks": 240,
+      "otherScenariosNotRun": 32
+    },
+    "typechecks": 3,
+    "build": true,
+    "portedModulesChanged": []
+  },
+  "pending": [
+    "Both enemy variants and their drops",
+    "Final candidate release gates, packaging, tag and publication"
+  ],
+  "regressionsResolved": [
+    "High damage impulse could push a zombie outside the map; physical impulse bounded without reducing damage.",
+    "Higher inherited finite capacity now gains each post-125 level delta.",
+    "Restore assertion now separates immediate saved health from original natural regeneration."
+  ],
+  "artifacts": {
+    "dist\\bundle\\gallery-CmDtL4W7.js": "fa7cad13576282267de84bc2be8a37bb2a6578ac1b5721edba4f83391e9fed42",
+    "dist\\bundle\\main-8DYseNGw.js": "8992cda1a66b27f9b5cd4bf5f397f74cad642b68f29345fce0a0134d7e35fbd1",
+    "dist\\bundle\\Player-o3pII7gY.js": "6b3844a973e7c31df7b6d9b053c12c7cafa4b4f05970e74c2c737cad98186cc5"
+  },
+  "cleanup": {
+    "headlessPeerProcesses": "Exited in test finally",
+    "ownedPreviewServer": "Stopped via original exec session 10654"
+  },
+  "browser": {
+    "ok": true,
+    "cases": [
+      {
+        "kind": "selection",
+        "width": 640,
+        "height": 480,
+        "fit": {
+          "value": 74.935546875,
+          "best": 78.009765625
+        }
+      },
+      {
+        "kind": "selection",
+        "width": 960,
+        "height": 720,
+        "fit": {
+          "value": 74.935546875,
+          "best": 78.009765625
+        }
+      },
+      {
+        "kind": "selection",
+        "width": 1280,
+        "height": 720,
+        "fit": {
+          "value": 74.935546875,
+          "best": 78.009765625
+        }
+      },
+      {
+        "kind": "selection",
+        "width": 640,
+        "height": 889,
+        "fit": {
+          "value": 74.935546875,
+          "best": 78.009765625
+        }
+      },
+      {
+        "kind": "world",
+        "width": 640,
+        "height": 480,
+        "fit": {
+          "wave": 59.99999999999999,
+          "level": 41.529296875,
+          "xp": 56.5791015625,
+          "bounds": [
+            {
+              "xMin": 288,
+              "xMax": 352,
+              "yMin": 18,
+              "yMax": 48
+            },
+            {
+              "xMin": 19,
+              "xMax": 97,
+              "yMin": 28,
+              "yMax": 44
+            },
+            {
+              "xMin": 101,
+              "xMax": 214,
+              "yMin": 28,
+              "yMax": 44
+            }
+          ],
+          "scale": 1,
+          "left": 0,
+          "top": 0,
+          "width": 640,
+          "height": 480
+        },
+        "stats": "HP / ARMOR 126668  |  GROWTH DMG +31493%"
+      },
+      {
+        "kind": "world",
+        "width": 960,
+        "height": 720,
+        "fit": {
+          "wave": 59.99999999999999,
+          "level": 41.529296875,
+          "xp": 56.5791015625,
+          "bounds": [
+            {
+              "xMin": 288,
+              "xMax": 352,
+              "yMin": 18,
+              "yMax": 48
+            },
+            {
+              "xMin": 19,
+              "xMax": 97,
+              "yMin": 28,
+              "yMax": 44
+            },
+            {
+              "xMin": 101,
+              "xMax": 214,
+              "yMin": 28,
+              "yMax": 44
+            }
+          ],
+          "scale": 1.5,
+          "left": 0,
+          "top": 0,
+          "width": 640,
+          "height": 480
+        },
+        "stats": "HP / ARMOR 126668  |  GROWTH DMG +31493%"
+      },
+      {
+        "kind": "world",
+        "width": 1280,
+        "height": 720,
+        "fit": {
+          "wave": 59.99999999999999,
+          "level": 41.529296875,
+          "xp": 56.5791015625,
+          "bounds": [
+            {
+              "xMin": 394.5,
+              "xMax": 458.5,
+              "yMin": 18,
+              "yMax": 48
+            },
+            {
+              "xMin": 19,
+              "xMax": 97,
+              "yMin": 28,
+              "yMax": 44
+            },
+            {
+              "xMin": 101,
+              "xMax": 214,
+              "yMin": 28,
+              "yMax": 44
+            }
+          ],
+          "scale": 1.5005861664712778,
+          "left": 0,
+          "top": 0,
+          "width": 853,
+          "height": 480
+        },
+        "stats": "HP / ARMOR 126668  |  GROWTH DMG +31493%"
+      },
+      {
+        "kind": "world",
+        "width": 640,
+        "height": 889,
+        "fit": {
+          "wave": 59.99999999999999,
+          "level": 41.529296875,
+          "xp": 56.5791015625,
+          "bounds": [
+            {
+              "xMin": 288,
+              "xMax": 352,
+              "yMin": 18,
+              "yMax": 48
+            },
+            {
+              "xMin": 19,
+              "xMax": 97,
+              "yMin": 28,
+              "yMax": 44
+            },
+            {
+              "xMin": 101,
+              "xMax": 214,
+              "yMin": 28,
+              "yMax": 44
+            }
+          ],
+          "scale": 1,
+          "left": 0,
+          "top": 0,
+          "width": 640,
+          "height": 889
+        },
+        "stats": "HP / ARMOR 126668  |  GROWTH DMG +31493%"
+      }
+    ],
+    "shots": [
+      "generated/reports/v030/endless/select-640x480.png",
+      "generated/reports/v030/endless/select-960x720.png",
+      "generated/reports/v030/endless/select-1280x720.png",
+      "generated/reports/v030/endless/select-640x889.png",
+      "generated/reports/v030/endless/world-640x480.png",
+      "generated/reports/v030/endless/pause-640x480.png",
+      "generated/reports/v030/endless/world-960x720.png",
+      "generated/reports/v030/endless/pause-960x720.png",
+      "generated/reports/v030/endless/world-1280x720.png",
+      "generated/reports/v030/endless/pause-1280x720.png",
+      "generated/reports/v030/endless/world-640x889.png",
+      "generated/reports/v030/endless/pause-640x889.png"
+    ],
+    "restored": {
+      "wave": 1000000,
+      "life": 241.89066666666668,
+      "armor": 37,
+      "ammo": 7,
+      "weapon": "uzi"
+    }
+  },
+  "review": "Direct screenshot review of selection, wide gameplay and normal/tall pause panels; real mouse/keyboard, geometry and pixel checks at four sizes. No zai."
+}

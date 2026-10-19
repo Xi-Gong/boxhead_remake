@@ -107,6 +107,8 @@ export interface SetupSelection {
 
 /** The CSaveData fields the host's StartGame imposes on the client (they shape the simulation; see PARITY §9). */
 export interface GameConfig {
+  /** Unlimited personal progression and stat-scaled bounded wave budgets; requires modern PvE rules. */
+  endless?: 'endless-pve-v1';
   /** Preserve inherited weapon capacity and synchronize supply eligibility; requires modern loot. */
   refill?: 'reliable-supplies-v1';
   /** Player-owned shots skip teammates in cooperative games; old peers keep original hit selection. */

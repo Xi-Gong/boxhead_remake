@@ -3,7 +3,7 @@ import { flash, TextFormat } from '../../../engine/runtime.ts';
 import { nowMs } from '../../../engine/flash/clock.ts';
 import { World } from '../../packages.ts';
 import { BODY_FONT, MENU_FONT, INK, RED, text, capsule } from '../UiStyle.ts';
-import { growthOf, MAX_LEVEL, xpRequired, type GrowthState } from './Growth.ts';
+import { growthOf, MAX_LEVEL, xpRequired, growthAtMaximum, infiniteGrowthWeapon, type GrowthState } from './Growth.ts';
 import { netSession } from './NetSession.ts';
 import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
 
@@ -76,7 +76,11 @@ function update(hud: any, state: GrowthState, wave: number, enemies: EnemyCounts
     view.center._x=layout.center;
     view.lastWidth=width;
   }
-  if(view.lastWave!==wave){view.wave.text=String(wave);view.lastWave=wave;}
+  if(view.lastWave!==wave){
+    view.wave.text=String(wave);view.wave.setTextFormat(new TextFormat(MENU_FONT,22,0xffffff,false,false,false,undefined,undefined,'center'));
+    if(view.wave.textWidth>60)view.wave.setTextFormat(new TextFormat(MENU_FONT,22*60/view.wave.textWidth,0xffffff,false,false,false,undefined,undefined,'center'));
+    view.lastWave=wave;
+  }
   if(view.zombies.text!==String(enemies.zombies))view.zombies.text=String(enemies.zombies);
   if(view.devils.text!==String(enemies.devils))view.devils.text=String(enemies.devils);
   for(let index=0;index<view.sides.length;index++){
@@ -90,16 +94,20 @@ function update(hud: any, state: GrowthState, wave: number, enemies: EnemyCounts
     if(ui.lastLevel!==p.level){
       if(ui.lastLevel>=0&&p.level>ui.lastLevel)ui.pulseUntil=time+700;
       ui.level.text='LV '+p.level;ui.lastLevel=p.level;
+      ui.level.setTextFormat(new TextFormat(BODY_FONT,11,INK,true));
+      if(ui.level.textWidth>74)ui.level.setTextFormat(new TextFormat(BODY_FONT,11*74/ui.level.textWidth,INK,true));
     }
     const pulse=time<ui.pulseUntil;
     if(progressChanged||ui.pulse!==pulse||ui.xp.text===''){
-      ui.xp.text=p.level===MAX_LEVEL?'MAX':pulse?'LEVEL UP!':`${p.xp} / ${xpRequired(p)} XP`;
+      ui.xp.text=growthAtMaximum(p)?'MAX':pulse?'LEVEL UP!':`${p.xp} / ${xpRequired(p)} XP`;
+      ui.xp.setTextFormat(new TextFormat(BODY_FONT,11,INK,false,false,false,undefined,undefined,'right'));
+      if(ui.xp.textWidth>109)ui.xp.setTextFormat(new TextFormat(BODY_FONT,11*109/ui.xp.textWidth,INK,false,false,false,undefined,undefined,'right'));
       ui.xp.textColor=pulse?0x007000:INK;ui.level.textColor=pulse?0x007000:INK;
       ui.pulse=pulse;ui.lastXp=p.xp;
     }
     if(progressChanged){
-      ui.fill._xscale=p.level===MAX_LEVEL?100:p.xp/xpRequired(p)*100;
-      ui.fill._visible=p.level===MAX_LEVEL||p.xp>0;
+      ui.fill._xscale=growthAtMaximum(p)?100:p.xp/xpRequired(p)*100;
+      ui.fill._visible=growthAtMaximum(p)||p.xp>0;
     }
   }
 }
@@ -116,9 +124,14 @@ function pauseGrowth(hud: any, state: GrowthState): void {
   const count=World.CWorld.mGameMode==='Single'?1:2;
   for(let i=0;i<count;i++){
     const x=count===1?180:28+i*304,p=state.players[i]!;
-    text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${p.level===MAX_LEVEL?'MAX':p.xp+'/'+xpRequired(p)+' XP'}`);
+    const heading=text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${growthAtMaximum(p)?'MAX':p.xp+'/'+xpRequired(p)+' XP'}`);
+    if(heading.textWidth>276){const format=heading.getTextFormat();format.size*=276/heading.textWidth;heading.setTextFormat(format);}
+    if(p.endless){const summary=text(layer,'_GrowthStats'+i,x,122,280,16,BODY_FONT,10,0xcccccc,false,'left',
+      `HP / ARMOR ${200+4*(p.level-1)}  |  GROWTH DMG +${Math.max(0,p.level-125)}%`);
+      if(summary.textWidth>276){const format=summary.getTextFormat();format.size*=276/summary.textWidth;summary.setTextFormat(format);}
+    }
     const groups:Record<string,Record<string,boolean>>={pistol:{}};
-    for(let n=1;n<=p.level;n++)for(const item of hud.mWorld.mUpgrades.mMultipliers[n]??[]){
+    for(let n=1;n<=Math.min(MAX_LEVEL,p.level);n++)for(const item of hud.mWorld.mUpgrades.mMultipliers[n]??[]){
       if(item.mClassID==='CThing_Creature_Player'&&typeof item.mValue==='string')groups[item.mValue]??={};
       else if(item.mName){
         const key=item.mClassID.replace(/^CThing_(?:Weapon|Object)_/,'').toLowerCase();
@@ -128,7 +141,7 @@ function pauseGrowth(hud: any, state: GrowthState): void {
     let row=0;
     for(const [key,name] of WEAPONS){
       if(!groups[key!])continue;
-      const y=129+row++*34;
+      const y=(p.endless?144:129)+row++*(p.endless?31:34);
       text(layer,`_Weapon${i}_${key}`,x,y,280,17,BODY_FONT,12,0xffffff,true,'left',name!);
       const flags=groups[key!]!, details:string[]=[];
       for(const [prop,label] of Object.entries(PERK_LABELS)){
@@ -164,6 +177,8 @@ export function installGrowthHud(): void {
   };
   proto.UpdatePlayer=function(this:any,player:any,position:any,...args:any[]):any{
     const result=updatePlayer.call(this,player,position,...args);
+    const weapon=player.mWeapon_Current;
+    if(weapon&&weapon.mTotalAmmo===999999&&!infiniteGrowthWeapon(weapon))this.mcPlayers[player.mPlayerIndex].mcAmmo.tfAmount.text=weapon.mAmmo+':'+weapon.mTotalAmmo;
     if(growthOf(this.mWorld)){
       const clip=this.mcPlayers[player.mPlayerIndex];
       if(clip){

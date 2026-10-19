@@ -66,6 +66,9 @@ class LanBridge {
   private peerSurvival = false;
   private peerLoot = false;
   private peerRefill = false;
+  private peerEndless = false;
+  private supportsEndless():boolean{return this.peerEndless&&this.peerGrowth&&this.peerSupplies&&this.peerSurvival&&this.peerLoot&&this.peerBalance;}
+  private waveMaximum():number{return this.supportsEndless()?maxUnlockedWave():Math.min(100,maxUnlockedWave());}
   session: NetSession | null = null;
   sid: string | undefined;
   /** Client: the host ip it joined (reconnects go there). */
@@ -222,7 +225,7 @@ class LanBridge {
       gameAmount: this.sel.settings ? this.sel.gameAmount : sd?.mGameAmount ?? 0,
       settings: this.sel.settings ?? roomSettingsFromSave(sd),
       wave: 1, // START_WAVE_SELECTOR: the choice is not persisted - every setup entry starts at wave 1...
-      maxWave: maxUnlockedWave(), // ...but its cap = the HOST's historical best (v0.2.4, WaveUnlock); both setup screens show it
+      maxWave: this.waveMaximum(), // New peers share the unlocked infinite range; older peers retain 1..100.
     };
     this.send({ t: 'setup', sel: this.sel });
     this.phase = 'setup';
@@ -275,7 +278,7 @@ class LanBridge {
     }
     if (this.phase !== 'setup') return;
     const sel = this.sel;
-    if (sel.mode === 'Coop' && !validWaveNumber(sel.wave ?? 1,maxUnlockedWave())) return;
+    if (sel.mode === 'Coop' && !validWaveNumber(sel.wave ?? 1,this.waveMaximum())) return;
     const settings = sel.settings ?? roomSettingsFromSave(sd);
     const cfg: GameConfig = {
       ...(sel.mode === 'Coop' && this.peerTeamPass ? {teamPass:'team-pass-v1' as const}:{}),
@@ -284,6 +287,7 @@ class LanBridge {
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival ? {survival:'survival-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival && this.peerLoot ? {loot:'supply-crates-v2' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival && this.peerLoot && this.peerRefill ? {refill:'reliable-supplies-v1' as const}:{}),
+      ...(sel.mode==='Coop'&&this.supportsEndless()?{endless:'endless-pve-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerBalance ? {balance:'pve-balance-v1' as const}:{}),
       difficulty: sel.difficulty,
       ...settings,
@@ -374,6 +378,8 @@ class LanBridge {
       this.peerSurvival = Array.isArray(msg.features) && msg.features.includes('survival-v1');
       this.peerLoot = Array.isArray(msg.features) && msg.features.includes('supply-crates-v2');
       this.peerRefill = Array.isArray(msg.features) && msg.features.includes('reliable-supplies-v1');
+      this.peerEndless = Array.isArray(msg.features) && msg.features.includes('endless-pve-v1');
+      if(this.isHost){const maxWave=this.waveMaximum();this.sel={...this.sel,maxWave,wave:Math.min(this.sel.wave,maxWave)};}
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.
       this.sid = this.sid ?? msg.sid;
       this.peerName = String(msg.name ?? 'player 2');

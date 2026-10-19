@@ -33,6 +33,7 @@ import { installExplosionFlash } from './local/ExplosionFlash.ts';
 import {installBalanceScope} from './local/Balance.ts';
 import { installFriendlyFire } from './local/FriendlyFire.ts';
 import { initializeLocalGrowth, localGrowthEnabled } from './local/LocalGrowth.ts';
+import { installEndlessScope } from './local/Endless.ts';
 
 /**
  * CrazyMonkeyGames sponsor / cross-promotion links, hidden on every screen they appear on (Screen_Main,
@@ -108,6 +109,7 @@ export function applyScope(): void {
   applied = true;
   installArmorScope();
   installBalanceScope();
+  installEndlessScope();
   installFriendlyFire();
   installExplosionFlash();
   setInstanceHook(scopeInstanceHook);

@@ -221,6 +221,8 @@ export class CScreen_LanSetup extends CScreen {
     setButtonLabel(this.bDiff, DIFFICULTY[sel.difficulty]!);
     setButtonLabel(this.bFrags, String(FRAGS[sel.gameAmount]!));
     this.bBest.text = 'BEST ' + Math.max(1, Math.floor(sel.maxWave ?? 1));
+    const bestFormat=this.bBest.getTextFormat();bestFormat.size=11;this.bBest.setTextFormat(bestFormat);
+    if(this.bBest.textWidth>124){bestFormat.size*=124/this.bBest.textWidth;this.bBest.setTextFormat(bestFormat);}
     const showFrags = sel.mode === 'DeathMatch';
     this.bFrags._visible = showFrags;
     this.bFrags.enabled = showFrags;

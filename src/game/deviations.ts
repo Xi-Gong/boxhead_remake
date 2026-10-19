@@ -14,6 +14,20 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'ENDLESS_PVE',
+    file:'local/Endless.ts, EndlessRules.ts, LocalGrowth.ts, Resume.ts, SurvivalRules.ts, StartWave.ts, WaveUnlock.ts; local/Net/Growth.ts, GrowthHud.ts, bridge.ts, NetSession.ts',
+    description:'v0.3.0 optional endless-pve-v1 requires the existing personal growth, armor, survival, loot and '+
+      'balance capabilities. Local modern PvE enables it; Death Match and explicit original fixtures retain '+
+      'their previous paths. Levels above 125 keep the authored tier-125 perks and add linear health, armor, '+
+      'weapon damage and finite ammunition capacity. Inherited larger capacity also gains each level delta. '+
+      'Derived table caches stay bounded at 125; cumulative XP and its inverse use exact closed-form integer '+
+      'arithmetic. Enemy budgets cap at 200 zombies/10 devils, with continuing health/damage based on earned '+
+      'previous-wave XP. Damage transfers once through shots/placed explosives; physical hit impulses alone '+
+      'cap at the original .3-cell explosion ceiling to prevent high damage jumping through map walls. '+
+      'High-wave selection follows historical unlocks, endless saves restore the target directly and reject '+
+      'older-rule worlds before mutation. Optional markers preserve old v2 saves and old capability meanings.',
+  },
+  {
     id: 'MENU_SPACING',
     file: 'local/UiStyle.ts; local/Net/Lobby.ts; scope.ts',
     description: 'v0.3.0 fits authored main-menu hit bounds to 24px rows spaced 36px apart, retaining '+

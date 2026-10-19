@@ -7,6 +7,19 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([undefined,...['endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1']])('negotiates endless waves only with every prerequisite; missing %s',missing=>{
+  const b=lanBridge(),previous=CMain.mSaveData,shared=CSaveData.mSharedObject;CMain.mSaveData={} as any;
+  CSaveData.mSharedObject={data:{mMaxWaveReached:1000}} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  try{
+   const features=['endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1'].filter(f=>f!==missing);
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});b.phase='setup';
+   expect(b.sel.maxWave).toBe(missing?100:1000);
+   b.sel={...b.sel,wave:missing?100:1000};b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');
+   expect(start.wave).toBe(missing?100:1000);expect(start.cfg.endless).toBe(missing?undefined:'endless-pve-v1');
+  }finally{CMain.mSaveData=previous;CSaveData.mSharedObject=shared;launch.mockRestore();}
+ });
  it.each([false,true])('negotiates reliable supplies only with all prerequisites: %s',enabled=>{
   const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});

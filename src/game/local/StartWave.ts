@@ -13,6 +13,7 @@
 //              lockstep peers compute it identically - and consumes it. Default 1 = exactly the original behaviour.
 import { World } from '../packages.ts';
 import { maxUnlockedWave } from './WaveUnlock.ts';
+import { endlessSelectionEnabled } from './Endless.ts';
 
 /**
  * Starting wave -> starting multiplier. Anchors = the original difficulty pairs of CUpgrades.SetDifficulty
@@ -43,13 +44,13 @@ export function getSelectedStartWave(): number { return selected; }
 export function setSelectedStartWave(n: number): void { selected = Math.min(Math.max(Math.floor(n), 1), maxUnlockedWave()); }
 export function cycleSelectedStartWave(delta: number): number {
   const max = maxUnlockedWave();
-  setSelectedStartWave(((selected - 1 + delta) % max + max) % max + 1);
+  const m=BigInt(max);setSelectedStartWave(Number(((BigInt(selected)-1n+BigInt(delta))%m+m)%m+1n));
   return selected;
 }
 export function resetSelectedStartWave(): void { selected = 1; }
 
 /** Hand the chosen wave to the SetDifficulty wrapper (called right before the world is built). */
-export function armStartWave(n: number): void { armed = Math.min(Math.max(Math.floor(n), 1), 100); }
+export function armStartWave(n: number): void { armed = Math.min(Math.max(Math.floor(n), 1),endlessSelectionEnabled()?Number.MAX_SAFE_INTEGER:100); }
 
 /** Take the armed wave (default 1 = original behaviour) and clear it. */
 export function consumeArmedWave(): number {
@@ -81,7 +82,7 @@ export function consumeArmedWaveOn(upgrades: any): void {
 }
 
 /** The wave the current run actually started at (see `runStart` above); recorded once per world build. */
-export function recordRunStartWave(n: number): void { runStart = Math.min(Math.max(Math.floor(n), 1), 100); }
+export function recordRunStartWave(n: number): void { runStart = Math.min(Math.max(Math.floor(n), 1),endlessSelectionEnabled()?Number.MAX_SAFE_INTEGER:100); }
 export function getRunStartWave(): number { return runStart; }
 
 export function _resetForTests(): void {

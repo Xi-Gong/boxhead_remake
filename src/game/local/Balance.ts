@@ -6,6 +6,7 @@ const rules=new WeakMap<object,number>();
 // Original port-contract fixtures also remain runnable beside the new tuned gameplay tests.
 const classicFixtures=new WeakSet<object>();
 export function setClassicWaveFixture(main:object):void{classicFixtures.add(main);}
+export function classicWaveFixture(main:object):boolean{return classicFixtures.has(main);}
 export function balancedWorld(world:any):boolean{return rules.has(world);}
 export function installBalanceScope():void{
   const upgrades=World.CUpgrades.prototype as any,init=upgrades.InitLists;

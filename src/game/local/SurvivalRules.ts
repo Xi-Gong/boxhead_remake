@@ -6,8 +6,9 @@ export function setSurvivalEnabled(world: object, enabled: boolean): void {
 }
 export function survivalEnabled(world: any): boolean { return worlds.has(world); }
 export function playerMaximum(player: any): number {
-  const level = player.mWorld?.mUpgrades?.lanGrowth?.players[player.mPlayerIndex]?.level ?? 1;
-  return 200 + 4 * (Math.max(1, Math.min(125, level)) - 1);
+  const growth=player.mWorld?.mUpgrades?.lanGrowth?.players[player.mPlayerIndex];
+  const level=growth?.level??1;
+  return 200 + 4 * (Math.max(1, growth?.endless?level:Math.min(125,level)) - 1);
 }
 export function syncVitals(player: any, mode: 'full' | 'restore' | 'level'): void {
   if (!survivalEnabled(player.mWorld)) return;

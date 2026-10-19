@@ -50,7 +50,7 @@ export function buildStartWaveCycler(parent: any, x: number, y: number): any {
   plate._y = -14;
   pillBase(plate, 90, 28);
   const value = menuText(plate, 'mcValue', 0, 3, 90, 24, '1', 18, PILL_LABEL);
-  const best = menuText(mc, 'mcBest', -45, 21, 90, 16, 'BEST 1', 11, GREY);
+  const best = menuText(mc, 'mcBest', -79, 21, 158, 16, 'BEST 1', 11, GREY);
   const editor = parent.waveInput = new WaveInput({ screen: parent, field: value, rect: {x:x-45,y:y-14,w:90,h:28},
     get:getSelectedStartWave, set:setSelectedStartWave, max:maxUnlockedWave,
     visible:()=>mc._visible&&!parent._LocalHighscores?._visible });

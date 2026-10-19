@@ -11,6 +11,7 @@
 //   - every world build (CWorld.InitFinished, right after recordRunStartWave) - starting AT wave N counts as
 //     entering N (a LAN guest starting at the host's higher wave unlocks it locally).
 import { CSaveData } from '../packages.ts';
+import { endlessSelectionEnabled } from './Endless.ts';
 
 export const SAVE_MEMBER = 'mMaxWaveReached';
 
@@ -22,12 +23,13 @@ export const SAVE_MEMBER = 'mMaxWaveReached';
 export function maxUnlockedWave(): number {
   const v = CSaveData.mSharedObject?.data?.[SAVE_MEMBER];
   const n = typeof v === 'number' && Number.isFinite(v) ? Math.floor(v) : 1;
-  return Math.min(Math.max(n, 1), 100);
+  return Math.min(Math.max(n, 1), endlessSelectionEnabled()?Number.MAX_SAFE_INTEGER:100);
 }
 
 /** Record that wave n was entered; writes + flushes ONLY when it grows (idempotent max). */
 export function recordWaveReached(n: number): void {
-  const w = Math.min(Math.max(Math.floor(n), 1), 100);
+  if(!Number.isSafeInteger(n)||n<1)return;
+  const w = Math.min(n,endlessSelectionEnabled()?Number.MAX_SAFE_INTEGER:100);
   if (w <= maxUnlockedWave()) return;
   const save = CSaveData._this;
   if (!save || !CSaveData.mSharedObject) return;

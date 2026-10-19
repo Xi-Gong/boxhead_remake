@@ -29,11 +29,13 @@ export class WaveInput {
   private modalText: any;
   private shield?: HTMLDivElement;
   private closeButton?: HTMLButtonElement;
+  private baseFormat: any;
 
   constructor(options: Options) {
     this.options = options; this.last = options.get();
+    this.baseFormat=options.field.getTextFormat();
     options.field.type = 'input';
-    options.field.text = String(this.last);
+    this.showValue(this.last);
     const previous = options.screen.onUnload;
     options.screen.onUnload = () => { this.dispose(); previous?.call(options.screen); };
   }
@@ -41,6 +43,11 @@ export class WaveInput {
   private showValue(n: number): void {
     this.last = n; this.dirty = false; this.pastedRaw = undefined;
     this.options.field.text = String(n);
+    this.options.field.setTextFormat(this.baseFormat);
+    if(this.options.field.textWidth>this.options.rect.w-6){
+      const format=this.options.field.getTextFormat();format.size*= (this.options.rect.w-6)/this.options.field.textWidth;
+      this.options.field.setTextFormat(format);
+    }
     if (this.input) this.input.value = String(n);
   }
   refresh(): void {
@@ -68,8 +75,8 @@ export class WaveInput {
   }
   cycle(delta: number): boolean {
     if (!this.editable() || !this.commit()) return false;
-    const max = Math.min(100, this.options.max());
-    const next = ((this.options.get() - 1 + delta) % max + max) % max + 1;
+    const max = this.options.max(),m=BigInt(max);
+    const next = Number(((BigInt(this.options.get())-1n+BigInt(delta))%m+m)%m+1n);
     this.options.set(next); this.showValue(next); return true;
   }
   cancel(): void { this.composing = false; this.showValue(this.options.get()); }
@@ -153,7 +160,7 @@ export class WaveInput {
       const close = pillButton(card,'_Close',0,120,170,28,'CLOSE',14);
       close.onRelease = () => this.dismiss();
     }
-    this.modalText.text = `${reason}\nAllowed range: 1 - ${Math.min(100,this.options.max())}.`;
+    this.modalText.text = `${reason}\nAllowed range: 1 - ${this.options.max()}.`;
     this.modal._visible = true; Key._clear();
     if (stage && !this.shield) {
       this.shield = document.createElement('div');

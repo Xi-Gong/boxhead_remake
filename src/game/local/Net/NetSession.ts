@@ -46,6 +46,8 @@ import { EventJournal } from './Events.ts';
 import { NetPresentation } from './Presentation.ts';
 import { PauseBarrier } from './PauseBarrier.ts';
 import { GROWTH_RULE, newGrowth, copyGrowth, growthOf, grantGrowthLoadout, type GrowthState } from './Growth.ts';
+import { endlessWorld } from '../Endless.ts';
+import { endlessStartLevel } from '../EndlessRules.ts';
 import {BALANCE_RULE,balancedStartLevel,DIFFICULTY_START_WAVES,difficultyIndex} from '../BalanceRules.ts';
 import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
 import { settleVitals } from '../SurvivalRules.ts';
@@ -479,10 +481,11 @@ export class NetSession {
     this.world = world;
     if (this.mode === 'Coop' && this.startOpts?.cfg.progression === GROWTH_RULE) {
       const balanced=this.startOpts.cfg.balance===BALANCE_RULE,fresh=!world.mUpgrades.lanGrowth;
+      const endless=endlessWorld(world);
       const baseWave=Math.max(world.mUpgrades.mLevelIndex,DIFFICULTY_START_WAVES[difficultyIndex(this.startOpts.cfg.difficulty)]!);
-      world.mUpgrades.lanGrowth ??= newGrowth(balanced?balancedStartLevel(baseWave,this.startOpts.cfg.devils):world.mUpgrades.mMultiplierIndex,balanced);
+      world.mUpgrades.lanGrowth ??= newGrowth(balanced?(endless?endlessStartLevel:balancedStartLevel)(baseWave,this.startOpts.cfg.devils):world.mUpgrades.mMultiplierIndex,balanced,endless);
       if(balanced){
-        for(const player of world.mUpgrades.lanGrowth.players)player.curve=BALANCE_RULE;
+        for(const player of world.mUpgrades.lanGrowth.players){player.curve=BALANCE_RULE;if(endless)player.endless=true;else delete player.endless;}
         if(fresh)grantGrowthLoadout(world);
       }
       settleVitals(world, !fresh);

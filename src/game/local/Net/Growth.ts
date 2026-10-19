@@ -5,22 +5,24 @@ import { Thing, World } from '../../packages.ts';
 import {BALANCE_RULE,balancedXpRequired} from '../BalanceRules.ts';
 import { recordGrowthScore } from './FloatingScores.ts';
 import { syncVitals } from '../SurvivalRules.ts';
+import { endlessXpRequired, experienceBeforeLevel, growthFromExperience } from '../EndlessRules.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
 export const MAX_LEVEL = 125;
 export const XP_PER_LEVEL = 5;
-export interface PlayerGrowth { score: number; level: number; xp: number; curve?: typeof BALANCE_RULE }
+export interface PlayerGrowth { score: number; level: number; xp: number; curve?: typeof BALANCE_RULE; endless?: true }
 export interface GrowthState { version: 1; players: [PlayerGrowth, PlayerGrowth] }
-export function newGrowth(level: number,balanced=false): GrowthState {
-  const base = Math.max(1, Math.min(MAX_LEVEL, Math.floor(level)));
-  const player=():PlayerGrowth=>({score:0,level:base,xp:0,...(balanced?{curve:BALANCE_RULE}:{})});
+export function newGrowth(level: number,balanced=false,endless=false): GrowthState {
+  const base = Math.max(1, Math.min(endless?Number.MAX_SAFE_INTEGER:MAX_LEVEL, Math.floor(level)));
+  const player=():PlayerGrowth=>({score:0,level:base,xp:0,...(balanced?{curve:BALANCE_RULE}:{}),...(endless?{endless:true as const}:{})});
   return { version: 1, players: [player(),player()] };
 }
 export function copyGrowth(state: GrowthState): GrowthState {
   return { version: 1, players: [{ ...state.players[0] }, { ...state.players[1] }] };
 }
 export function growthOf(world: any): GrowthState | undefined { return world?.mUpgrades?.lanGrowth; }
-export function xpRequired(player:PlayerGrowth):number{return player.curve===BALANCE_RULE?balancedXpRequired(player.level):XP_PER_LEVEL;}
+export function xpRequired(player:PlayerGrowth):number{return player.endless?endlessXpRequired(player.level):player.curve===BALANCE_RULE?balancedXpRequired(player.level):XP_PER_LEVEL;}
+export function growthAtMaximum(player:PlayerGrowth):boolean{return !player.endless&&player.level===MAX_LEVEL;}
 export function grantGrowthLoadout(world:any):void{
   const state=growthOf(world);if(!state)return;
   for(const player of Object.values(world.mThing_Collection.mPlayerThings) as any[]){
@@ -42,6 +44,7 @@ const views = new WeakMap<object, Map<number, Record<string, UpgradeRow>>>();
 const contexts = new WeakMap<object, Map<number, Record<string, any>>>();
 /** Reuse the original table, including its application order; no duplicate balance table. */
 function atLevel(upgrades: any, level: number): Record<string, UpgradeRow> {
+  level=Math.min(MAX_LEVEL,level);
   let levels = views.get(upgrades);
   if (!levels) views.set(upgrades, levels = new Map());
   let result = levels.get(level);
@@ -62,6 +65,11 @@ export function awardKill(state: PlayerGrowth, baseScore: number, xp: number): n
   const amount = baseScore * state.level;
   state.score += amount;
   let total = state.xp + xp;
+  if(state.endless){
+    if(total>=xpRequired(state))Object.assign(state,growthFromExperience(experienceBeforeLevel(state.level)+BigInt(total)));
+    else state.xp=total;
+    return amount;
+  }
   while(state.level<MAX_LEVEL&&total>=xpRequired(state)){total-=xpRequired(state);state.level++;}
   state.xp = state.level === MAX_LEVEL ? 0 : total;
   return amount;
@@ -78,23 +86,61 @@ function applyPersonal(upgrades: any, thing: any, previous: any): any {
   if (!state) return previous.call(upgrades, thing);
   const index = playerSource(thing);
   const level = index === undefined ? 1 : state.players[index]!.level;
-  const flags = atLevel(upgrades, level)[thing._CLASSID_];
+  const tier=Math.min(MAX_LEVEL,level),flags = atLevel(upgrades, tier)[thing._CLASSID_];
   const original = upgrades[thing._CLASSID_];
   // Only player weapons/objects are routed here. Original stats are registered lazily before first apply.
   let cache = contexts.get(upgrades);
   if (!cache) contexts.set(upgrades, cache = new Map());
-  let classes = cache.get(level);
-  if (!classes) cache.set(level, classes = {});
+  let classes = cache.get(tier);
+  if (!classes) cache.set(tier, classes = {});
   let view = classes[thing._CLASSID_];
   if (!view || view[thing._CLASSID_].mOriginalStats !== original?.mOriginalStats) {
     view = Object.create(upgrades);
     view[thing._CLASSID_] = { IDCount: 10000, ...flags, mOriginalStats: original?.mOriginalStats };
     classes[thing._CLASSID_] = view;
   }
-  return previous.call(view, thing);
+  const beforeAmmo=thing.mAmmo,beforeCapacity=thing.mTotalAmmo,fresh=thing.mWorld===undefined;
+  const value=previous.call(view,thing);
+  if(index!==undefined&&state.players[index]!.endless&&thing._CLASSID_.startsWith('CThing_Weapon_')){
+    const raw=original?.mOriginalStats;
+    if(raw){
+      const excess=Math.max(0,level-MAX_LEVEL),damage=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;
+      if(raw.mDamage!==undefined)thing.mDamage=raw.mDamage*damage*(1+.01*excess);
+      const infinite=flags?.InfinateAmmo||raw.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
+      if(!infinite){
+        const base=raw.mTotalAmmo*(flags?.QuadAmmo?4:flags?.DoubleAmmo?2:1);
+        const step=Math.max(1,Math.ceil(base*.005));
+        const gained=Math.max(0,level-(thing.mEndlessLevel??MAX_LEVEL))*step;
+        const capacity=Math.max(base+step*excess,(beforeCapacity??0)+(fresh?0:gained));
+        if(excess>0){
+          if(fresh)thing.mAmmo=capacity;
+          else thing.mAmmo=Math.min(capacity,beforeAmmo+(thing.mEndlessLevel===level?0:Math.max(0,capacity-beforeCapacity)));
+          thing.mEndlessLevel=level;
+        }else if(capacity>thing.mTotalAmmo)thing.mAmmo=Math.max(beforeAmmo,thing.mAmmo);
+        thing.mTotalAmmo=capacity;
+      }
+    }
+  }
+  return value;
+}
+
+/** Infinity is an authored weapon/perk property, not an accidental finite-capacity sentinel collision. */
+export function infiniteGrowthWeapon(weapon:any):boolean{
+  const u=weapon.mWorld?.mUpgrades,slot=playerSource(weapon),state=growthOf(weapon.mWorld);
+  if(!u||slot===undefined||!state?.players[slot]?.endless)return weapon.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
+  const flags=atLevel(u,state.players[slot]!.level)[weapon._CLASSID_];
+  return !!flags?.InfinateAmmo||u[weapon._CLASSID_]?.mOriginalStats?.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
 }
 
 export function installGrowthScope(): void {
+  const weapon=Thing.Weapon.CThing_Weapon.prototype as any,decrement=weapon.DecrementAmmo,empty=weapon.EmptyWeapon;
+  weapon.DecrementAmmo=function(this:any):void{
+    if(this.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo&&!infiniteGrowthWeapon(this)){this.mAmmo--;this.mFireRateCount=this.mFireRate;}
+    else decrement.call(this);
+  };
+  weapon.EmptyWeapon=function(this:any):void{
+    if(this.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo&&!infiniteGrowthWeapon(this))this.mAmmo=0;else empty.call(this);
+  };
   // Capture the FIRST fatal damage, not the last affect processed after the victim was already dead.
   for (const ctor of [Thing.Affect.CThing_Affect, Thing.Affect.CThing_Affect_Bullet, Thing.Affect.CThing_Affect_Explosion,
     Thing.Affect.CThing_Affect_FireBall, Thing.Affect.CThing_Affect_ZombieAttack, Thing.Affect.CThing_Affect_DevilAttack]) {
@@ -155,7 +201,8 @@ export function installGrowthScope(): void {
     if (personal && personal.level !== before) {
       const player = findPlayer(this, slot);
       if (player) syncVitals(player, 'level');
-      for (let n = before! + 1; n <= personal.level; n++) for (const key of forIn(this.mUpgrades.mMultipliers[n])) {
+      if(player&&personal.endless)for(const entry of player.mWeaponList??[])if(entry.mActive&&entry.mThing)this.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
+      for (let n = before! + 1; n <= Math.min(MAX_LEVEL,personal.level); n++) for (const key of forIn(this.mUpgrades.mMultipliers[n])) {
         const item = this.mUpgrades.mMultipliers[n][key];
         if (item.mClassID === 'CThing_Creature_Player' && typeof item.mValue === 'string' && player?.mWeapons?.[item.mValue]) player.NewWeapon(item.mValue);
       }

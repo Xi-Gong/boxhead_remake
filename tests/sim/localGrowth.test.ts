@@ -27,9 +27,9 @@ function start(game:any,wave=1) {
 describe('local permanent personal growth',()=>{
   it.each(['Single','Coop'] as const)('%s uses owned kills, the balanced curve, score-before-level, and no decay',mode=>{
     const game=createHeadlessGame({mode}),world=game.world(),players=game.players(),state=growthOf(world)!;
-    expect(state.players[0]).toEqual({score:0,level:1,xp:0,curve:'pve-balance-v1'});
+    expect(state.players[0]).toEqual({score:0,level:1,xp:0,curve:'pve-balance-v1',endless:true});
     for(let i=0;i<5;i++)kill(world,players[0]);
-    expect(state.players[0]).toEqual({score:500,level:2,xp:0,curve:'pve-balance-v1'});
+    expect(state.players[0]).toEqual({score:500,level:2,xp:0,curve:'pve-balance-v1',endless:true});
     expect(state.players[1].score).toBe(0);
     if(mode==='Coop'){kill(world,players[1],true);expect(state.players[1].level).toBe(2);expect(state.players[1].score).toBe(1000);}
     state.players[0].level=10;state.players[0].xp=4;kill(world,players[0],true);
@@ -42,7 +42,7 @@ describe('local permanent personal growth',()=>{
     const game=createHeadlessGame({mode,menuOnly:'Select'}); CMain.mSaveData.mDifficulty=3;
     start(game,20); const world=game.world(),level=balancedStartLevel(35,true,mode==='Single'?1:2);
     expect(world.mUpgrades.mLevelIndex).toBe(20);
-    expect(growthOf(world)!.players[0]).toEqual({score:0,level,xp:0,curve:'pve-balance-v1'});
+    expect(growthOf(world)!.players[0]).toEqual({score:0,level,xp:0,curve:'pve-balance-v1',endless:true});
     for(const p of game.players())expect(p.mWeapons.railgun.mActive).toBe(true);
   });
   it('single progression uses all previous kills, cooperation an equal share; disabling devils excludes their XP',()=>{
