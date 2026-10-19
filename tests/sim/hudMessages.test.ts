@@ -7,6 +7,20 @@ import { makeSnapCtx, captureWorldSnap, restoreWorldSnap } from '../../src/game/
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 import { NetSession } from '../../src/game/local/Net/NetSession.ts';
 
+it('keeps at least 22 pixels between simultaneous arrivals throughout entry and replacement',()=>{
+  const g=createHeadlessGame({mode:'Single'});noSpawn(g);const w=g.world(),h=w.mHud;
+  advanceVirtual(4000);w.Draw();
+  for(const count of [3,1,2,4]){
+    for(let n=0;n<count;n++)h.AddMessage_Info('burst '+count+'/'+n,0);
+    for(let step=0;step<=8;step++){
+      const rows=hudMessageRows(h);expect(rows.length).toBeLessThanOrEqual(3);
+      for(let i=1;i<rows.length;i++)expect(rows[i]!.y-rows[i-1]!.y).toBeGreaterThanOrEqual(21.999);
+      expect(rows.at(-1)!.y).toBeLessThanOrEqual(66);
+      advanceVirtual(20);w.Draw();
+    }
+  }g.quit();
+});
+
 it('bounds the display stack, identifies players, and ages it independently of drawing frequency',()=>{
   const g=createHeadlessGame({mode:'Single'});noSpawn(g);const w=g.world(),h=w.mHud;
   for(let n=1;n<=4;n++)h.AddMessage_Info('ammo '+n,0);

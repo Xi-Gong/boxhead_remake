@@ -481,5 +481,260 @@
         ]
       ]
     }
+  },
+  "simultaneousArrivalCorrection": {
+    "regressionBefore": "0px between simultaneous rows (expected >=22px)",
+    "relatedTestsPassed": 21,
+    "typechecks": 3,
+    "build": true,
+    "browser": {
+      "ok": true,
+      "cases": [
+        {
+          "width": 640,
+          "height": 480,
+          "last": [
+            {
+              "text": "P1: All ammo full!",
+              "frame": 128,
+              "at": 22473.30000001192,
+              "x": 320,
+              "y": 352,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 352,
+                "w": 326,
+                "h": 24
+              }
+            },
+            {
+              "text": "P2: Rocket Launcher ammo full!",
+              "frame": 128,
+              "at": 22473.400000035763,
+              "x": 320,
+              "y": 374,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 374,
+                "w": 326,
+                "h": 24
+              }
+            },
+            {
+              "text": "P1: Health full!",
+              "frame": 128,
+              "at": 22473.400000035763,
+              "x": 320,
+              "y": 396,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 396,
+                "w": 326,
+                "h": 24
+              }
+            }
+          ],
+          "samples": 79
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "burstFrames": 7,
+          "minimumGap": 22
+        },
+        {
+          "width": 960,
+          "height": 720,
+          "last": [
+            {
+              "text": "P1: All ammo full!",
+              "frame": 343,
+              "at": 31073.200000047684,
+              "x": 320,
+              "y": 352,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 352,
+                "w": 326,
+                "h": 24
+              }
+            },
+            {
+              "text": "P2: Rocket Launcher ammo full!",
+              "frame": 343,
+              "at": 31073.400000035763,
+              "x": 320,
+              "y": 374,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 374,
+                "w": 326,
+                "h": 24
+              }
+            },
+            {
+              "text": "P1: Health full!",
+              "frame": 343,
+              "at": 31073.400000035763,
+              "x": 320,
+              "y": 396,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 396,
+                "w": 326,
+                "h": 24
+              }
+            }
+          ],
+          "samples": 81
+        },
+        {
+          "width": 960,
+          "height": 720,
+          "burstFrames": 7,
+          "minimumGap": 22
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "last": [
+            {
+              "text": "P1: All ammo full!",
+              "frame": 557,
+              "at": 39640,
+              "x": 426.5,
+              "y": 352,
+              "alpha": 100,
+              "bounds": {
+                "x": 263.5,
+                "y": 352,
+                "w": 326,
+                "h": 24
+              }
+            },
+            {
+              "text": "P2: Rocket Launcher ammo full!",
+              "frame": 557,
+              "at": 39640.10000002384,
+              "x": 426.5,
+              "y": 374,
+              "alpha": 100,
+              "bounds": {
+                "x": 263.5,
+                "y": 374,
+                "w": 326,
+                "h": 24
+              }
+            },
+            {
+              "text": "P1: Health full!",
+              "frame": 557,
+              "at": 39640.10000002384,
+              "x": 426.5,
+              "y": 396,
+              "alpha": 100,
+              "bounds": {
+                "x": 263.5,
+                "y": 396,
+                "w": 326,
+                "h": 24
+              }
+            }
+          ],
+          "samples": 79
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "burstFrames": 7,
+          "minimumGap": 21.999999999999943
+        },
+        {
+          "width": 640,
+          "height": 889,
+          "last": [
+            {
+              "text": "P1: All ammo full!",
+              "frame": 771,
+              "at": 48198.10000002384,
+              "x": 320,
+              "y": 761,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 761,
+                "w": 326,
+                "h": 24
+              }
+            },
+            {
+              "text": "P2: Rocket Launcher ammo full!",
+              "frame": 771,
+              "at": 48198.10000002384,
+              "x": 320,
+              "y": 783,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 783,
+                "w": 326,
+                "h": 24
+              }
+            },
+            {
+              "text": "P1: Health full!",
+              "frame": 771,
+              "at": 48198.10000002384,
+              "x": 320,
+              "y": 805,
+              "alpha": 100,
+              "bounds": {
+                "x": 157,
+                "y": 805,
+                "w": 326,
+                "h": 24
+              }
+            }
+          ],
+          "samples": 77
+        },
+        {
+          "width": 640,
+          "height": 889,
+          "burstFrames": 6,
+          "minimumGap": 22
+        }
+      ],
+      "shots": [
+        "generated/reports/v030/hud-messages/640x480.png",
+        "generated/reports/v030/hud-messages/burst-640x480.png",
+        "generated/reports/v030/hud-messages/960x720.png",
+        "generated/reports/v030/hud-messages/burst-960x720.png",
+        "generated/reports/v030/hud-messages/1280x720.png",
+        "generated/reports/v030/hud-messages/burst-1280x720.png",
+        "generated/reports/v030/hud-messages/640x889.png",
+        "generated/reports/v030/hud-messages/burst-640x889.png"
+      ]
+    },
+    "review": "All four burst screenshots directly reviewed; original pixel/bounds/motion assertions retained.",
+    "artifacts": {
+      "generated/reports/v030/hud-messages/640x480.png": "79797047c02bfce6c0bf3052ad8b567eb9ddcfcf50ae25582a093a21a812f57b",
+      "generated/reports/v030/hud-messages/burst-640x480.png": "414fdc3a911283dcd4bb05c5a5531a95eb559b4d4335293d5939dc261f52daab",
+      "generated/reports/v030/hud-messages/960x720.png": "6f8dfffe112bf9a1b03e739a5b72f5da45f2c13952e345f8ba56620a40732fda",
+      "generated/reports/v030/hud-messages/burst-960x720.png": "46cda64f4979215bb793757ecd5d30d21b2a77d37fa60942f3aae8c2e9efe0d6",
+      "generated/reports/v030/hud-messages/1280x720.png": "c4729929580d4e043f021a93269c1decd56244094cc4fd693a49efb26bc142f7",
+      "generated/reports/v030/hud-messages/burst-1280x720.png": "7328743b5c905be4f2d4832c150b9f368b432b024ac222432848e074bdfc2d6e",
+      "generated/reports/v030/hud-messages/640x889.png": "4f6726d063872869d237c0faa6f0547dcc1b71e69004547a31c82fd75a4134cd",
+      "generated/reports/v030/hud-messages/burst-640x889.png": "abd5b9832b4d7128b5baf80e1084ad11380d745a27e2c467d52d1df68bf0bf35",
+      "dist/bundle/gallery-CmDtL4W7.js": "fa7cad13576282267de84bc2be8a37bb2a6578ac1b5721edba4f83391e9fed42",
+      "dist/bundle/main-D5JxBPIm.js": "554ff24157e361a59024659c49d05f73a08552c2212906e65659aaa89b34a9c9",
+      "dist/bundle/Player-o3pII7gY.js": "6b3844a973e7c31df7b6d9b053c12c7cafa4b4f05970e74c2c737cad98186cc5"
+    }
   }
 }

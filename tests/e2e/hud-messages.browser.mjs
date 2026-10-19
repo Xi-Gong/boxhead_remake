@@ -13,8 +13,9 @@ try{
   w.Spawn_Zombie=()=>false;w.Spawn_Devil=()=>false;
   for(const t of Object.values(w.mThing_Collection.mThings))if(t._CLASSID_.includes('Creature_')&&!t._CLASSID_.endsWith('Player'))t.Delete();
   const q=window.__messageQA={samples:[],labels:new WeakMap()},render=P.World.CHud.RenderMovieClipAsBitmapObject,draw=h.DrawBMObject;
+  const drawHud=h.Draw;q.frame=0;h.Draw=function(...args){q.frame++;return drawHud.apply(this,args);};
   P.World.CHud.RenderMovieClipAsBitmapObject=function(mc,...args){const bm=render.call(this,mc,...args);if(mc===P.World.CHud.mcMessage)q.labels.set(bm,mc.tfMessage.text);return bm;};
-  h.DrawBMObject=function(bm,p,alpha){const text=q.labels.get(bm);if(text)q.samples.push({text,at:performance.now(),x:p.x,y:p.y,alpha,bounds:{x:p.x+bm.mDisp.x,y:p.y+bm.mDisp.y,w:bm.sBMD.width,h:bm.sBMD.height}});return draw.call(this,bm,p,alpha);};
+  h.DrawBMObject=function(bm,p,alpha){const text=q.labels.get(bm);if(text)q.samples.push({text,frame:q.frame,at:performance.now(),x:p.x,y:p.y,alpha,bounds:{x:p.x+bm.mDisp.x,y:p.y+bm.mDisp.y,w:bm.sBMD.width,h:bm.sBMD.height}});return draw.call(this,bm,p,alpha);};
  });
  await g.page.waitForTimeout(3100);
  for(const [width,height]of[[640,480],[960,720],[1280,720],[640,889]]){
@@ -49,6 +50,13 @@ try{
    assert(white>10,'each authored white message must have visible pixels');
   }
   report.cases.push({width,height,last,samples:rows.samples.length});
+  await g.page.waitForTimeout(3100);
+  await g.eval(()=>{const q=window.__messageQA,h=window.__game.main().mcWorld.mHud;q.samples=[];for(let i=0;i<4;i++)h.AddMessage_Info('Burst pickup '+i,i%2);});
+  await g.page.waitForTimeout(250);
+  const burst=await g.eval(()=>window.__messageQA.samples),frames=new Map();
+  for(const row of burst){if(!frames.has(row.frame))frames.set(row.frame,[]);frames.get(row.frame).push(row);}
+  assert(frames.size>=4);for(const frame of frames.values()){assert.equal(frame.length,3);frame.sort((a,b)=>a.y-b.y);for(let n=1;n<frame.length;n++)assert(frame[n].y-frame[n-1].y>=21.99,'same-frame pickup entry must retain line spacing');}
+  const burstFile=`${out}/burst-${width}x${height}.png`;await g.shot(burstFile,false);report.shots.push(burstFile);report.cases.push({width,height,burstFrames:frames.size,minimumGap:Math.min(...[...frames.values()].flatMap(f=>f.slice(1).map((r,i)=>r.y-f[i].y)))});
   await g.page.waitForTimeout(3100);
  }
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;

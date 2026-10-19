@@ -24,7 +24,11 @@ function show(hud: any, text: string, color: number): void {
   advance(v);
   for(const row of v.rows){row.from=offset(row);row.target-=22;row.movedAt=row.age;}
   if(v.rows.length===3)release(v.rows.shift()!);
-  v.rows.push({text,color,age:0,from:22,target:0,movedAt:0});
+  const from=Math.max(22,(v.rows.at(-1)?.from??0)+22);
+  v.rows.push({text,color,age:0,from,target:0,movedAt:0});
+  // Same-frame arrivals have never been visible: enter them as one evenly spaced group.
+  // Once a row has been drawn, append below its current position and ease every row together.
+  if(v.rows.every(row=>!row.bitmap))for(const row of v.rows){row.from=row.target+22;row.movedAt=row.age;}
 }
 /** Read-only diagnostics for deterministic animation regressions. */
 export function hudMessageRows(hud: any): {text:string;age:number;y:number;alpha:number}[] {

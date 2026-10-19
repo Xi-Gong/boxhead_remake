@@ -618,7 +618,7 @@
       "sha256": "6b3844a973e7c31df7b6d9b053c12c7cafa4b4f05970e74c2c737cad98186cc5"
     }
   },
-  "followup": "Screenshot review found simultaneous HUD message entry overlap; tracked for a separate correction before release.",
+  "followup": "Simultaneous HUD message entry overlap fixed and accepted separately; see hud-messages.json simultaneousArrivalCorrection.",
   "cleanup": "Browser contexts closed and peer processes killed in finally. Owned preview server retained for final QA.",
   "pending": [
     "Final functional release gates, portable packaging, tag and publication"
