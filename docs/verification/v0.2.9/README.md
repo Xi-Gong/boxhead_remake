@@ -70,3 +70,17 @@ the corrected fixtures and passes in full; no slower host path was introduced.
 
 Raw logs/screenshots are retained under `generated/reports/v029/`; feature evidence above is committed.
 Final gate, network, performance and artifact records are added after acceptance completes.
+
+## Functional gate results
+
+[gates.json](gates.json) records all 35 passing functional gates on the same candidate asar. Vitest passes
+1,493 tests with 71 pre-existing conditional skips; none were added. Browser UI passes 188/188 and audio 49/49.
+The three-mode browser, Electron and packaged playtests, historical regressions, actual LAN reconnect/timeout,
+native/packaged smoke and actual v0.2.5 save continuity all pass. The old save retains score 1234, health 137,
+Uzi ammunition 17, best wave 7 and its rebound fire key.
+
+Each resumed segment records its starting source hash and log checksums. Three historical failures and their
+corrections are retained: portrait pixels covered by the new HUD, an obsolete zero-input assumption, and the
+old six-weapon selected-wave expectation. Production runtime bytes stayed identical throughout. Subsequent
+packaged LAN QA uses dedicated ports 48630/48631–48640, installed only in owned test processes; this prevents
+joining a player's normal room but does not remove CPU/GPU contention.

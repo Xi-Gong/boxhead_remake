@@ -26,6 +26,8 @@ const cases=[
  ['vitest','node_modules/vitest/vitest.mjs','run'],
  ['bitmap-blit','tests/e2e/bitmap-blit.browser.mjs'],['masked-copy','tests/e2e/masked-copy.browser.mjs'],['engine-browser','tests/browser/run-engine.ts'],
  ['ui','tests/e2e/ui.browser.mjs'],['audio','tests/e2e/audio.browser.mjs'],
+ ...['wave-input','room-settings','floating-scores','explosion-flash','local-growth','modern-supplies'].map(name=>[name,`tests/e2e/${name}.browser.mjs`]),
+ ['survival-ui','tests/e2e/supplies-ui.browser.mjs'],
  ['growth-ui','tests/e2e/growth-ui.browser.mjs'],['balance-ui','tests/e2e/growth-ui.browser.mjs'],['supplies-ui','tests/e2e/supplies-ui.browser.mjs'],['added-ui','tests/e2e/added-ui.browser.mjs'],
  ['input-badge','tests/e2e/inputBadge.browser.mjs'],['viewport-pause','tests/e2e/viewportPause.browser.mjs'],
  ['browser','tests/sim/playtest.browser.mjs'],['electron-play','tests/sim/playtest.browser.mjs','--electron'],
@@ -33,6 +35,7 @@ const cases=[
  ...['v012','v019','v020','v023','v024','typing','lanui','netretry','net'].map(name=>[name,`tests/sim/playtest.${name}.mjs`]),
  ['electron-smoke','tests/unit/platform/electron-smoke.run.ts'],['packaged-smoke','tests/unit/platform/electron-smoke.run.ts','--packaged-only'],
  ['old-save','tests/e2e/saveCompatibility.electron.mjs'],
+ ['response-offline','tests/e2e/response-offline.browser.mjs','--electron'],
 ];
 const start=from?cases.findIndex(c=>c[0]===from):0;
 if(start<0)throw new Error('unknown starting gate: '+from);
@@ -40,7 +43,7 @@ for(const [name,...args]of cases.slice(start)){
  if(report.cases.some(c=>c.name===name&&c.code===0)){console.log('REUSE '+name);continue;}
  console.log('START '+name);const started=new Date().toISOString(),logFile=path.join(out,name+'.log'),log=createWriteStream(logFile);
  const code=await new Promise((resolve,reject)=>{
-  const child=spawn(process.execPath,args,{cwd:process.cwd(),windowsHide:true,env:{...process.env,BOXHEAD_GROWTH_BALANCED:name==='balance-ui'?'1':'0',GAME_URL:process.env.GAME_URL??'http://127.0.0.1:5311/'},stdio:['ignore','pipe','pipe']});
+  const child=spawn(process.execPath,args,{cwd:process.cwd(),windowsHide:true,env:{...process.env,BOXHEAD_SURVIVAL:name==='survival-ui'?'1':'0',BOXHEAD_GROWTH_BALANCED:name==='balance-ui'?'1':'0',GAME_URL:process.env.GAME_URL??'http://127.0.0.1:5311/'},stdio:['ignore','pipe','pipe']});
   child.stdout.pipe(log,{end:false});child.stderr.pipe(log,{end:false});child.once('error',reject);child.once('exit',resolve);
  });
  await new Promise(resolve=>log.end(resolve));report.cases=report.cases.filter(c=>c.name!==name);
