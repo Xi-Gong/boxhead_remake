@@ -41,6 +41,7 @@ async function launchApp(dirName) {
   });
   await isolateLanPorts(app, report);
   const page = await app.firstWindow();
+  if(process.env.BOXHEAD_QA_FUNCTIONAL_ONLY==='1')await page.setViewportSize({width:640,height:480});
   await page.addInitScript(() => { Math.random = () => 0.424242; });
   await page.reload();
   await app.evaluate(({ BrowserWindow }, [x, y]) => {

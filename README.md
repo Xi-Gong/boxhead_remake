@@ -47,13 +47,16 @@ Gamepads work throughout (stick to move, RT/A to shoot, START to pause); keys ar
 
 - **Save, resume & retry** — continue a saved run, retry the failed wave, or select a previously reached wave.
 - **LAN co-op & death match** — discover rooms or join by IP in the desktop app, with rollback and reconnect support.
-- **Permanent PvE growth** — solo, local co-op and LAN share personal scores, levels and weapon upgrades, with health and armor capacity rising together. Score popups fly to their owner's panel.
+- **Endless PvE growth** — continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Enemy strength keeps rising while wave budgets stay bounded; wave selection follows your best progress beyond wave 100.
+- **Two enemy variants** — Bone Chargers telegraph a locked-direction rush; Ember Priests mark the ground with delayed flames. Both have distinct modeled parts and animated skill poses.
+- **Purple enchantment crates** — priests have a 30% purple-drop chance. Enchant your held ammunition for +35% damage and two extra bullet penetrations; purple ammo text tracks the remaining enchanted stock. Refills add ordinary rounds.
 - **More supplies** — devils drop equally likely blue armor, olive ammo or green medical crates, which remain until needed. Random red boxes replenish the floor during play.
 - **Comfort and setup** — type an unlocked starting wave directly, change LAN room rules as host, and enjoy softer explosion flashes and automatic audio recovery.
-- **Four survival difficulties** — tuned spawn pacing and enemy speed ceilings support progression while preserving original enemy health, damage and per-wave totals.
+- **Four survival difficulties** — tuned pacing, concurrency and speed ceilings, with increasingly strong enemies and at most 200 zombies and 10 devils per wave.
+- **Reliable supplies and clearer UI** — refills preserve inherited weapon capacity; confirmed P1/P2 pickup messages remain evenly spaced, and conditional lobby actions have room to breathe.
 - **Co-op weapon crates** — fallen players drop their arsenal and remaining ammunition for recovery.
 
-[Feature details](docs/features.md) · [Verification and performance evidence](docs/verification/v0.2.9/README.md)
+[Feature details](docs/features.md) · [v0.3.0 verification](docs/verification/v0.3.0/README.md)
 
 <p align="center"><img src="assets/readme/coop-crate.png" alt="Co-op weapon recovery" width="640"></p>
 

@@ -1,0 +1,215 @@
+{
+  "status": "packaged-identity-verified-functional-gates-pending",
+  "version": "0.3.0",
+  "asarSha256": "534a8b131713ecafd5ef6aa4af8440bdbeb82ee8dac86c03cf3841cab0f2f829",
+  "exe": {
+    "path": "release/Boxhead 2Play Rooms-0.3.0-portable.exe",
+    "bytes": 101644422,
+    "sha256": "15c85bbf5525cd8e6e7517c87b0e23ecba26ada46ffab153b9d3255384192a08"
+  },
+  "verifiedRuntimeFiles": [
+    "dist-electron/main.cjs",
+    "dist-electron/preload.cjs",
+    "dist/index.html",
+    "dist/bundle/gallery-CmDtL4W7.js",
+    "dist/bundle/main-srVURTYE.js",
+    "dist/bundle/Player-o3pII7gY.js"
+  ],
+  "scope": "Preflight only; complete release gates and actual portable launch pending.",
+  "nativeLan": {
+    "ok": true,
+    "delayMs": 30,
+    "netcode": "rollback-v2",
+    "combat": false,
+    "recovery": false,
+    "explosions": 0,
+    "responseLimitMs": 60,
+    "steps": [
+      "launching host + client with --boxhead-net-delay=30 (one-way)",
+      "rollback lockstep running at D=0 (injected 30 ms one-way)",
+      "shot C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\netsmooth-functional-30\\net_smooth_01_host_ingame.png",
+      "shot C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\netsmooth-functional-30\\net_smooth_02_client_ingame.png",
+      "shot C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\netsmooth-functional-30\\net_smooth_confirmed_paused.png",
+      "functional confirmed gameplay, ordered sound/decal identities and enchanted shots agree"
+    ],
+    "errors": [],
+    "shots": [
+      "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\netsmooth-functional-30\\net_smooth_01_host_ingame.png",
+      "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\netsmooth-functional-30\\net_smooth_02_client_ingame.png",
+      "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\netsmooth-functional-30\\net_smooth_confirmed_paused.png"
+    ],
+    "environment": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Boxhead2PlayRooms/0.3.0 Chrome/152.0.7977.130 Electron/44.7.0 Safari/537.36",
+      "dpr": 1.0000000298023224,
+      "width": 640,
+      "height": 480,
+      "canvas": [
+        640,
+        480
+      ],
+      "selection": {
+        "mode": "Coop",
+        "charP1": 3,
+        "charP2": 0,
+        "levelIdx": 0,
+        "difficulty": 0,
+        "gameAmount": 1,
+        "settings": {
+          "gameSpeed": 1,
+          "devils": true,
+          "collisions": true,
+          "damage": true
+        },
+        "wave": 1,
+        "maxWave": 1
+      }
+    },
+    "clientEnvironment": {
+      "dpr": 1.0000000298023224,
+      "width": 640,
+      "height": 480,
+      "canvas": [
+        640,
+        480
+      ]
+    },
+    "scope": "Short 640x480 functional LAN acceptance; no profiling, response benchmark or stress.",
+    "confirmed": [
+      {
+        "digest": {
+          "tick": 102,
+          "full": {
+            "things": "098ac15893b27b7c",
+            "cells": "5d9a62b535b081e9",
+            "collection": "425b1cd6fbc90aaa",
+            "navigation": "9ac3b1d8cd62655c",
+            "upgrades": "d9e0495737f85a3b",
+            "slots": "6ab77daec1353d8a",
+            "random": "1e56b130164998e4",
+            "outcome": "97edbfaaf8c4c77e"
+          },
+          "score": 0,
+          "things": 19,
+          "zombies": 3,
+          "q": [
+            141,
+            136,
+            3200,
+            208,
+            136,
+            3200
+          ]
+        },
+        "events": [
+          15,
+          4070918905
+        ],
+        "decals": [
+          {
+            "kind": "scorch",
+            "direction": 1,
+            "frame": 0,
+            "x": 323.20000000000005,
+            "y": 272
+          }
+        ]
+      },
+      {
+        "digest": {
+          "tick": 102,
+          "full": {
+            "things": "098ac15893b27b7c",
+            "cells": "5d9a62b535b081e9",
+            "collection": "425b1cd6fbc90aaa",
+            "navigation": "9ac3b1d8cd62655c",
+            "upgrades": "d9e0495737f85a3b",
+            "slots": "6ab77daec1353d8a",
+            "random": "1e56b130164998e4",
+            "outcome": "97edbfaaf8c4c77e"
+          },
+          "score": 0,
+          "things": 19,
+          "zombies": 3,
+          "q": [
+            141,
+            136,
+            3200,
+            208,
+            136,
+            3200
+          ]
+        },
+        "events": [
+          15,
+          4070918905
+        ],
+        "decals": [
+          {
+            "kind": "scorch",
+            "direction": 1,
+            "frame": 0,
+            "x": 323.20000000000005,
+            "y": 272
+          }
+        ]
+      }
+    ],
+    "enchantment": [
+      {
+        "kinds": [
+          "CThing_Shot_Bullet"
+        ],
+        "decals": [
+          {
+            "kind": "scorch",
+            "direction": 1,
+            "frame": 0,
+            "x": 323.20000000000005,
+            "y": 272
+          }
+        ]
+      },
+      {
+        "kinds": [
+          "CThing_Shot_Bullet"
+        ],
+        "decals": [
+          {
+            "kind": "scorch",
+            "direction": 1,
+            "frame": 0,
+            "x": 323.20000000000005,
+            "y": 272
+          }
+        ]
+      }
+    ],
+    "audio": [
+      {
+        "state": "running",
+        "decoded": 31,
+        "total": 31,
+        "failed": [],
+        "voices": 0,
+        "recoveries": 0,
+        "muted": false
+      },
+      {
+        "state": "running",
+        "decoded": 31,
+        "total": 31,
+        "failed": [],
+        "voices": 0,
+        "recoveries": 0,
+        "muted": false
+      }
+    ],
+    "affinityMask": 15,
+    "priority": "BelowNormal"
+  },
+  "priorAttempt": {
+    "status": "failed, retained",
+    "report": "lan-audio-device-failure.json",
+    "description": "Windows audio-device errors recovered automatically but failed the strict console gate. Same packaged runtime passed after widening test CPU affinity from two to four logical processors; resource starvation is a hypothesis, not a proven cause."
+  }
+}

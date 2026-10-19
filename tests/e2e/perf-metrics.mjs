@@ -1,5 +1,10 @@
 // Renderer work measured through the real Player methods, with CDP CPU/heap metrics outside the sample window.
 export async function startMetrics(page, {samplingInterval = 32768} = {}) {
+ if(process.env.BOXHEAD_QA_FUNCTIONAL_ONLY==='1'){
+  // Functional release checks do not authorize forced GC or CPU/allocation profiling.
+  const finish=async()=>({status:'not-collected',reason:'Functional-only QA; no performance claim'});
+  finish.freeze=async()=>{};return finish;
+ }
  const cdp=await page.context().newCDPSession(page);await cdp.send('Performance.enable');
  await cdp.send('HeapProfiler.enable');
  await cdp.send('HeapProfiler.collectGarbage');

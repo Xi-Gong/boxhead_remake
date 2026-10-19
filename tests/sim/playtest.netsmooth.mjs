@@ -29,6 +29,7 @@ const RESPONSE_TRACE = process.env.BOXHEAD_RESPONSE_TRACE === '1';
 const CLIENT_FIRST = process.env.BOXHEAD_CLIENT_FIRST === '1';
 const ALL_RESPONSE = process.env.BOXHEAD_ALL_RESPONSE === '1';
 const HIDDEN = process.env.BOXHEAD_QA_HIDDEN === '1';
+const FUNCTIONAL=process.env.BOXHEAD_QA_FUNCTIONAL_ONLY==='1';
 const SUPPLY_STRESS = Number(process.env.BOXHEAD_NET_SUPPLY_STRESS ?? 0);
 const EXPLOSIONS = Number(process.env.BOXHEAD_NET_EXPLOSIONS ?? 0);
 // User-approved practical acceptance: keep the ordinary one-tick-plus-frame target, allow a bounded
@@ -37,7 +38,7 @@ const RESPONSE_LIMIT_MS = EXPLOSIONS ? 100 : 60;
 if (!Number.isFinite(DELAY_MS) || DELAY_MS < 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>=0]');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const OUT = join(ROOT, 'generated/reports/qa');
+const OUT = join(ROOT,FUNCTIONAL?`generated/reports/v030/netsmooth-functional-${DELAY_MS}`:'generated/reports/qa');
 mkdirSync(OUT, { recursive: true });
 for (const d of ['netsmooth-host', 'netsmooth-client']) {
   try { rmSync(join(OUT, d), { recursive: true, force: true }); } catch { /* best effort */ }
@@ -62,6 +63,7 @@ async function launchApp(dirName) {
   try {
   await isolateLanPorts(app, report);
   const page = await app.firstWindow();
+  if(FUNCTIONAL)await page.setViewportSize({width:640,height:480});
   const jitter=Number(process.env.BOXHEAD_QA_JITTER??0),tcpOnly=process.env.BOXHEAD_QA_TCP_ONLY==='1';
   if(jitter||tcpOnly)await app.evaluate(async(_,{jitter,tcpOnly})=>{
     const udp=process.getBuiltinModule('dgram'),net=process.getBuiltinModule('net'),send=udp.Socket.prototype.send,write=net.Socket.prototype.write;
@@ -88,14 +90,14 @@ async function launchApp(dirName) {
   },{jitter,tcpOnly});
   await page.addInitScript(() => { Math.random = () => 0.424242; });
   await page.reload();
-  await app.evaluate(({ BrowserWindow, screen }, {offscreen,hidden}) => {
+  await app.evaluate(({ BrowserWindow, screen }, {offscreen,hidden,functional}) => {
     const w = BrowserWindow.getAllWindows()[0];
     const [x,y]=hidden?[screen.getPrimaryDisplay().workArea.x+40,screen.getPrimaryDisplay().workArea.y+40]:offscreen;
     if(hidden&& (w.getOpacity()!==0||w.isFocusable()))throw new Error('QA window must be transparent and non-focusable');
     w.setPosition(x,y);
-    if(hidden)w.setContentSize(960,720); // Set size AFTER changing displays/DPI.
+    if(hidden)w.setContentSize(functional?640:960,functional?480:720); // Set size AFTER changing displays/DPI.
     w.setAlwaysOnTop(false);
-  }, {offscreen:OFFSCREEN,hidden:HIDDEN});
+  }, {offscreen:OFFSCREEN,hidden:HIDDEN,functional:FUNCTIONAL});
   page.on('console', (m) => { if (m.type() === 'error') report.errors.push(`[${dirName}] ${m.text().slice(0, 300)}`); });
   page.on('pageerror', (e) => report.errors.push(`[${dirName} pageerror] ${e.message}`));
   return { app, page };
@@ -204,7 +206,7 @@ try {
     canvas:[window.__game.platform.presenter.canvas.width,window.__game.platform.presenter.canvas.height],selection:window.__game.lan().sel}));
   report.clientEnvironment = await C.page.evaluate(() => ({dpr:devicePixelRatio,width:innerWidth,height:innerHeight,
     canvas:[window.__game.platform.presenter.canvas.width,window.__game.platform.presenter.canvas.height]}));
-  if(HIDDEN&& (report.environment.width!==960||report.environment.height!==720))throw new Error('unexpected fixed rendering size');
+  if(HIDDEN&& (report.environment.width!==(FUNCTIONAL?640:960)||report.environment.height!==(FUNCTIONAL?480:720)))throw new Error('unexpected fixed rendering size');
   if(HIDDEN&&['dpr','width','height','canvas'].some(k=>JSON.stringify(report.environment[k])!==JSON.stringify(report.clientEnvironment[k])))throw new Error('peer rendering geometry differs');
   const lanC0 = await c.lan();
   if ((MODERN ? lanH0.inputDelay !== 0 : lanH0.inputDelay < 1) || lanH0.inputDelay !== lanC0.inputDelay) throw new Error(`rollback inputDelay not agreed: ${lanH0.inputDelay}/${lanC0.inputDelay}`);
@@ -247,6 +249,56 @@ try {
   step(`rollback lockstep running at D=${dH} (injected ${DELAY_MS} ms one-way)`);
   await shot('01_host_ingame', H.page);
   await shot('02_client_ingame', C.page);
+
+  if(FUNCTIONAL){
+    if(!MODERN||SUPPLY_STRESS||EXPLOSIONS||ALL_RESPONSE||process.env.BOXHEAD_NET_CPU_PROFILE==='1')throw new Error('functional QA forbids benchmark/stress options');
+    report.scope='Short 640x480 functional LAN acceptance; no profiling, response benchmark or stress.';
+    const target=Math.max((await h.worldInfo()).tick,(await c.worldInfo()).tick)+30;
+    for(const P of [H,C])await P.page.evaluate(target=>{
+      const g=window.__game,w=g.main().mcWorld,pkg=g.pkg,process=w.Process;
+      if(!w.mUpgrades.enemyVariantState)throw new Error('enemy-variants-v1 was not negotiated');
+      window.__functionalQA={kinds:[],decals:[]};
+      const copy=w.bmFloor.copyPixels;
+      w.bmFloor.copyPixels=function(source,rect,dest,...args){
+        for(const [kind,key]of [['blood','bmBloodSplat'],['scorch','bmScorchMark']]){
+          const cache=pkg.World.Map.CMap_Decal[key];if(!cache)continue;
+          for(let direction=0;direction<cache.bmList.length;direction++)for(let frame=0;frame<cache.bmList[direction].length;frame++){
+            const image=cache.bmList[direction][frame];if(image.sBMD===source)window.__functionalQA.decals.push({kind,direction,frame,x:dest.x-image.mDisp.x,y:dest.y-image.mDisp.y});
+          }
+        }return copy.call(this,source,rect,dest,...args);
+      };
+      w.Process=function(...args){
+        if(this.mTick===target){
+          const players=Object.values(this.mThing_Collection.mPlayerThings),p=players.find(p=>p.mPlayerIndex===0);p.NewWeapon('uzi');p.SelectWeapon('uzi');p.mWeapon_Current.mAmmo=7;
+          const stocks=players.map(p=>({player:p,ammo:p.mWeapon_Current.mAmmo}));
+          const crate=this.mThing_Collection.AddThing(new pkg.Thing.Object.CThing_Object_SupplyCrate(p.mPosition.Clone(),'enchant','s'+this.mUpgrades.supplyState.nextId++));crate.Process_Init();
+          const received=stocks.find(s=>s.player.mWeapon_Current.mEnchantedAmmo===s.ammo||s.player.mWeapon_Current.mEnchantedAmmo===-1);
+          if(!received||received.player.mWeapon_Current.mAmmo!==received.ammo)throw new Error('purple crate did not enchant the eligible picker held stock');
+          const picker=received.player;picker.mWeapon_Current.Fire(picker.mPosition.Clone(),picker.mAngle.Clone());
+          this.mMap.mDecal.Draw_ScorchMark(picker.mPosition);
+        }
+        const result=process.apply(this,args);
+        for(const t of Object.values(this.mThing_Collection.mThings))if(t.mEnchanted&&!window.__functionalQA.kinds.includes(t._CLASSID_))window.__functionalQA.kinds.push(t._CLASSID_);
+        return result;
+      };
+    },target);
+    for(let i=0;i<8;i++){
+      const hk=i%2?'ArrowLeft':'ArrowRight',ck=i%2?'KeyA':'KeyD';
+      await H.page.keyboard.down(hk);await C.page.keyboard.down(ck);await H.page.keyboard.down('Slash');await C.page.keyboard.down('Space');
+      await H.page.waitForTimeout(400);await H.page.keyboard.up(hk);await C.page.keyboard.up(ck);
+    }
+    await H.page.keyboard.up('Slash');await C.page.keyboard.up('Space');
+    await H.page.waitForTimeout(500);await H.page.keyboard.press('KeyP');
+    for(const x of [h,c])if(!await x.waitFor(()=>window.__game.lan().paused,null,10000))throw new Error('functional pause did not settle');
+    report.confirmed=await Promise.all([H,C].map(P=>P.page.evaluate(()=>({digest:window.__game.__netDigest(),events:window.__game.lan().confirmedEvents,decals:window.__functionalQA.decals}))));
+    if(JSON.stringify(report.confirmed[0])!==JSON.stringify(report.confirmed[1]))throw new Error('functional confirmed gameplay/sound/decal mismatch');
+    if(report.confirmed.some(p=>!p.decals.some(d=>d.kind==='scorch')))throw new Error('functional confirmed decal fixture did not commit');
+    report.enchantment=await Promise.all([H,C].map(P=>P.page.evaluate(()=>window.__functionalQA)));
+    if(report.enchantment.some(q=>!q.kinds.includes('CThing_Shot_Bullet')))throw new Error('functional enchanted shot was not observed');
+    report.audio=await Promise.all([H,C].map(P=>P.page.evaluate(()=>window.__game.audio())));
+    if(report.audio.some(a=>a.state!=='running'||a.decoded!==31||a.failed.length))throw new Error('functional audio gate failed');
+    await shot('confirmed_paused',H.page);step('functional confirmed gameplay, ordered sound/decal identities and enchanted shots agree');
+  }else{
 
   // (2) the smoothness window: constant steering on both machines; sample the observability fields.
   const WINDOW_MS = Number(process.env.BOXHEAD_NET_WINDOW_MS ?? 20000);
@@ -525,6 +577,7 @@ try {
     if(report.transportFaults.some(s=>s.errors.length))throw new Error('unexpected transport fixture error: '+JSON.stringify(report.transportFaults));
     if(process.env.BOXHEAD_QA_TCP_ONLY==='1'&&report.transportFaults.some(s=>!s.udpSuppressed))throw new Error('TCP fallback fixture never suppressed a UDP input');
     if(Number(process.env.BOXHEAD_QA_JITTER??0)&&report.transportFaults.some(s=>!s.tcpDelayed))throw new Error('jitter fixture never delayed a TCP write');
+  }
   }
 
   report.ok = report.errors.length === 0;

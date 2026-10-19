@@ -9,7 +9,7 @@
   progression, score and inventory.
 - **Coop death weapon crate** — a fallen player drops their whole arsenal with live ammo; pickup restores the
   owner exactly and gives the teammate the best of both.
-- **Devil supplies** — every devil drops one equally likely blue armor, olive ammunition or bright green medical
+- **Devil supplies** — every base devil drops one equally likely blue armor, olive ammunition or bright green medical
   crate. These crates stay across waves and saves until a living player can benefit. Armor fills only armor,
   medical fills only health, and ammunition fills all owned weapons without unlocking new ones. Full players
   leave the crate for later or for their teammate. Modern LAN peers negotiate these rules; older peers retain
@@ -19,12 +19,12 @@
   Fixed boxes return after 24 seconds. Every 20 simulation seconds, 1 solo or 2 co-op boxes appear on reachable,
   empty floor, up to 3/6 active random boxes. These last 45 seconds; pausing stops the timer.
 - **Start-wave input** — type an ASCII decimal number or use the arrows; the range is 1 through the historical
-  `BEST` wave, capped at 100. Leading zeros are normalized. Invalid text opens an in-game prompt and cancels
+  `BEST` wave, extending beyond 100 with modern PvE. Leading zeros are normalized. Invalid text opens an in-game prompt and cancels
   starting or switching; Enter/blur commits, Escape restores the last valid value. Each visit starts at wave 1,
   and typing never unlocks waves. The LAN host edits against their own save cap; the guest sees a readonly value.
 - **Personal PvE progression** — solo, local co-op and LAN share last-hit scores, permanent levels and weapon upgrades
   for each player. Zombies award 1 XP and devils 5 XP; level requirements begin at 5 XP and rise by 5 every ten
-  levels, up to level 125. Top corner
+  levels, with no modern PvE level cap. The original weapon unlock table remains at levels 1–125. Top corner
   score/level/XP panels flank the current wave and its remaining zombie/devil totals (including pending spawns),
   with individual upgrade summaries while paused. Retry restores the current wave's starting growth and
   inventory; a fresh selected-wave run grants its baseline level from the same earned-wave curve, respecting
@@ -36,10 +36,26 @@
   fireballs do not interrupt or knock back a player who had armor before the hit, even if that hit breaks it.
   Damage still spills into health, and lethal hits still kill. Co-op respawn keeps level, fills health and
   clears armor; natural health regeneration is unchanged.
-- **Four PvE difficulty curves** — Single and co-op tune spawn pacing, active enemy caps and speed ceilings for
-  Beginner, Intermediate, Expert and Nightmare. Per-wave kill budgets, enemy health/damage and weapon upgrades
-  stay intact, so stronger weapons keep their impact. LAN enables the tuning only after capability negotiation.
+- **Endless weapon growth** — beyond 125, each level adds 1% of weapon damage at level 125 and
+  `max(1, ceil(capacity at level 125 × 0.005))` finite ammo capacity. Only the added capacity is supplied;
+  inherited higher capacity remains valid. Saves restore current supplies without a bonus refill.
+- **Four PvE difficulty curves** — Single and co-op retain Beginner, Intermediate, Expert and Nightmare pacing,
+  active caps and speed ceilings. Wave budgets stop at 200 zombies and 10 devils, including variants.
+  Enemy health/damage continue scaling from the earned-wave reference level. LAN enables new rules after negotiation.
   See the [balance audit and explosion measurements](verification/v0.2.8/README.md).
+- **Bone Charger and Ember Priest** — deterministic subtype slots start at waves 8/20, with at most four
+  chargers and one priest active. The charger warns for 0.6 seconds, then rushes at most four cells along a
+  locked direction; hits interrupt it. The priest replaces player fireballs with visible ground marks,
+  warning for 0.9 seconds before four damage pulses. Walls block the flames and overlapping pulses do not stack.
+- **Enchanted ammunition** — chargers independently roll 50% for a red box, merged with the combo guarantee.
+  Priests always drop one crate: 30% purple enchantment, otherwise equal armor/ammo/medical odds.
+  Purple crates enchant the held stock for +35% damage; bullets hit up to three enemies, railguns retain
+  unlimited enemy piercing, and blasts retain at least 75% damage at the edge while physical walls block them.
+  Refills add ordinary rounds; switching, death crates, saves and rollback preserve the enchanted remainder.
+  Authored infinite ammunition stays enchanted. Fake walls leave the crate available for an offensive weapon.
+- **Reliable pickups and spacing** — supply effects synchronize personal maxima and preserve higher inherited
+  capacities. Red single-weapon rewards fill only the selected weapon. P1/P2 notices use three evenly spaced
+  confirmed HUD rows with smooth entry and fade; conditional lobby controls have separate action rows.
 - **LAN multiplayer** (portable build) — host & auto-discover or join by IP for co-op and death match.
   Rollback applies local input on the next simulation tick without waiting for the peer, with immediate local
   weapon audio and display interpolation at the monitor's refresh rate. Redundant UDP inputs use TCP as a
