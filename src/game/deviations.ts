@@ -53,7 +53,9 @@ export const DEVIATIONS: Deviation[] = [
     id: 'SOFT_EXPLOSION_FLASH',
     file: 'local/ExplosionFlash.ts; scope.ts (CWorld.Process_Brightness wrapper)',
     description: 'Reduce the positive full-screen brightness wash to 8% of its authored strength: '+
-      'peak RGB offset 204 becomes 16.32. Only freshly returned display-filter offsets change; '+
+      'peak RGB offset 204 becomes nominally 16.32 (floored to 16 with the CPU Float32 byte rules so '+
+      'the original GPU brightness fast path remains eligible, preserving the softer pixels). '+
+      'Only freshly returned display-filter offsets change; '+
       'mBrightness, original fade cadence, explosion art, shake, damage, sound, decals, RNG and '+
       'network state stay intact. Repeated blasts cannot stack a brighter wash. The shared initial '+
       'world flash is softened too; LOW quality still omits the effect entirely.',

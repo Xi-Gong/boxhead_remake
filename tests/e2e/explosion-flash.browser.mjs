@@ -39,17 +39,25 @@ try{
    if(kind==='burst')for(let i=0;i<12;i++)create(['rocket','grenade','barrel','mine'][i%4],i);else create(kind,0);
    const effects=Object.values(tc.mThings).filter(t=>t._CLASSID_==='CThing_Effect_Explosion');
    for(const e of effects)if(!e.mcDrawObject)e.Process_Init();
-   const current=w.Process_Brightness,images={};let offset;
-   for(const mode of ['unlit','original','reduced']){
+   const current=w.Process_Brightness,images={},cpuCalls={};let offset;
+   const cpu=w.bmDraw.colorMatrixCPU;
+   for(const mode of ['unlit','original','reduced','cpu-reference']){
+    cpuCalls[mode]=0;
+    w.bmDraw.colorMatrixCPU=function(...args){cpuCalls[mode]++;return cpu.apply(this,args);};
     w.Process_Brightness=function(){this.mBrightness=mode==='unlit'?0:1;const f=current.call(this);
-     if(mode==='original')for(const item of f)for(const i of [4,9,14])item.matrix[i]/=.08;
-     offset=f[0]?.matrix[4]??0;return f;};
+     if(mode==='original'||mode==='cpu-reference')for(const item of f)for(const i of [4,9,14])item.matrix[i]=this.mBrightness*255*(mode==='original'?1:.08);
+     if(mode==='reduced')offset=f[0]?.matrix[4]??0;return f;};
     w.Draw();g.platform.presenter.render(g.player);images[mode]=g.platform.presenter.canvas.toDataURL('image/png');
    }
    w.Process_Brightness=current;
-   return {images,offset,count:effects.length};
+   delete w.bmDraw.colorMatrixCPU;
+   return {images,offset,cpuCalls,count:effects.length};
   },kind);
-  assert.equal(result.count,kind==='burst'?12:1);assert.equal(result.offset,16.32);
+  assert.equal(result.count,kind==='burst'?12:1);assert.equal(result.offset,16);
+  assert.equal(result.cpuCalls.reduced,0,'soft flash must retain the GPU fast path');
+  assert.equal(result.cpuCalls['cpu-reference'],1,'reference must exercise the previous fractional CPU path');
+  const pixels=mode=>PNG.sync.read(Buffer.from(result.images[mode].split(',')[1],'base64')).data;
+  assert.deepEqual(pixels('reduced'),pixels('cpu-reference'),'GPU wash must exactly preserve the previous softer pixels');
   const values={};
   for(const [mode,data]of Object.entries(result.images)){
    const buffer=Buffer.from(data.split(',')[1],'base64');writeFileSync(`${out}/${kind}-${mode}.png`,buffer);
@@ -61,7 +69,7 @@ try{
   assert(values.original.mean>values.reduced.mean+20);
   assert(values.reduced.mean-values.unlit.mean<(values.original.mean-values.unlit.mean)*.45);
   assert(values.reduced.white<values.original.white);
-  report.comparisons.push({kind,count:result.count,offset:result.offset,...values});
+  report.comparisons.push({kind,count:result.count,offset:result.offset,cpuCalls:result.cpuCalls,exactCpuPixelMatch:true,...values});
  }
  assert.deepEqual(await g.expr('g.errors'),[]);assert.deepEqual(g.log,[]);report.ok=true;
 }finally{writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));await g?.close();await browser.close();}

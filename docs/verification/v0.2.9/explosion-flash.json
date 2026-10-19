@@ -4,102 +4,168 @@
     {
       "kind": "rocket",
       "count": 1,
-      "offset": 16.32,
+      "offset": 16,
+      "cpuCalls": {
+        "unlit": 0,
+        "original": 0,
+        "reduced": 0,
+        "cpu-reference": 1
+      },
+      "exactCpuPixelMatch": true,
       "unlit": {
-        "mean": 211.42551942567331,
+        "mean": 211.42725647522263,
         "white": 1105
       },
       "original": {
-        "mean": 254.97108248873877,
-        "white": 236215
+        "mean": 254.97107404279282,
+        "white": 236217
       },
       "reduced": {
-        "mean": 227.32647522522328,
+        "mean": 227.32823198197985,
+        "white": 1128
+      },
+      "cpu-reference": {
+        "mean": 227.32823198197985,
         "white": 1128
       }
     },
     {
       "kind": "grenade",
       "count": 1,
-      "offset": 16.32,
+      "offset": 16,
+      "cpuCalls": {
+        "unlit": 0,
+        "original": 0,
+        "reduced": 0,
+        "cpu-reference": 1
+      },
+      "exactCpuPixelMatch": true,
       "unlit": {
-        "mean": 211.3617792792742,
+        "mean": 211.36084881756346,
         "white": 1105
       },
       "original": {
-        "mean": 254.47185810810822,
-        "white": 235112
+        "mean": 254.47181728603613,
+        "white": 235111
       },
       "reduced": {
-        "mean": 226.89806024774364,
+        "mean": 226.89717060810435,
+        "white": 1167
+      },
+      "cpu-reference": {
+        "mean": 226.89717060810435,
         "white": 1167
       }
     },
     {
       "kind": "barrel",
       "count": 1,
-      "offset": 16.32,
+      "offset": 16,
+      "cpuCalls": {
+        "unlit": 0,
+        "original": 0,
+        "reduced": 0,
+        "cpu-reference": 1
+      },
+      "exactCpuPixelMatch": true,
       "unlit": {
-        "mean": 211.42031813062945,
+        "mean": 211.42252815315183,
         "white": 1144
       },
       "original": {
-        "mean": 254.96685388513507,
-        "white": 236143
+        "mean": 254.9668369932432,
+        "white": 236140
       },
       "reduced": {
-        "mean": 227.64671030405157,
+        "mean": 227.6489231418893,
+        "white": 1128
+      },
+      "cpu-reference": {
+        "mean": 227.6489231418893,
         "white": 1128
       }
     },
     {
       "kind": "mine",
       "count": 1,
-      "offset": 16.32,
+      "offset": 16,
+      "cpuCalls": {
+        "unlit": 0,
+        "original": 0,
+        "reduced": 0,
+        "cpu-reference": 1
+      },
+      "exactCpuPixelMatch": true,
       "unlit": {
-        "mean": 211.0461162725196,
+        "mean": 211.04956784909675,
         "white": 1105
       },
       "original": {
-        "mean": 254.4701632882884,
-        "white": 235077
+        "mean": 254.47011824324332,
+        "white": 235076
       },
       "reduced": {
-        "mean": 226.58274211711415,
+        "mean": 226.58618947071747,
+        "white": 1167
+      },
+      "cpu-reference": {
+        "mean": 226.58618947071747,
         "white": 1167
       }
     },
     {
       "kind": "chargepack",
       "count": 1,
-      "offset": 16.32,
+      "offset": 16,
+      "cpuCalls": {
+        "unlit": 0,
+        "original": 0,
+        "reduced": 0,
+        "cpu-reference": 1
+      },
+      "exactCpuPixelMatch": true,
       "unlit": {
-        "mean": 211.18470298423165,
+        "mean": 211.18438344594327,
         "white": 1144
       },
       "original": {
-        "mean": 254.96800957207213,
-        "white": 236133
+        "mean": 254.9679926801802,
+        "white": 236130
       },
       "reduced": {
-        "mean": 227.41110078828558,
+        "mean": 227.41078688062748,
+        "white": 1128
+      },
+      "cpu-reference": {
+        "mean": 227.41078688062748,
         "white": 1128
       }
     },
     {
       "kind": "burst",
       "count": 12,
-      "offset": 16.32,
+      "offset": 16,
+      "cpuCalls": {
+        "unlit": 0,
+        "original": 0,
+        "reduced": 0,
+        "cpu-reference": 1
+      },
+      "exactCpuPixelMatch": true,
       "unlit": {
-        "mean": 209.84550112612885,
+        "mean": 209.84758305180532,
         "white": 2698
       },
       "original": {
-        "mean": 254.38934825450457,
-        "white": 233443
+        "mean": 254.3893876689188,
+        "white": 233450
       },
       "reduced": {
-        "mean": 225.17430743243392,
+        "mean": 225.17637950450683,
+        "white": 2857
+      },
+      "cpu-reference": {
+        "mean": 225.17637950450683,
         "white": 2857
       }
     }

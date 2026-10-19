@@ -9,7 +9,11 @@ export function installExplosionFlash(): void {
     // Original brightness allocates a fresh identity matrix with RGB offsets. Scale that returned
     // display filter only; never scale mBrightness (which would alter the original fade duration).
     for (const filter of filters) for (const index of [4,9,14]) {
-      if (filter.matrix[index] > 0) filter.matrix[index] *= EXPLOSION_FLASH_STRENGTH;
+      if (filter.matrix[index] > 0) {
+        // The CPU matrix path stores Float32 coefficients and floors the resulting byte channels.
+        // Quantize this additive wash identically so the existing GPU brightness path stays eligible.
+        filter.matrix[index] = Math.floor(Math.fround(filter.matrix[index] * EXPLOSION_FLASH_STRENGTH));
+      }
     }
     return filters;
   };

@@ -72,9 +72,9 @@ describe('explosion (CThing_Effect_Explosion.Process_Delay)', () => {
         expect([0,6,12,18].map(i=>filters[0].matrix[i])).toEqual([1,1,1,1]);
       }
     }
-    expect(states).toEqual([.8,.6,.4,.2,0,0]);expect(offsets).toEqual([16.32,12.24,8.16,4.08,0,0]);
+    expect(states).toEqual([.8,.6,.4,.2,0,0]);expect(offsets).toEqual([16,12,8,4,0,0]);
     // Repeated explosions reset the authored fade, but cannot stack into a brighter wash.
-    for(let n=0;n<50;n++){w.mBrightness=1;expect(w.Process_Brightness()[0].matrix[4]).toBeCloseTo(16.32);}
+    for(let n=0;n<50;n++){w.mBrightness=1;expect(w.Process_Brightness()[0].matrix[4]).toBe(16);}
   });
 
   it('animation: Effect.Explosion frames at 2.5 frames per tick, then the effect deletes itself', () => {
