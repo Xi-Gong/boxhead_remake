@@ -4,6 +4,7 @@
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
+import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
@@ -18,7 +19,8 @@ const app = await electron.launch({
   args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
   env: { ...process.env, BOXHEAD_USER_DATA: join(ROOT, 'generated/reports/qa/net-typing') },
 });
-const page = await app.firstWindow();
+  await isolateLanPorts(app);
+  const page = await app.firstWindow();
 try {
   const waitFor = async (fn, arg = null, timeout = 30000) => {
     try { await page.waitForFunction(fn, arg, { timeout, polling: 100 }); return true; } catch { return false; }

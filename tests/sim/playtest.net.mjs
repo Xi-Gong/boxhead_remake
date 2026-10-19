@@ -12,6 +12,7 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
+import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
 import { startMetrics } from '../e2e/perf-metrics.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -38,6 +39,7 @@ async function launchApp(dirName) {
     args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
+  await isolateLanPorts(app);
   const page = await app.firstWindow();
   await page.addInitScript(() => { Math.random = () => 0.424242; });
   await page.reload();

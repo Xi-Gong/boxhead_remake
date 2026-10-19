@@ -16,6 +16,7 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
+import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
 import { startMetrics } from '../e2e/perf-metrics.mjs';
 import { explosionBurst } from './explosionFixture.ts';
 import { installResponseFixture, responseActions } from '../e2e/response-probes.mjs';
@@ -59,6 +60,7 @@ async function launchApp(dirName) {
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
   try {
+  await isolateLanPorts(app);
   const page = await app.firstWindow();
   const jitter=Number(process.env.BOXHEAD_QA_JITTER??0),tcpOnly=process.env.BOXHEAD_QA_TCP_ONLY==='1';
   if(jitter||tcpOnly)await app.evaluate(async(_,{jitter,tcpOnly})=>{
@@ -78,7 +80,7 @@ async function launchApp(dirName) {
       return send.apply(this,args);
     };
     net.Socket.prototype.write=function(...args){
-      const peer=(this.remotePort>=47631&&this.remotePort<=47640)||(this.localPort>=47631&&this.localPort<=47640);
+      const peer=[this.remotePort,this.localPort].some(p=>p>=48631&&p<=48640);
       if(peer&&jitter){const at=Math.max(Date.now()+(++sequence%(jitter+1)),due.get(this)??0);due.set(this,at);stats.tcpDelayed++;
         setTimeout(()=>{if(!this.destroyed)write.apply(this,args);},Math.max(0,at-Date.now()));return true;}
       return write.apply(this,args);

@@ -8,6 +8,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
+import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = join(ROOT, 'generated/reports/qa');
@@ -38,6 +39,7 @@ try {
     args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, 'net-ui') },
   });
+  await isolateLanPorts(app);
   const page = await app.firstWindow();
   await app.evaluate(({ BrowserWindow }, [x, y]) => {
     const w = BrowserWindow.getAllWindows()[0];
