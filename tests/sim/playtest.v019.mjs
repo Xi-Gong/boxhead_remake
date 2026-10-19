@@ -13,6 +13,8 @@ const OUT = join(dirname(fileURLToPath(import.meta.url)), '../../generated/repor
 mkdirSync(OUT, { recursive: true });
 const URL = process.env.GAME_URL ?? 'http://localhost:5198/';
 const MENU_Y = { Single: 226, Coop: 256, DeathMatch: 286 };
+// Explicit old-build oracle mode retains the original x36/six-weapon assertion.
+const classicGrowth = process.env.BOXHEAD_CLASSIC_GROWTH === '1';
 
 const report = { ok: false, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
@@ -97,10 +99,11 @@ const startState = await page.evaluate(() => {
   const w = window.__game.main().mcWorld;
   const p = w.mThing_Collection.mPlayerThings;
   const first = Object.values(p)[0];
-  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, weapons: first.mWeaponList.filter((x) => x.mActive).map((x) => x.mNameID) };
+  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, growth: w.mUpgrades.lanGrowth?.players[0], weapons: first.mWeaponList.filter((x) => x.mActive).map((x) => x.mNameID) };
 });
 if (startState.level !== 25 || startState.mult !== 36) fail(`wave-25 start wrong: level ${startState.level} mult ${startState.mult}`);
-const wantWeapons = 'pistol,uzi,shotgun,barrel,grenade,fakewall';
+if (!classicGrowth && (startState.growth?.level !== 85 || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
+const wantWeapons = classicGrowth ? 'pistol,uzi,shotgun,barrel,grenade,fakewall' : 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack,railgun';
 if (startState.weapons.join(',') !== wantWeapons) fail(`wave-25 loadout wrong (${startState.weapons.join(',')}), wanted ${wantWeapons}`);
 step(`wave-25 run verified: level ${startState.level} mult ${startState.mult} weapons ${startState.weapons.join(',')}`);
 // v0.2.8 Beginner pacing is intentionally slower. Preserve the ten-enemy field assertion,

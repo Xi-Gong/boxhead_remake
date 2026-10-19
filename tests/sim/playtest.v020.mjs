@@ -13,6 +13,7 @@ const OUT = join(dirname(fileURLToPath(import.meta.url)), '../../generated/repor
 mkdirSync(OUT, { recursive: true });
 const URL = process.env.GAME_URL ?? 'http://localhost:5198/';
 const MENU_Y = { Single: 226 };
+const classicGrowth = process.env.BOXHEAD_CLASSIC_GROWTH === '1';
 
 const report = { ok: false, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
@@ -84,9 +85,10 @@ if (!(await waitRunning())) fail('wave-25 room did not start');
 const startState = await page.evaluate(() => {
   const w = window.__game.main().mcWorld;
   const first = Object.values(w.mThing_Collection.mPlayerThings)[0];
-  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, score: w.mHud.nTotalScore };
+  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, score: w.mHud.nTotalScore, growth: w.mUpgrades.lanGrowth?.players[0] };
 });
 if (startState.level !== 25) fail(`run did not start at level 25: ${startState.level}`);
+if (!classicGrowth && (startState.growth?.level !== 85 || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
 step(`wave-25 run started: ${JSON.stringify(startState)}`);
 
 // ---- REAL passive death: hands off the keyboard, wave 25's zombies do the rest -----------------------
@@ -125,6 +127,7 @@ const retryState = await page.evaluate(() => {
     level: w.mUpgrades.mLevelIndex,
     mult: w.mUpgrades.mMultiplierIndex,
     score: w.mHud.nTotalScore,
+    growth: w.mUpgrades.lanGrowth?.players[0],
     zombies: w.mUpgrades.Level.mZombieCount,
     weapons: first.mWeaponList.filter((x) => x.mActive).map((x) => x.mNameID),
   };
@@ -137,7 +140,8 @@ if (retryState.score !== 0) fail(`retry score ${retryState.score}, wanted 0 (fre
 // mLoaded flips), so a small upper bound — mid-wave would be dozens. The exact fresh-start state is pinned
 // deterministically by tests/sim/startWave.test.ts T1.
 if (retryState.zombies > 10) fail(`retry started mid-wave (zombies ${retryState.zombies}), wanted a fresh wave start`);
-const wantWeapons = 'pistol,uzi,shotgun,barrel,grenade,fakewall';
+if (!classicGrowth && JSON.stringify(retryState.growth) !== JSON.stringify(startState.growth)) fail('retry did not restore personal growth: '+JSON.stringify(retryState.growth));
+const wantWeapons = classicGrowth ? 'pistol,uzi,shotgun,barrel,grenade,fakewall' : 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack,railgun';
 if (retryState.weapons.join(',') !== wantWeapons) fail(`retry loadout wrong (${retryState.weapons.join(',')}), wanted ${wantWeapons}`);
 step(`RETRY at the failed wave verified: ${JSON.stringify(retryState)}`);
 await page.waitForTimeout(1500);
