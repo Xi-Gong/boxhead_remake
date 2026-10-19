@@ -135,7 +135,8 @@ describe('game speed option -> world ticks per 50 Hz enterFrame', () => {
 
 describe('devils option', () => {
   it('devils off: no devil ever spawns, even at Nightmare (level 35)', () => {
-    const r = soak({ mode: 'Single', room: 7, seed: 12, difficulty: 3, ticks: 600, options: { infiniteLife: true, devils: 0 } });
+    // Preserve the original absent-field contract; modern explicit zero budgets are covered in endless.test.ts.
+    const r = soak({ classicWaves: true, mode: 'Single', room: 7, seed: 12, difficulty: 3, ticks: 600, options: { infiniteLife: true, devils: 0 } });
     expectHealthySoak(r, { running: true });
     expect(r.max.devils).toBe(0);
     expect(r.game.world().mUpgrades.Level.Devil_Count).toBeUndefined();
