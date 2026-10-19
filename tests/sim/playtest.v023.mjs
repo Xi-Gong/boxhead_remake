@@ -31,7 +31,7 @@ async function launchApp(dirName) {
     args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
-  await isolateLanPorts(app);
+  await isolateLanPorts(app, report);
   const page = await app.firstWindow();
   await app.evaluate(({ BrowserWindow }, [x, y]) => {
     const w = BrowserWindow.getAllWindows()[0];
@@ -271,9 +271,10 @@ try {
 } catch (e) {
   report.errors.push(String(e?.message ?? e));
 } finally {
-  writeFileSync(join(OUT, 'v023_report.json'), JSON.stringify(report, null, 2));
   try { await H?.app.close(); } catch {}
   try { await C?.app.close(); } catch {}
+  report.ok = report.ok && report.errors.length === 0;
+  writeFileSync(join(OUT, 'v023_report.json'), JSON.stringify(report, null, 2));
 }
 console.log(report.ok ? 'V0.3 TARGETED PLAYTEST PASSED' : `V0.3 TARGETED PLAYTEST FAILED: ${report.errors.join(' | ')}`);
 process.exit(report.ok ? 0 : 1);

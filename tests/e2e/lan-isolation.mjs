@@ -1,6 +1,23 @@
 // Test-process socket namespace: real transport, isolated from the player's normal LAN room.
-export async function isolateLanPorts(app) {
- await app.evaluate(() => {
+export async function isolateLanPorts(app, report) {
+ const prefix='BOXHEAD_QA_MAIN_ERROR ';let pending='';
+ const fail=message=>{
+  console.error(message);
+  if(report){report.errors.push(message);report.ok=false;}
+  else process.exitCode=1;
+ };
+ app.process().stderr?.on('data',chunk=>{
+  pending+=chunk.toString();const lines=pending.split('\n');pending=lines.pop();
+  for(const line of lines){const at=line.indexOf(prefix);if(at>=0)fail(line.slice(at));}
+ });
+ app.process().once('exit',code=>{if(code!==null&&code!==0)fail(`QA main process exited with code ${code}`);});
+ await app.evaluate(({app,dialog}) => {
+  // Electron's default uncaught-exception dialog can steal focus even from a hidden test window.
+  // Keep the error in stderr and make the test fail; never turn a main-process exception into a pass.
+  dialog.showErrorBox=(title,content)=>{
+   console.error('BOXHEAD_QA_MAIN_ERROR '+JSON.stringify({title,content}));
+   app.exit(1);
+  };
   if(globalThis.__qaIsolatedLanPorts)return;
   const net=process.getBuiltinModule('net'),udp=process.getBuiltinModule('dgram');
   const listen=net.Server.prototype.listen,connect=net.Socket.prototype.connect;

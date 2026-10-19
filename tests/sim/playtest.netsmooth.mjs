@@ -60,7 +60,7 @@ async function launchApp(dirName) {
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
   try {
-  await isolateLanPorts(app);
+  await isolateLanPorts(app, report);
   const page = await app.firstWindow();
   const jitter=Number(process.env.BOXHEAD_QA_JITTER??0),tcpOnly=process.env.BOXHEAD_QA_TCP_ONLY==='1';
   if(jitter||tcpOnly)await app.evaluate(async(_,{jitter,tcpOnly})=>{
@@ -531,10 +531,11 @@ try {
 } catch (e) {
   report.errors.push(String(e?.message ?? e));
 } finally {
-  writeFileSync(join(OUT, 'net_smooth_report.json'), JSON.stringify(report, null, 2));
   try { await H?.app.close(); } catch {}
   try { await C?.app.close(); } catch {}
   clearTimeout(deadline);
+  report.ok = report.ok && report.errors.length === 0;
+  writeFileSync(join(OUT, 'net_smooth_report.json'), JSON.stringify(report, null, 2));
 }
 console.log(report.ok ? `PACKAGED NET-SMOOTH PLAYTEST PASSED (${DELAY_MS} ms one-way)` : `PACKAGED NET-SMOOTH PLAYTEST FAILED: ${report.errors.join(' | ')}`);
 process.exit(report.ok ? 0 : 1);
