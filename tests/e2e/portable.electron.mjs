@@ -10,12 +10,12 @@ import { chromium } from 'playwright-core';
 import { Game, toMainMenu } from './lib.mjs';
 
 const expected=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
-const root=process.cwd(),out=resolve(`generated/reports/v${expected.replaceAll('.','')}/portable`);
+const root=process.cwd(),out=resolve(process.env.BOXHEAD_QA_OUT??`generated/reports/v${expected.replaceAll('.','')}/portable`);
 mkdirSync(out,{recursive:true});
 const exe=process.env.BOXHEAD_QA_EXE??resolve(`release/Boxhead 2Play Rooms-${expected}-portable.exe`);
 const port=await new Promise((resolvePort,reject)=>{const s=createServer();s.once('error',reject);s.listen(0,'127.0.0.1',()=>{const p=s.address().port;s.close(()=>resolvePort(p));});});
 const child=spawn(exe,['--boxhead-multi','--boxhead-hidden','--window-position=-32000,0',`--remote-debugging-port=${port}`,
- '--disable-features=CalculateNativeWinOcclusion','--disable-backgrounding-occluded-windows','--disable-background-timer-throttling'],
+ '--disable-features=CalculateNativeWinOcclusion','--disable-backgrounding-occluded-windows','--disable-background-timer-throttling','--force-device-scale-factor=1'],
  {cwd:root,windowsHide:true,stdio:'ignore',env:{...process.env,BOXHEAD_USER_DATA:join(out,'data-'+expected)}});
 let browser,page;
 try{
@@ -28,6 +28,8 @@ try{
  assert.ok(ready,'portable child exposes its CDP endpoint');
  browser=await chromium.connectOverCDP(endpoint);
  page=browser.contexts()[0].pages()[0];
+ // Single-instance artifact smoke, not a performance benchmark: bound GPU work during office hours.
+ await page.setViewportSize({width:640,height:480});
  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
  const g=new Game(page,browser.contexts()[0],errors);
  const executable=execFileSync('powershell.exe',['-NoProfile','-Command',
@@ -47,6 +49,8 @@ try{
  }
  if(process.env.BOXHEAD_QA_CAPTURE_ASAR){const target=resolve(process.env.BOXHEAD_QA_CAPTURE_ASAR);mkdirSync(dirname(target),{recursive:true});copyFileSync(archive,target);}
  assert.ok(await g.waitExpr('g.ready',120000));await toMainMenu(g);
+ const viewport=await page.evaluate(()=>({width:innerWidth,height:innerHeight,dpr:devicePixelRatio}));
+ assert.deepEqual(viewport,{width:640,height:480,dpr:1});
  if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
   await g.clickClip('m.mcScreen.mcSinglePlay');assert.ok(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
   await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');
@@ -58,7 +62,7 @@ try{
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
  }
- writeFileSync(join(out,'launch-'+version+'.json'),JSON.stringify({version,exe,executable,archive,extractedAsarSha256,verifiedRuntimeFiles,ok:true},null,2));
+ writeFileSync(join(out,'launch-'+version+'.json'),JSON.stringify({version,exe,executable,archive,extractedAsarSha256,verifiedRuntimeFiles,viewport,ok:true},null,2));
  console.log('PASS: actual portable',version,process.env.BOXHEAD_QA_CAPTURE_ASAR?'baseline extraction':'gameplay, save/continue and audio');
 }finally{
  if(page)await page.evaluate(()=>window.boxheadDesktop.quit()).catch(()=>{});

@@ -1,0 +1,141 @@
+{
+  "version": "0.2.9",
+  "ok": true,
+  "scope": {
+    "date": "2026-10-19",
+    "authorization": "User explicitly chose: 轻量复核通过后发布（推荐）",
+    "basis": "Initial functional/network acceptance, targeted regressions for subsequent changes, fresh serial final checks.",
+    "threeRoundHeavyPerformance": "interrupted; excluded by agreed release scope; no aggregate speedup claim",
+    "fullInitialMatrixRerunOnFinalArtifact": false
+  },
+  "initialCandidate": {
+    "asarSha256": "d56222ff408fbdb5fb9e80f1e691e2df97bde99564cfd65877e57cd0c8bd8cf2",
+    "functionalGates": "gates.json",
+    "network": "network.json"
+  },
+  "finalCandidate": {
+    "asarSha256": "0023e4962eac471f35be334223571278dc9e1c38136171d4b9d71f8e13d55db7",
+    "productionChangesSinceInitial": [
+      "electron/lan.ts: beacon socket and room lifetime/error handling",
+      "src/game/local/ExplosionFlash.ts: integer RGB offsets preserving GPU fast path",
+      "src/game/deviations.ts: records"
+    ],
+    "checks": [
+      {
+        "name": "build",
+        "args": [
+          "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js",
+          "run",
+          "build"
+        ],
+        "started": "2026-10-19T02:36:22.161Z",
+        "finished": "2026-10-19T02:36:37.587Z",
+        "code": 0,
+        "priority": "below-normal",
+        "logicalProcessors": 2,
+        "log": "generated/reports/v029/final/build.log",
+        "sha256": "8eb518c9e552c7dea7c13df07a198edc74fb9443206bf509423ea61174caa652"
+      },
+      {
+        "name": "vitest",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "--minWorkers=1",
+          "--no-file-parallelism"
+        ],
+        "started": "2026-10-19T02:36:45.600Z",
+        "finished": "2026-10-19T02:41:39.893Z",
+        "code": 0,
+        "priority": "below-normal",
+        "logicalProcessors": 2,
+        "log": "generated/reports/v029/final/vitest.log",
+        "sha256": "dc11c5a6b5c378070bda9993b63e0b8c6a9f1e2348907e188888f79f25df79cd"
+      },
+      {
+        "name": "package",
+        "args": [
+          "node_modules/electron-builder/out/cli/cli.js",
+          "--win",
+          "portable",
+          "--x64",
+          "--config.directories.output=C:/Users/royxg/boxhead-build"
+        ],
+        "started": "2026-10-19T02:41:49.329Z",
+        "finished": "2026-10-19T02:44:25.576Z",
+        "code": 0,
+        "priority": "below-normal",
+        "logicalProcessors": 2,
+        "log": "generated/reports/v029/final/package.log",
+        "sha256": "2f65a4d8b7a3b0c26fb50cd341885a82beb086f5de8ea5a27fe803c273324302"
+      },
+      {
+        "name": "portable",
+        "args": [
+          "tests/e2e/portable.electron.mjs"
+        ],
+        "started": "2026-10-19T02:45:05.300Z",
+        "finished": "2026-10-19T02:45:31.781Z",
+        "code": 0,
+        "priority": "below-normal",
+        "logicalProcessors": 2,
+        "log": "generated/reports/v029/final/portable.log",
+        "sha256": "4cb81bed105e15d63f6623e8bbaa0803de2a3193ef0938a3ddfb9c4bbe7f7330"
+      }
+    ],
+    "vitest": {
+      "passed": 1499,
+      "preexistingSkipped": 71,
+      "total": 1570,
+      "workers": 1,
+      "fileParallelism": false
+    },
+    "audit": {
+      "modules": 491,
+      "portedModules": 117,
+      "changedPorts": [],
+      "log": "generated/reports/v029/final/code-inventory.json",
+      "sha256": "c3120118a5b1f60ed610ff525c1b8e24672ce96071504fdf77563c546742ea1e"
+    },
+    "artifact": "artifact.json",
+    "targetedEvidence": [
+      {
+        "path": "generated/reports/v029/beacon-before.log",
+        "sha256": "95c07d9b0d2cfe4768f7eba93226eda5087af061ba205246c50302b8a2909138"
+      },
+      {
+        "path": "generated/reports/v029/beacon-after.log",
+        "sha256": "0651f865df968d34eb3c26ff96e835b32d0ef3c2e03ec3fc7b524c0e16cb5523"
+      },
+      {
+        "path": "generated/reports/v029/beacon-real-transport.log",
+        "sha256": "85a4e3d8cc230f5d58096f472c2e708a118b7cd0420a3aa4d6f019edfe33b5ed"
+      },
+      {
+        "path": "generated/reports/v029/beacon-typecheck.log",
+        "sha256": "a581b8a2499d3fb53a5cbab2ce59c545c9521db57a7b9ba0061f5259c323eab3"
+      },
+      {
+        "path": "generated/reports/v029/main-error-guard/report.json",
+        "sha256": "29ee426a277c3262bb6ffe796c14d42dd3e8c734e165ee1bfad81cf9de49ee05"
+      },
+      {
+        "path": "generated/reports/v029/flash-gpu-unit.log",
+        "sha256": "4bdaa5f5c9172b5b943ade92454e351b3ba3816eaf7cb253720842e035208dd4"
+      },
+      {
+        "path": "generated/reports/v029/flash-gpu-browser.log",
+        "sha256": "29dd938867b8a43cf406f6cce77f81c4b976686a2059c02e8ca5f3df38daa3e9"
+      },
+      {
+        "path": "generated/reports/v029/stress-gpu-fixed/net_smooth_report.json",
+        "sha256": "65ee1208d4fe49379060ed0513cf29dad79b0f7df402bb84b629d57bad72accd"
+      },
+      {
+        "path": "generated/reports/v029/performance/interrupted.json",
+        "sha256": "cc8235c02dbaaf18635089968693fa49aed7437efdc6d30d8280d46480312870"
+      }
+    ]
+  }
+}

@@ -17,10 +17,16 @@
 - Confirmed kill scores animate once toward the correct player's score panel, without rollback flicker.
 - Type an unlocked starting wave directly, with full text validation, paste and IME handling.
 - Hosts can change room settings before starting; with co-op friendly fire off, shots pass through teammates.
+- Leaving or rebuilding a LAN room no longer lets a late discovery beacon trigger a main-process error dialog.
 - Audio recovers from startup or output failures without restarting the game.
 - Rocket, grenade, barrel, mine and other explosion screen flashes are substantially softer.
+- Softened flashes retain the GPU rendering path, avoiding a full-screen CPU readback on each flash.
 
 Death match keeps its existing progression and supply rules. Older LAN clients retain the rules their capabilities support.
+
+Verification includes the initial candidate's complete functional and LAN matrix, targeted regressions for
+the final beacon/flash fixes, and a lightweight final build and portable check. The planned three-round heavy
+performance comparison was stopped to avoid interfering with office work; no overall speedup is claimed.
 
 Windows portable: **Boxhead 2Play Rooms-0.2.9-portable.exe**. Saves remain in `%USERPROFILE%\.boxhead`.
 
