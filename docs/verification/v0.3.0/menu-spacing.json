@@ -386,5 +386,14 @@
   ],
   "review": "Direct review of four recovery-room screenshots and representative main/setup/pause screenshots; pixel, geometry and real-click assertions. No zai.",
   "coverage": "Additional existing added-ui gate passed: main six entries, discovery, waiting/ready/host/guest/setup, four sizes and DPR2, pause, save and continue.",
-  "full_ui": "The full UI suite is running against this static build; final release gates will rerun the final candidate."
+  "full_ui": {
+    "passed": 188,
+    "total": 188,
+    "failed": 0,
+    "raw": "generated/reports/x1/ui_report.json",
+    "applicationCommit": "09cbd51"
+  },
+  "build": {
+    "main-CoKWcGOB.js": "d4a3723a8d42b7deaf3a9e65e90d0db3a9b6929289429a7dcd9a711534019500"
+  }
 }
