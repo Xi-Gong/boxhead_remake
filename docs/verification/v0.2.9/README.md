@@ -4,6 +4,12 @@ This release unifies PvE progression, expands supplies, improves setup/input and
 Death match and older negotiated LAN rules retain their established behavior. Implementation details and
 individual validation records are in [PARITY §21](../../../PARITY.md).
 
+**Current acceptance status:** the initial candidate completed the functional and network checks below.
+Follow-up beacon-lifetime and GPU-flash fixes are committed and pass their targeted checks, including a real
+two-process 256-explosion/200-crate run. The renewed full performance comparison was stopped at the user's
+request because background QA affected office work. Its partial runs are not a completed comparison.
+Heavy QA is disabled by default; final portable packaging and publication remain pending.
+
 ## Feature evidence
 
 - [Confirmed score flights](floating-scores.json): four viewport sizes, owner geometry, pixels and replay identity.
