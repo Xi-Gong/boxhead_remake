@@ -7,6 +7,7 @@ Development evidence is recorded per independent commit:
 - [Endless growth, bounded wave budgets and high-wave restore](endless-progress.json)
 - [Enemy geometry, animation, skills, loot and enchanted ammunition](enemy-variants.json)
 - [Integrated armor, horn geometry, native lighting and skill-effect polish](art-polish.json)
+- [Complete native playback sequences and finite skill continuity](animation-continuity.json)
 
 Visual review uses direct screenshots with pixel/geometry checks and real mouse/keyboard interactions.
 The four viewports are 640×480, 960×720, 1280×720 and 640×889. Enemy contact sheets cover every original

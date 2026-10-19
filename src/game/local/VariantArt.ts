@@ -116,11 +116,15 @@ function prepare(kind:EnemyVariant):any{
  const collection=cache[kind]=new X.CDrawPrimitive_XSI_Collection();
  const zombie=kind==='charger',links:Record<string,string>={stand:zombie?'Zombie_Zombie_Stand':'Player_Stand',walk:zombie?'Zombie_Zombie_Walk':'Player_Walk',attack:zombie?'Zombie_Zombie_Attack':'Devil_Devil_Attack',shothit_1:'Player_HitRear',shothit_2:'Player_HitFront',dying:'Player_Dying',dead:'Player_Dead',warning:zombie?'Zombie_Zombie_Stand':'Devil_Devil_Attack',charge:zombie?'Zombie_Zombie_Walk':'Player_Walk',cast:zombie?'Zombie_Zombie_Attack':'Devil_Devil_Attack',recovery:zombie?'Zombie_Zombie_Stand':'Player_Stand'};
  for(const [key,link]of Object.entries(links)){
-  const original=DI.mAnimationSets[link],derived={...original,mID:'Variant_'+kind+'_'+key,mGroupID:'Variant_'+kind,mFrameSequence:undefined as any};
+  const original=DI.mAnimationSets[link],custom=['warning','charge','cast','recovery'].includes(key);
+  // Base actions keep the authored return frames. Skill frames expand that logical timeline once,
+  // so finite poses never restart midway and the looping charge keeps the native walk cadence.
+  const derived={...original,mID:'Variant_'+kind+'_'+key,mGroupID:'Variant_'+kind,mFrameSequence:custom?undefined:original.mFrameSequence?.slice()};
   derived.mDirections=original.mDirections.map((frames:any[],direction:number)=>{
-   const custom=['warning','charge','cast','recovery'].includes(key),count=custom?Math.max(6,frames.length):frames.length;
+   const sequence:number[]=original.mFrameSequence??frames.map((_,i)=>i),count=custom?Math.max(6,sequence.length):frames.length;
    return Array.from({length:count},(_,index)=>{
-    const frame=frames[index%frames.length],models:any={},partner=DI.mGroups[frame.rPartner]?.[frame.mAnimID]?.mDirections[direction]?.[index%frames.length]?.Models,remap=DI.mGroups[sourceStyle.mGroup_Remap]?.[frame.mAnimID]?.mDirections[direction]?.[index%frames.length]?.Models;
+    const sourceIndex=custom?sequence[key==='charge'?index%sequence.length:Math.round(index/(count-1)*(sequence.length-1))]!:index;
+    const frame=frames[sourceIndex],models:any={},partner=DI.mGroups[frame.rPartner]?.[frame.mAnimID]?.mDirections[direction]?.[sourceIndex]?.Models,remap=DI.mGroups[sourceStyle.mGroup_Remap]?.[frame.mAnimID]?.mDirections[direction]?.[sourceIndex]?.Models;
     for(const name of Object.keys(frame.Models)){
      const base=frame.Models[name].Empty?partner?.[name]??frame.Models[name]:frame.Models[name];
      const source=sourceStyle.mModels[name]?.mGroup_Remap?remap?.[name]??base:base;

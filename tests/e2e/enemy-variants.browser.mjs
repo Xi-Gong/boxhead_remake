@@ -39,7 +39,10 @@ try{
      const d=Math.floor(j*a.mDirections.length/4),frames=a.mDirections[d].mFrames,f=frames[Math.floor(frames.length/2)],x=120+j*180+70,y=row*rowHeight+20+top*2.5;
      dc.strokeStyle='#b8b0a4';dc.beginPath();dc.moveTo(x-12,y);dc.lineTo(x+12,y);dc.stroke();dc.save();dc.translate(x,y);dc.scale(2.5,2.5);dc.drawImage(f.sBMD.toImageSource(),f.mDisp.x,f.mDisp.y,f.sBMD.width,f.sBMD.height);dc.restore();
     }
-   }rows.push({kind,png:c.toDataURL('image/png'),detail:detail.toDataURL('image/png'),metrics});
+   }
+   if(items.walk.mAnimationObject.mFrameCount!==8||items.charge.mAnimationObject.mFrameCount!==8)throw new Error('truncated native walk/charge cycle');
+   for(const d of items.walk.mAnimationObject.mDirections)if(d.mFrames[5]!==d.mFrames[3]||d.mFrames[6]!==d.mFrames[2]||d.mFrames[7]!==d.mFrames[1])throw new Error('missing native return frames');
+   rows.push({kind,png:c.toDataURL('image/png'),detail:detail.toDataURL('image/png'),metrics});
   }return rows;
  });
  for(const sheet of sheets){for(const [suffix,data]of [['all-directions',sheet.png],['closeups',sheet.detail]]){const file=`${out}/${sheet.kind}-${suffix}.png`;writeFileSync(file,Buffer.from(data.split(',')[1],'base64'));report.shots.push(file);}report.art.push({kind:sheet.kind,metrics:sheet.metrics});}
@@ -50,7 +53,8 @@ try{
   while(performance.now()-start<8000){
    const time=performance.now()-start,key=actions[Math.min(10,Math.floor(time/720))];ctx.fillStyle='#e7e2d9';ctx.fillRect(0,0,320,180);ctx.fillStyle='#222';ctx.font='14px Arial';ctx.fillText(key,12,22);
    for(const [i,e]of Object.values(window.__variantsQA.enemies).entries()){
-    const a=e.mXSI_Animation.mCollection.mItems[key].mAnimationObject,d=Math.floor(time/450)%a.mDirections.length,frames=a.mDirections[d].mFrames,f=frames[Math.floor(time/70)%frames.length],x=90+i*150,y=148;
+    const a=e.mXSI_Animation.mCollection.mItems[key].mAnimationObject,frames=a.mDirections[0].mFrames,phase=(time%720)/720,
+     f=frames[['walk','charge'].includes(key)?Math.floor(time/70)%frames.length:Math.min(frames.length-1,Math.floor(phase*frames.length))],x=90+i*150,y=148;
     ctx.save();ctx.translate(x,y);ctx.scale(1.7,1.7);ctx.drawImage(f.sBMD.toImageSource(),f.mDisp.x,f.mDisp.y,f.sBMD.width,f.sBMD.height);ctx.restore();
    }await new Promise(r=>setTimeout(r,65));
   }recorder.stop();for(const track of stream.getTracks())track.stop();return done;

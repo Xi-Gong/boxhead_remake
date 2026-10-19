@@ -109,12 +109,29 @@ it('bakes independent collections for every original direction/action without mo
  for(const kind of ['charger','priest']as const){const c=variantCollection(kind);for(const key of ['stand','walk','attack','shothit_1','shothit_2','dying','dead','warning','charge','cast','recovery']){const a=c.mItems[key].mAnimationObject;expect(a.mDirections.length).toBe(['dying','dead'].includes(key)?4:['stand','recovery'].includes(key)||(key==='warning'&&kind==='charger')?16:8);for(const d of a.mDirections)for(const f of d.mFrames)expect(f.sBMD).toBeDefined();}}
  expect(JSON.stringify(base.mDirections)).toBe(source);g.quit();
 });
+it('retains the native eight-frame walk return without a truncated loop seam',()=>{
+ const g=boot(),DI=DrawPrimitive.XSI.CDrawPrimitive_XSI_DI;
+ for(const kind of ['charger','priest']as const){
+  const c=variantCollection(kind),source=DI.mAnimationSets[kind==='charger'?'Zombie_Zombie_Walk':'Player_Walk'];
+  expect(source.mFrameSequence).toEqual([0,1,2,3,4,3,2,1]);
+  expect(c.mItems.walk.mAnimationObject.mFrameCount).toBe(8);
+  expect(c.mItems.charge.mAnimationObject.mFrameCount).toBe(8);
+  for(const d of c.mItems.walk.mAnimationObject.mDirections){expect(d.mFrames[5]).toBe(d.mFrames[3]);expect(d.mFrames[6]).toBe(d.mFrames[2]);expect(d.mFrames[7]).toBe(d.mFrames[1]);}
+ }g.quit();
+});
 it('keeps native feet and aligned face arrays throughout every base action and direction',()=>{
  const g=boot(),DI=DrawPrimitive.XSI.CDrawPrimitive_XSI_DI;
  for(const kind of ['charger','priest']as const)for(const [key,link]of Object.entries({stand:kind==='charger'?'Zombie_Zombie_Stand':'Player_Stand',walk:kind==='charger'?'Zombie_Zombie_Walk':'Player_Walk',attack:kind==='charger'?'Zombie_Zombie_Attack':'Devil_Devil_Attack',shothit_1:'Player_HitRear',shothit_2:'Player_HitFront',dying:'Player_Dying',dead:'Player_Dead',warning:kind==='charger'?'Zombie_Zombie_Stand':'Devil_Devil_Attack',charge:kind==='charger'?'Zombie_Zombie_Walk':'Player_Walk',cast:kind==='charger'?'Zombie_Zombie_Attack':'Devil_Devil_Attack',recovery:kind==='charger'?'Zombie_Zombie_Stand':'Player_Stand'})){
   const original=DI.mAnimationSets[link],derived=DI.mAnimationSets['Variant_'+kind+'_'+key];
+  const custom=['warning','charge','cast','recovery'].includes(key);
+  if(!custom){
+   expect(derived.mFrameSequence).toEqual(original.mFrameSequence);
+   if(original.mFrameSequence)expect(derived.mFrameSequence).not.toBe(original.mFrameSequence);
+   expect(variantCollection(kind).mItems[key].mAnimationObject.mFrameCount).toBe(original.mFrameSequence?.length??original.mDirections[0].length);
+  }
   for(let d=0;d<original.mDirections.length;d++)for(let i=0;i<derived.mDirections[d].length;i++){
-   const phase=i%original.mDirections[d].length,source=original.mDirections[d][phase],models=derived.mDirections[d][i].Models;
+   const sequence=original.mFrameSequence??original.mDirections[d].map((_:any,n:number)=>n),count=derived.mDirections[d].length;
+   const phase=custom?sequence[key==='charge'?i%sequence.length:Math.round(i/(count-1)*(sequence.length-1))]:i,source=original.mDirections[d][phase],models=derived.mDirections[d][i].Models;
    for(const name of ['Foot_Left','Foot_Right']){
     const foot=source.Models[name]?.Empty?DI.mGroups[source.rPartner]?.[source.mAnimID]?.mDirections[d]?.[phase]?.Models[name]:source.Models[name];
     expect(models[name]?.Shape_vList).toEqual(foot?.Shape_vList);
