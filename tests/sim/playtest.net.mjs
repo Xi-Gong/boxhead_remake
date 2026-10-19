@@ -13,6 +13,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
+import {lanWindowFlag,placeLanWindow,typeLanAddress} from '../e2e/lan-user-input.mjs';
 import { startMetrics } from '../e2e/perf-metrics.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -25,7 +26,6 @@ for (const d of ['net-host', 'net-client']) {
 
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
-const OFFSCREEN = ['-32000', '0'];
 
 const report = { ok: false, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
@@ -36,19 +36,14 @@ async function launchApp(dirName) {
     executablePath: process.env.BOXHEAD_QA_EXE ?? join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
-    args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
+    args: [...NO_THROTTLE, '--boxhead-multi', lanWindowFlag],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
   await isolateLanPorts(app, report);
   const page = await app.firstWindow();
-  if(process.env.BOXHEAD_QA_FUNCTIONAL_ONLY==='1')await page.setViewportSize({width:640,height:480});
   await page.addInitScript(() => { Math.random = () => 0.424242; });
   await page.reload();
-  await app.evaluate(({ BrowserWindow }, [x, y]) => {
-    const w = BrowserWindow.getAllWindows()[0];
-    w.setPosition(x, y);
-    w.setAlwaysOnTop(false);
-  }, OFFSCREEN).catch(() => {});
+  await placeLanWindow(app,page);
   page.on('console', (m) => { if (m.type() === 'error') report.errors.push(`[${dirName}] ${m.text().slice(0, 300)}`); });
   page.on('pageerror', (e) => report.errors.push(`[${dirName} pageerror] ${e.message}`));
   return { app, page };
@@ -121,7 +116,7 @@ const CREATE_ROOM_BTN = [320 - 117, 240 - 6];
 const JOIN_BTN = legacy ? [303, 330] : [520, 350];
 const READY_BTN = [210, legacy ? 340 : 330]; // client, room view
 const START_ROOM_BTN = READY_BTN; // host, gated on player 2 being ready
-const RESUME_BTN = [320, 240 + 36]; // host, room view (after a finished game with a checkpoint)
+const RESUME_BTN = [320, 240 + 36]; // retained legacy coordinate
 const P2_CHAR_RIGHT = [160, 276]; // the P2 character card's > arrow on the setup screen
 const START_GAME_BTN = [320, legacy ? 452 : 444]; // setup screen
 
@@ -131,7 +126,7 @@ let H, C, C2;
 try {
   // ---- host instance -------------------------------------------------------------------
   step('launching host instance');
-  const H = await launchApp('net-host');
+  H = await launchApp('net-host');
   const h = helpers(H.page);
   if (!(await h.waitFor(() => window.__game?.ready, null, 120000))) throw new Error('host boot failed');
   if (!(await h.waitScreen('State_Main', 'Screen_Main', 60000))) throw new Error(`host: no main menu (${await h.state()})`);
@@ -146,13 +141,13 @@ try {
 
   // ---- client instance -----------------------------------------------------------------
   step('launching client instance');
-  const C = await launchApp('net-client');
+  C = await launchApp('net-client');
   const c = helpers(C.page);
   if (!(await c.waitFor(() => window.__game?.ready, null, 120000))) throw new Error('client boot failed');
   if (!(await c.waitScreen('State_Main', 'Screen_Main', 60000))) throw new Error(`client: no main menu (${await c.state()})`);
   await c.click(...LAN_BTN);
   if (!(await c.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error(`client: no lobby (${await c.state()})`);
-  await C.page.fill('input[type=text]', '127.0.0.1');
+  await typeLanAddress(C.page,'127.0.0.1');
   await c.click(...JOIN_BTN);
   step('client joining by manual IP');
 
@@ -300,7 +295,7 @@ try {
   if (!(await c2.waitScreen('State_Main', 'Screen_Main', 60000))) throw new Error('client relaunch: no main menu');
   await c2.click(...LAN_BTN);
   if (!(await c2.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error('client relaunch: no lobby');
-  await C2.page.fill('input[type=text]', '127.0.0.1');
+  await typeLanAddress(C2.page,'127.0.0.1');
   await c2.click(...JOIN_BTN);
   if (!(await h.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 25000))) {
     await lanState('host-resume-fail', H.page);
@@ -370,7 +365,16 @@ try {
   await C2.page.evaluate(() => window.__game.main().SetState('State_LanLobby'));
   if (!(await h.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error(`host: no room after the debrief (${await h.state()})`);
   await shot('10_host_room_resume', H.page);
-  await h.click(...RESUME_BTN);
+  if(legacy)await h.click(...RESUME_BTN);
+  else{
+    const point=await H.page.evaluate(()=>{
+      const m=window.__game.main(),button=m.mcScreen.resumeBtn;
+      if(!button?._visible)throw new Error('resume button not visible');
+      const b=button.getBounds(m._parent),p=window.__game.platform.presenter;
+      return p.logicalToClient((b.xMin+b.xMax)/2,(b.yMin+b.yMax)/2);
+    });
+    await H.page.mouse.click(point.x,point.y);
+  }
   if (!(await h.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error('host did not resume for the timeout run');
   if (!(await c2.waitFor(() => window.__game.state() === 'State_RunWorld' && window.__game.main().mcWorld?.mLoaded, null, 60000))) throw new Error('client did not resume for the timeout run');
   step('resumed again; killing the client for good');

@@ -12,6 +12,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
+import {lanWindowFlag,placeLanWindow,typeLanAddress} from '../e2e/lan-user-input.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = join(ROOT, 'generated/reports/qa');
@@ -20,7 +21,6 @@ for (const d of ['v024-a', 'v024-host', 'v024-client']) rmSync(join(OUT, d), { r
 
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
-const OFFSCREEN = ['-32000', '0'];
 const MENU_Y = { Single: 226, LAN: 370 };
 
 const report = { ok: false, steps: [], errors: [], shots: [] };
@@ -33,16 +33,12 @@ async function launchApp(dirName) {
     executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
-    args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
+    args: [...NO_THROTTLE, '--boxhead-multi', lanWindowFlag],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
   await isolateLanPorts(app, report);
   const page = await app.firstWindow();
-  await app.evaluate(({ BrowserWindow }, [x, y]) => {
-    const w = BrowserWindow.getAllWindows()[0];
-    w.setPosition(x, y);
-    w.setAlwaysOnTop(false);
-  }, OFFSCREEN).catch(() => {});
+  await placeLanWindow(app,page);
   page.on('pageerror', (e) => report.errors.push(`[${dirName}] ${e.message}`));
   return { app, page };
 }
@@ -193,7 +189,7 @@ try {
     if (!(await x.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error(`${n}: no lobby (C)`);
   }
   await h.click(...CREATE_ROOM_BTN);
-  await C.page.fill('input[type=text]', '127.0.0.1');
+  await typeLanAddress(C.page,'127.0.0.1');
   await c.click(...JOIN_BTN);
   await c.click(...READY_BTN);
   if (!(await h.waitFor(() => window.__game?.lan?.()?.ready === true, null, 20000))) throw new Error('no READY (C)');

@@ -9,6 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
+import {lanWindowFlag,placeLanWindow} from '../e2e/lan-user-input.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = join(ROOT, 'generated/reports/qa');
@@ -16,7 +17,6 @@ mkdirSync(OUT, { recursive: true });
 
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
-const OFFSCREEN = ['-32000', '0'];
 
 const report = { ok: false, steps: [], errors: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
@@ -36,16 +36,12 @@ try {
     executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
-    args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
+    args: [...NO_THROTTLE, '--boxhead-multi', lanWindowFlag],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, 'net-ui') },
   });
   await isolateLanPorts(app, report);
   const page = await app.firstWindow();
-  await app.evaluate(({ BrowserWindow }, [x, y]) => {
-    const w = BrowserWindow.getAllWindows()[0];
-    w.setPosition(x, y);
-    w.setAlwaysOnTop(false);
-  }, OFFSCREEN).catch(() => {});
+  await placeLanWindow(app,page,{nativeResize:true});
   page.on('pageerror', (e) => report.errors.push(`pageerror: ${e.message}`));
 
   const state = () => page.evaluate(() => window.__game?.state?.());
@@ -91,7 +87,7 @@ try {
     const input = document.querySelector('input[type=text]');
     const c = document.querySelector('canvas').getBoundingClientRect();
     const r = input.getBoundingClientRect();
-    return { input: { l: r.left, t: r.top, w: r.width, h: r.height }, display: getComputedStyle(input).display, canvas: { l: c.left, t: c.top, w: c.width, h: c.height } };
+    return { input: { l: r.left, t: r.top, w: r.width, h: r.height }, display: getComputedStyle(input).display, canvas: { l: c.left, t: c.top, w: c.width, h: c.height },viewport:{width:innerWidth,height:innerHeight} };
   });
 
   const sizes = [
@@ -106,6 +102,7 @@ try {
       await page.waitForTimeout(500); // let the presenter recompute + the onResize handler re-place the input
     }
     const m = await measure();
+    if(s.set&&(Math.abs(m.viewport.width-s.set[0])>2||Math.abs(m.viewport.height-s.set[1])>2))throw new Error(`${s.name}: native resize did not reach the requested viewport (${JSON.stringify(m.viewport)})`);
     if (m.display !== 'block') throw new Error(`${s.name}: input not visible in the entry view (${m.display})`);
     // Expected page-absolute rect: content space -> stage (+ centring offset) -> client px.
     const off = await page.evaluate(() => {
@@ -144,7 +141,7 @@ try {
   // ---- regression (user report 2026-10-14): the typed-in IP box must NOT linger over the next screen ----
   await click(...CLOSE_ROOM_BTN); // CLOSE ROOM -> entry view
   await page.waitForTimeout(600);
-  await page.evaluate(() => { const i = document.querySelector('input[type=text]'); i?.focus(); });
+  await page.getByPlaceholder('192.168.x.x').click();
   await page.keyboard.type('192.168.0.1', { delay: 30 });
   await page.waitForTimeout(200);
   const typed = await page.evaluate(() => document.querySelector('input[type=text]')?.value ?? null);

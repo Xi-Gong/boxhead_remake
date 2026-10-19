@@ -10,6 +10,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
+import {lanWindowFlag,placeLanWindow,typeLanAddress} from '../e2e/lan-user-input.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = join(ROOT, 'generated/reports/qa');
@@ -17,7 +18,6 @@ mkdirSync(OUT, { recursive: true });
 
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
-const OFFSCREEN = ['-32000', '0'];
 
 const report = { ok: false, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
@@ -28,16 +28,12 @@ async function launchApp(dirName) {
     executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
-    args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
+    args: [...NO_THROTTLE, '--boxhead-multi', lanWindowFlag],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
   await isolateLanPorts(app, report);
   const page = await app.firstWindow();
-  await app.evaluate(({ BrowserWindow }, [x, y]) => {
-    const w = BrowserWindow.getAllWindows()[0];
-    w.setPosition(x, y);
-    w.setAlwaysOnTop(false);
-  }, OFFSCREEN).catch(() => {});
+  await placeLanWindow(app,page);
   page.on('pageerror', (e) => report.errors.push(`[${dirName}] ${e.message}`));
   return { app, page };
 }
@@ -87,7 +83,8 @@ try {
     if (!(await x.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error(`${n}: no lobby`);
   }
   await h.click(...CREATE_ROOM_BTN);
-  await C.page.fill('input[type=text]', '127.0.0.1');
+  await typeLanAddress(C.page,'127.0.0.1');
+  step('manual IP typed with focus: '+JSON.stringify(await C.page.evaluate(()=>({state:window.__game.state(),phase:window.__game.lan().bridge,viewport:{width:innerWidth,height:innerHeight}}))));
   await c.click(...JOIN_BTN);
   await c.click(...READY_BTN);
   if (!(await h.waitFor(() => window.__game?.lan?.()?.ready === true, null, 20000))) throw new Error('no READY');
@@ -270,6 +267,10 @@ try {
   report.ok = report.errors.length === 0;
 } catch (e) {
   report.errors.push(String(e?.message ?? e));
+  for(const [name,instance]of [['host',H],['client',C]])if(instance){
+    await shot('failure-'+name,instance.page).catch(()=>{});
+    (report.failureStates??={})[name]=await instance.page.evaluate(()=>({state:window.__game.state(),bridge:window.__game.lan(),input:[...document.querySelectorAll('input')].map(e=>({display:e.style.display,visibility:getComputedStyle(e).visibility,rect:e.getBoundingClientRect().toJSON()})),viewport:{width:innerWidth,height:innerHeight}})).catch(String);
+  }
 } finally {
   try { await H?.app.close(); } catch {}
   try { await C?.app.close(); } catch {}

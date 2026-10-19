@@ -13,6 +13,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 import { isolateLanPorts } from '../e2e/lan-isolation.mjs';
+import {lanWindowFlag,placeLanWindow,typeLanAddress} from '../e2e/lan-user-input.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = join(ROOT, 'generated/reports/qa');
@@ -23,7 +24,6 @@ for (const d of ['netretry-host', 'netretry-client']) {
 
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
-const OFFSCREEN = ['-32000', '0'];
 
 const report = { ok: false, steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
@@ -34,16 +34,12 @@ async function launchApp(dirName) {
     executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
-    args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
+    args: [...NO_THROTTLE, '--boxhead-multi', lanWindowFlag],
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, dirName) },
   });
   await isolateLanPorts(app, report);
   const page = await app.firstWindow();
-  await app.evaluate(({ BrowserWindow }, [x, y]) => {
-    const w = BrowserWindow.getAllWindows()[0];
-    w.setPosition(x, y);
-    w.setAlwaysOnTop(false);
-  }, OFFSCREEN).catch(() => {});
+  await placeLanWindow(app,page);
   page.on('console', (m) => { if (m.type() === 'error') report.errors.push(`[${dirName}] ${m.text().slice(0, 300)}`); });
   page.on('pageerror', (e) => report.errors.push(`[${dirName} pageerror] ${e.message}`));
   return { app, page };
@@ -89,17 +85,31 @@ function helpers(page) {
     if (!w?.mUpgrades) return null;
     return { room: w.mWorldLibLink, level: w.mUpgrades.mLevelIndex, tick: w.mTick, score: w.mHud.nTotalScore };
   });
-  /** Kill BOTH players deterministically (the crate-test pattern) - a natural coop all-dead end. */
-  const killBoth = () => page.evaluate(() => {
-    const m = window.__game.main();
-    const DEAD = window.__game.pkg.Thing.CThing.mFlag_DEAD;
-    for (const p of Object.values(m.mcWorld.mThing_Collection.mPlayerThings)) {
-      if (!p) continue;
-      p.mFlags |= DEAD; // the real damage path sets it before State_Dying
-      p.SetState('State_Dying');
-    }
-  });
-  return { waitFor, waitScreen, click, centreOf, worldInfo, killBoth };
+  return { waitFor, waitScreen, click, centreOf, worldInfo };
+}
+
+/** The same all-dead fixture on a shared future simulation tick, including every rollback replay. */
+async function scheduleNaturalEnd(peers,label){
+ const ticks=await Promise.all(peers.map(p=>p.page.evaluate(()=>window.__game.main().mcWorld.mTick))),target=Math.max(...ticks)+30;
+ for(const peer of peers)await peer.page.evaluate(target=>{
+  const g=window.__game,w=g.main().mcWorld,collection=w.mThing_Collection,process=collection.Process,DEAD=g.pkg.Thing.CThing.mFlag_DEAD;
+  if(w.mTick>=target)throw new Error('death fixture target already passed');
+  window.__deathFixture={target,applied:[]};
+  collection.Process=function(...args){
+   if(this.mWorld.mTick===target){
+    window.__deathFixture.applied.push(this.mWorld.mTick);
+    for(const p of Object.values(this.mPlayerThings))if(p){p.mFlags|=DEAD;p.SetState('State_Dying');}
+   }
+   return process.apply(this,args);
+  };
+ },target);
+ step(`${label}: all-dead fixture scheduled at common simulation tick ${target}`);
+}
+async function verifyNaturalEndFixture(peers,label){
+ const traces=await Promise.all(peers.map(p=>p.page.evaluate(()=>window.__deathFixture)));
+ for(const trace of traces)if(!trace.applied.length||trace.applied.some(t=>t!==trace.target))throw new Error(`${label}: death fixture did not run on its simulation tick`);
+ if(traces[0].target!==traces[1].target)throw new Error(`${label}: death fixture target mismatch`);
+ (report.deathFixtures??=[]).push({label,traces});
 }
 
 const LAN_BTN = [320, 370];
@@ -125,7 +135,7 @@ try {
   }
   await h.click(...CREATE_ROOM_BTN);
   if (!(await h.waitFor(() => window.__game?.lan?.()?.bridge === 'hosting', null, 20000))) throw new Error('host: CREATE ROOM did not host');
-  await C.page.fill('input[type=text]', '127.0.0.1');
+  await typeLanAddress(C.page,'127.0.0.1');
   await c.click(...JOIN_BTN);
   if (!(await h.waitFor(() => !!window.__game?.lan?.()?.peerName, null, 20000))) throw new Error('host never saw the client join');
   await c.click(...READY_BTN);
@@ -145,8 +155,7 @@ try {
 
   // ---- natural all-dead -> Debrief with RETRY VISIBLE on both --------------------------------------------------
   step('killing both players (natural coop end)');
-  await h.killBoth();
-  await c.killBoth();
+  await scheduleNaturalEnd([H,C],'first natural end');
   for (const [n, x] of [['host', h], ['client', c]]) {
     if (!(await x.waitFor(() => window.__game.state() === 'State_Debrief', null, 60000))) {
       throw new Error(`${n}: no debrief after the natural end (${await H.page.evaluate(() => window.__game.state())})`);
@@ -161,6 +170,7 @@ try {
   }
   await shot('01_host_debrief_retry_visible', H.page);
   await shot('02_client_debrief_retry_visible', C.page);
+  await verifyNaturalEndFixture([H,C],'first natural end');
   step('natural end: Debrief on both, RETRY visible, session ended');
 
   // ---- both EXIT to the room: the room must be actionable (was: dead-end with stale READY badges) ---------------
@@ -230,12 +240,12 @@ try {
 
   // ---- second natural end -> the CLIENT presses Debrief RETRY -> both rebuild -------------------------------------
   step('second natural end');
-  await h.killBoth();
-  await c.killBoth();
+  await scheduleNaturalEnd([H,C],'second natural end');
   for (const [n, x] of [['host', h], ['client', c]]) {
     if (!(await x.waitFor(() => window.__game.state() === 'State_Debrief', null, 60000))) throw new Error(`${n}: no debrief after the second natural end`);
   }
   await shot('06_client_debrief_before_retry', C.page);
+  await verifyNaturalEndFixture([H,C],'second natural end');
   const retryBtn = await c.centreOf('m.mcScreen._Retry');
   if (!retryBtn) throw new Error('client debrief RETRY button not found');
   step(`client pressing Debrief RETRY at ${JSON.stringify(retryBtn)}`);
@@ -266,6 +276,10 @@ try {
   report.ok = report.errors.length === 0;
 } catch (e) {
   report.errors.push(String(e?.message ?? e));
+  for(const [name,instance]of [['host',H],['client',C]])if(instance){
+    await shot('failure-'+name,instance.page).catch(()=>{});
+    (report.failureStates??={})[name]=await instance.page.evaluate(()=>({state:window.__game.state(),bridge:window.__game.lan(),tick:window.__game.main().mcWorld?.mTick,players:Object.values(window.__game.main().mcWorld?.mThing_Collection.mPlayerThings??{}).map(p=>({life:p.mLife,flags:p.mFlags,state:p.mStateID}))})).catch(String);
+  }
 } finally {
   try { await H?.app.close(); } catch {}
   try { await C?.app.close(); } catch {}

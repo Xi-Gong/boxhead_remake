@@ -1,0 +1,97 @@
+{
+  "status": "qa-fixture-accepted-release-gates-pending",
+  "scope": "Historical native LAN acceptance fixture only. Production code and packaged runtime remain unchanged.",
+  "asarSha256": "9075cf6d39a1cd5eda0da197ce61968216ba4092bbb8e03ab06155ac42bc9f05",
+  "sourceSha256": "71fb57c2201527c1b615a19a7030364e2289efecd9e94711ce2394eac750ca1e",
+  "initialFailure": {
+    "path": "generated/reports/v030/v023-initial-failure.json",
+    "sha256": "7f3b529f2996c613f6c4505ec7bf2b021e0ca092d07c9e49dda0a53d11516f85",
+    "description": "One manual-IP fill action timed out waiting for editability before gameplay. A diagnostic-only rerun passed before the input/window correction, so the initial cause is not proven."
+  },
+  "naturalRetryFailure": {
+    "path": "generated/reports/v030/netretry-initial-failure.json",
+    "sha256": "ac299f094327a38f06adffdbd38b567e6852917930343eeda4c47f4c4748e609",
+    "description": "Second forced all-dead did not reach debrief once; a diagnostic-only rerun passed. The old fixture mutated each predicted head independently. It now injects the same original all-dead state at a shared future simulation tick on every replay, retaining traces and original natural-end/retry assertions. Initial causation is not claimed as proven."
+  },
+  "resumeCoordinateFailure": {
+    "path": "generated/reports/v030/net-resume-coordinate-failure.json",
+    "sha256": "685492431eaa02fc89da4e3e78d7f20711e75f6ecdd8c7e8a6b4ede1c10c09a4",
+    "description": "The historical final resume click targeted the old centered coordinate after the new side-by-side layout. The modern branch clicks the visible button actual bounds through Presenter; the legacy coordinate remains."
+  },
+  "correction": [
+    "Real mouse focus and keyboard typing replace fill(), with explicit visibility, typed-value and retained-focus checks.",
+    "Functional native windows are born transparent and non-focusable, positioned on the normal display and bounded to 640x480 during gameplay.",
+    "Native resize coverage keeps real window resizing and now asserts the requested viewport sizes. Original gameplay, camera, pause, retry and recovery assertions remain.",
+    "Natural all-dead injection runs inside the simulation collection phase on a common future tick, including rollback replay.",
+    "Modern resume uses the visible button bounds; legacy coordinates remain.",
+    "Host/client handles are assigned to the outer cleanup scope, so finally awaits their close before writing the report.",
+    "Failed v023/netretry runs collect both peer screenshots and state before process cleanup."
+  ],
+  "checks": {
+    "typechecks": 3,
+    "syntaxChecks": 6,
+    "relatedGates": [
+      {
+        "name": "v023",
+        "code": 0,
+        "sourceSha256": "270809389c97d1aac208f6c8244f2a2763ad674d6ef0016ec42ab2bfd7b85593",
+        "affinityMask": 3,
+        "path": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\gates-from-v023\\v023.log",
+        "sha256": "a787cdfdab6f586261c4f7e8a58a870d425149aafc76cb13a6f5199e0eecb520"
+      },
+      {
+        "name": "v024",
+        "code": 0,
+        "sourceSha256": "270809389c97d1aac208f6c8244f2a2763ad674d6ef0016ec42ab2bfd7b85593",
+        "affinityMask": 3,
+        "path": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\gates-from-v023\\v024.log",
+        "sha256": "94b9d326b34635267089a09020b395415060e3452a09ea8f536dcd5c61de47c9"
+      },
+      {
+        "name": "lanui",
+        "code": 0,
+        "sourceSha256": "270809389c97d1aac208f6c8244f2a2763ad674d6ef0016ec42ab2bfd7b85593",
+        "affinityMask": 15,
+        "path": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\gates-from-v023\\lanui.log",
+        "sha256": "a83b3da78323adddf18339ca08aa47308d5580a0faea701877d294a64c9eceaa"
+      },
+      {
+        "name": "netretry",
+        "code": 0,
+        "sourceSha256": "04240e5ea6ba02cd630efa3d68d348bdc1f2ac85f53c2a91059fc7b0b1cd9267",
+        "affinityMask": 15,
+        "path": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\gates-from-netretry\\netretry.log",
+        "sha256": "5eff5cc2797d6960dbab18a454e01ffda905c4cff165946b91b3165872e4e95e"
+      },
+      {
+        "name": "net",
+        "code": 0,
+        "sourceSha256": "71fb57c2201527c1b615a19a7030364e2289efecd9e94711ce2394eac750ca1e",
+        "affinityMask": 15,
+        "path": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v030\\gates-net-cleanup\\net.log",
+        "sha256": "52ef771380bf848029398b9748b897d8036b28c1f38fcad4bb5fa74c975d4ba8"
+      }
+    ],
+    "diagnosticOnly": {
+      "path": "generated/reports/v030/v023-diagnostic.log",
+      "sha256": "5f19502fb5b8845cca26da1646f2bdc467157795ac50f32ff7c7ce566ad3ada0"
+    },
+    "focusedInput": {
+      "path": "generated/reports/v030/v023-real-input.log",
+      "sha256": "7c7e01a005df3e03839b2fc9f8d6221acf2847b3969a92f87567d3b42ff5d411"
+    },
+    "nativeSize": {
+      "path": "generated/reports/v030/lanui-native-size.log",
+      "sha256": "bdd57eb74c626a273570d601fd31d94be5bf5e134bf9ad43a0fd0ab3a0373da3"
+    },
+    "retryDiagnostic": {
+      "path": "generated/reports/v030/netretry-diagnostic.log",
+      "sha256": "4188d7e26dde918545ba7a6eb670e8af2a972a572f0d84ac53744bcd38ec2053"
+    },
+    "sharedTickRetry": {
+      "path": "generated/reports/v030/netretry-shared-tick.log",
+      "sha256": "fc00af1c4c4579ab8ff21255b09aa7555679f5549d6bf40e6bb55a0000e74805"
+    }
+  },
+  "releaseEvidence": "Earlier passed gates are reused only for the identical verified asar, with source identities retained for all segments."
+}
