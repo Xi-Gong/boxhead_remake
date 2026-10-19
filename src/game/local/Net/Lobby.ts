@@ -50,6 +50,7 @@ export class CScreen_LanLobby extends CScreen {
   private inputsText: any;
   private resumeText: any;
   private resumeBtn: any;
+  private settingsBtn: any;
   private readyBtn: any;
   private leaveBtn: any;
   private startBtn: any;
@@ -179,22 +180,23 @@ export class CScreen_LanLobby extends CScreen {
     room(this.p2Badge);
     this.inputsText = this.Text(-222, -20, 290, 16, BODY_FONT, 11, GREY, false, 'left', 'YOUR INPUTS: KEYBOARD');
     room(this.inputsText);
-    room(this.Button(0, 64, 170, 24, 'GAME SETTINGS', 12, () => this.roomSettings.open()));
+    this.settingsBtn=this.Button(0,48,190,28,'GAME SETTINGS',13,()=>this.roomSettings.open());
+    room(this.settingsBtn);
 
     this.resumeText = this.Text(-230, 8, 460, 16, BODY_FONT, 12, INK, true, 'center', 'LAST GAME AVAILABLE');
     room(this.resumeText);
-    this.resumeBtn = this.Button(0, 36, 190, 28, 'RESUME GAME', 14, () => lanBridge().requestRetry());
+    this.resumeBtn = this.Button(-116,48,190,28,'RESUME GAME',14,()=>lanBridge().requestRetry());
     room(this.resumeBtn);
 
-    this.readyBtn = this.Button(-110, 96, 150, 28, 'READY', 15, () => lanBridge().setReady(!lanBridge().ready), { selected: true });
+    this.readyBtn = this.Button(-116,92,180,28,'READY',15,()=>lanBridge().setReady(!lanBridge().ready),{selected:true});
     room(this.readyBtn);
-    this.leaveBtn = this.Button(110, 96, 150, 28, 'LEAVE', 15, () => lanBridge().leaveLobby());
+    this.leaveBtn = this.Button(116,92,180,28,'LEAVE',15,()=>lanBridge().leaveLobby());
     room(this.leaveBtn);
-    this.startBtn = this.Button(-110, 96, 150, 28, 'START', 15, () => lanBridge().enterSetup(), { selected: true });
+    this.startBtn = this.Button(-116,92,180,28,'START',15,()=>lanBridge().enterSetup(),{selected:true});
     room(this.startBtn);
-    this.startHint = this.Text(-230, 115, 460, 14, BODY_FONT, 11, GREY, false, 'center', 'waiting for player 2 to get ready');
+    this.startHint = this.Text(-230,116,460,12,BODY_FONT,11,GREY,false,'center','waiting for player 2 to get ready');
     room(this.startHint);
-    this.closeBtn = this.Button(110, 96, 150, 28, 'CLOSE ROOM', 14, () => lanBridge().leaveLobby());
+    this.closeBtn = this.Button(116,92,180,28,'CLOSE ROOM',14,()=>lanBridge().leaveLobby());
     room(this.closeBtn);
 
     // shared (both views): the status line under the title + BACK at the panel's lower edge
@@ -341,6 +343,7 @@ export class CScreen_LanLobby extends CScreen {
     const canResume = b.isHost && ended && !!sess!.netCheckpoint;
     const canRetryFresh = b.isHost && ended && !sess!.netCheckpoint;
     const showRetryStrip = canResume || canRetryFresh;
+    this.settingsBtn._x=showRetryStrip?116:0;
     if (this.resumeText) {
       this.resumeText._visible = room && showRetryStrip;
       this.resumeText.text = canResume ? 'LAST GAME AVAILABLE' : 'GAME OVER - RETRY AVAILABLE';

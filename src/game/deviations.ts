@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id: 'MENU_SPACING',
+    file: 'local/UiStyle.ts; local/Net/Lobby.ts; scope.ts',
+    description: 'v0.3.0 fits authored main-menu hit bounds to 24px rows spaced 36px apart, retaining '+
+      'original art, Contents and Register_Button hover/input. LAN resume/retry and settings share a '+
+      'separate action row, centering settings when no recovery exists. Primary actions and footer remain '+
+      'separate. Pill text fields fit their labels instead of extending below the visible button and '+
+      'inflating its hit area. Layout stays in authored content coordinates with existing Presenter transforms.',
+  },
+  {
     id: 'STABLE_HUD_MESSAGES',
     file: 'local/Net/HudMessages.ts, NetSession.ts, NetScope.ts; local/SupplyDrops.ts, Supplies.ts',
     description: 'v0.3.0 modern HUD messages are a bounded three-row display queue, outside rollback snapshots. '+

@@ -30,7 +30,9 @@ try {
    connect:async()=>({ok:true}),send(){},closePeer(){},shutdown(){},addresses:async()=>['192.168.1.5']}};
  }});
  await toMainMenu(g);
- assert.deepEqual(await g.expr('[m.mcScreen.mcSinglePlay,m.mcScreen.mcCoopPlay,m.mcScreen.mcDeathPlay,m.mcScreen.mcInstructions,m.mcScreen.mcContinue,m.mcScreen.mcLanGame].map(b=>b._y)'),[226,256,286,316,346,376]);
+ const menuRows=await g.expr('[m.mcScreen.mcSinglePlay,m.mcScreen.mcCoopPlay,m.mcScreen.mcDeathPlay,m.mcScreen.mcInstructions,m.mcScreen.mcContinue,m.mcScreen.mcLanGame].map(b=>b.getBounds(m.mcScreen))');
+ assert.deepEqual(menuRows.map(b=>Math.round((b.yMin+b.yMax)/2)),[226,262,298,334,370,406]);
+ assert(menuRows.every((b,i)=>!i||b.yMin-menuRows[i-1].yMax>=11.9),'all six menu hit areas have twelve-pixel gaps');
  await surface(g,'main');
  await g.clickClip('m.mcScreen.mcLanGame');
  assert.ok(await g.waitScreen('State_LanLobby','Screen_LanLobby'));

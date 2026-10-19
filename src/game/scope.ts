@@ -25,7 +25,7 @@ import { armStartWave, consumeArmedWaveOn, getRunStartWave, getSelectedStartWave
 import { recordWaveReached } from './local/WaveUnlock.ts';
 import { buildStartWaveCycler } from './local/StartWaveUi.ts';
 import { setBadgeHidden, setBadgeInGame } from './local/InputBadge.ts';
-import { menuTextItem, text } from './local/UiStyle.ts';
+import { layoutMainMenu, menuTextItem, text } from './local/UiStyle.ts';
 import { installViewport } from './local/Viewport.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 import { installArmorScope } from './local/Armor.ts';
@@ -476,8 +476,8 @@ export function applyScope(): void {
       this.Register_Button(mc, 'State_LanLobby');
       items.push(mc);
     }
-    // A compact, stable column leaves the author credit clear even when both additions are present.
-    items.forEach((mc, i) => { mc._x = 320; mc._y = 226 + i * 30; });
+    // Fit actual authored hit bounds; the old 35.5px shapes overlapped in a 30px row.
+    layoutMainMenu(this,items);
   };
   mainProtoResume.State_Continue = function (this: any): void {
     const snap = armFromStored();

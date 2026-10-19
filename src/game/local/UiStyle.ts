@@ -28,6 +28,16 @@ export const PILL_SHADE = 0xd8d8d8;     // the soft bottom/right shade of the ra
 export const PILL_LABEL = 0x1f1f1f;
 export const MENU_FONT = 'Arial Rounded MT Bold';
 export const BODY_FONT = 'Calibri';
+/** Compact visible rows retain twelve logical pixels between their actual hit bounds. */
+export function layoutMainMenu(parent: any, items: any[]): void {
+  items.forEach((mc,i)=>{
+    const b=mc.getBounds(parent),factor=24/(b.yMax-b.yMin);
+    mc._xscale*=factor;mc._yscale*=factor;
+    const fitted=mc.getBounds(parent);
+    mc._x+=320-(fitted.xMin+fitted.xMax)/2;
+    mc._y+=226+i*36-(fitted.yMin+fitted.yMax)/2;
+  });
+}
 
 /** The soft 45-degree shadow carried by the authored menu parents. */
 export function menuShadow(): any[] {
@@ -115,7 +125,7 @@ export function pillButton(parent: any, name: string, x: number, y: number, w: n
   contents._y = -h / 2;
   pillBase(contents, w, h);
   const wash = washCapsule(contents, '_Wash', 0, 0, w, h);
-  const tf = text(contents, '_Label', 0, (h - size) / 2 - 2, w, h, BODY_FONT, size, PILL_LABEL, true, 'center', label);
+  const tf = text(contents, '_Label', 0, (h - size) / 2 - 2, w, size + 4, BODY_FONT, size, PILL_LABEL, true, 'center', label);
   const setHover = (on: boolean, selected: boolean): void => {
     const enabled = mc.enabled !== false;
     wash._visible = enabled && (on || selected);

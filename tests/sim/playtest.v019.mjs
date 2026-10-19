@@ -12,7 +12,7 @@ import { chromium } from 'playwright-core';
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '../../generated/reports/qa');
 mkdirSync(OUT, { recursive: true });
 const URL = process.env.GAME_URL ?? 'http://localhost:5198/';
-const MENU_Y = { Single: 226, Coop: 256, DeathMatch: 286 };
+const MENU_Y = { Single: 226, Coop: 262, DeathMatch: 298 };
 // Explicit old-build oracle mode retains the original x36/six-weapon assertion.
 const classicGrowth = process.env.BOXHEAD_CLASSIC_GROWTH === '1';
 

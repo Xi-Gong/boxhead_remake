@@ -58,7 +58,7 @@ try {
     await page.waitForTimeout(150);
   };
 
-  await click(320, 346); // LAN GAME
+  await click(320, 370); // LAN GAME
   if (!(await onScreen('State_LanLobby', 'Screen_LanLobby'))) throw new Error('no lobby');
 
   // Click the DOM IP input (real mouse -> real focus), then type with REAL key events.

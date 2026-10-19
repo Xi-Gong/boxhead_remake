@@ -102,7 +102,7 @@ function helpers(page) {
   return { waitFor, waitScreen, click, centreOf, worldInfo, killBoth };
 }
 
-const LAN_BTN = [320, 346];
+const LAN_BTN = [320, 370];
 const CREATE_ROOM_BTN = [320 - 117, 240 - 6]; // v0.2.2 panel layout
 const JOIN_BTN = [520, 350];
 const READY_BTN = [210, 330];

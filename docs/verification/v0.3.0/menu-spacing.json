@@ -1,0 +1,390 @@
+{
+  "ok": true,
+  "cases": [
+    {
+      "width": 640,
+      "height": 480,
+      "buttons": [
+        {
+          "label": "GAME SETTINGS",
+          "b": {
+            "xMin": 21,
+            "xMax": 212,
+            "yMin": 34,
+            "yMax": 63.5
+          },
+          "stage": {
+            "xMin": 341,
+            "xMax": 532,
+            "yMin": 274,
+            "yMax": 303.5
+          },
+          "textWidth": 88.6640625,
+          "width": 190
+        },
+        {
+          "label": "RESUME GAME",
+          "b": {
+            "xMin": -211,
+            "xMax": -20,
+            "yMin": 34,
+            "yMax": 63.5
+          },
+          "stage": {
+            "xMin": 109,
+            "xMax": 300,
+            "yMin": 274,
+            "yMax": 303.5
+          },
+          "textWidth": 89.22265625,
+          "width": 190
+        },
+        {
+          "label": "START",
+          "b": {
+            "xMin": -206,
+            "xMax": -25,
+            "yMin": 78,
+            "yMax": 107.5
+          },
+          "stage": {
+            "xMin": 114,
+            "xMax": 295,
+            "yMin": 318,
+            "yMax": 347.5
+          },
+          "textWidth": 39.4921875,
+          "width": 180
+        },
+        {
+          "label": "CLOSE ROOM",
+          "b": {
+            "xMin": 26,
+            "xMax": 207,
+            "yMin": 78,
+            "yMax": 107.5
+          },
+          "stage": {
+            "xMin": 346,
+            "xMax": 527,
+            "yMin": 318,
+            "yMax": 347.5
+          },
+          "textWidth": 78.50390625,
+          "width": 180
+        },
+        {
+          "label": "BACK TO MENU",
+          "b": {
+            "xMin": -85,
+            "xMax": 86,
+            "yMin": 134,
+            "yMax": 163.5
+          },
+          "stage": {
+            "xMin": 235,
+            "xMax": 406,
+            "yMin": 374,
+            "yMax": 403.5
+          },
+          "textWidth": 91.6015625,
+          "width": 170
+        }
+      ],
+      "scale": 1,
+      "left": 0,
+      "top": 0
+    },
+    {
+      "width": 960,
+      "height": 720,
+      "buttons": [
+        {
+          "label": "GAME SETTINGS",
+          "b": {
+            "xMin": 21,
+            "xMax": 212,
+            "yMin": 34,
+            "yMax": 63.5
+          },
+          "stage": {
+            "xMin": 341,
+            "xMax": 532,
+            "yMin": 274,
+            "yMax": 303.5
+          },
+          "textWidth": 88.6640625,
+          "width": 190
+        },
+        {
+          "label": "RESUME GAME",
+          "b": {
+            "xMin": -211,
+            "xMax": -20,
+            "yMin": 34,
+            "yMax": 63.5
+          },
+          "stage": {
+            "xMin": 109,
+            "xMax": 300,
+            "yMin": 274,
+            "yMax": 303.5
+          },
+          "textWidth": 89.22265625,
+          "width": 190
+        },
+        {
+          "label": "START",
+          "b": {
+            "xMin": -206,
+            "xMax": -25,
+            "yMin": 78,
+            "yMax": 107.5
+          },
+          "stage": {
+            "xMin": 114,
+            "xMax": 295,
+            "yMin": 318,
+            "yMax": 347.5
+          },
+          "textWidth": 39.4921875,
+          "width": 180
+        },
+        {
+          "label": "CLOSE ROOM",
+          "b": {
+            "xMin": 26,
+            "xMax": 207,
+            "yMin": 78,
+            "yMax": 107.5
+          },
+          "stage": {
+            "xMin": 346,
+            "xMax": 527,
+            "yMin": 318,
+            "yMax": 347.5
+          },
+          "textWidth": 78.50390625,
+          "width": 180
+        },
+        {
+          "label": "BACK TO MENU",
+          "b": {
+            "xMin": -85,
+            "xMax": 86,
+            "yMin": 134,
+            "yMax": 163.5
+          },
+          "stage": {
+            "xMin": 235,
+            "xMax": 406,
+            "yMin": 374,
+            "yMax": 403.5
+          },
+          "textWidth": 91.6015625,
+          "width": 170
+        }
+      ],
+      "scale": 1.5,
+      "left": 0,
+      "top": 0
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "buttons": [
+        {
+          "label": "GAME SETTINGS",
+          "b": {
+            "xMin": 21,
+            "xMax": 212,
+            "yMin": 34,
+            "yMax": 63.5
+          },
+          "stage": {
+            "xMin": 447.5,
+            "xMax": 638.5,
+            "yMin": 274,
+            "yMax": 303.5
+          },
+          "textWidth": 88.6640625,
+          "width": 190
+        },
+        {
+          "label": "RESUME GAME",
+          "b": {
+            "xMin": -211,
+            "xMax": -20,
+            "yMin": 34,
+            "yMax": 63.5
+          },
+          "stage": {
+            "xMin": 215.5,
+            "xMax": 406.5,
+            "yMin": 274,
+            "yMax": 303.5
+          },
+          "textWidth": 89.22265625,
+          "width": 190
+        },
+        {
+          "label": "START",
+          "b": {
+            "xMin": -206,
+            "xMax": -25,
+            "yMin": 78,
+            "yMax": 107.5
+          },
+          "stage": {
+            "xMin": 220.5,
+            "xMax": 401.5,
+            "yMin": 318,
+            "yMax": 347.5
+          },
+          "textWidth": 39.4921875,
+          "width": 180
+        },
+        {
+          "label": "CLOSE ROOM",
+          "b": {
+            "xMin": 26,
+            "xMax": 207,
+            "yMin": 78,
+            "yMax": 107.5
+          },
+          "stage": {
+            "xMin": 452.5,
+            "xMax": 633.5,
+            "yMin": 318,
+            "yMax": 347.5
+          },
+          "textWidth": 78.50390625,
+          "width": 180
+        },
+        {
+          "label": "BACK TO MENU",
+          "b": {
+            "xMin": -85,
+            "xMax": 86,
+            "yMin": 134,
+            "yMax": 163.5
+          },
+          "stage": {
+            "xMin": 341.5,
+            "xMax": 512.5,
+            "yMin": 374,
+            "yMax": 403.5
+          },
+          "textWidth": 91.6015625,
+          "width": 170
+        }
+      ],
+      "scale": 1.5005861664712778,
+      "left": 0,
+      "top": 0
+    },
+    {
+      "width": 640,
+      "height": 889,
+      "buttons": [
+        {
+          "label": "GAME SETTINGS",
+          "b": {
+            "xMin": 21,
+            "xMax": 212,
+            "yMin": 34,
+            "yMax": 63.5
+          },
+          "stage": {
+            "xMin": 341,
+            "xMax": 532,
+            "yMin": 478.5,
+            "yMax": 508
+          },
+          "textWidth": 88.6640625,
+          "width": 190
+        },
+        {
+          "label": "RESUME GAME",
+          "b": {
+            "xMin": -211,
+            "xMax": -20,
+            "yMin": 34,
+            "yMax": 63.5
+          },
+          "stage": {
+            "xMin": 109,
+            "xMax": 300,
+            "yMin": 478.5,
+            "yMax": 508
+          },
+          "textWidth": 89.22265625,
+          "width": 190
+        },
+        {
+          "label": "START",
+          "b": {
+            "xMin": -206,
+            "xMax": -25,
+            "yMin": 78,
+            "yMax": 107.5
+          },
+          "stage": {
+            "xMin": 114,
+            "xMax": 295,
+            "yMin": 522.5,
+            "yMax": 552
+          },
+          "textWidth": 39.4921875,
+          "width": 180
+        },
+        {
+          "label": "CLOSE ROOM",
+          "b": {
+            "xMin": 26,
+            "xMax": 207,
+            "yMin": 78,
+            "yMax": 107.5
+          },
+          "stage": {
+            "xMin": 346,
+            "xMax": 527,
+            "yMin": 522.5,
+            "yMax": 552
+          },
+          "textWidth": 78.50390625,
+          "width": 180
+        },
+        {
+          "label": "BACK TO MENU",
+          "b": {
+            "xMin": -85,
+            "xMax": 86,
+            "yMin": 134,
+            "yMax": 163.5
+          },
+          "stage": {
+            "xMin": 235,
+            "xMax": 406,
+            "yMin": 578.5,
+            "yMax": 608
+          },
+          "textWidth": 91.6015625,
+          "width": 170
+        }
+      ],
+      "scale": 1,
+      "left": 0,
+      "top": 0
+    }
+  ],
+  "shots": [
+    "generated/reports/v030/menu-spacing/resume-640x480.png",
+    "generated/reports/v030/menu-spacing/resume-960x720.png",
+    "generated/reports/v030/menu-spacing/resume-1280x720.png",
+    "generated/reports/v030/menu-spacing/resume-640x889.png"
+  ],
+  "review": "Direct review of four recovery-room screenshots and representative main/setup/pause screenshots; pixel, geometry and real-click assertions. No zai.",
+  "coverage": "Additional existing added-ui gate passed: main six entries, discovery, waiting/ready/host/guest/setup, four sizes and DPR2, pause, save and continue.",
+  "full_ui": "The full UI suite is running against this static build; final release gates will rerun the final candidate."
+}

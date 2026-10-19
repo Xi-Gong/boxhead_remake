@@ -116,4 +116,4 @@ export async function toMainMenu(g, timeout = 90000) {
   if (!(await g.waitScreen('State_Main', 'Screen_Main', timeout))) throw new Error(`no main menu (state ${await g.state()})`);
 }
 
-export const MENU_Y = { Single: 226, Coop: 256, DeathMatch: 286, Instructions: 316 };
+export const MENU_Y = { Single: 226, Coop: 262, DeathMatch: 298, Instructions: 334 };
