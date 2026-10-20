@@ -149,7 +149,7 @@ describe('WorldSnap round-trip (rollback T1)', () => {
     // Reference: one uninterrupted chaos run. Its rows are captured and the game QUIT immediately - a live
     // second game still receives engine enterFrames while later boots step the clock, which would drift the
     // reference (exactly what the first version of this test hit).
-    const A = createHeadlessGame({ mode: 'Coop', room: 1, seed: 91, navBudget: 300 });
+    const A = createHeadlessGame({ classicTimedWaves: true, mode: 'Coop', room: 1, seed: 91, navBudget: 300 });
     runTo(A, TOTAL);
     const want = hash(A);
     const wantRows0 = rows(A).slice();
@@ -161,7 +161,7 @@ describe('WorldSnap round-trip (rollback T1)', () => {
     // Round-trip peers: snapshots taken across the busiest window (weapon grants at 8/14, crate at 30).
     for (const k of [10, 18, 22, 28, 31, 36]) {
       console.log(`[T1] round-trip k=${k}`);
-      const B = createHeadlessGame({ mode: 'Coop', room: 1, seed: 91, navBudget: 300 });
+      const B = createHeadlessGame({ classicTimedWaves: true, mode: 'Coop', room: 1, seed: 91, navBudget: 300 });
       runTo(B, k, `k${k}-pre`);
       const ctx = makeSnapCtx(B.world());
       const slot: RingSlot = { tRel: B.world()!.mTick, data: captureWorldSnap(B.world(), ctx), instances: ctx.instances, sharedObjs: ctx.sharedObjs };

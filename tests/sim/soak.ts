@@ -101,10 +101,13 @@ function* soakSteps(opts: SoakOptions): Generator<void, SoakReport, void> {
   const maxAge: Record<string, number> = {};
   const DEAD = 32; // Thing.CThing.mFlag_DEAD
   let t = -1;
+  // Draft ticks synchronize input but deliberately freeze every thing's lifetime.
+  let combatTick = 0;
   let offscreen = 0;
   const onTick = (): void => {
     t++;
     const w = game.world();
+    if (w.mUpgrades.timedWave?.phase !== 'draft') combatTick++;
     checker.check(w);
     if (game.mode !== 'DeathMatch') {
       for (const p of game.players()) {
@@ -125,8 +128,8 @@ function* soakSteps(opts: SoakOptions): Generator<void, SoakReport, void> {
       if (!transient) continue;
       const key = th.mRandomRedId ? 'CThing_Object_Pickup(random)' : dropped ? 'CThing_Object_Pickup(dropped)' : c;
       alive.add(th);
-      if (!born.has(th)) born.set(th, t);
-      const age = t - born.get(th)!;
+      if (!born.has(th)) born.set(th, combatTick);
+      const age = combatTick - born.get(th)!;
       if (!(age <= (maxAge[key] ?? -1))) maxAge[key] = age;
     }
     for (const th of [...born.keys()]) if (!alive.has(th)) born.delete(th);

@@ -1,6 +1,6 @@
 # v0.3.1 streamlined release gate
 
-Proposed in response to the user's 2026-10-20 request to reduce redundant release QA. **Full-gate execution still awaits explicit authorization.** This replaces repeated historical end-to-end passes with current risk coverage; historical scripts/assertions remain available and are not reported as passing without execution.
+Authorized by the user's 2026-10-20 instruction to execute the streamlined full gate, fix failures and publish v0.3.1 with its Windows portable EXE after all gates pass. This replaces repeated historical end-to-end passes with current risk coverage; historical scripts/assertions remain available and are not reported as passing without execution.
 
 ## Required coverage
 

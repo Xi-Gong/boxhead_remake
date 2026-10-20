@@ -44,7 +44,8 @@ describe('fresh XSI animation object without an animation [BC DrawPrimitive.XSI.
   });
 
   it('Coop: FIRE held while dead fires on the respawn tick and the respawn still completes', () => {
-    const g = createHeadlessGame({ mode: 'Coop', room: 3, seed: 5, difficulty: 1 });
+    // Retain the v0.2.9 respawn/maxima oracle; tier rewards and draft bonuses have separate coverage.
+    const g = createHeadlessGame({ classicTieredGrowth: true, classicWaveDraft: true, mode: 'Coop', room: 3, seed: 5, difficulty: 1 });
     const w = g.world();
     const DOWN = ['State_Dying', 'State_Dead', 'State_Respawn'];
     const p2 = new Bot(1);

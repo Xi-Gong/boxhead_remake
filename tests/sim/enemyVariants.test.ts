@@ -9,6 +9,7 @@ import {getRandomState,setRandomState,random} from '../../src/engine/flash/rng.t
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,makeSnapCtx,restoreWorldSnap} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
+import {tieredExperienceBeforeLevel} from '../../src/game/local/TieredGrowthRules.ts';
 function boot(mode:'Single'|'Coop'='Single'){const g=createHeadlessGame({mode});noSpawn(g);placePlayer(g,9.5,8.5,0);return g;}
 function enemy(g:any,kind:'charger'|'priest',x=5.5,y=8.5){const C=kind==='charger'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil,e:any=new C(pos(x,y));e.mEnemyVariant=kind;g.world().mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');return e;}
 function supplies(g:any){return (Object.values(g.world().mThing_Collection.mThings)as any[]).filter(t=>t.mSupplyId&&t.Process);}
@@ -29,7 +30,11 @@ it('respects active subtype caps and applies health/score once on the same famil
  const priest=enemy(g,'priest',5.5,9.5);expect([priest._CLASSID_,priest.mLife,priest.mScore]).toEqual(['CThing_Creature_Devil',1200,1500]);w.mUpgrades.__set__mLevel(20);w.mUpgrades.enemyVariantState.devil=4;expect(World.CWorld.prototype.Spawn_Devil.call(w)).toBe(true);expect(g.things().filter(t=>t.mEnemyVariant==='priest')).toHaveLength(1);g.quit();
 });
 it.each([['charger',200,1],['priest',1500,5]]as const)('%s retains its family XP and variant score', (kind,score,xp)=>{
- const g=boot(),w=g.world(),e=enemy(g,kind);e.lanFatalSlot=0;w.LogKill(e);const s=w.mUpgrades.lanGrowth.players[0];expect(s.score).toBe(score);expect((s.level-1)*5+s.xp).toBe(xp);g.quit();
+ for(const classicTieredGrowth of [true,false]){
+  const g=createHeadlessGame({mode:'Single',classicTieredGrowth});noSpawn(g);const w=g.world(),e=enemy(g,kind);e.lanFatalSlot=0;w.LogKill(e);const s=w.mUpgrades.lanGrowth.players[0];expect(s.score).toBe(score);
+  if(classicTieredGrowth)expect((s.level-1)*5+s.xp).toBe(xp);
+  else expect(tieredExperienceBeforeLevel(s.level)+BigInt(s.xp)).toBe(BigInt(xp));g.quit();
+ }
 });
 it('charges along a locked direction, hits once and finishes recovery/cooldown',()=>{
  const g=boot(),w=g.world(),e=enemy(g,'charger'),p=g.players()[0];p.mInvincible=0;p.mArmor=100;

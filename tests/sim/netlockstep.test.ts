@@ -137,7 +137,7 @@ describe('NetSlot', () => {
 describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
   it('coop: the client NetSession reproduces the reference run exactly (movement, fire, grenade hold, weapon tap)', { timeout: 120000 }, () => {
     // --- peer A: the host reference, plain keyboard play, recording the player-1 bitmaps.
-    const A = createHeadlessGame({ mode: 'Coop', room: 1, seed: SEED, difficulty: 0, options: { gameSpeed: 1, devils: 1, collisions: 1, damage: 1, detail: true, p2Character: 0 } });
+    const A = createHeadlessGame({ classicWaves: true, classicGrowth: true, mode: 'Coop', room: 1, seed: SEED, difficulty: 0, options: { gameSpeed: 1, devils: 1, collisions: 1, damage: 1, detail: true, p2Character: 0 } });
     // A reaches the world through the harness path, B through the session path - the RNG consumed BEFORE the world
     // differs. Real peers both use the session path; here both worlds pin the stream once ready (the world itself is
     // identical either way - only the live spawn randomness needed a common starting state).
@@ -218,7 +218,7 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
       p1.SetState('State_Dying'); // the real death path (runs LogKill)
     };
 
-    const A = createHeadlessGame({ mode: 'Coop', room: 1, seed: SEED, difficulty: 0, options: { gameSpeed: 1, devils: 1, collisions: 1, damage: 1, detail: true, p2Character: 0, infiniteLife: true } });
+    const A = createHeadlessGame({ classicWaves: true, classicGrowth: true, mode: 'Coop', room: 1, seed: SEED, difficulty: 0, options: { gameSpeed: 1, devils: 1, collisions: 1, damage: 1, detail: true, p2Character: 0, infiniteLife: true } });
     setRandomState(0xC0FFEE);
     const hashes = new Map<number, string>();
     const TICKS = 70; // death at 60 -> 10 post-death ticks of hash comparison across the spawn moment
@@ -260,7 +260,7 @@ describe('LAN lockstep (sequential replay = interleaved lockstep)', () => {
     // proven by recording every CSound.PlaySound on the reference run and on the session replay and comparing.
     // Ambience is Draw-driven but gated on the sim tick (v0.1.10), so its cadence is a function of the tick too.
     const TICKS = 320;
-    const A = createHeadlessGame({ mode: 'Coop', room: 1, seed: SEED, difficulty: 0, options: { gameSpeed: 1, devils: 1, collisions: 1, damage: 1, detail: true, p2Character: 0 } });
+    const A = createHeadlessGame({ classicWaves: true, classicGrowth: true, mode: 'Coop', room: 1, seed: SEED, difficulty: 0, options: { gameSpeed: 1, devils: 1, collisions: 1, damage: 1, detail: true, p2Character: 0 } });
     setRandomState(0xC0FFEE);
     const soundsA = recordSounds(A);
     for (let T = 0; T < TICKS; T++) {

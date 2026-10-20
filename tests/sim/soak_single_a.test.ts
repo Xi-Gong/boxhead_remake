@@ -13,7 +13,15 @@ describe('Single soak, difficulty 0 (Beginner)', () => {
     it(`room ${room}`, () => {
       const r = soak({ mode: 'Single', room, seed: 1000 + room, difficulty: 0, ticks: 1500, options: { infiniteLife: true } });
       expect(r.ticks, summary(r)).toBe(1500);
-      expectHealthySoak(r, { running: true, minLevel: MIN_LEVEL[room] });
+      expectHealthySoak(r, { running: true });
+      expect(r.game.world().mUpgrades.timedWave.phase).toBe('combat');
+      expect(r.game.world().mUpgrades.timedWave.remainingTicks).toBeGreaterThan(0);
     });
   }
+  // Preserve the original 60-second advancement assertions on their pre-timed rules.
+  for (const room of [1, 3]) it(`classic timed-wave fixture room ${room}`, () => {
+    const r = soak({ classicTimedWaves: true, mode: 'Single', room, seed: 1000 + room, difficulty: 0, ticks: 1500, options: { infiniteLife: true } });
+    expect(r.ticks, summary(r)).toBe(1500);
+    expectHealthySoak(r, { running: true, minLevel: MIN_LEVEL[room] });
+  });
 });

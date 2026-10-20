@@ -41,7 +41,8 @@ it.each([0,1,2,3] as const)('applies difficulty %i to actual local worlds withou
 });
 it.each([0,1,2,3] as const)('bounds actual spawn pressure at difficulty %i on the high and low quality paths',(difficulty)=>{
  for(const detail of [true,false]){
-  const g=createHeadlessGame({mode:'Single',room:18,difficulty,options:{detail,infiniteLife:true}}),w=g.world();
+  // Historical ordinary-wave pressure oracle; timed wave 100 is now a Boss encounter.
+  const g=createHeadlessGame({classicTimedWaves:true,mode:'Single',room:18,difficulty,options:{detail,infiniteLife:true}}),w=g.world();
   w.mUpgrades.__set__mLevel(100);const tuning=balancedWave(100,difficulty),cap=Math.min(tuning.Zombie_Count,detail?60:40);
   let peak=0;runBots(g,[new Bot(0,{passive:true})],600,()=>{
    const count=w.mUpgrades.Level.mZombieCount;peak=Math.max(peak,count);expect(count).toBeLessThanOrEqual(cap);

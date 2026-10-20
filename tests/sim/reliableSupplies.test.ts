@@ -18,7 +18,7 @@ it('a single-weapon red reward fills inherited capacity without changing the sel
 });
 
 it('synchronizes supply limits without granting ammo during an eligibility query', () => {
-  const g=createHeadlessGame({mode:'Single'}); noSpawn(g);
+  const g=createHeadlessGame({classicTieredGrowth:true,mode:'Single'}); noSpawn(g);
   const p=g.players()[0],w=g.world(); p.NewWeapon('uzi'); p.mWeapons.uzi.mThing.mAmmo=7;
   w.mUpgrades.lanGrowth.players[0].level=39;
   expect(supplyCanBenefit(p,'ammo')).toBe(true);
