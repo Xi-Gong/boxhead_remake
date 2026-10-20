@@ -21,5 +21,12 @@
     "Restricted localhost initially produced ERR_NETWORK_ACCESS_DENIED and then a cross-sandbox timeout. Restarted only the owned preview service and reran with permitted localhost; failure reports retained."
   ],
   "audit": {"modules": 542, "portedModules": 117, "changedPorts": []},
-  "scope": "Short serial one-instance 640x480 browser checks only. Full release/LAN gates still require authorization; refreshed portable candidate recorded separately."
+  "portable": {
+    "report": "generated/reports/v031/boss-health/portable/timed-candidate/report.json",
+    "launch": "generated/reports/v031/boss-health/portable/launch-0.3.1.json",
+    "overhead": "3000 / 6000, visible at (261,227)",
+    "review": "Actual portable Boss screenshot directly reviewed",
+    "ok": true
+  },
+  "scope": "Short serial one-instance 640x480 browser and actual portable checks only. Full release/LAN gates still require authorization."
 }

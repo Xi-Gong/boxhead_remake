@@ -31,6 +31,8 @@ Bonuses accumulate within the run and survive saves, retries and respawns. New r
 
 **Bone Tyrant / Ember Lord** alternate every five waves, with at most four ordinary zombie reinforcements. Disabling devils always selects the Tyrant. Below half health, the Tyrant performs two independently warned/aimed charges; the Lord's three-mark spell speeds up from eight to six seconds. Ordinary nonfatal hits do not interrupt Boss skills. A Boss kill doubles each player's one chosen reward; surviving the time limit gives the normal reward.
 
+Each Boss also has a health bar above its head showing current/maximum HP; large values use compact units such as `934.5K / 1.25M`. It follows the Boss and camera, uses confirmed LAN health, and hides when paused, offscreen or defeated.
+
 Optional v2 extensions retain remaining time, choices, bonuses and Boss HP/skills. Old saves convert once, preserving score, equipment, current health/armor/ammo and crates while restarting the current wave timer and supplying the basic build without free refills. Later continues retain time/offers. LAN negotiates timed-waves-v1, wave-draft-v1 and boss-waves-v1 with dependencies; incompatible peers keep their prior rules and cannot load a newer-rule save.
 
 Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchanted tracers, rockets and muzzle effects are clearer; variant/Boss armor follows the original body animation. Classic assets remain available for reference, and art adds no protocol fields.

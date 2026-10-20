@@ -13,6 +13,7 @@
 
 - The **Bone Tyrant** gains a second independently warned and aimed charge below half health. The **Ember Lord** lays three fire marks and casts more frequently below half health. Ordinary nonfatal hits do not interrupt Boss skills.
 - At most four ordinary zombie reinforcements accompany a Boss. Disabling devils selects the Tyrant for every Boss wave.
+- A compact health bar above each Boss shows current and maximum HP, with abbreviated large values. It follows the Boss on screen and uses confirmed health in LAN play.
 - Bone Chargers and Ember Priests retain their distinct ordinary skills. Refined bone armor, rust bracers, layered crowns, molten seams and the Lord's furnace chest follow the original body animation.
 - Charge warnings reflect the real hit radius and stop at static obstacles. Fire warnings remain visible at LOW detail. Timed arrivals appear before their first stationary spell.
 

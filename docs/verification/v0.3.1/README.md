@@ -22,9 +22,13 @@ Browser checks were short, serial, one headless Chrome game at 640×480, with re
 
 The actual **0.3.1 portable candidate passed** its short single-instance 640×480 check: startup, save/continue, 31 decoded sounds with running audio, real movement/fire, a normal-wave draft, preserved wave-two timer/bonus, a five-minute medium-map Boss encounter and one doubled reward. The EXE's extracted asar matches the staged archive and every current runtime file; source XSI/library assets also match. See [candidate identity and acceptance](candidate.json). Production-browser first-cast visibility and portable draft/Boss screenshots were reviewed directly. The separate candidate staging directory avoids replacing older unpacked artifacts.
 
+The refreshed candidate from `4307226` includes the requested overhead Boss health display. The same portable checks passed again, with a visible `3000 / 6000` plate in the actual EXE screenshot. Its renderer is `main-BYcI9ojS.js`; [candidate.json](candidate.json) identifies the current EXE and hashes. The earlier candidate and its evidence remain preserved.
+
 Initial failures and subsequent corrections are retained under `generated/reports/v031/` and described in each evidence manifest. The art scene's explicit stationary placement did not substitute for a behavior test: the discovered invisible first cast received a separate failing regression, fix and production-browser check.
 
 The candidate EXE and 271 evidence files (screenshots, motion clips, logs, manifests and reproduction scripts) are archived outside the checkout at `C:/Users/royxg/boxhead-exe-archive/v0.3.1-candidate-f6ace3e`. Every archived entry was checked against its source SHA256; browser profile caches are excluded. The archive captures source commit `f6ace3e`, before this receipt/index addition. See [archive receipt and checksums](archive.json). All owned game/GPU processes and preview services were stopped after acceptance.
+
+The refreshed Boss-health candidate and accumulated evidence have a separate [archive receipt](archive-boss-health.json) under `C:/Users/royxg/boxhead-exe-archive/v0.3.1-candidate-4307226`.
 
 ## Pending full gates
 
