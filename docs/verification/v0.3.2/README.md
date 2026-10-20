@@ -19,6 +19,16 @@ The user's 2026-10-20 instruction supersedes the initial lightweight-only bounda
 
 ## Completed items
 
+### Entirely new visible enemy meshes (latest user requirement)
+
+Final fresh ordinary/Boss demon check passed in `generated/reports/v032/demons-1792509661824`; directly reviewed details, in-world warnings and full hunter-Boss action sheet. This verifies final meshes and unchanged telegraphs/64×7 bars with pixels and geometry. No previous derived-model screenshot is used as final appearance evidence.
+
+The user explicitly rejected repetitive reuse of the original zombie model. EnemyMesh now rebuilds every visible head/torso/arm/hand/boot face with new beveled/prismatic silhouettes and materials; source rigs, XSI metadata and functional foot/muzzle anchors remain. Runner respirator/back tanks, asymmetric bloated brute, masked armored butcher/blade, antlered hunter and four player-cue gunner identities have distinct meshes. Earlier derived-art assertions remain in explicit legacy oracles.
+
+Four targeted suites passed all 22 tests, including >10,000 rebuilt-part checks, source metadata and every gun anchor. The first anchor test compared Alternate1 player feet against the base rig; it now follows the same authored remap. Production review exposed reverse face painting hiding equipment and gaps around retained joints; both were repaired before final build `main-CpivMMMS.js`. Original 117 mechanical ports remain unchanged.
+
+Final production runner/brute art and warning passed in `generated/reports/v032/combat-roster-1792509542948`, directly reviewed. All four fresh gunner skins × three guns × 16 directions passed in `generated/reports/v032/gunner-1792509601788`, directly reviewed. Prior derived-model images are historical evidence and no longer represent the final appearance.
+
 ### Butcher/hunter devils and Boss forms
 
 Wave-12/18 replacements add armored melee butchers and fan-firing hunters, one ordinary active each, 2600/2100 base HP, 30% armor, 14/12 XP. Wave-15/20 Boss forms join the four-family rotation and existing 1–3-member encounters. Locked 1s cleaves and .9s fans recover after firing; each Boss follow-up gets a fresh .7s warning, with rotated cleaves/interleaved fan gaps. Boss armor remains 40%; new Boss kill XP 70, party kill rewards remain once and doubled only after all Bosses die.

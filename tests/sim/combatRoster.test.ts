@@ -36,10 +36,10 @@ it('retains a pending strike and new-enemy identity across save and exact rollba
  const ctx=makeSnapCtx(w),data=captureWorldSnap(w,ctx,false),instances=ctx.instances,sharedObjs=ctx.sharedObjs;
  const run=()=>{for(let i=0;i<8;i++)b.State_CombatSmash();};run();const digest=simulationDigest(captureWorldSnap(w,ctx,false));restoreWorldSnap(w,{tRel:0,data,instances,sharedObjs},ctx);run();expect(simulationDigest(captureWorldSnap(w,ctx,false))).toEqual(digest);g.quit();
 });
-it('preserves all authored return frames, feet and animation metadata in the derived art',()=>{
+it('retains the previous derived-art oracle with authored feet and return frames',()=>{
  const g=boot(),DI=DrawPrimitive.XSI.CDrawPrimitive_XSI_DI;
  for(const kind of ['runner','brute']as const){
-  const c=combatCollection(kind);expect(c.mItems.walk.mAnimationObject.mFrameCount).toBe(8);
+  const c=combatCollection(kind,true);expect(c.mItems.walk.mAnimationObject.mFrameCount).toBe(8);
   for(const [key,link]of Object.entries({stand:'Zombie_Zombie_Stand',walk:'Zombie_Zombie_Walk',attack:'Zombie_Zombie_Attack',shothit_1:'Player_HitRear',shothit_2:'Player_HitFront',dying:'Player_Dying',dead:'Player_Dead'})){
    const source=DI.mAnimationSets[link],derived=DI.mAnimationSets['Combat_'+kind+'_'+key];expect(derived.mFrameSequence).toEqual(source.mFrameSequence);
    for(let d=0;d<source.mDirections.length;d++)for(let f=0;f<source.mDirections[d].length;f++){

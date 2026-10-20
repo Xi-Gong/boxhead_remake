@@ -2,6 +2,7 @@
 import {DrawPrimitive,Thing} from '../packages.ts';
 import {copy,bounds,polygon,solid} from './VariantArt.ts';
 import type {CombatKind} from './CombatRosterRules.ts';
+import {freshMeshMaterials,freshEnemyModels} from './EnemyMesh.ts';
 const caches=new WeakMap<object,Record<string,any>>();
 function edit(model:any,name:string,kind:CombatKind,angle:number):void{
  if(!model.Shape_vList?.length||name.startsWith('Foot')||name.startsWith('GunPosition'))return;
@@ -35,15 +36,16 @@ function edit(model:any,name:string,kind:CombatKind,angle:number):void{
   polygon(model,[cx-7,y-2,cx+7,y-2,cx+7,y+2,cx-7,y+2],'RosterWound',-.1);
  }
 }
-export function combatCollection(kind:CombatKind):any{
+export function combatCollection(kind:CombatKind,legacy=false):any{
  const X=DrawPrimitive.XSI,DI=X.CDrawPrimitive_XSI_DI,S=X.CDrawPrimitive_XSI_StyleSheet,di=S.mXSI_DI;
- let cache=caches.get(di);if(!cache)caches.set(di,cache={});if(cache[kind])return cache[kind];
- const saved=di.mStyleSheet;S.SS_ZOMBIE();const source=di.mStyleSheet,style=copy(source),identity='Combat_'+kind;
+ const cacheKey=kind+(legacy?'Legacy':'Fresh');let cache=caches.get(di);if(!cache)caches.set(di,cache={});if(cache[cacheKey])return cache[cacheKey];
+ const saved=di.mStyleSheet;S.SS_ZOMBIE();const source=di.mStyleSheet,style=copy(source),identity=(legacy?'Combat_':'FreshCombat_')+kind;
  style.mID='SS_'+identity;style.mGroup_Remap=undefined;for(const m of Object.values(style.mModels)as any[])m.mGroup_Remap=undefined;
  for(const [name,color]of Object.entries({RosterBand:kind==='runner'?0xa48553:0x726954,RosterWound:0x873e35,RosterApron:0x50443a}))style.mMaterials[name]={mColor:color,mAlpha:100};
  for(const name of ['Body_Top','Body_Side','Body_Front','Body_Back']){delete style.mMaterials[name].mcLinkID;style.mMaterials[name].mColor=kind==='runner'?0x394c4f:0x77704c;}
  for(const name of ['UpperArm','LowerArm','Bandana'])style.mMaterials[name].mColor=kind==='runner'?0x86968a:0xa29b70;
- const collection=cache[kind]=new X.CDrawPrimitive_XSI_Collection();
+ if(!legacy)freshMeshMaterials(style,kind);
+ const collection=cache[cacheKey]=new X.CDrawPrimitive_XSI_Collection();
  const links={stand:'Zombie_Zombie_Stand',walk:'Zombie_Zombie_Walk',attack:'Zombie_Zombie_Attack',shothit_1:'Player_HitRear',shothit_2:'Player_HitFront',dying:'Player_Dying',dead:'Player_Dead'};
  try{for(const [key,link]of Object.entries(links)){
   const original=DI.mAnimationSets[link],derived={...original,mID:identity+'_'+key,mGroupID:identity,mFrameSequence:original.mFrameSequence?.slice()};
@@ -51,8 +53,10 @@ export function combatCollection(kind:CombatKind):any{
    const partner=DI.mGroups[frame.rPartner]?.[frame.mAnimID]?.mDirections[direction]?.[index]?.Models,remap=DI.mGroups[source.mGroup_Remap]?.[frame.mAnimID]?.mDirections[direction]?.[index]?.Models,models:any={};
    for(const name of Object.keys(frame.Models)){
     const base=frame.Models[name].Empty?partner?.[name]??frame.Models[name]:frame.Models[name];
-    models[name]=copy(source.mModels[name]?.mGroup_Remap?remap?.[name]??base:base);edit(models[name],name,kind,direction*Math.PI*2/original.mDirections.length);
-   }return {...frame,Models:models,rPartner:undefined};
+    models[name]=copy(source.mModels[name]?.mGroup_Remap?remap?.[name]??base:base);if(legacy)edit(models[name],name,kind,direction*Math.PI*2/original.mDirections.length);
+   }
+   if(!legacy)freshEnemyModels(models,kind,direction*Math.PI*2/original.mDirections.length,original.mTilt,original.mLight);
+   return {...frame,Models:models,rPartner:undefined};
   }));DI.mAnimationSets[derived.mID]=derived;S.SS_APPLY(style);collection.AddItem(X.CDrawPrimitive_XSI_Animation.Load(derived.mID,key));
  }}finally{if(saved)S.SS_APPLY(saved);}return collection;
 }

@@ -1,5 +1,6 @@
 import {DrawPrimitive,Thing} from '../packages.ts';
 import {copy,bounds,polygon,solid,horn} from './VariantArt.ts';
+import {freshMeshMaterials,freshEnemyModels} from './EnemyMesh.ts';
 export type DemonKind='butcher'|'hunter';
 const caches=new WeakMap<object,Map<string,any>>();
 function edit(model:any,name:string,kind:DemonKind,boss:boolean,angle:number,up:number[]):void{
@@ -44,14 +45,15 @@ function edit(model:any,name:string,kind:DemonKind,boss:boolean,angle:number,up:
  }
  for(let n=model.Shape_vList.length-1;n>=0;n--){const p=model.Shape_vList[n];let area=0;for(let i=0;i<p.length;i+=2){const j=(i+2)%p.length;area+=p[i]*p[j+1]-p[j]*p[i+1];}if(Math.abs(area)<1e-5)for(const key of ['Shape_vList','Shape_Matrix','Shape_Material','Shape_Brightness'])model[key].splice(n,1);}
 }
-export function demonCollection(kind:DemonKind,boss=false):any{
- const X=DrawPrimitive.XSI,DI=X.CDrawPrimitive_XSI_DI,S=X.CDrawPrimitive_XSI_StyleSheet,di=S.mXSI_DI,key=kind+(boss?'Boss':'');let cache=caches.get(di);if(!cache)caches.set(di,cache=new Map());if(cache.has(key))return cache.get(key);
- const saved=di.mStyleSheet;S.SS_DEVIL(Thing.Creature.CThing_Creature_Devil.mDefault_Scale);const source=di.mStyleSheet,style=copy(source),identity='Demon_'+key;
+export function demonCollection(kind:DemonKind,boss=false,legacy=false):any{
+ const X=DrawPrimitive.XSI,DI=X.CDrawPrimitive_XSI_DI,S=X.CDrawPrimitive_XSI_StyleSheet,di=S.mXSI_DI,key=kind+(boss?'Boss':'')+(legacy?'Legacy':'Fresh');let cache=caches.get(di);if(!cache)caches.set(di,cache=new Map());if(cache.has(key))return cache.get(key);
+ const saved=di.mStyleSheet;S.SS_DEVIL(Thing.Creature.CThing_Creature_Devil.mDefault_Scale);const source=di.mStyleSheet,style=copy(source),identity=(legacy?'Demon_':'FreshDemon_')+kind+(boss?'Boss':'');
  style.mID='SS_'+identity;style.mGroup_Remap=undefined;for(const m of Object.values(style.mModels)as any[])m.mGroup_Remap=undefined;
  const palette={DemonMetal:kind==='butcher'?0x4f514e:0x354957,DemonRim:kind==='butcher'?0xa3a596:0x9caeae,DemonStrap:0x5c4337,DemonApron:0x8b7b61,DemonWound:0x8b3e33,DemonGlow:kind==='butcher'?0xcc6c42:0x8ad0c9};
  for(const [name,color]of Object.entries(palette))style.mMaterials[name]={mColor:color,mAlpha:100};
  for(const name of ['Body_Top','Body_Side','Body_Front','Body_Back']){delete style.mMaterials[name].mcLinkID;style.mMaterials[name].mColor=kind==='butcher'?0x554438:0x2d3944;}
  for(const name of ['UpperArm','LowerArm','Bandana'])style.mMaterials[name].mColor=kind==='butcher'?0x91594a:0x576c74;
+ if(!legacy)freshMeshMaterials(style,kind);
  const c=new X.CDrawPrimitive_XSI_Collection();cache.set(key,c);
  try{for(const [action,link]of Object.entries({stand:'Player_Stand',walk:'Player_Walk',attack:'Devil_Devil_Attack',shothit_1:'Player_HitRear',shothit_2:'Player_HitFront',dying:'Player_Dying',dead:'Player_Dead'})){
   const original=DI.mAnimationSets[link],derived={...original,mID:identity+'_'+action,mGroupID:identity,mFrameSequence:original.mFrameSequence?.slice()};
@@ -59,7 +61,8 @@ export function demonCollection(kind:DemonKind,boss=false):any{
    const partner=DI.mGroups[frame.rPartner]?.[frame.mAnimID]?.mDirections[d]?.[i]?.Models,remap=DI.mGroups[source.mGroup_Remap]?.[frame.mAnimID]?.mDirections[d]?.[i]?.Models,models:any={},centers:any={};
    for(const name of Object.keys(frame.Models)){const base=frame.Models[name].Empty?partner?.[name]??frame.Models[name]:frame.Models[name];models[name]=copy(source.mModels[name]?.mGroup_Remap?remap?.[name]??base:base);if(models[name].Shape_vList?.length){const b=bounds(models[name]);centers[name]=[(b[0]!+b[2]!)/2,(b[1]!+b[3]!)/2];}}
    const vector=(a:string,b:string)=>centers[a]&&centers[b]?[centers[a][0]-centers[b][0],centers[a][1]-centers[b][1]]:[0,-1];
-   for(const name of Object.keys(models))edit(models[name],name,kind,boss,d*Math.PI*2/original.mDirections.length,name.includes('Arm_')||name.startsWith('Hand_')?vector('UpperArm_'+name.split('_')[1],'LowerArm_'+name.split('_')[1]):vector('Head','Body'));
+   if(legacy)for(const name of Object.keys(models))edit(models[name],name,kind,boss,d*Math.PI*2/original.mDirections.length,name.includes('Arm_')||name.startsWith('Hand_')?vector('UpperArm_'+name.split('_')[1],'LowerArm_'+name.split('_')[1]):vector('Head','Body'));
+   else freshEnemyModels(models,kind,d*Math.PI*2/original.mDirections.length,original.mTilt,original.mLight,boss);
    return {...frame,Models:models,rPartner:undefined};
   }));DI.mAnimationSets[derived.mID]=derived;S.SS_APPLY(style);c.AddItem(X.CDrawPrimitive_XSI_Animation.Load(derived.mID,action));
  }}finally{if(saved)S.SS_APPLY(saved);}return c;

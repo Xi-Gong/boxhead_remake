@@ -776,4 +776,12 @@ export const DEVIATIONS: Deviation[] = [
       'Mixed encounters, depleted armor and pending chains persist; protected Boss skills still admit '+
       'normal lethal attribution. Old-capability variants gain no new optional fields on resume.',
   },
+  {
+    id:'FRESH_ENEMY_MESHES',file:'local/EnemyMesh.ts, CombatRosterArt.ts, DemonArt.ts, GunnerArt.ts',
+    description:'The user explicitly requested entirely new models after reviewing the earlier derived '+
+      'approach. All visible heads, torsos, arms, hands and boots now use new beveled/prismatic geometry, '+
+      'materials and silhouettes, retaining only animation rig metadata and functional anchors. Four gunner '+
+      'identities retain player palette/gear cues and original gun anchors. Prior derived art remains an '+
+      'explicit legacy oracle; new geometry and all actions are checked separately.',
+  },
 ];

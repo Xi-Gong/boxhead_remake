@@ -43,10 +43,10 @@ it('keeps a protected casting Boss alive through absorbed hits while lethal hits
  e.Affect(new Thing.Affect.CThing_Affect_Bullet(p,{mPosition:p.mPosition.Clone()},80,p.mAngle.Clone()));e.ProcessAffects();expect(e.mLife).toBe(50);expect(e.mStateID).toBe('State_CombatHunt');
  e.Affect(new Thing.Affect.CThing_Affect_Bullet(p,{mPosition:p.mPosition.Clone()},200,p.mAngle.Clone()));e.ProcessAffects();expect(e.mLife).toBeLessThanOrEqual(0);expect(['State_Dying','State_Dead']).toContain(e.mStateID);g.quit();
 });
-it('bakes both ordinary/Boss collections without changing feet, metadata or native return timing',()=>{
+it('retains the previous ordinary/Boss art oracle with original feet and timing',()=>{
  const g=boot(),DI=DrawPrimitive.XSI.CDrawPrimitive_XSI_DI;
  for(const kind of ['butcher','hunter']as const)for(const boss of [false,true]){
-  const c=demonCollection(kind,boss);expect(c.mItems.walk.mAnimationObject.mFrameCount).toBe(8);
+  const c=demonCollection(kind,boss,true);expect(c.mItems.walk.mAnimationObject.mFrameCount).toBe(8);
   for(const [key,link]of Object.entries({stand:'Player_Stand',walk:'Player_Walk',attack:'Devil_Devil_Attack',shothit_1:'Player_HitRear',shothit_2:'Player_HitFront',dying:'Player_Dying',dead:'Player_Dead'})){
    const src=DI.mAnimationSets[link],derived=DI.mAnimationSets['Demon_'+kind+(boss?'Boss':'')+'_'+key];expect(derived.mFrameSequence).toEqual(src.mFrameSequence);
    for(let d=0;d<src.mDirections.length;d++)for(let f=0;f<src.mDirections[d].length;f++){
