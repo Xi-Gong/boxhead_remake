@@ -12,6 +12,7 @@ export function captureEnemyArmor(world:any):EnemyArmor[]{
 }
 export function combatKillXp(enemy:any):number{
  if(enemy.mBossKind)return 50;
+ if(enemy.mCombatKind)return enemy.mCombatKind==='brute'?4:2;
  return enemy._CLASSID_==='CThing_Creature_Devil'?(enemy.mEnemyVariant==='priest'?12:10):(enemy.mEnemyVariant==='charger'?4:2);
 }
 const layers=new WeakMap<object,any>();

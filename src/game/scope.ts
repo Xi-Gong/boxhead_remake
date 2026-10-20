@@ -35,6 +35,7 @@ import { installWaveDraft } from './local/WaveDraft.ts';
 import {installCombatScope,settleCombatPlayers} from './local/Combat.ts';
 import {installCombatPacing} from './local/CombatPacing.ts';
 import {installCombatEnemies} from './local/CombatEnemies.ts';
+import {installCombatRoster} from './local/CombatRoster.ts';
 import { installBossWaves } from './local/BossWaves.ts';
 import { installClearWaves } from './local/ClearWaves.ts';
 import { installWeaponArt } from './local/WeaponArt.ts';
@@ -130,6 +131,7 @@ export function applyScope(): void {
   installProjectileArt();
   installBossWaves();
   installCombatEnemies();
+  installCombatRoster();
   installClearWaves();
   installCombatPacing();
   installWaveDraft();

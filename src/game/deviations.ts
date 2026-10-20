@@ -753,4 +753,11 @@ export const DEVIATIONS: Deviation[] = [
       'devils now save their depleted armor. Higher real-kill XP and bounded reference starts offset fewer, '+
       'tougher enemies without timeout XP or an assumed Boss reward.',
   },
+  {
+    id:'COMBAT_ROSTER',file:'local/CombatRoster.ts, CombatRosterRules.ts, CombatRosterArt.ts, EnemyVariants.ts',
+    description:'Modern runner and brute replace successful original zombie slots from waves 3/6 without '+
+      'extra subtype RNG. Runner flank targets and a locked .8s heavy cone with 1.2s recovery encourage '+
+      'movement. Independent loading-time XSI geometry keeps source feet, metadata and return frames. '+
+      'Saved skill state and family counters reconstruct new identities without refilling HP.',
+  },
 ];

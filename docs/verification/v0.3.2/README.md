@@ -19,6 +19,12 @@ Only lightweight serial targeted checks and short single-instance low-resolution
 
 ## Completed items
 
+### Runner and heavy melee zombies
+
+Wave 3/6 ordinal replacements add flanking runners and telegraphed heavy brutes, at most two active of each. No extra subtype RNG, quotas unchanged. Brute .8s warning locks a 2.2-cell cone, followed by 1.2s recovery; escape and walls prevent damage. New save identities/skill state and rollback are covered. Derived loading-time art preserves all source feet, XSI metadata and return frames; classic collections remain.
+
+Four targeted suites passed 34 tests; all typechecks/build passed (`main-9S_PNEEg.js`), 117 ports unchanged. Production single-instance contact sheets cover all actions and 16 directions; geometry/pixel checks passed in `generated/reports/v032/combat-roster-1792507566256`. Directly reviewed details, full brute action sheet and in-world warning. Prepared visual scenes are not ordinary combat play evidence.
+
 ### Tougher enemies and consumable armor
 
 Prepared production scene `generated/reports/v032/combat-enemies-1792507233344` passed current Boss 12000 HP / 4800 armor, devil 2000 / 600, cyan pixels and real pause/unpause. `armor.png` directly reviewed; this is visual/behavior fixture evidence, not normal combat balance or a live LAN test. The 117 mechanical port files remain unchanged.

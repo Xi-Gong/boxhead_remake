@@ -1,0 +1,9 @@
+export type CombatKind='runner'|'brute';
+export function combatFamily(kind:string):'Zombie'|'Devil'{return ['charger','runner','brute','gunner'].includes(kind)?'Zombie':'Devil';}
+export function combatOrdinal(wave:number,ordinal:number,family:'Zombie'|'Devil'):CombatKind|undefined{
+ const slot=ordinal*37%100;
+ if(family==='Zombie'){
+  if(wave>=3&&slot<18)return 'runner';
+  if(wave>=6&&slot>=18&&slot<32)return 'brute';
+ }
+}

@@ -3,9 +3,9 @@ import {CMain,DrawPrimitive,Thing} from '../packages.ts';
 import type {EnemyVariant} from './EnemyVariants.ts';
 const caches=new WeakMap<object,Record<string,any>>(),classic=new WeakSet<object>();
 export function setClassicVariantArtFixture(main:object):void{classic.add(main);}
-function copy(v:any):any{if(Array.isArray(v))return v.map(copy);if(v&&typeof v==='object'){const o:any={};for(const k of Object.keys(v))if(k!=='mcBMD'&&k!=='sBMD')o[k]=copy(v[k]);return o;}return v;}
-function bounds(model:any):number[]{const p=(model.Shape_vList??[]).flat();return [Math.min(...p.filter((_:any,i:number)=>i%2===0)),Math.min(...p.filter((_:any,i:number)=>i%2)),Math.max(...p.filter((_:any,i:number)=>i%2===0)),Math.max(...p.filter((_:any,i:number)=>i%2))];}
-function polygon(model:any,points:number[],material:string,brightness:number):void{
+export function copy(v:any):any{if(Array.isArray(v))return v.map(copy);if(v&&typeof v==='object'){const o:any={};for(const k of Object.keys(v))if(k!=='mcBMD'&&k!=='sBMD')o[k]=copy(v[k]);return o;}return v;}
+export function bounds(model:any):number[]{const p=(model.Shape_vList??[]).flat();return [Math.min(...p.filter((_:any,i:number)=>i%2===0)),Math.min(...p.filter((_:any,i:number)=>i%2)),Math.max(...p.filter((_:any,i:number)=>i%2===0)),Math.max(...p.filter((_:any,i:number)=>i%2))];}
+export function polygon(model:any,points:number[],material:string,brightness:number):void{
  // New faces paint above the underlying part, sharing its direction-dependent occlusion plane.
  model.Shape_vList.unshift(points);model.Shape_Matrix.unshift(undefined);model.Shape_Material.unshift(material);model.Shape_Brightness.unshift(brightness);
 }
@@ -22,7 +22,7 @@ function mesh(model:any,cx:number,cy:number,angle:number,vertices:number[][],fac
   polygon(model,points,material,Math.max(-.4,Math.min(.45,shade)));model.PEdge.push([...points,...v[ids[0]!]!]);
  }
 }
-function solid(model:any,cx:number,cy:number,angle:number,width:number,depth:number,height:number,material:string,taper=1):void{
+export function solid(model:any,cx:number,cy:number,angle:number,width:number,depth:number,height:number,material:string,taper=1):void{
  const v=[[-width/2,-depth/2,0],[width/2,-depth/2,0],[width/2,depth/2,0],[-width/2,depth/2,0],[-width*taper/2,-depth*taper/2,height],[width*taper/2,-depth*taper/2,height],[width*taper/2,depth*taper/2,height],[-width*taper/2,depth*taper/2,height]];
  mesh(model,cx,cy,angle,v,[[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]],material);
 }
