@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "directory": "C:\\Users\\royxg\\boxhead-exe-archive\\v0.3.1-release",
+  "sourceCommit": "0213d9e9bf56e34a01bd8b2acbce81436fad9d35",
+  "exe": "Boxhead 2Play Rooms-0.3.1-portable.exe",
+  "exeSHA256": "5a1619bdc30ced600593f848a8ccc996eadff9dec594040d498482da1749208c",
+  "evidence": "v0.3.1-verification.zip",
+  "evidenceSHA256": "122fe879703968c9dfff7be412d9395b3b2600f4f53ec1ca80653946e5298be0",
+  "verifiedEvidenceEntries": 644,
+  "profileCachesExcluded": true,
+  "inventory": "evidence-files.json",
+  "inventorySHA256": "406e7c69457a18fad231fe6a1b5e47cf659d292b80142a290c5d2ccca02014b0"
+}

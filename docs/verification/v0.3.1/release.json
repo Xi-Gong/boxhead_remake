@@ -1,0 +1,176 @@
+{
+  "status": "release-gates-passed",
+  "version": "0.3.1",
+  "date": "2026-10-20",
+  "branch": "codex/feature-v0.3.1-gameplay-art",
+  "runtimeSourceCommit": "30ef319c6479d21b5b47334c9c5d841e8e885b84",
+  "verificationSourceCommit": "0213d9e9bf56e34a01bd8b2acbce81436fad9d35",
+  "baselineStable": "v0.2.9",
+  "exe": "release/Boxhead 2Play Rooms-0.3.1-portable.exe",
+  "exeBytes": 101657484,
+  "exeSHA256": "5a1619bdc30ced600593f848a8ccc996eadff9dec594040d498482da1749208c",
+  "asarSHA256": "323e07745620b0c1e81b354bc03d44f3312094dca1fc1ea58c9c699b849e21b8",
+  "renderer": "dist/bundle/main-CTNg9n_N.js",
+  "runtimeInputsSHA256": "337bad4f03d9db93933cdcf9d15f0781a579a2ac6f2f740d59b5d790497cbcdd",
+  "runtimeInputCount": 402,
+  "verifiedPackagedFiles": 70,
+  "candidateBytesReused": true,
+  "gates": {
+    "vitest": {
+      "passed": 1719,
+      "skipped": 71,
+      "passedFiles": 133,
+      "skippedFiles": 2,
+      "unhandledErrors": 0
+    },
+    "typechecks": [
+      "tsconfig.json",
+      "config/tsconfig.strict.json",
+      "config/tsconfig.tools.json"
+    ],
+    "mechanicalPorts": {
+      "total": 117,
+      "changed": 0
+    },
+    "browserUI": {
+      "passed": 188,
+      "failed": 0
+    },
+    "audio": {
+      "passed": 49,
+      "failed": 0
+    },
+    "lan": {
+      "ok": true,
+      "oneWayDelayMs": 30,
+      "viewport": [
+        640,
+        480
+      ],
+      "checks": [
+        "multiple Bosses: negotiated rules, two compact overhead bars, DEVIL count and delayed rollback agree",
+        "real TCP disconnect/rejoin preserves partially defeated encounter, member HP and bonuses without rebuilding",
+        "all Bosses defeated: exactly one doubled selection per player and next-wave checkpoint after cleanup",
+        "natural all-dead end and client RETRY restore wave 16 checkpoint without duplicating Boss reward"
+      ],
+      "confirmedComparisons": 5,
+      "rollback": [
+        {
+          "predictions": 262,
+          "corrections": 15,
+          "replayedTicks": 33,
+          "maxDepth": 3,
+          "captureMs": 0,
+          "predictionLimit": 6,
+          "confirmLag": 1,
+          "ringSize": 17,
+          "confirmTick": 264
+        },
+        {
+          "predictions": 150,
+          "corrections": 10,
+          "replayedTicks": 10,
+          "maxDepth": 1,
+          "captureMs": 0,
+          "predictionLimit": 6,
+          "confirmLag": 1,
+          "ringSize": 17,
+          "confirmTick": 264
+        }
+      ],
+      "partialV2SaveCoverage": "Full Vitest boss roster/save tests; live pair verifies history recovery and next-wave checkpoint"
+    },
+    "native": {
+      "ok": true,
+      "checks": [
+        "native window, isolated save location and hidden/no-focus creation",
+        "isolated renderer with sandboxed preload API",
+        "packaged app protocol MIME, missing files and traversal protection",
+        "real menu mouse input, gameplay keyboard and pause",
+        "native wide viewport and transformed pause click",
+        "native F11, IPC and Alt+Enter fullscreen round trips remain hidden",
+        "native process restart preserves settings/save and remaining simulation time"
+      ]
+    },
+    "portable": {
+      "ok": true,
+      "version": "0.3.1",
+      "viewport": {
+        "width": 640,
+        "height": 480,
+        "dpr": 1
+      },
+      "rewardDelta": 2
+    }
+  },
+  "evidence": [
+    {
+      "path": "generated/reports/v031/release-gates/vitest-2.log",
+      "sha256": "97b19d8c1d3b951e89fdb93684bad17a3d213e9215de999b7b99764ff37952da"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/build.log",
+      "sha256": "3286700d859c594c418ac39962cc8af679370fc81a564c0bfe0e802d48094b36"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/audit.log",
+      "sha256": "e01cb59106132504c900bcb69de73ecf8bfd43e9cfb241934876db245cb772a3"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/browser-ui-1.json",
+      "sha256": "5f85dbe116d794ba837cea1b6524c1dcfa1c1e3e12690490a5acf3dc6575bda8"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/browser-audio.json",
+      "sha256": "946f64636b6f4cf8ae8a94741ccaa2a405805077b2911540401b6ce2691d6e24"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/lan-4/net_smooth_report.json",
+      "sha256": "a04a0841ec97c35e2519e051c9c5c6d3638e8033a89af527ebd14f63c3c52932"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/native-1/report.json",
+      "sha256": "48a625469419a28930dccfb545deab902c5d1595483cc7c02c4c0ce893475f17"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/portable-1/launch-0.3.1.json",
+      "sha256": "e081e8073e40d845c85b40fe3f00351841231daada16aad4f2d7d99d9055b545"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/portable-1/timed-candidate/report.json",
+      "sha256": "240c4bf6b9aa08c8d6fff35c66c3f74789a07b65bc87afe9e54933d6083e3a06"
+    },
+    {
+      "path": "generated/reports/v031/release-gates/artifact-final.json",
+      "sha256": "d340daa8cb863f57fd0500cd0230b17b3e097f68c1e722f0e8a4cd8dc7665666"
+    }
+  ],
+  "screenshotsReviewed": [
+    "generated/reports/x1/menus_05_coop_room.png",
+    "generated/reports/x1/debrief_02_typed.png",
+    "generated/reports/x1/controls_02_rebound.png",
+    "generated/reports/x1/viewport_paused_1280x720.png",
+    "generated/reports/v031/release-gates/lan-4/v031-two-bosses-0.png",
+    "generated/reports/v031/release-gates/lan-2/v031-partial-defeat.png",
+    "generated/reports/v031/release-gates/native-1/native-final.png",
+    "generated/reports/v031/release-gates/portable-1/timed-candidate/boss.png",
+    "generated/reports/v031/release-gates/portable-1/timed-candidate/draft.png"
+  ],
+  "reviewMethod": "Direct screenshot review, existing pixel/geometry checks and real input; zai not used. Prior gun/enemy contact sheets and motion clips retained with unchanged relevant art inputs.",
+  "failuresRetained": [
+    "generated/reports/v031/release-gates/vitest-1.log",
+    "generated/reports/v031/release-gates/fixture-fixes.log",
+    "generated/reports/v031/release-gates/lan-1.log",
+    "generated/reports/v031/release-gates/lan-2.log",
+    "generated/reports/v031/release-gates/lan-3.log"
+  ],
+  "cleanup": {
+    "ownedGameProcessesRemaining": 0,
+    "ownedGpuProcessesRemaining": 0,
+    "qaListenersRemaining": 0,
+    "ownedPreviewPIDStopped": 33552
+  },
+  "performanceClaim": false,
+  "archive": "archive-release.json",
+  "releaseURL": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.1"
+}

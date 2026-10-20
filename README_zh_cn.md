@@ -17,7 +17,7 @@
 ## 快速开始
 
 **Windows 便携版：** 在 [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest) 下载单文件 exe，双击即可游玩。
-此分支正在准备 **v0.3.1**，[候选验证记录](docs/verification/v0.3.1/README.md)与完整发行门禁分开记录。最新已发布预览版为 [v0.3.0-rc2](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.0-rc2)，最新稳定版为 v0.2.9。
+**[v0.3.1正式版](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.1)** 带来限时生存、递增Boss挑战、波间构筑、分段成长与战斗美术精修。完整结果见[发行验证记录](docs/verification/v0.3.1/README.md)。
 存档与设置统一保存在 `%USERPROFILE%\.boxhead`。
 
 **从源码运行：**
@@ -60,7 +60,7 @@ npm run dist        # Windows 便携版：release/Boxhead 2Play Rooms-<版本>-p
 - **补给与界面更稳定**：补弹保留武器箱继承容量，P1/P2确认拾取白字稳定等距，大厅条件按钮分行排布。
 - **合作武器箱**：阵亡玩家掉落武器与剩余弹药，可拾取恢复。
 
-[完整功能说明](docs/features_zh_cn.md) · [v0.3.1候选验证](docs/verification/v0.3.1/README.md) · [v0.3.0-rc2验证](docs/verification/v0.3.0-rc2/README.md)
+[完整功能说明](docs/features_zh_cn.md) · [v0.3.1发行验证](docs/verification/v0.3.1/README.md) · [v0.3.0-rc2验证](docs/verification/v0.3.0-rc2/README.md)
 
 <p align="center"><img src="assets/readme/coop-crate.png" alt="合作武器回收" width="640"></p>
 

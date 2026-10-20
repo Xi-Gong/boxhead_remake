@@ -1,6 +1,6 @@
 # v0.3.1 — Continuous survival, Boss waves and sharper combat
 
-**Release-note draft:** lightweight candidate acceptance has passed. Full release gates and formal publication are pending authorization and successful completion.
+Survive, build, and break the horde. This stable release includes the changes since v0.2.9 and the intervening v0.3.0 prereleases.
 
 ## Survive the clock and build your run
 
@@ -30,9 +30,9 @@
 - Supplies preserve inherited capacities, single-weapon rewards refill the right weapon, and confirmed P1/P2 pickup messages keep stable spacing. Main-menu and conditional LAN controls have clearer layouts.
 - Optional save extensions preserve timers, drafts and Boss state. Old saves migrate once without refilling current health, armor or ammunition. LAN negotiates optional new rules; older peers and death match retain their supported behavior.
 
-Windows portable candidate: **Boxhead 2Play Rooms-0.3.1-portable.exe**. Saves and settings remain in `%USERPROFILE%\.boxhead`.
+Windows portable: **Boxhead 2Play Rooms-0.3.1-portable.exe**. Saves and settings remain in `%USERPROFILE%\.boxhead`.
 
-Targeted simulation/art checks, all three TypeScript configurations, production build, serial Chrome checks and a short actual-portable save/audio/gameplay check passed. This is not the full release gate. No gameplay/LAN performance improvement is claimed.
+The authorized streamlined release gate passed: **1,719 Vitest tests**, all three TypeScript configurations and production build, **188 browser UI checks**, **49 audio checks**, a real delayed-input packaged LAN pair, packaged native window/input/fullscreen/persistence checks and the actual portable EXE. Existing conditional skips remain unchanged. LAN checks cover common confirmed gameplay/sound/decal identities, multiple Bosses, partial defeat, real disconnect recovery, doubled-reward deduplication and checkpoint retry. Historical version-by-version duplicate runs and the rendered performance/stress matrix were omitted as agreed; no gameplay/LAN performance improvement is claimed. The portable extraction matches all current runtime files; SHA256 is provided alongside the download.
 
 [Detailed changes and verification (Chinese)](https://github.com/Xi-Gong/boxhead_remake/blob/v0.3.1/PARITY.md)
 

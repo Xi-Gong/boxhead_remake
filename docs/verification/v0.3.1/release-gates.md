@@ -27,3 +27,20 @@ Run game checks serially at low resolution. The actual-network leg uses at most 
 Keep failures and interrupted runs. Fix the cause and rerun the affected gate; a change to shared behavior may invalidate more than one gate. Full Vitest failures must be resolved without skips or removing classic assertions. Do not reduce a gate in response to a failing assertion.
 
 No runtime performance claim follows from this smaller QA matrix. The saved time comes from avoiding duplicate launch/build/test work, not from measured gameplay improvements. After these gates pass, record the final input/artifact identity, update English release notes and Chinese PARITY, push the annotated tag, publish the formal Release and verify the uploaded EXE.
+
+## Final results (2026-10-20)
+
+All required gates passed. [release.json](release.json) records the final artifact identity and report paths.
+
+| Gate | Result |
+|---|---|
+| Source/simulation | 133 files / 1,719 Vitest tests passed; 71 existing conditional skips unchanged; no unhandled errors. All three TypeScript configurations and production build passed. 117 mechanical ports unchanged. |
+| Browser UI/audio | 188/188 UI and 49/49 audio checks passed against `main-CTNg9n_N.js`; direct screenshot review plus real inputs, geometry/pixel checks and real audio waveform recovery. |
+| Actual LAN | `lan-4`: one hidden 640×480 pair, 30 ms one-way delay, common confirmed full digests and ordered sound/decal identities; two 64×7 bars, DEVIL counts, partial defeat, actual TCP history recovery, doubled reward once per player, natural death and checkpoint retry. V2 partial-Boss save coverage comes from Vitest; the live pair covers history recovery and the next-wave checkpoint. |
+| Native/portable | Seven packaged native checks passed, including hidden native fullscreen and process-restart persistence. Actual portable launch passed complete asar/runtime identity, new gameplay, save/continue, Boss reward and 31 decoded/running sounds. |
+
+Failure records are retained: first full-suite sandbox EACCES and classic-fixture assumptions, plus `lan-1`/`lan-2`/`lan-3` harness failures (family/HUD identity, checkpoint observation time, confirmed-HUD rendering race). Fixes preserve assertions and production behavior. The final LAN and native script changes are test-only, so they do not invalidate the runtime fingerprint.
+
+Standalone historical scripts **not executed** for this final candidate: `tests/sim/playtest.browser.mjs`, `playtest.v012.mjs`, `playtest.v019.mjs`, `playtest.v020.mjs`, `playtest.v023.mjs`, `playtest.v024.mjs`, `playtest.typing.mjs`, `playtest.lanui.mjs`, `playtest.net.mjs`, `playtest.netretry.mjs`; their important risks are covered by the current UI/audio, native, portable and combined LAN checks. The old standalone `electron-smoke.run.ts` fixture/production passes were replaced by `release-native.electron.mjs` plus actual portable launch. Their scripts and assertions remain intact. `playtest.netsmooth.mjs` ran in functional release mode only, not its response/performance/stress mode. Full Vitest retains its original headless burst fixtures; no rendered stress or multi-instance performance matrix was run.
+
+The freshly built 70 runtime files, version and 402-input fingerprint match the verified candidate, permitting reuse of the exact EXE. All owned game/GPU processes and QA listeners were cleaned up; only this run's preview PID 33552 was stopped. Final screenshots, motion clips, logs, failed attempts and SHA256 are archived as recorded in [archive-release.json](archive-release.json).

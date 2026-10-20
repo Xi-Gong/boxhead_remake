@@ -1,6 +1,6 @@
-# v0.3.1 candidate verification
+# v0.3.1 release verification
 
-Development is on `codex/feature-v0.3.1-gameplay-art`, with each independent commit pushed to its matching remote branch. **This is candidate evidence, not a completed formal-release gate.** The latest stable release remains v0.2.9; the changes below also include work previously published in v0.3.0-rc1/rc2.
+Development is on `codex/feature-v0.3.1-gameplay-art`, with each independent commit pushed to its matching remote branch. **The authorized streamlined full release gate passed.** v0.3.1 includes the changes since stable v0.2.9, including work previously published in v0.3.0-rc1/rc2. The stage-specific candidate history below is retained; the final [release gate manifest](release.json) identifies the shipping bytes and current results.
 
 ## Authorized lightweight checks
 
@@ -33,10 +33,12 @@ The refreshed Boss-health candidate and accumulated evidence have a separate [ar
 
 The current candidate from `069d865` passed the short actual-portable scenario again: compact bar, DEVIL `1`, WAVE clock `5:00`, ordinary draft, continued timer/bonus and one doubled Boss reward. Its entire extracted asar and current runtime files match the inspected build. Three-Boss layout/counts were checked in the production browser; source tests cover real roster spawning, partial defeats, saves and rollback. See [current archive receipt](archive-encounters.json). These are lightweight results, not live two-peer LAN acceptance.
 
-## Pending full gates
+## Completed full release gate
 
-Fresh authorization is still required for the proposed release gate: full Vitest, current browser UI/audio coverage, live two-peer LAN correctness, Electron/native and portable artifact checks. Long-duration behavior in lightweight tests used controlled simulation clocks, not multi-minute unattended sessions. No multi-instance benchmark, extreme stress, foreground-window test or performance claim is included.
+The user authorized the streamlined gate on 2026-10-20. Complete Vitest passed 1,719 tests in 133 files, with 71 existing conditional skips unchanged. The final build passed all three TypeScript configurations; all 117 mechanical ports remain unchanged. Browser UI passed 188/188 and audio 49/49 checks.
 
-The user has requested a shorter release process. The proposed [streamlined gate](release-gates.md) merges duplicate build/startup/scenario work and replaces the blanket historical-script matrix with explicit current risk coverage. It retains full Vitest, UI/audio, actual LAN correctness and native/portable artifact checks; execution still awaits authorization. Omitted historical scripts will be recorded as not executed.
+A serial 640×480 packaged pair with 30 ms one-way delay passed confirmed gameplay/sound/decal equality, bounded rollback, multiple Boss bars/DEVIL counts, partial defeat, real TCP history recovery, one doubled reward per player, natural death and client checkpoint retry. V2 partial-Boss save/downgrade checks are covered by the full simulation suite; the live pair verifies history recovery and the next-wave checkpoint. Three initial harness failures are retained: native-family count versus HUD count, wave-start checkpoint time versus a later paused observation, and clicking before the confirmed draft UI rendered. No production change or removed assertion was needed.
 
-Only after the complete authorized gate passes will the final build be repackaged, the annotated `v0.3.1` tag pushed, and a formal GitHub Release published with its verified portable EXE. [English release-note draft](RELEASE_NOTES.md).
+Seven packaged native checks passed, including real input, hidden native fullscreen and cross-process persistence. The actual portable EXE independently passed startup, complete asar/current-runtime equality, tiered/clearable rules, save/continue, draft, numeric-free Boss health, doubled reward and 31 decoded/running sounds. Direct screenshots were reviewed alongside pixel/geometry and real-input checks; zai was not used. All owned game processes and test listeners were cleaned up.
+
+The [streamlined gate](release-gates.md) records the coverage and omitted historical scripts. It avoids duplicate builds and version-by-version launch matrices, with no rendered stress/performance benchmark or foreground-window test. All 70 final built runtime files and the 402-input fingerprint match the already packaged candidate, so the verified EXE is reused without repacking identical bytes. See the [final archive receipt](archive-release.json), [English release notes](RELEASE_NOTES.md) and [stable Release](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.1).
