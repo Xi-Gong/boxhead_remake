@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'WEAPON_ART',
+    file:'local/WeaponArt.ts; scope.ts',
+    description:'v0.3.1 independently derives the five held gun meshes and materials at resource load time. '+
+      'The original right-hand and muzzle anchors define the rigid frame. Animation IDs, original direction '+
+      'lookups, return frames and XSI_Info remain unchanged; all four character styles keep their own caches. '+
+      'Classic source collections remain available for fixtures and comparisons. No global rasterizer, '+
+      'render-scale setting, input, damage, projectile position or collision rule is changed.',
+  },
+  {
     id:'TIMED_REFERENCE_GROWTH',
     file:'local/TimedGrowthRules.ts, Endless.ts, LocalGrowth.ts; local/Net/NetSession.ts',
     description:'Timed PvE derives selected-wave levels and enemy growth from map duration, the three spawn '+

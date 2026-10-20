@@ -1,0 +1,21 @@
+{
+  "feature": "five held guns: geometry and materials",
+  "tests": {"passed":39,"files":4,"workers":1,"suites":["weaponArt","persistentEnchantment","weaponCrate","gamepad"]},
+  "invariants": ["all XSI_Info and original gun/hand anchors unchanged", "1600 native skin/gun/direction/frame combinations", "all 16 input-facing lookups including original eight-direction walk", "original eight-frame return sequence", "original non-gun hit/death/stand/walk animations reused", "valid nondegenerate faces and finite bitmap bounds", "four skin caches isolated by original resource identity", "all eight simulation digest categories equal from the same snapshot and simulation clock"],
+  "initialTestCorrections": ["Walk has eight native directions; test now checks the unchanged mapping for all sixteen facing inputs.", "Cross-run local virtual clocks differ in navigation timestamps; replay now uses the same snapshot and simulation clock and keeps all digest assertions."],
+  "typechecks": ["tsconfig.json","config/tsconfig.strict.json","config/tsconfig.tools.json"],
+  "build": "main-IhoZDWhK.js",
+  "audit": {"modules":532,"portedModules":117,"changedPorts":[]},
+  "browser": {
+    "render1x": "generated/reports/v031/weapon-art/run-1792467521326-1x/report.json",
+    "render2x": "generated/reports/v031/weapon-art/run-1792467615663-2x/report.json",
+    "initial2x": "generated/reports/v031/weapon-art/run-1792467437385-2x/report.json",
+    "mode": "serial, one headless Chrome game at 640x480",
+    "evidencePerSkin": ["skin-N-sheet.png: original/new, all sixteen facings", "skin-N-walk.png: all logical frames and facings", "skin-N-detail.png: four cardinal closeups"],
+    "motion2x": "walk-and-turn.webm: eight seconds, all skins, stand/walk/hit transitions",
+    "gameplay": ["combat-old.png","combat-new.png","combat-enchanted.png"],
+    "changedHeroPixels2x":193,
+    "review": "direct screenshots, geometry, anchor equality and pixels; zai not used",
+    "limits": "portable candidate and final heavy gates remain pending; projectile visual polish is a separately requested next feature"
+  }
+}
