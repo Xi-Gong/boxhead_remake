@@ -1,0 +1,19 @@
+{
+  "feature": "projectiles, trajectories, rocket body/exhaust and muzzle effects",
+  "tests": {"passed":21,"files":3,"workers":1,"suites":["projectileArt","weaponArt","persistentEnchantment"]},
+  "invariants": ["sixteen-angle resolved muzzle and collision endpoints", "unresolved delayed pellets hidden", "both authored visible frames retained with fade", "finite geometry and bounded strokes", "all simulation digest categories unchanged by classic and polished drawing", "no new snapshot or protocol fields", "original projectile collision, damage, spread, RNG, speed and lifetime unchanged"],
+  "typechecks": ["tsconfig.json","config/tsconfig.strict.json","config/tsconfig.tools.json"],
+  "build": "main-wk4iEMWf.js",
+  "audit": {"modules":535,"portedModules":117,"changedPorts":[]},
+  "browser": {
+    "final": "generated/reports/v031/projectile-art/run-1792468443906/report.json",
+    "earlierPasses": ["generated/reports/v031/projectile-art/run-1792468229385/report.json","generated/reports/v031/projectile-art/run-1792468338897/report.json"],
+    "failure": "generated/reports/v031/projectile-art/run-1792468181015/report.json",
+    "mode": "one headless Chrome game, 640x480, real movement/weapon-selection/fire keys",
+    "coverage": "five weapons, ordinary and enchanted; sixteen-direction contact sheet, 3x detail, four-second fade/turn/exhaust WebM and combat screenshots",
+    "changedPixelsNearMuzzle": {"pistol":120,"uzi":60,"shotgun":241,"rocket":448,"railgun":180},
+    "review": "direct image inspection, pixel ROI and simulation geometry; no zai",
+    "limits": "video recorded; direction/frame contact sheets reviewed directly. Portable candidate and full release gates pending."
+  },
+  "corrections": ["Collision fixture now distinguishes ordinary bullet object hits from railgun map-only hits; endpoint assertions retained.","Browser comparison waits for presentation and measures the muzzle-front ROI; early full-screen pixel counts are not final evidence.","Initial typed Fire wrapper failed compilation; corrected wrapper typing and rebuilt. The run against the earlier build is retained but not final evidence.","Visual review strengthened pale-floor tracer edges, matched muzzle colors and retained the second fading frame."]
+}

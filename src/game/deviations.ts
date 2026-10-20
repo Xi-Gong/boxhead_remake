@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'PROJECTILE_ART',
+    file:'local/ProjectileArt.ts; scope.ts',
+    description:'v0.3.1 draws warm bullet/pellet tracers, cyan rail cores, directional rocket bodies and short '+
+      'matching muzzle effects. Draw-only inversion of the authored cosmetic drift keeps hitscan lines on '+
+      'the resolved muzzle/impact segment; unresolved delayed pellets are hidden and the two authored '+
+      'visible frames fade without extending lifetime. Original collision, damage, emission, RNG and '+
+      'snapshot fields stay unchanged. Visual identity caches use WeakMap; classic art remains a fixture.',
+  },
+  {
     id:'WEAPON_ART',
     file:'local/WeaponArt.ts; scope.ts',
     description:'v0.3.1 independently derives the five held gun meshes and materials at resource load time. '+
