@@ -51,6 +51,8 @@ import { endlessStartLevel } from '../EndlessRules.ts';
 import {BALANCE_RULE,balancedStartLevel,DIFFICULTY_START_WAVES,difficultyIndex} from '../BalanceRules.ts';
 import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
 import { copyTimedWave, type TimedWaveState } from '../TimedWaves.ts';
+import { takeDraftChoice } from '../WaveDraftInput.ts';
+import { copyWaveDraft, type WaveDraftState } from '../WaveDraftRules.ts';
 import { settleVitals } from '../SurvivalRules.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
@@ -174,6 +176,7 @@ export class NetSession {
   confirmedWave = 1;
   confirmedEnemies: EnemyCounts = {zombies:0,devils:0};
   confirmedTimedWave: TimedWaveState | undefined;
+  confirmedWaveDraft: WaveDraftState | undefined;
   events = new EventJournal();
   decals = new EventJournal();
   scores = new EventJournal();
@@ -495,6 +498,7 @@ export class NetSession {
       this.confirmedWave = world.mUpgrades.mLevelIndex;
       this.confirmedEnemies = remainingEnemies(world);
       this.confirmedTimedWave = copyTimedWave(world);
+      this.confirmedWaveDraft = copyWaveDraft(world.mUpgrades.waveDraft);
       if (this.startOpts.resumeTick === undefined) this.captureCheckpoint(world);
     } else this.confirmedGrowth = undefined;
     this.phase = 'playing';
@@ -677,6 +681,7 @@ export class NetSession {
       this.confirmedWave = world.mUpgrades.mLevelIndex;
       this.confirmedEnemies = remainingEnemies(world);
       this.confirmedTimedWave = copyTimedWave(world);
+      this.confirmedWaveDraft = copyWaveDraft(world.mUpgrades.waveDraft);
     }
     const t = world.mTick - this.startTick;
     this.virtualTimeMs += 1000 / CMain.mFPS;
@@ -751,6 +756,7 @@ export class NetSession {
       meta.wave = world.mUpgrades.mLevelIndex;
       meta.enemies = remainingEnemies(world);
       meta.timedWave = copyTimedWave(world);
+      meta.waveDraft = copyWaveDraft(world.mUpgrades.waveDraft);
     }
     if (this.mode === 'DeathMatch' && (tick + 1) % DM_CHECKPOINT_EVERY === 0) {
       const snap = capture(world);
@@ -769,7 +775,7 @@ export class NetSession {
         this.netCheckpoint = meta.checkpoint;
         if (this.mode !== 'DeathMatch') recordWaveReached(meta.checkpoint.snap.wave);
       }
-      if (meta.growth) { this.confirmedGrowth = meta.growth; this.confirmedWave = meta.wave; this.confirmedEnemies = meta.enemies; this.confirmedTimedWave = meta.timedWave; }
+      if (meta.growth) { this.confirmedGrowth = meta.growth; this.confirmedWave = meta.wave; this.confirmedEnemies = meta.enemies; this.confirmedTimedWave = meta.timedWave; this.confirmedWaveDraft = meta.waveDraft; }
       this.events.confirm(t);
       this.decals.confirm(t);
       this.scores.confirm(t);
@@ -997,7 +1003,7 @@ export class NetSession {
       const secondary = consume(input['KEY_' + name + '2']);
       held[name] = primary || secondary;
     }
-    return packBits(held as Record<SlotBitName, boolean>);
+    return takeDraftChoice(this.world,this.role)??packBits(held as Record<SlotBitName, boolean>);
   }
 
   slot(playerIndex: number, name: string): NetSlot {

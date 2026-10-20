@@ -2,7 +2,7 @@
 import {flash,proto,forIn} from '../../engine/runtime.ts';
 import {CMain,CSound,Thing,registerGameClass} from '../packages.ts';
 import {CThing_Object_Pickup} from '../Thing/Object/CThing_Object_Pickup.ts';
-import { playerMaximum, survivalEnabled } from './SurvivalRules.ts';
+import { playerArmorMaximum, survivalEnabled } from './SurvivalRules.ts';
 import { reliableSupplies, syncSupplyWeapon, syncSupplyVitals } from './ReliableSupplies.ts';
 import {canEnchant,enchantHeldWeapon} from './EnchantmentRules.ts';
 
@@ -14,7 +14,7 @@ export function devilSupply(roll:number):SupplyKind|undefined{return roll<20?'ar
 const enabledWorlds=new WeakSet<object>();
 export function setSuppliesEnabled(world:object,enabled:boolean):void{if(enabled)enabledWorlds.add(world);else enabledWorlds.delete(world);}
 export function suppliesEnabled(world:any):boolean{return enabledWorlds.has(world);}
-export function armorMaximum(player:any):number{return survivalEnabled(player.mWorld)?playerMaximum(player):ARMOR_MAX;}
+export function armorMaximum(player:any):number{return survivalEnabled(player.mWorld)?playerArmorMaximum(player):ARMOR_MAX;}
 export function armorValue(value:unknown,maximum=ARMOR_MAX):number{return typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.min(maximum,value)):0;}
 export function refillArmor(player:any):void{player.mArmor=armorMaximum(player);}
 export function refillAmmo(player:any):void{

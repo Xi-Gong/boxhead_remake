@@ -7,6 +7,17 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([undefined,'wave-draft-v1','timed-waves-v1'])('negotiates wave draft with timed waves and guards resume; missing %s',missing=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  const features=['wave-draft-v1','timed-waves-v1','endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1'].filter(f=>f!==missing);
+  try{
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});b.phase='setup';b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.waveDraft).toBe(missing?undefined:'wave-draft-v1');
+   const onHello=vi.fn();b.session={phase:'reconnecting',startOpts:{cfg:{timedWaves:'timed-waves-v1',waveDraft:'wave-draft-v1'}},onHello} as any;
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});expect(onHello).toHaveBeenCalledTimes(missing?0:1);
+  }finally{b.session=null;CMain.mSaveData=previous;launch.mockRestore();}
+ });
  it.each([true,false])('negotiates timed waves and rejects a downgraded timer checkpoint: %s',enabled=>{
   const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});

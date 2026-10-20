@@ -6,6 +6,7 @@ import {BALANCE_RULE,balancedXpRequired} from '../BalanceRules.ts';
 import { recordGrowthScore } from './FloatingScores.ts';
 import { syncVitals } from '../SurvivalRules.ts';
 import { endlessXpRequired, experienceBeforeLevel, growthFromExperience } from '../EndlessRules.ts';
+import { draftBonuses } from '../WaveDraftRules.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
 export const MAX_LEVEL = 125;
@@ -100,24 +101,34 @@ function applyPersonal(upgrades: any, thing: any, previous: any): any {
     classes[thing._CLASSID_] = view;
   }
   const beforeAmmo=thing.mAmmo,beforeCapacity=thing.mTotalAmmo,fresh=thing.mWorld===undefined;
+  const previousDraftCapacity=thing.mDraftCapacityBonus??0;
   const value=previous.call(view,thing);
   if(index!==undefined&&state.players[index]!.endless&&thing._CLASSID_.startsWith('CThing_Weapon_')){
     const raw=original?.mOriginalStats;
     if(raw){
       const excess=Math.max(0,level-MAX_LEVEL),damage=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;
-      if(raw.mDamage!==undefined)thing.mDamage=raw.mDamage*damage*(1+.01*excess);
+      const bonus=draftBonuses(upgrades.mWorld,index);
+      if(raw.mDamage!==undefined)thing.mDamage=raw.mDamage*damage*(1+.01*excess)*(1+.08*bonus.damage);
       const infinite=flags?.InfinateAmmo||raw.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
       if(!infinite){
         const base=raw.mTotalAmmo*(flags?.QuadAmmo?4:flags?.DoubleAmmo?2:1);
         const step=Math.max(1,Math.ceil(base*.005));
         const gained=Math.max(0,level-(thing.mEndlessLevel??MAX_LEVEL))*step;
-        const capacity=Math.max(base+step*excess,(beforeCapacity??0)+(fresh?0:gained));
+        const unmodifiedCapacity=Math.max(0,(beforeCapacity??0)-previousDraftCapacity);
+        const capacity=Math.max(base+step*excess,unmodifiedCapacity+(fresh?0:gained));
         if(excess>0){
           if(fresh)thing.mAmmo=capacity;
           else thing.mAmmo=Math.min(capacity,beforeAmmo+(thing.mEndlessLevel===level?0:Math.max(0,capacity-beforeCapacity)));
           thing.mEndlessLevel=level;
         }else if(capacity>thing.mTotalAmmo)thing.mAmmo=Math.max(beforeAmmo,thing.mAmmo);
         thing.mTotalAmmo=capacity;
+        if(upgrades.waveDraft){
+          const extra=Math.floor(capacity*.15*bonus.capacity),total=capacity+extra;
+          thing.mDraftCapacityBonus=extra;thing.mTotalAmmo=total;
+          thing.mAmmo=fresh?total:Math.min(total,Math.max(thing.mAmmo,beforeAmmo+Math.max(0,total-beforeCapacity)));
+        }
+      }else if(upgrades.waveDraft){
+        thing.mDraftCapacityBonus=0;
       }
     }
   }

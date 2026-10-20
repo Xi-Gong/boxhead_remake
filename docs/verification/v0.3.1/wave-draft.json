@@ -1,0 +1,19 @@
+{
+  "scope": "Wave draft feature on codex/feature-v0.3.1-gameplay-art; not full release acceptance",
+  "targetedTests": ["timedWaves", "waveDraft", "endless", "localGrowth", "resume", "survival", "gamepad", "weaponCrate", "persistentEnchantment", "netGrowthHud", "lanBridge"],
+  "testResult": {"filesPassed":11,"testsPassed":158,"workers":1,"fileParallelism":false},
+  "build": "Three TypeScript configurations and production renderer/Electron builds passed. Browser evidence precedes a legacy-only pause caption guard; modern draft rendering and simulation are unchanged by that guard.",
+  "browser": {
+    "build": "main-CbNQiYZv.js",
+    "report": "generated/reports/v031/wave-draft/run-1792465734500/report.json",
+    "viewport": "640x480",
+    "mode": "One installed headless Chrome instance; isolated context; real mouse and keyboard",
+    "review": "Direct screenshot inspection, six-card geometry, text-width checks and 2579 light text pixels; no zai",
+    "resume": {"savedTicks":282,"resumedTicks":281,"offersUnchanged":true,"playerOneStillConfirmed":true},
+    "retainedFailure": "generated/reports/v031/wave-draft/run-1792465584489/report.json: short ArrowDown tap was lost; fixed by consuming the key press latch and regression-tested"
+  },
+  "fixedDuringVerification": ["High-wave weapon normalization refilled saved ammo on the first update", "Local draft ignored key taps shorter than a simulation tick"],
+  "classicCoverage": "Original survival difficulty-start assertion retained through explicit classicWaveDraft fixture; all historical assertions retained",
+  "notRun": ["Physical gamepad", "Multi-instance LAN gameplay", "Full release gates", "Stress/performance benchmarks", "Portable candidate"],
+  "remaining": ["Boss waves", "Reference growth retuning", "Enemy art", "Gun art", "Candidate packaging", "Fresh authorization for heavy gates"]
+}

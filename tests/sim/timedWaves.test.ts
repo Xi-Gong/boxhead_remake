@@ -1,5 +1,7 @@
 import { expect, it } from 'vitest';
-import { createHeadlessGame } from './harness.ts';
+import { createHeadlessGame as boot, type HeadlessGameOptions } from './harness.ts';
+// Timed-only capability fixture: the next stage has independent draft tests.
+const createHeadlessGame=(opts:HeadlessGameOptions={})=>boot({...opts,classicWaveDraft:true});
 import { CMain, Thing } from '../../src/game/packages.ts';
 import { mapSize, waveSeconds, spawnIntervalSeconds, ROOM_DIMENSIONS } from '../../src/game/local/TimedWaveRules.ts';
 import { timedWave, chooseTimedSpawn, clearWaveCombat } from '../../src/game/local/TimedWaves.ts';

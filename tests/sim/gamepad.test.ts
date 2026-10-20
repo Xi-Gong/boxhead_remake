@@ -8,6 +8,7 @@ import { engine } from '../../src/engine/swf/state.ts';
 import { installGamepad } from '../../src/game/local/Gamepad.ts';
 import { CMain } from '../../src/game/packages.ts';
 import { createHeadlessGame, KEYS } from './harness.ts';
+import {beginWaveDraft,waveDraft} from '../../src/game/local/WaveDraft.ts';
 
 interface PadSpec { axes?: number[]; pressed?: number[]; connected?: boolean }
 
@@ -28,6 +29,18 @@ function fakePads() {
 }
 
 describe('gamepad -> game (scope wiring)', () => {
+  it('each pad chooses and confirms its own draft through the existing key slots',()=>{
+    const g=createHeadlessGame({mode:'Coop'}),w=g.world(),pads=fakePads();
+    const gp=installGamepad({player:g.player,provider:pads.provider});
+    try{
+      pads.set(0,{pressed:[0]});gp.poll(false);g.tick(1);beginWaveDraft(w);g.tick(2);
+      expect(waveDraft(w)!.round!.confirmed).toEqual([false,false]);
+      pads.set(0,{pressed:[]});gp.poll(false);g.tick(1);
+      pads.set(0,{pressed:[13]});gp.poll(false);g.tick(1);expect(waveDraft(w)!.round!.selected).toEqual([1,0]);
+      pads.set(0,{pressed:[0]});gp.poll(false);g.tick(1);expect(waveDraft(w)!.round!.confirmed).toEqual([true,false]);
+      pads.set(1,{pressed:[0]});gp.poll(false);g.tick(1);expect(w.mUpgrades.mLevelIndex).toBe(2);
+    }finally{gp.dispose();g.quit();}
+  });
   it('stick and d-pad drive the player through the CInput key slots', () => {
     const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 3, difficulty: 0 });
     const pads = fakePads();

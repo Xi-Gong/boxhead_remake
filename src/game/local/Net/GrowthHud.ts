@@ -6,6 +6,7 @@ import { BODY_FONT, MENU_FONT, INK, RED, text, capsule } from '../UiStyle.ts';
 import { growthOf, MAX_LEVEL, xpRequired, growthAtMaximum, infiniteGrowthWeapon, type GrowthState } from './Growth.ts';
 import { netSession } from './NetSession.ts';
 import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
+import { compactStat, draftBonuses } from '../WaveDraftRules.ts';
 
 export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 172, top: 4 } as const;
 export function growthLayout(width: number): { left: number; right: number; center: number; bottom: number } {
@@ -126,8 +127,11 @@ function pauseGrowth(hud: any, state: GrowthState): void {
     const x=count===1?180:28+i*304,p=state.players[i]!;
     const heading=text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${growthAtMaximum(p)?'MAX':p.xp+'/'+xpRequired(p)+' XP'}`);
     if(heading.textWidth>276){const format=heading.getTextFormat();format.size*=276/heading.textWidth;heading.setTextFormat(format);}
-    if(p.endless){const summary=text(layer,'_GrowthStats'+i,x,122,280,16,BODY_FONT,10,0xcccccc,false,'left',
-      `HP / ARMOR ${200+4*(p.level-1)}  |  GROWTH DMG +${Math.max(0,p.level-125)}%`);
+    if(p.endless){
+      const session=netSession(),bonus=session?session.confirmedWaveDraft?.bonuses[i]:hud.mWorld.mUpgrades.waveDraft?draftBonuses(hud.mWorld,i):undefined,base=200+4*(p.level-1);
+      const caption=bonus?`HP ${compactStat(base*(1+.1*bonus.health))} / SHIELD ${compactStat(base*(1+.1*bonus.armor))} | DMG +${compactStat(((1+.01*Math.max(0,p.level-125))*(1+.08*bonus.damage)-1)*100)}% | AMMO +${compactStat(bonus.capacity*15)}%`
+        :`HP / ARMOR ${base}  |  GROWTH DMG +${Math.max(0,p.level-125)}%`;
+      const summary=text(layer,'_GrowthStats'+i,x,122,280,16,BODY_FONT,10,0xcccccc,false,'left',caption);
       if(summary.textWidth>276){const format=summary.getTextFormat();format.size*=276/summary.textWidth;summary.setTextFormat(format);}
     }
     const groups:Record<string,Record<string,boolean>>={pistol:{}};

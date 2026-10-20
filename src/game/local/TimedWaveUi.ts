@@ -28,7 +28,7 @@ export function installTimedWaveUi():void {
       text(layer,'_Time',0,2,112,22,BODY_FONT,14,0xffffff,true,'center','');
     }
     if(layer){
-      layer._visible=!!state&&!this.mcScreenPause;layer._x=(world.mScreenSize.x-112)/2;layer._y=54;
+      layer._visible=!!state&&state.phase==='combat'&&!this.mcScreenPause;layer._x=(world.mScreenSize.x-112)/2;layer._y=54;
       if(state){layer._Time.text='SURVIVE '+clockLabel(state.remainingTicks,CMain.mFPS);layer._Time.textColor=state.remainingTicks<=CMain.mFPS*30?0xffd28d:0xffffff;}
     }
     return result;

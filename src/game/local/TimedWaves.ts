@@ -9,7 +9,7 @@ import { TIMED_WAVES_RULE, spawnIntervalSeconds, waveSeconds } from './TimedWave
 export interface SpawnWarning { family:'Zombie'|'Devil'; x:number; y:number; ticks:number }
 export interface TimedWaveState {
   rule:typeof TIMED_WAVES_RULE;
-  phase:'combat';
+  phase:'combat'|'draft';
   totalTicks:number; remainingTicks:number;
   zombieTicks:number; devilTicks:number;
   opening:number;
@@ -137,6 +137,10 @@ function drawWarnings(world:any):void {
 /** Install before supply processing; later local/LAN/checkpoint wrappers stay outermost. */
 export function installTimedWaves():void {
   const upgrades=World.CUpgrades.prototype as any,level=upgrades.__set__mLevel,process=upgrades.Process;
+  upgrades.AdvanceTimedWave=function(this:any):void{
+    clearWaveCombat(this.mWorld);this.__set__mLevel(this.mLevelIndex+1);CSound.mSamples.Click.PlaySound();
+  };
+  upgrades.FinishTimedWave=function(this:any):void{this.AdvanceTimedWave();};
   upgrades.__set__mLevel=function(this:any,wave:any):any{
     const result=level.call(this,wave);if(timedWavesConfigured())resetTimedWave(this.mWorld,this);return result;
   };
@@ -153,7 +157,7 @@ export function installTimedWaves():void {
     if(!world.mLoaded||world.mCompleteState||!livingWavePlayers(world).length)return;
     this.mTick++;
     if(--state.remainingTicks<=0){
-      clearWaveCombat(world);this.__set__mLevel(this.mLevelIndex+1);CSound.mSamples.Click.PlaySound();return;
+      this.FinishTimedWave();return;
     }
     processWarnings(world);
     const difficulty=difficultyIndex(netSession()?.startOpts?.cfg.difficulty??CMain.mSaveData.__get__mDifficulty());

@@ -14,6 +14,16 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'WAVE_DRAFT',
+    file:'local/WaveDraft.ts, WaveDraftRules.ts, WaveDraftInput.ts, WaveDraftUi.ts; local/Net/Growth.ts, NetSession.ts; local/Resume.ts',
+    description:'v0.3.1 optional wave-draft-v1 requires timed waves. Between waves, combat and supplies freeze '+
+      'while tick inputs select one of three seeded rewards per player. All confirmations advance immediately; '+
+      'the 12-second deadline uses the visible firepower default. Held battle fire cannot confirm the draft. '+
+      'Choices reuse the existing seven input bits; cumulative additive bonuses and reward deduplication live '+
+      'in the snapshot graph and optional v2 saves. Selected waves receive an evenly distributed baseline build '+
+      'without assumed Boss bonuses or per-wave replay. Migration preserves current health, shield and ammunition.',
+  },
+  {
     id:'TIMED_WAVES',
     file:'local/TimedWaves.ts, TimedWaveRules.ts, Resume.ts; local/Net/protocol.ts, bridge.ts',
     description:'v0.3.1 optional timed-waves-v1 replaces finite enemy budgets with map-sized simulation timers '+

@@ -28,6 +28,8 @@ import { LOOT_RULE, modernLoot, type SupplyState } from './LootRules.ts';
 import { ENDLESS_RULE } from './EndlessRules.ts';
 import { endlessWorld } from './Endless.ts';
 import { timedWave, copyTimedWave, type TimedWaveState } from './TimedWaves.ts';
+import { waveDraft } from './WaveDraft.ts';
+import { copyWaveDraft, newWaveDraft, type WaveDraftState } from './WaveDraftRules.ts';
 import {VARIANTS_RULE,captureVariants,restoreVariants,variantsWorld,type VariantSave} from './EnemyVariants.ts';
 import {ENCHANTMENT_RULE,persistentEnchantment,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
 
@@ -41,6 +43,7 @@ export interface WeaponState {
   /** Undefined while the weapon was never picked up (no mThing). */
   ammo?: number;
   totalAmmo?: number;
+  draftCapacityBonus?: number;
   enchantedAmmo?: number;
   enchanted?: true;
 }
@@ -86,6 +89,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  waveDraft?: WaveDraftState;
   timedWave?: TimedWaveState;
   enchantment?: typeof ENCHANTMENT_RULE;
   variants?: VariantSave;
@@ -185,6 +189,7 @@ function capturePlayer(p: any): PlayerState {
       active: !!w.mActive,
       ammo: w.mThing != undefined ? w.mThing.mAmmo : undefined,
       totalAmmo: w.mThing != undefined ? w.mThing.mTotalAmmo : undefined,
+      ...(w.mThing?.mDraftCapacityBonus!==undefined?{draftCapacityBonus:w.mThing.mDraftCapacityBonus}:{}),
       ...captureEnchantment(w.mThing),
     };
   }
@@ -253,6 +258,7 @@ export function capture(world: any): RunSnapshot {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
     ...(endlessWorld(world)?{endless:ENDLESS_RULE}:{}),
     ...(timedWave(world)?{timedWave:copyTimedWave(world)}:{}),
+    ...(waveDraft(world)?{waveDraft:copyWaveDraft(waveDraft(world))}:{}),
     ...(variantsWorld(world)?{variants:captureVariants(world)}:{}),
     ...(persistentEnchantment(world)?{enchantment:ENCHANTMENT_RULE}:{}),
     ...(survivalEnabled(world) ? { survival: SURVIVAL_RULE } : {}),
@@ -326,6 +332,7 @@ function applyPlayer(world: any, s: PlayerState): void {
     if (world.mUpgrades.lanGrowth && entry.mThing) world.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
     if (ws.ammo != undefined && entry.mThing != undefined) entry.mThing.mAmmo = ws.ammo;
     if (ws.totalAmmo != undefined && entry.mThing != undefined) entry.mThing.mTotalAmmo = ws.totalAmmo;
+    if(waveDraft(world)&&entry.mThing)entry.mThing.mDraftCapacityBonus=ws.draftCapacityBonus??0;
     if(entry.mThing)restoreEnchantment(entry.mThing,ws);
   }
   if (s.currentWeapon != undefined) {
@@ -429,6 +436,8 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if(snap.variants?.rule===VARIANTS_RULE&&!variantsWorld(world))return false;
   if(snap.enchantment===ENCHANTMENT_RULE&&!persistentEnchantment(world))return false;
   if(snap.timedWave&&!timedWave(world))return false;
+  if(snap.waveDraft&&!waveDraft(world))return false;
+  if(snap.timedWave?.phase==='draft'&&!snap.waveDraft?.round)return false;
   const u = world.mUpgrades;
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);
@@ -441,6 +450,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     // every crossed wave's upgrade table entries and resets the live spawn counters.
     if(endlessWorld(world))u.__set__mLevel(snap.wave);
     else while (u.mLevelIndex < snap.wave) u.__set__mLevel(u.mLevelIndex + 1);
+    if(waveDraft(world))u.waveDraft=copyWaveDraft(snap.waveDraft)??newWaveDraft(snap.wave);
     // Multiplier: climb step by step so tier upgrades activate at every crossed index (the LogKills path); a single
     // call would only activate the tiers of the final index. Decay below the built value is a plain set.
     if (snap.growth) u.mMultiplierIndex = snap.multiplierIndex;
@@ -481,6 +491,12 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
       hud.mPlayer2_Deaths = snap.deaths[1];
     }
     initializeLocalGrowth(world, true);
+    if(waveDraft(world)){
+      for(const p of Object.values(world.mThing_Collection.mPlayerThings) as any[])for(const entry of p.mWeaponList??[]){
+        if(!entry.mActive||!entry.mThing)continue;
+        const ammo=entry.mThing.mAmmo;u.ApplyUpgrade_Weapon(entry.mThing);entry.mThing.mAmmo=ammo;
+      }
+    }
     settleVitals(world, true);
     setRandomState(snap.rngState);
     world.mTick = snap.tick;
