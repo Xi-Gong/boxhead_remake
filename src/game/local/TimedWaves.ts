@@ -142,6 +142,13 @@ function drawWarnings(world:any):void {
 }
 /** Install before supply processing; later local/LAN/checkpoint wrappers stay outermost. */
 export function installTimedWaves():void {
+  // Authored entrance spawns join mapwho only on their first movement. A nearby timed arrival can cast
+  // immediately, so register it once initialization completes instead of leaving a stationary caster invisible.
+  for(const ctor of [Thing.Creature.CThing_Creature_Zombie,Thing.Creature.CThing_Creature_Devil]){
+    const p=ctor.prototype as any,init=p.Process_Init;p.Process_Init=function(this:any):any{
+      const result=init.call(this);if(timedWave(this.mWorld))this.mMapwho.MoveThing(this);return result;
+    };
+  }
   const upgrades=World.CUpgrades.prototype as any,level=upgrades.__set__mLevel,process=upgrades.Process;
   upgrades.AdvanceTimedWave=function(this:any):void{
     clearWaveCombat(this.mWorld);this.__set__mLevel(this.mLevelIndex+1);CSound.mSamples.Click.PlaySound();

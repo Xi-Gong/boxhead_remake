@@ -8,6 +8,19 @@ import { timedWave, chooseTimedSpawn, clearWaveCombat } from '../../src/game/loc
 import { capture, applyToWorld } from '../../src/game/local/Resume.ts';
 import { captureWorldSnap, restoreWorldSnap, makeSnapCtx } from '../../src/game/local/Net/WorldSnap.ts';
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
+import {beginEmberCast} from '../../src/game/local/EnemyVariants.ts';
+
+it('registers a newly arrived priest before its first stationary cast, while retaining classic entry behavior',()=>{
+ for(const classicTimedWaves of [false,true]){
+  const game=createHeadlessGame({classicTimedWaves}),w=game.world(),p=game.players()[0];
+  p.Move(new Thing.Math.CThing_Position(10.5,8.5,0));
+  const e:any=new Thing.Creature.CThing_Creature_Devil(new Thing.Math.CThing_Position(10.5,12.5,0));e.mEnemyVariant='priest';w.mThing_Collection.AddThing(e);e.Process_Init();
+  expect(beginEmberCast(e)).toBe(true);
+  if(classicTimedWaves)expect(e.mCellID).toBeUndefined();
+  else{expect(e.mCellID).toEqual(w.mMap.mCells[12][10].mID);expect(w.mMap.mCells[12][10].mObjects[e.sUniqueID]).toBe(e);}
+  game.quit();
+ }
+});
 
 it('classifies size boundaries and assigns ordinary/Boss limits for all 18 actual maps',()=>{
   expect([mapSize(40,20),mapSize(40,21),mapSize(41,17),mapSize(50,40),mapSize(50,41),mapSize(64,10)])

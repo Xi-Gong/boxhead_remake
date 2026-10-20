@@ -1,0 +1,9 @@
+{
+  "feature": "register timed arrivals before their first stationary cast",
+  "reproduction": {"test":"registers a newly arrived priest before its first stationary cast, while retaining classic entry behavior","before":"Expected cell Point {x:10,y:12}; received undefined after successful first cast. Test failed before the change.","after":"Timed initialization registers the same entity in mapwho; classic fixture still defers until movement."},
+  "tests":{"passed":62,"files":5,"workers":1,"suites":["timedWaves","enemyVariants","bossWaves","waveDraft","variantArt"]},
+  "typechecks":["tsconfig.json","config/tsconfig.strict.json","config/tsconfig.tools.json"],
+  "build":"main-CziR791U.js",
+  "browser":{"final":"generated/reports/v031/timed-arrival/run-1792469596866/report.json","initialFailure":"generated/reports/v031/timed-arrival/run-1792469561909/report.json","correction":"Priest casts use mStateID, not the charger's mVariantPhase; the corrected fixture keeps the registration and first-frame assertions.","mode":"single headless Chrome, 640x480, real menu clicks and pause key","review":"direct first-cast screenshot plus model-area pixel count, without an extra enemy Move call or zai"},
+  "scope":"Only timed PvE initialization; no mechanical port edits, classic/legacy entry behavior preserved. Full release gates remain pending."
+}

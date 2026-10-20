@@ -14,6 +14,14 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'TIMED_ARRIVAL_VISIBILITY',
+    file:'local/TimedWaves.ts',
+    description:'Timed PvE registers initialized enemies in mapwho before their first movement. '+
+      'The original entrance-only path defers registration until movement; a nearby priest could '+
+      'therefore start a stationary cast while still invisible. Classic/legacy entry behavior remains '+
+      'unchanged, and the existing mapwho operation preserves insertion-order and snapshot semantics.',
+  },
+  {
     id:'ENEMY_BOSS_ART',
     file:'local/VariantArt.ts, EnemyVariants.ts',
     description:'v0.3.1 derives separate ordinary/Boss armor, bracers, crowns, bone spines and furnace '+
