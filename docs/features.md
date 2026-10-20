@@ -58,21 +58,25 @@ Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchan
   starting or switching; Enter/blur commits, Escape restores the last valid value. Each visit starts at wave 1,
   and typing never unlocks waves. The LAN host edits against their own save cap; the guest sees a readonly value.
 - **Personal PvE progression** — solo, local co-op and LAN share last-hit scores, permanent levels and weapon upgrades
-  for each player. Zombies award 1 XP and devils 5 XP; level requirements begin at 5 XP and rise by 5 every ten
-  levels, with no modern PvE level cap. The original weapon unlock table remains at levels 1–125. Top corner
-  score/level/XP panels flank the current wave and its live zombie/devil counts (legacy rules include pending spawn totals),
-  with individual upgrade summaries while paused. Retry restores the current wave's starting growth and
+  for each player. Zombies award 1 XP and devils 5 XP. New runs use basic level costs of 2–5 XP through level 10,
+  6–15 XP through level 30, then 20 XP plus 3 per further level. Existing runs retain their saved curve.
+  The original weapon unlock table remains at levels 1–125, with no modern PvE level cap. Top corner
+  score/level/XP panels flank WAVE and its clock. Ordinary-wave counts include the unspawned objective;
+  Bosses count under DEVIL. There are individual upgrade summaries while paused.
+  Retry restores the current wave's starting growth and
   inventory; a fresh selected-wave run grants its baseline level from the same earned-wave curve, respecting
   the difficulty head start. Kill scores use the level before that kill's upgrade. Local co-op keeps its shared
   camera and controls; death match retains its rules. Old v2 local saves convert once while preserving total
   score, current health/armor, weapons and ammo; co-op splits old score equally, with any odd point going to P1.
-- **Growing survivability** — before run-upgrade bonuses, health and armor caps are both `200 + 4 × (level − 1)` (200/396/696 at levels
-  1/50/125). A living level-up adds only the health-cap difference; armor does not refill. Enemy melee and
+- **Growing survivability** — new-run health and armor caps start at 200; levels 2–10 add 4 each,
+  11–30 add 6, and 31 onward add 10, before run-upgrade bonuses. Existing saved curves retain
+  `200 + 4 × (level − 1)`. A living level-up adds only the health-cap difference; armor does not refill. Enemy melee and
   fireballs do not interrupt or knock back a player who had armor before the hit, even if that hit breaks it.
   Damage still spills into health, and lethal hits still kill. Co-op respawn keeps level, fills health and
   clears armor; natural health regeneration is unchanged.
-- **Endless weapon growth** — beyond 125, each level adds 1% of weapon damage at level 125 and
-  `max(1, ceil(capacity at level 125 × 0.005))` finite ammo capacity. Only the added capacity is supplied;
+- **Endless weapon growth** — new runs add 1% weapon damage and 0.5% finite capacity per level at 11–30,
+  then 2% and 1% per level from 31 onward. Existing saved curves retain their post-125 growth of 1% damage and
+  `max(1, ceil(capacity at level 125 × 0.005))` finite ammo per level. Only the added capacity is supplied;
   inherited higher capacity remains valid. Saves restore current supplies without a bonus refill.
 - **Four PvE difficulty curves** — Single and co-op retain Beginner, Intermediate, Expert and Nightmare pacing,
   active caps and speed ceilings. Modern timed waves replenish continuously; legacy finite-wave budgets stop at 200 zombies and 10 devils, including variants.
