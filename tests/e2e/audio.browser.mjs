@@ -55,7 +55,7 @@ async function openRouted(routes, fault) {
     const connect=AudioNode.prototype.connect;
     AudioNode.prototype.connect=function(...args){
       const result=connect.apply(this,args);
-      if(args[0]===this.context.destination){const a=this.context.createAnalyser();a.fftSize=2048;connect.call(this,a);q.analyser=a;}
+      if(args[0]===this.context.destination){const a=this.context.createAnalyser();a.fftSize=2048;connect.call(this,a);q.analyser=a;(q.analysers??=[]).push(a);}
       return result;
     };
   },fault);
@@ -168,12 +168,15 @@ await runGroup('kill', async () => {
 
 async function signal(g){
   return g.eval(async()=>{
+    // Start and observe in the same browser task; an IPC gap can miss the short pistol transient.
+    const sample=window.__game.pkg.CSound.mSamples.Weapon_Pistol_Fire_wav;sample.StopSound();sample.PlaySound();
     let peak=0;const samples=new Float32Array(2048);
     for(let n=0;n<40;n++){
       window.__audioFault.analyser?.getFloatTimeDomainData(samples);
       for(const x of samples)peak=Math.max(peak,Math.abs(x));
       await new Promise(resolve=>setTimeout(resolve,10));
     }
+    window.__audioFault.observed={peak,contexts:window.__audioFault.contexts.map(c=>({state:c.state,time:c.currentTime})),analysers:window.__audioFault.analysers?.length,audio:window.__game.audio(),sample:{playing:sample.mPlaying,link:sample.mLinkID,volume:sample.oSound.getVolume(),duration:sample.oSound.duration}};
     return peak;
   });
 }
@@ -201,8 +204,9 @@ for(const fault of ['construct','decode','nodes','clock','resume'])await runGrou
     const a=window.__game.audio();return a.state==='running'&&a.decoded===31&&a.failed.length===0&&
       (!['nodes','clock'].includes(fault)||a.recoveries>0);
   },fault,15000));
-  await playPistol(g);const peak=await signal(g);
-  check('actual audio output contains a nonzero waveform',peak>.001,{peak});
+  check('recovered boot reaches the real menu',await g.waitScreen('State_Main','Screen_Main',90000));
+  const peak=await signal(g);
+  check('actual audio output contains a nonzero waveform',peak>.001,await g.eval(()=>window.__audioFault.observed));
   return g;
 });
 
