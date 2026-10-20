@@ -96,6 +96,13 @@ it('rejects Boss saves on an incapable world before mutation and preserves class
  expect(applyToWorld(world,save)).toBe(false);expect(capture(world)).toEqual(before);const normal=timedWave(world)!.totalTicks;
  world.mUpgrades.__set__mLevel(5);expect(timedWave(world)!.boss).toBeUndefined();expect(timedWave(world)!.totalTicks).toBe(normal);old.quit();
 });
+it('hides timed and draft overlays immediately on pause even when the world no longer draws',()=>{
+ const {g,w,e}=encounter();w.mHud.Draw(w.bmDraw);expect(w._BossWaveHud._visible).toBe(true);
+ w.mHud.Pause(true);expect(w._BossWaveHud._visible).toBe(false);expect(w._TimedWaveHud._visible).toBe(false);
+ w.mHud.Pause(false);w.mHud.Draw(w.bmDraw);expect(w._BossWaveHud._visible).toBe(true);
+ e.mLife=0;e.CheckForDead();w.mUpgrades.Process();w.mHud.Draw(w.bmDraw);expect(w._WaveDraftHud._visible).toBe(true);
+ w.mHud.Pause(true);expect(w._WaveDraftHud._visible).toBe(false);g.quit();
+});
 it('keeps LAN Boss HP in confirmed metadata, independent of speculative changes',()=>{
  const g=createHeadlessGame({menuOnly:'Main'}),s=new NetSession(0,{send(){}});
  s.startLocalGame({mode:'Coop',roomLink:'ROOM_Single_0001',seed:17,netcode:'rollback-v2',cfg:{

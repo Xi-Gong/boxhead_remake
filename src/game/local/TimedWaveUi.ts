@@ -19,6 +19,13 @@ export function installTimedWaveUi():void {
     showWaveLimit(this,index,this.mMode!=='DeathMatch'&&timedWavesConfigured());return result;
   };
   const hud=World.CHud.prototype as any,draw=hud.Draw;
+  const pause=hud.Pause;
+  hud.Pause=function(this:any,...args:any[]):any{
+    const result=pause.apply(this,args);
+    // Paused worlds do not call Draw, so visibility must change with the pause transition itself.
+    if(this.mcScreenPause)for(const name of ['_TimedWaveHud','_BossWaveHud','_WaveDraftHud'])if(this.mWorld[name])this.mWorld[name]._visible=false;
+    return result;
+  };
   hud.Draw=function(this:any,...args:any[]):any{
     const result=draw.apply(this,args),world=this.mWorld,session=netSession();
     const state=session?session.confirmedTimedWave:timedWave(world);
