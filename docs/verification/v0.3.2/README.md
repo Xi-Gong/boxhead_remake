@@ -15,7 +15,7 @@ Approved on 2026-10-20. Work stays on `codex/feature-v0.3.1-gameplay-art`; each 
 
 ## Authorization and release boundary
 
-Only lightweight serial targeted checks and short single-instance low-resolution browser/game checks are currently authorized. No multi-instance live LAN, full release gate, rendered stress, performance benchmarks or foreground/focus stealing. The user selected this boundary explicitly. Obtain fresh full-gate authorization after presenting the concrete candidate; publish v0.3.2 and its portable EXE only after required gates pass. No new agents are authorized.
+The user's 2026-10-20 instruction supersedes the initial lightweight-only boundary: run the complete streamlined release gates, fix failures, then publish v0.3.2 and its portable EXE. Coverage is recorded in [release-gates.md](release-gates.md). Games remain serial, hidden and low-resolution except the one isolated functional LAN pair. No performance/stress matrix, foreground windows or subagents are authorized. Earlier evidence retains its actual limited scope.
 
 ## Completed items
 
