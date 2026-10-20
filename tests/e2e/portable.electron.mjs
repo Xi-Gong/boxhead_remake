@@ -9,6 +9,7 @@ import asar from '@electron/asar';
 import { chromium } from 'playwright-core';
 import { Game, toMainMenu } from './lib.mjs';
 import { verifyPersistentEnchantment } from './persistent-enchantment.mjs';
+import { verifyV031Candidate } from './v031-candidate.mjs';
 
 const expected=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
 const root=process.cwd(),out=resolve(process.env.BOXHEAD_QA_OUT??`generated/reports/v${expected.replaceAll('.','')}/portable`);
@@ -42,7 +43,7 @@ try{
  const extractedAsarSha256=createHash('sha256').update(readFileSync(archive)).digest('hex');
  const verifiedRuntimeFiles=[];
  if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
-  assert.equal(extractedAsarSha256,createHash('sha256').update(readFileSync('release/win-unpacked/resources/app.asar')).digest('hex'),'complete portable asar matches the validated unpacked build');
+  assert.equal(extractedAsarSha256,createHash('sha256').update(readFileSync(process.env.BOXHEAD_QA_STAGED_ASAR??'release/win-unpacked/resources/app.asar')).digest('hex'),'complete portable asar matches the validated unpacked build');
   for(const file of [join('dist-electron','main.cjs'),join('dist-electron','preload.cjs'),...readdirSync('dist/bundle').filter(n=>n.endsWith('.js')).map(n=>join('dist','bundle',n))]){
    assert.ok(asar.extractFile(archive,file).equals(readFileSync(file)),'portable contains current built code: '+file);
    verifiedRuntimeFiles.push(file.replaceAll('\\','/'));
@@ -61,6 +62,7 @@ try{
   await g.clickClip('m.mcScreen.mcContinue');assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
   const audio=await g.expr('g.audio()');assert.equal(audio.decoded,31);assert.equal(audio.state,'running');
   if(process.env.BOXHEAD_QA_ENCHANTMENT==='1')await verifyPersistentEnchantment(g,join(out,'enchantment'));
+  if(process.env.BOXHEAD_QA_TIMED==='1')await verifyV031Candidate(g,join(out,'timed-candidate'));
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
  }

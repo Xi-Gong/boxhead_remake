@@ -1,0 +1,38 @@
+# v0.3.1 — Continuous survival, Boss waves and sharper combat
+
+**Release-note draft:** lightweight candidate acceptance has passed. Full release gates and formal publication are pending authorization and successful completion.
+
+## Survive the clock and build your run
+
+- Ordinary waves last **3, 4 or 5 minutes** according to map size. Enemies keep arriving from nearby reachable entrances or warned safe ground, with a fast opening and a stronger final phase.
+- Every fifth wave brings one Boss and **one extra minute**. Defeat it to advance immediately, or survive the time limit for the normal reward. The clock freezes during pause and disconnect holds.
+- Each player chooses one of three upgrades between waves, within **12 seconds**. Firepower, vitality, shield and magazine bonuses accumulate; first aid and resupply restore current resources. Everyone confirming starts the next wave immediately.
+- Killing a Boss doubles each player's one selected reward. Timeout clearing grants no extra kill XP or drops, while map objects, placed equipment and existing supply crates remain.
+
+## Meet the Bone Tyrant and Ember Lord
+
+- The **Bone Tyrant** gains a second independently warned and aimed charge below half health. The **Ember Lord** lays three fire marks and casts more frequently below half health. Ordinary nonfatal hits do not interrupt Boss skills.
+- At most four ordinary zombie reinforcements accompany a Boss. Disabling devils selects the Tyrant for every Boss wave.
+- Bone Chargers and Ember Priests retain their distinct ordinary skills. Refined bone armor, rust bracers, layered crowns, molten seams and the Lord's furnace chest follow the original body animation.
+- Charge warnings reflect the real hit radius and stop at static obstacles. Fire warnings remain visible at LOW detail. Timed arrivals appear before their first stationary spell.
+
+## Clearer guns, bullets and trajectories
+
+- All five held guns have independent refined geometry and material separation: steel pistol, boxy UZI, warm shotgun furniture, olive rocket tube and twin-rail heavy gun.
+- Warm bullet/pellet tracers, cyan rail cores, directional rockets and short matching muzzle effects distinguish ordinary and enchanted fire. Resolved hitscan traces stay aligned with their original muzzle and impact line.
+- Four character skins, original animation sequences and exact gameplay anchors are retained. Art does not change weapon damage, rate, range, spread or collision, and original assets/classic fixtures remain available.
+
+## Also included since stable v0.2.9
+
+- Endless personal growth beyond level 125 and wave selection beyond 100, with bounded high-wave initialization. Timed selected-wave builds now account for map duration and spawn pacing without replaying every previous wave.
+- Purple priest crates enchant the held weapon for **35% extra damage** and additional ordinary-bullet penetration. Supplies, upgrades, switching, saves and recovery crates preserve a nonempty weapon's enchantment; depletion ends it, including after a later refill.
+- Supplies preserve inherited capacities, single-weapon rewards refill the right weapon, and confirmed P1/P2 pickup messages keep stable spacing. Main-menu and conditional LAN controls have clearer layouts.
+- Optional save extensions preserve timers, drafts and Boss state. Old saves migrate once without refilling current health, armor or ammunition. LAN negotiates optional new rules; older peers and death match retain their supported behavior.
+
+Windows portable candidate: **Boxhead 2Play Rooms-0.3.1-portable.exe**. Saves and settings remain in `%USERPROFILE%\.boxhead`.
+
+Targeted simulation/art checks, all three TypeScript configurations, production build, serial Chrome checks and a short actual-portable save/audio/gameplay check passed. This is not the full release gate. No gameplay/LAN performance improvement is claimed.
+
+[Detailed changes and verification (Chinese)](https://github.com/Xi-Gong/boxhead_remake/blob/v0.3.1/PARITY.md)
+
+**Full changelog:** [v0.2.9...v0.3.1](https://github.com/Xi-Gong/boxhead_remake/compare/v0.2.9...v0.3.1)

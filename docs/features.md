@@ -2,6 +2,39 @@
 
 ## Beyond the original
 
+### Timed waves, Bosses and run upgrades
+
+Solo, local co-op and compatible LAN co-op loop indefinitely. Death match retains its rules.
+
+| Map size | Ordinary wave | Every fifth wave: Boss |
+|---|---:|---:|
+| Small: maps 1, 2, 4, 8 | 3 minutes | 4 minutes |
+| Medium: remaining maps | 4 minutes | 5 minutes |
+| Large/long: maps 14–18 | 5 minutes | 6 minutes |
+
+The longest side at least 64 cells or area above 2,000 cells makes a map large; at most 800 cells and longest side at most 40 makes it small. Menus show the time limit. The simulation clock stops on pause/disconnect freezes. Survive the limit to advance; killing the Boss advances immediately. Death on the last tick is still defeat.
+
+Ordinary waves continuously replenish enemies within difficulty/detail concurrency caps, with a quick opening and faster late-wave arrivals. Nearby reachable entrances are preferred; safe ground arrivals warn for 0.8 seconds. Timeouts clear enemies, projectiles and fire damage without kill rewards. Map objects, placed equipment and existing supply crates remain.
+
+Each player gets three choices between waves, with **12 seconds** to confirm. Everyone confirming advances immediately; timeout takes the displayed default **Firepower**. Move/weapon-switch controls select, fire confirms, or click a card. Holding fire from combat does not automatically confirm. Combat, regeneration and supply timers freeze during selection.
+
+| Upgrade | One reward |
+|---|---|
+| Firepower | +8% weapon damage bonus |
+| Vitality | +10% maximum-health bonus; living players receive the added capacity |
+| Shield | +10% maximum-armor bonus; no instant refill |
+| Magazine | +15% finite-ammo capacity bonus; receive the added capacity |
+| First aid | Restore 35% maximum health |
+| Resupply | Restore 35% maximum capacity for owned weapons |
+
+Bonuses accumulate within the run and survive saves, retries and respawns. New runs reset them. Firepower is always offered; two distinct seeded alternatives exclude useless heals/refills. Selected high waves distribute the four permanent bonuses evenly and derive baseline XP from map duration and spawn pacing without replaying earlier waves or assuming Boss rewards.
+
+**Bone Tyrant / Ember Lord** alternate every five waves, with at most four ordinary zombie reinforcements. Disabling devils always selects the Tyrant. Below half health, the Tyrant performs two independently warned/aimed charges; the Lord's three-mark spell speeds up from eight to six seconds. Ordinary nonfatal hits do not interrupt Boss skills. A Boss kill doubles each player's one chosen reward; surviving the time limit gives the normal reward.
+
+Optional v2 extensions retain remaining time, choices, bonuses and Boss HP/skills. Old saves convert once, preserving score, equipment, current health/armor/ammo and crates while restarting the current wave timer and supplying the basic build without free refills. Later continues retain time/offers. LAN negotiates timed-waves-v1, wave-draft-v1 and boss-waves-v1 with dependencies; incompatible peers keep their prior rules and cannot load a newer-rule save.
+
+Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchanted tracers, rockets and muzzle effects are clearer; variant/Boss armor follows the original body animation. Classic assets remain available for reference, and art adds no protocol fields.
+
 <p align="center"><img src="../assets/readme/coop-crate.png" alt="Coop death weapon crate" width="640"></p>
 
 - **Save & resume** — pause-menu **SAVE & QUIT**, main-menu **CONTINUE**; death **RETRY** restores the failed
@@ -25,13 +58,13 @@
 - **Personal PvE progression** — solo, local co-op and LAN share last-hit scores, permanent levels and weapon upgrades
   for each player. Zombies award 1 XP and devils 5 XP; level requirements begin at 5 XP and rise by 5 every ten
   levels, with no modern PvE level cap. The original weapon unlock table remains at levels 1–125. Top corner
-  score/level/XP panels flank the current wave and its remaining zombie/devil totals (including pending spawns),
+  score/level/XP panels flank the current wave and its live zombie/devil counts (legacy rules include pending spawn totals),
   with individual upgrade summaries while paused. Retry restores the current wave's starting growth and
   inventory; a fresh selected-wave run grants its baseline level from the same earned-wave curve, respecting
   the difficulty head start. Kill scores use the level before that kill's upgrade. Local co-op keeps its shared
   camera and controls; death match retains its rules. Old v2 local saves convert once while preserving total
   score, current health/armor, weapons and ammo; co-op splits old score equally, with any odd point going to P1.
-- **Growing survivability** — health and armor caps are both `200 + 4 × (level − 1)` (200/396/696 at levels
+- **Growing survivability** — before run-upgrade bonuses, health and armor caps are both `200 + 4 × (level − 1)` (200/396/696 at levels
   1/50/125). A living level-up adds only the health-cap difference; armor does not refill. Enemy melee and
   fireballs do not interrupt or knock back a player who had armor before the hit, even if that hit breaks it.
   Damage still spills into health, and lethal hits still kill. Co-op respawn keeps level, fills health and
@@ -40,7 +73,7 @@
   `max(1, ceil(capacity at level 125 × 0.005))` finite ammo capacity. Only the added capacity is supplied;
   inherited higher capacity remains valid. Saves restore current supplies without a bonus refill.
 - **Four PvE difficulty curves** — Single and co-op retain Beginner, Intermediate, Expert and Nightmare pacing,
-  active caps and speed ceilings. Wave budgets stop at 200 zombies and 10 devils, including variants.
+  active caps and speed ceilings. Modern timed waves replenish continuously; legacy finite-wave budgets stop at 200 zombies and 10 devils, including variants.
   Enemy health/damage continue scaling from the earned-wave reference level. LAN enables new rules after negotiation.
   See the [balance audit and explosion measurements](verification/v0.2.8/README.md).
 - **Bone Charger and Ember Priest** — deterministic subtype slots start at waves 8/20, with at most four

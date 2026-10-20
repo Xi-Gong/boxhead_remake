@@ -17,7 +17,7 @@ gamepads and LAN multiplayer. Intentional additions are documented in [PARITY.md
 ## Quick Start
 
 **Windows portable:** download the single-file exe from [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest).
-For the current release candidate, use [v0.3.0-rc2](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.0-rc2). The latest stable release is v0.2.9.
+This branch prepares **v0.3.1**; [candidate verification](docs/verification/v0.3.1/README.md) is separate from the full release gates. The latest published prerelease is [v0.3.0-rc2](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.0-rc2), and the latest stable release is v0.2.9.
 Saves and settings live in `%USERPROFILE%\.boxhead`.
 
 **Run from source:**
@@ -48,16 +48,19 @@ Gamepads work throughout (stick to move, RT/A to shoot, START to pause); keys ar
 
 - **Save, resume & retry** — continue a saved run, retry the failed wave, or select a previously reached wave.
 - **LAN co-op & death match** — discover rooms or join by IP in the desktop app, with rollback and reconnect support.
-- **Endless PvE growth** — continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Enemy strength keeps rising while wave budgets stay bounded; wave selection follows your best progress beyond wave 100.
+- **Timed, endless PvE** — survive 3/4/5-minute waves on small/medium/large maps with continuous nearby reinforcements. Every fifth wave has a Boss and one extra minute; defeating it ends the wave immediately.
+- **Build between waves** — each player chooses one of three upgrades within 12 seconds. Boss kills double that wave's reward. Damage, health, armor and ammunition bonuses accumulate through the run.
+- **Endless PvE growth** — continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Wave selection follows your best progress beyond wave 100 and grants a map-duration-based starting build.
 - **Two enemy variants** — Bone Chargers telegraph a locked-direction rush; Ember Priests mark the ground with delayed flames. Both have distinct modeled parts and animated skill poses.
 - **Purple enchantment crates** — priests have a 30% purple-drop chance. Enchant your held weapon for +35% damage and two extra bullet penetrations. Refills, upgrades and weapon switching retain the enchantment until ammunition runs out; later refills do not restore a depleted enchantment. Enchanted ammo text stays purple.
 - **More supplies** — devils drop equally likely blue armor, olive ammo or green medical crates, which remain until needed. Random red boxes replenish the floor during play.
 - **Comfort and setup** — type an unlocked starting wave directly, change LAN room rules as host, and enjoy softer explosion flashes and automatic audio recovery.
-- **Four survival difficulties** — tuned pacing, concurrency and speed ceilings, with increasingly strong enemies and at most 200 zombies and 10 devils per wave.
+- **Four survival difficulties** — tuned pacing, concurrency and speed ceilings, with increasingly strong enemies. Modern timed waves have no total kill quota; older peers retain their supported wave rules.
+- **Clearer combat art** — five refined gun models, warm bullet tracers, cyan rail beams, directional rockets and matching enchanted effects. Chargers, priests and both Bosses have distinct armor, crowns and skill poses.
 - **Reliable supplies and clearer UI** — refills preserve inherited weapon capacity; confirmed P1/P2 pickup messages remain evenly spaced, and conditional lobby actions have room to breathe.
 - **Co-op weapon crates** — fallen players drop their arsenal and remaining ammunition for recovery.
 
-[Feature details](docs/features.md) · [v0.3.0-rc2 targeted verification](docs/verification/v0.3.0-rc2/README.md) · [rc1 original-build verification](docs/verification/v0.3.0/README.md)
+[Feature details](docs/features.md) · [v0.3.1 candidate verification](docs/verification/v0.3.1/README.md) · [v0.3.0-rc2 verification](docs/verification/v0.3.0-rc2/README.md)
 
 <p align="center"><img src="assets/readme/coop-crate.png" alt="Co-op weapon recovery" width="640"></p>
 

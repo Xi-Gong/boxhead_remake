@@ -1,0 +1,29 @@
+{
+  "status":"candidate-not-published",
+  "version":"0.3.1",
+  "branch":"codex/feature-v0.3.1-gameplay-art",
+  "baselineStable":"v0.2.9",
+  "exe":"release/Boxhead 2Play Rooms-0.3.1-portable.exe",
+  "exeBytes":101655893,
+  "exeSHA256":"48677da3a150c7fbb8e886bbda9517e8d9432381708c187977cea92102feedd2",
+  "asarSHA256":"f3588c743a35fa060be56567968d7eae22260c037738c979e8393a7e511c3da2",
+  "renderer":"main-CziR791U.js",
+  "build":"generated/reports/v031/candidate/build.log",
+  "packaging":"generated/reports/v031/candidate/package.log",
+  "inspection":"generated/reports/v031/candidate/artifact.json",
+  "output":"C:/Users/royxg/boxhead-build/v031-candidate",
+  "staged":"release/v031-candidate/win-unpacked",
+  "portable":{
+    "launch":"generated/reports/v031/portable-candidate/run-1792470005101/launch-0.3.1.json",
+    "scenario":"generated/reports/v031/portable-candidate/run-1792470005101/timed-candidate/report.json",
+    "log":"generated/reports/v031/portable-candidate/run-1792470005101/portable.log",
+    "mode":"one hidden actual portable instance, 640x480, isolated save directory, unique CDP port",
+    "checks":["embedded version", "entire extracted asar equals staged archive", "current built runtime files", "startup and real input", "save/continue", "31 decoded sounds and running audio", "ordinary timeout/draft click", "wave-two timer 5999 and damage bonus 1 preserved", "medium-map Boss duration 7500 ticks and HP 6000", "new gun/Boss resource identity", "exactly doubled chosen reward"],
+    "review":"draft.png, boss.png and final-portable.png directly reviewed",
+    "ok":true
+  },
+  "typechecks":["tsconfig.json","config/tsconfig.strict.json","config/tsconfig.tools.json"],
+  "audit":{"modules":541,"portedModules":117,"changedPorts":[]},
+  "inspectionCorrection":"Windows asar extraction needs native archive child paths. The initial slash-separated inspector failed; native-path extraction verified the files against disk.",
+  "pending":"Fresh authorization for full release gates; no final tag or GitHub Release yet. No multi-instance performance/stress or foreground tests performed."
+}
