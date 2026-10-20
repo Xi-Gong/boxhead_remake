@@ -2,6 +2,7 @@
 import {CMain,CSound,Thing,World} from '../packages.ts';
 import {netSession} from './Net/NetSession.ts';
 import {worldEnemyGrowth} from './Endless.ts';
+import {combatWorld} from './CombatRules.ts';
 import {variantsWorld,variantSight,emberZones} from './EnemyVariants.ts';
 import {attemptTimedSpawn,bossMembers,livingWavePlayers,reachableSpawnCells,roomForTimedSpawn,timedSpawnRole,timedWave,timedWavesConfigured,type BossWaveState} from './TimedWaves.ts';
 
@@ -92,8 +93,8 @@ export function installBossWaves():void{
     }
     if(--boss.reinforcementTicks<=0){
       const adds=(Object.values(w.mThing_Collection.mThings)as any[]).filter(e=>e._CLASSID_==='CThing_Creature_Zombie'&&!e.mBossKind&&e.Process&&!e.lanKillLogged&&!(e.mFlags&Thing.CThing.mFlag_DEAD)).length;
-      if((!boss.members||adds+state.warnings.filter(s=>s.role==='reinforcement').length<4)&&roomForTimedSpawn(w,'Zombie'))attemptTimedSpawn(w,'Zombie','reinforcement');
-      boss.reinforcementTicks=ticks(2);
+      if((!boss.members||adds+state.warnings.filter(s=>s.role==='reinforcement').length<(combatWorld(w)?1:4))&&roomForTimedSpawn(w,'Zombie'))attemptTimedSpawn(w,'Zombie','reinforcement');
+      boss.reinforcementTicks=ticks(combatWorld(w)?3:2);
     }
   };
   upgrades.Process=function(this:any):any{

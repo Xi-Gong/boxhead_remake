@@ -19,6 +19,14 @@ Only lightweight serial targeted checks and short single-instance low-resolution
 
 ## Completed items
 
+### Population, authored entrances and map deadlines
+
+Production real menu click/move/fire passed in `generated/reports/v032/combat-pacing-1792506966835`; menu and combat screenshots directly reviewed. Initial first-map objective 60 and cap 4, 2000 ticks, zero ground warnings. This short functional play does not establish final enemy balance, which remains pending.
+
+Modern zombie objectives/caps are floored 40% of the original v0.3.1 values, including LOW's 40-enemy limit (now at most 16); Nightmare HIGH tops at 22. Full-map BFS selects reachable original entrances, cycles similarly close exits, waits when blocked/too near and never falls back to ground. Nine-second arrival periods alternate with three-second recovery gaps; Boss ordinary adds cap at one with 3s checks. Distant cell movement accelerates toward the active area, smoothly returning to combat speed near the player.
+
+The 18 primary-start path/area profiles produce 80/85/90/90/85/95/85/90/95/105/95/100/100/95/105/105/105/105 seconds, Boss +30. Profile metrics and entrance cursor persist; reference growth uses reduced objectives and bounded sums. Seven related suites passed 71 tests, encounter set 33 and post-fix affected set 13; classic deadline/fallback assertions remain explicit. First profile test exposed early caching of empty geometry; production browser then exposed the constructor's pre-marker initial deadline. Refresh now runs at loading completion before resume/growth. Failed browser evidence remains; no pass was inferred from headless-only results. Final typechecks/build `main-41p_ietm.js` passed.
+
 ### Consecutive draft taps
 
 Current production browser keyboard/pad mapping and both-player ready flow passed in `generated/reports/v032/draft-input-1792506455083`; `p2-choice.png` directly reviewed. Real two-peer transport remains pending.

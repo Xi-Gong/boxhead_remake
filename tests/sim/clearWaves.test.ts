@@ -11,7 +11,7 @@ import {Thing} from '../../src/game/packages.ts';
 
 it('sets finite map-sized objectives on every ordinary map, scaling cooperation without changing deadlines',()=>{
  for(let room=1;room<=18;room++){
-  const g=createHeadlessGame({room}),w=g.world(),s=timedWave(w)!,c=s.clear!;
+  const g=createHeadlessGame({room,classicCombat:true}),w=g.world(),s=timedWave(w)!,c=s.clear!;
   expect(c).toMatchObject({...clearWaveBudget(1,s.totalTicks/25,0,true,1),emittedZombies:0,killedZombies:0});
   expect(remainingEnemies(w)).toEqual({zombies:c.zombies,devils:0});expect(c.zombies).toBeGreaterThan(100);
   w.mUpgrades.__set__mLevel(5);expect(timedWave(w)!.clear).toBeUndefined();expect(timedWave(w)!.boss).toBeDefined();g.quit();
@@ -20,7 +20,7 @@ it('sets finite map-sized objectives on every ordinary map, scaling cooperation 
  expect(coop.zombies).toBeGreaterThan(solo.zombies);expect(coop.zombies).toBeLessThan(2*solo.zombies);
 });
 it('reserves pending arrivals and stops at the exact family budget without banking excess spawns',()=>{
- const g=createHeadlessGame({room:18}),w=g.world(),s=timedWave(w)!,c=s.clear!;w.mSpawnPoint_Zombie=[];c.zombies=1;
+ const g=createHeadlessGame({room:18,classicCombat:true}),w=g.world(),s=timedWave(w)!,c=s.clear!;w.mSpawnPoint_Zombie=[];c.zombies=1;
  expect(attemptTimedSpawn(w,'Zombie')).toBe(true);expect(s.warnings).toHaveLength(1);expect(roomForTimedSpawn(w,'Zombie')).toBe(false);
  expect(attemptTimedSpawn(w,'Zombie')).toBe(false);s.warnings[0]!.ticks=1;w.mUpgrades.Process();
  expect(c.emittedZombies).toBe(1);expect(s.warnings).toHaveLength(0);

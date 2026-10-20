@@ -3,13 +3,13 @@ import {balancedWave} from './BalanceRules.ts';
 import {growthFromExperience} from './EndlessRules.ts';
 import {spawnIntervalSeconds} from './TimedWaveRules.ts';
 import {tieredGrowthFromExperience} from './TieredGrowthRules.ts';
-import {clearWaveBudget} from './ClearWaveRules.ts';
-export interface TimedGrowthConfig {seconds:number;difficulty:number;devils:boolean;players:number;bosses:boolean;tiered?:boolean;clearable?:boolean}
+import {clearWaveBudget,combatWaveBudget} from './ClearWaveRules.ts';
+export interface TimedGrowthConfig {seconds:number;difficulty:number;devils:boolean;players:number;bosses:boolean;tiered?:boolean;clearable?:boolean;combat?:boolean;combatSeconds?:number}
 /** Reference assumes survival through Boss time, without awarding an assumed Boss kill or doubled perk. */
 export function timedWaveExperience(wave:number,config:TimedGrowthConfig):number{
   const {seconds,difficulty,devils,bosses}=config;
-  if(bosses&&wave%5===0)return Math.floor((seconds+60)/2);
-  if(config.clearable){const b=clearWaveBudget(wave,seconds,difficulty,devils,config.players);return b.zombies+5*b.devils;}
+  if(bosses&&wave%5===0)return Math.floor(config.combat?((config.combatSeconds??90)+30)/3:(seconds+60)/2);
+  if(config.clearable){const b=(config.combat?combatWaveBudget:clearWaveBudget)(wave,seconds,difficulty,devils,config.players);return b.zombies+5*b.devils;}
   let zombies=3;
   for(const [fraction,progress] of [[.2,0],[.5,.2],[.3,.7]]){
     const interval=Math.ceil(25*spawnIntervalSeconds(difficulty,wave,progress!));

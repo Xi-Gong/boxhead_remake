@@ -6,6 +6,8 @@ import { difficultyIndex } from './BalanceRules.ts';
 import { netSession } from './Net/NetSession.ts';
 import { TIMED_WAVES_RULE, spawnIntervalSeconds, waveSeconds } from './TimedWaveRules.ts';
 import {CLEAR_WAVES_RULE,clearWaveKeys,type ClearWaveState} from './ClearWaveRules.ts';
+import {combatWorld} from './CombatRules.ts';
+import {walkDistances} from './CombatPacing.ts';
 
 export type SpawnRole='boss'|'reinforcement';
 export interface SpawnWarning { family:'Zombie'|'Devil'; x:number; y:number; ticks:number; role?:SpawnRole }
@@ -18,6 +20,8 @@ export interface TimedWaveState {
   totalTicks:number; remainingTicks:number;
   zombieTicks:number; devilTicks:number;
   opening:number;
+  entranceCursor?:number;
+  mapPacing?:{area:number;entranceDistance:number;seconds:number};
   warnings:SpawnWarning[];
   boss?:BossWaveState;
   clear?:ClearWaveState;
@@ -34,7 +38,7 @@ export function copyTimedWave(world:any):TimedWaveState|undefined {
   const state=timedWave(world);return state?cloneTimedWave(state):undefined;
 }
 export function cloneTimedWave(state:TimedWaveState):TimedWaveState {
-  return {...state,warnings:state.warnings.map(w=>({...w})),...(state.clear?{clear:{...state.clear}}:{}),...(state.boss?{boss:{...state.boss,...(state.boss.members?{members:state.boss.members.map(m=>({...m}))}:{})}}:{})};
+  return {...state,...(state.mapPacing?{mapPacing:{...state.mapPacing}}:{}),warnings:state.warnings.map(w=>({...w})),...(state.clear?{clear:{...state.clear}}:{}),...(state.boss?{boss:{...state.boss,...(state.boss.members?{members:state.boss.members.map(m=>({...m}))}:{})}}:{})};
 }
 export function resetTimedWave(world:any,upgrades=world.mUpgrades):void {
   const size=world.mMap.mSize,totalTicks=waveSeconds(size.x,size.y)*CMain.mFPS;
@@ -69,6 +73,18 @@ function safeDistance(players:any[],x:number,y:number):boolean {
 }
 export function chooseTimedSpawn(world:any,family:'Zombie'|'Devil'): {point:any;warning:boolean}|undefined {
   const players=livingWavePlayers(world);if(!players.length)return;
+  if(combatWorld(world)){
+    const reachable=walkDistances(world,players.map(p=>p.mPosition));
+    const entrances=(world['mSpawnPoint_'+family]??[]).filter((s:any)=>reachable.has(s.mNextCell)
+      &&!(s.mCell.mCollide&World.Map.CMap_Cell.mCollide_NoSpawn)&&!(s.mNextCell.mCollide&World.Map.CMap_Cell.mCollide_NonMovable)
+      &&safeDistance(players,s.mPosition.mX,s.mPosition.mY));
+    if(!entrances.length)return;
+    // Prefer the active section, while cycling equally useful authored entrances in stable map order.
+    const nearest=Math.min(...entrances.map((s:any)=>reachable.get(s.mNextCell)!));
+    const useful=entrances.filter((s:any)=>reachable.get(s.mNextCell)!<=nearest+10),state=timedWave(world)!;
+    const cursor=state.entranceCursor??0;state.entranceCursor=cursor+1;
+    return {point:useful[cursor%useful.length],warning:false};
+  }
   // Rotate targets by simulation tick; no subtype RNG is added to legacy spawning.
   const target=players[world.mTick%players.length],p=target.mPosition;
   const cells=reachableSpawnCells(world,target),reachable=new Set(cells);
@@ -103,7 +119,7 @@ export function attemptTimedSpawn(world:any,family:'Zombie'|'Devil',role?:SpawnR
   timedWave(world)!.warnings.push({family,x:p.mX,y:p.mY,ticks:Math.ceil(.8*CMain.mFPS),...(role?{role}:{})});return true;
 }
 function cap(world:any,family:'Zombie'|'Devil'):number {
-  return Math.min(world.mUpgrades.Level[family+'_Count']??0,family==='Zombie'?(_root._quality==='LOW'?40:60):Infinity);
+  return Math.min(world.mUpgrades.Level[family+'_Count']??0,family==='Zombie'?(_root._quality==='LOW'?(combatWorld(world)?16:40):60):Infinity);
 }
 export function roomForTimedSpawn(world:any,family:'Zombie'|'Devil'):boolean {
   const state=timedWave(world)!,pending=state.warnings.filter(w=>w.family===family).length,c=state.clear,keys=clearWaveKeys(family);
@@ -189,6 +205,7 @@ export function installTimedWaves():void {
   };
   upgrades.ProcessTimedSpawns=function(this:any):void{
     const world=this.mWorld,state=timedWave(world)!;
+    if(combatWorld(world)&&((state.totalTicks-state.remainingTicks)%(12*CMain.mFPS))>=9*CMain.mFPS)return;
     const difficulty=difficultyIndex(netSession()?.startOpts?.cfg.difficulty??CMain.mSaveData.__get__mDifficulty());
     const team=state.clear&&World.CWorld.mGameMode!=='Single'?1.35:1;
     const interval=Math.ceil(CMain.mFPS*spawnIntervalSeconds(difficulty,this.mLevelIndex,1-state.remainingTicks/state.totalTicks)/team);

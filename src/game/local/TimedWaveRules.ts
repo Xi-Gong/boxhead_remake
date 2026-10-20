@@ -1,5 +1,7 @@
 // TIMED_WAVES: pure rules shared by simulation, menus and deterministic tests.
 export const TIMED_WAVES_RULE = 'timed-waves-v1';
+// Derived from the authored walkable regions and primary-start/entrance paths; checked on all 18 worlds.
+export const COMBAT_ROOM_SECONDS:readonly number[]=[80,85,90,90,85,95,85,90,95,105,95,100,100,95,105,105,105,105];
 export type MapSize = 'small' | 'medium' | 'large';
 export const ROOM_DIMENSIONS: readonly (readonly [number, number])[] = [
   [22,17],[25,21],[34,38],[25,25],[46,17],[22,41],[33,30],[30,25],[41,33],
