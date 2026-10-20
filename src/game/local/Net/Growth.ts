@@ -8,6 +8,7 @@ import { syncVitals } from '../SurvivalRules.ts';
 import { endlessXpRequired, experienceBeforeLevel, growthFromExperience } from '../EndlessRules.ts';
 import { draftBonuses,type WaveBonuses } from '../WaveDraftRules.ts';
 import {combatWorld,modernWeapon} from '../CombatRules.ts';
+import {combatKillXp} from '../CombatEnemies.ts';
 import {TIERED_GROWTH_RULE,tieredXpRequired,tieredExperienceBeforeLevel,tieredGrowthFromExperience,tieredLevelStats,levelRewardTier} from '../TieredGrowthRules.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
@@ -221,7 +222,7 @@ export function installGrowthScope(): void {
     const slot = victim.lanFatalSlot;
     const personal = slot === 0 || slot === 1 ? state.players[slot] : undefined;
     const before = personal?.level;
-    const amount = personal ? awardKill(personal, victim.mScore, victim._CLASSID_ === 'CThing_Creature_Devil' ? 5 : 1) : 0;
+    const amount = personal ? awardKill(personal, victim.mScore, combatWorld(this)?combatKillXp(victim):victim._CLASSID_ === 'CThing_Creature_Devil' ? 5 : 1) : 0;
     const hud = this.mHud, add = hud.AddScore, own = Object.getOwnPropertyDescriptor(hud, 'AddScore');
     // Keep score timing, original wave counts, drop cadence and RNG; flights live outside rollback state.
     const source = this;

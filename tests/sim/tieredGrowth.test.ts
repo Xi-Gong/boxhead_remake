@@ -35,7 +35,7 @@ it('keeps classic XP APIs intact and awards exact tiered carry with no truncatio
  expect([modern.level,modern.xp]).toEqual([Number.MAX_SAFE_INTEGER-1,4]);
 });
 it('uses real kill credit to unlock opening weapon rewards sooner without passive XP',()=>{
- const g=createHeadlessGame(),w=g.world(),p=g.players()[0],state=growthOf(w)!.players[0];try{
+ const g=createHeadlessGame({classicCombat:true}),w=g.world(),p=g.players()[0],state=growthOf(w)!.players[0];try{
   expect(state.tiered).toBe('tiered-growth-v1');expect(state.level).toBe(1);
   for(let n=0;n<9;n++){const e:any=new Thing.Creature.CThing_Creature_Zombie(p.mPosition.Clone());w.mThing_Collection.AddThing(e);e.Process_Init();e.mLife=0;e.lanFatalSlot=0;w.LogKill(e);}
   expect(state.level).toBe(5);expect(p.mWeapons.uzi.mActive).toBe(true);const before={...state};

@@ -19,6 +19,14 @@ Only lightweight serial targeted checks and short single-instance low-resolution
 
 ## Completed items
 
+### Tougher enemies and consumable armor
+
+Prepared production scene `generated/reports/v032/combat-enemies-1792507233344` passed current Boss 12000 HP / 4800 armor, devil 2000 / 600, cyan pixels and real pause/unpause. `armor.png` directly reviewed; this is visual/behavior fixture evidence, not normal combat balance or a live LAN test. The 117 mechanical port files remain unchanged.
+
+Ordinary/charger HP ×2.5, devil/priest/Boss ×2; ordinary movement ×1.2, devil ×1.12, variants ×1.1. Devil armor 30% HP, Boss 40%, no regeneration. Ordinary armored devils now save current armor alongside variants. Small cyan armor strips read confirmed LAN metadata; original Boss HP bars remain. Real kills award 2/4/10/12 XP for ordinary/charger/devil/priest and 50 for Boss, with reference growth using conservative family XP and no assumed Boss kill.
+
+First targeted run retained four failures of implicit old HP/XP assumptions; exact assertions remain in explicit classic fixtures. It passed 73 others, final affected four-suite set passed all 36. Modern tests cover actual fatal attribution after armor, ordinary/priest save depletion, deterministic replay and Boss HP/armor. Typechecks/build passed (`main-DiuD5wS0.js`).
+
 ### Population, authored entrances and map deadlines
 
 Production real menu click/move/fire passed in `generated/reports/v032/combat-pacing-1792506966835`; menu and combat screenshots directly reviewed. Initial first-map objective 60 and cap 4, 2000 ticks, zero ground warnings. This short functional play does not establish final enemy balance, which remains pending.

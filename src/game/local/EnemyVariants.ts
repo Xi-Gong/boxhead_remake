@@ -28,26 +28,26 @@ export function variantSight(w:any,a:any,b:any):boolean{
 }
 export interface EmberZone {id:number;caster:string;target:number;mPosition:any;mAngle:any;damage:number;born:number;warning:number;duration:number;interval:number;lastPulse:number}
 export function emberZones(w:any):EmberZone[]{return w.mUpgrades.enemyVariantState?.zones??[];}
-const skillFields=['mLife','mMaxLife','mVariantCooldown','mVariantPhase','mVariantTicks','mChargeX','mChargeY','mChargeDistance','mBossKind','mBossChargesRemaining'] as const;
+const skillFields=['mLife','mMaxLife','mVariantCooldown','mVariantPhase','mVariantTicks','mChargeX','mChargeY','mChargeDistance','mBossKind','mBossChargesRemaining','mEnemyArmor','mEnemyArmorMaximum'] as const;
 export interface VariantSave {
  rule:typeof VARIANTS_RULE;wave:number;zombie:number;devil:number;nextZone:number;
  zones:(Omit<EmberZone,'mPosition'|'mAngle'>&{x:number;y:number;angle:number})[];
- enemies:{id:string;kind:EnemyVariant;x:number;y:number;angle:number;state:string;frame:number;damageSound?:string;deathSound?:string;fields:Record<string,number|string|undefined>}[];
+ enemies:{id:string;kind:EnemyVariant|'devil';x:number;y:number;angle:number;state:string;frame:number;damageSound?:string;deathSound?:string;fields:Record<string,number|string|undefined>}[];
 }
 export function captureVariants(w:any):VariantSave|undefined{
  if(!variantsWorld(w))return;
  const s=w.mUpgrades.enemyVariantState;
  return {rule:VARIANTS_RULE,wave:s.wave,zombie:s.zombie,devil:s.devil,nextZone:s.nextZone,
   zones:s.zones.map(({mPosition:p,mAngle:a,...rest}:EmberZone)=>({...rest,x:p.mX,y:p.mY,angle:a.__get__mAngle()})),
-  enemies:things(w).filter(e=>e.mEnemyVariant&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mEnemyVariant,x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
+  enemies:things(w).filter(e=>(e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mEnemyVariant??'devil',x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
 }
 export function restoreVariants(w:any,s:VariantSave|undefined):void{
  if(!variantsWorld(w)||s?.rule!==VARIANTS_RULE)return;
- for(const e of things(w))if(e.mEnemyVariant&&e.Process){e.ClearCollideCell();e.Delete();}
+ for(const e of things(w))if((e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process){e.ClearCollideCell();e.Delete();}
  const identities=new Map<string,string>();
  for(const saved of s.enemies){
   const ctor=saved.kind==='charger'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil;
-  const e:any=new ctor(position(saved.x,saved.y),new Thing.Math.CThing_Angle(saved.angle));e.mEnemyVariant=saved.kind;
+  const e:any=new ctor(position(saved.x,saved.y),new Thing.Math.CThing_Angle(saved.angle));if(saved.kind!=='devil')e.mEnemyVariant=saved.kind;
   if(saved.fields.mBossKind)e.mBossKind=saved.fields.mBossKind;
   if(typeof saved.fields.mBossSlot==='number')e.mBossSlot=saved.fields.mBossSlot;
   w.mThing_Collection.AddThing(e);e.Process_Init();

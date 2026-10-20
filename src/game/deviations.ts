@@ -745,4 +745,12 @@ export const DEVIATIONS: Deviation[] = [
       'arrival cadence/recovery gaps. Static area and primary-start path metrics yield ordinary 80–105s '+
       'and Boss +30s deadlines; selected-wave references and old-save next-wave migration share the rule.',
   },
+  {
+    id:'COMBAT_ENEMIES',file:'local/CombatEnemies.ts, Combat.ts, EnemyVariants.ts, TimedGrowthRules.ts; local/Net/Growth.ts, NetSession.ts',
+    description:'Modern ordinary/charger HP is 2.5x, devil/priest and Boss HP 2x. Devils receive consumable '+
+      'armor worth 30% HP and Bosses 40%, with family speed increases. Emission-owned penetration bypasses '+
+      'a bounded armor share before fatal ownership. Confirmed metadata supplies LAN armor bars; ordinary '+
+      'devils now save their depleted armor. Higher real-kill XP and bounded reference starts offset fewer, '+
+      'tougher enemies without timeout XP or an assumed Boss reward.',
+  },
 ];
