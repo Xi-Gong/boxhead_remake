@@ -6,7 +6,7 @@ import {infiniteGrowthWeapon} from './Net/Growth.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {syncVitals} from './SurvivalRules.ts';
 import {takeDraftChoice} from './WaveDraftInput.ts';
-import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
+import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,DRAFT_CONFIRM,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
 const classic=new WeakSet<object>();
 const classicReady=new WeakSet<object>();
 export function setClassicDraftReadyFixture(main:object):void{classicReady.add(main);}
@@ -70,7 +70,9 @@ export function processWaveDraft(world:any):void {
       :takeDraftChoice(world,index)??heldBits(p,index,true);
     const direct=decodeDraftChoice(bits),previous=round.previousBits[index]!,fresh=bits&~previous;
     if(!(bits&16))round.armed[index]=true;
-    if(direct!==undefined){round.selected[index]=direct;round.confirmed[index]=true;}
+    if(round.readyRule&&bits>=100&&bits<=102)round.selected[index]=bits-100;
+    else if(round.readyRule&&bits===DRAFT_CONFIRM)round.confirmed[index]=true;
+    else if(direct!==undefined){round.selected[index]=direct;round.confirmed[index]=true;}
     else {
       if(fresh&(1|4|64))round.selected[index]=(round.selected[index]!+2)%3;
       else if(fresh&(2|8|32))round.selected[index]=(round.selected[index]!+1)%3;

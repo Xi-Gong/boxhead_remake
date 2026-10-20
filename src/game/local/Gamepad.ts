@@ -21,6 +21,8 @@ import { GamepadWatcher, navigatorPadProvider, STICK_DEADZONE, type PadDirs, typ
 import { STAGE_H, STAGE_W } from '../../engine/platform/Presenter.ts';
 import { Key, Mouse } from '../../engine/flash/input.ts';
 import { CMain, World } from '../packages.ts';
+import {toggleStats} from './DraftStatsInput.ts';
+import {netSession} from './Net/NetSession.ts';
 
 /** Standard-mapping button indices used by the mapping. */
 const BTN = { A: 0, LB: 4, RB: 5, LT: 6, RT: 7, START: 9 } as const;
@@ -177,6 +179,9 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // override decides which pad that is (swapAssignment).
     const postfix = assign[slot] === 0 || World.CWorld.mGameMode === 'Single' ? '' : '2';
     const h = held[slot]!;
+    if(p.down.has(3)){
+      const world=CMain?._this?.mcWorld;if(world)toggleStats(world,netSession()?.role??(postfix?1:0));
+    }
     const dirs = {
       left: p.stick.left || p.dpad.left,
       right: p.stick.right || p.dpad.right,

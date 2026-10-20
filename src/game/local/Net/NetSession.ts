@@ -55,6 +55,7 @@ import { copyTimedWave, type TimedWaveState } from '../TimedWaves.ts';
 import { takeDraftChoice } from '../WaveDraftInput.ts';
 import { copyWaveDraft, type WaveDraftState } from '../WaveDraftRules.ts';
 import { settleVitals } from '../SurvivalRules.ts';
+import {capturePlayerStats,type PlayerStats} from '../PlayerStats.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -178,6 +179,7 @@ export class NetSession {
   confirmedEnemies: EnemyCounts = {zombies:0,devils:0};
   confirmedTimedWave: TimedWaveState | undefined;
   confirmedWaveDraft: WaveDraftState | undefined;
+  confirmedPlayerStats:PlayerStats[]|undefined;
   events = new EventJournal();
   decals = new EventJournal();
   scores = new EventJournal();
@@ -501,6 +503,7 @@ export class NetSession {
       this.confirmedEnemies = remainingEnemies(world);
       this.confirmedTimedWave = copyTimedWave(world);
       this.confirmedWaveDraft = copyWaveDraft(world.mUpgrades.waveDraft);
+      this.confirmedPlayerStats=capturePlayerStats(world);
       if (this.startOpts.resumeTick === undefined) this.captureCheckpoint(world);
     } else this.confirmedGrowth = undefined;
     this.phase = 'playing';
@@ -684,6 +687,7 @@ export class NetSession {
       this.confirmedEnemies = remainingEnemies(world);
       this.confirmedTimedWave = copyTimedWave(world);
       this.confirmedWaveDraft = copyWaveDraft(world.mUpgrades.waveDraft);
+      this.confirmedPlayerStats=capturePlayerStats(world);
     }
     const t = world.mTick - this.startTick;
     this.virtualTimeMs += 1000 / CMain.mFPS;
@@ -759,6 +763,7 @@ export class NetSession {
       meta.enemies = remainingEnemies(world);
       meta.timedWave = copyTimedWave(world);
       meta.waveDraft = copyWaveDraft(world.mUpgrades.waveDraft);
+      meta.playerStats=capturePlayerStats(world);
     }
     if (this.mode === 'DeathMatch' && (tick + 1) % DM_CHECKPOINT_EVERY === 0) {
       const snap = capture(world);
@@ -777,7 +782,7 @@ export class NetSession {
         this.netCheckpoint = meta.checkpoint;
         if (this.mode !== 'DeathMatch') recordWaveReached(meta.checkpoint.snap.wave);
       }
-      if (meta.growth) { this.confirmedGrowth = meta.growth; this.confirmedWave = meta.wave; this.confirmedEnemies = meta.enemies; this.confirmedTimedWave = meta.timedWave; this.confirmedWaveDraft = meta.waveDraft; }
+      if (meta.growth) { this.confirmedGrowth = meta.growth; this.confirmedWave = meta.wave; this.confirmedEnemies = meta.enemies; this.confirmedTimedWave = meta.timedWave; this.confirmedWaveDraft = meta.waveDraft; this.confirmedPlayerStats=meta.playerStats; }
       this.events.confirm(t);
       this.decals.confirm(t);
       this.scores.confirm(t);

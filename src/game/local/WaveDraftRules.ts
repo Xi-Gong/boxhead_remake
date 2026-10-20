@@ -29,4 +29,6 @@ export function copyWaveDraft(state:WaveDraftState|undefined):WaveDraftState|und
 /** Three explicit card clicks fit the existing seven-bit packet; 96 reserves both weapon-cycle bits. */
 export function encodeDraftChoice(choice:number):number {return 96+(choice+1);}
 export function decodeDraftChoice(bits:number):number|undefined {return bits>=97&&bits<=99?bits-97:undefined;}
+export function encodeDraftSelection(choice:number):number{return 100+choice;}
+export const DRAFT_CONFIRM=103;
 export function compactStat(value:number):string {return Math.abs(value)<10000?String(Math.round(value)):value.toExponential(1);}

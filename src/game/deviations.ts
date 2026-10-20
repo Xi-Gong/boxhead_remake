@@ -716,4 +716,11 @@ export const DEVIATIONS: Deviation[] = [
       'must explicitly confirm; selection/readiness persists through saves and rollback, and rewards remain '+
       'once per wave. Old wave-draft-v1 peers retain their twelve-second rule and explicit classic fixtures.',
   },
+  {
+    id:'DRAFT_STATS_UI',file:'local/WaveDraftUi.ts, DraftStatsInput.ts, PlayerStats.ts, WaveDraftInput.ts; local/Net/NetSession.ts',
+    description:'Independent render-owned build sheets and light-grey/red draft cards show actual derived '+
+      'player/weapon stats and reward previews. Tab/R and pad Y inspect; bindings persist without colliding '+
+      'with gameplay keys. New ready rounds separate mouse selection from readiness using reserved seven-bit '+
+      'commands; old rounds retain their input interpretation. LAN sheets only display confirmed tick metadata.',
+  },
 ];
