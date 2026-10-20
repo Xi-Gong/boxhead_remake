@@ -6,36 +6,27 @@
 
 Solo, local co-op and compatible LAN co-op loop indefinitely. Death match retains its rules.
 
-| Map size | Ordinary wave | Every fifth wave: Boss |
-|---|---:|---:|
-| Small: maps 1, 2, 4, 8 | 3 minutes | 4 minutes |
-| Medium: remaining maps | 4 minutes | 5 minutes |
-| Large/long: maps 14–18 | 5 minutes | 6 minutes |
+Modern v0.3.2 rounds target **90 seconds normally and 120 seconds for Bosses**, adjusted to authored floor area and entrance paths: ordinary maps last 80–105 seconds; Bosses add 30 seconds. Menus show the exact limit. Pause, draft and disconnect freezes stop the simulation clock. Clear the finite ordinary objective or survive; defeating every Boss ends its round immediately. Timeouts grant no passive XP or kill rewards.
 
-The longest side at least 64 cells or area above 2,000 cells makes a map large; at most 800 cells and longest side at most 40 makes it small. Menus show the time limit. The simulation clock stops on pause/disconnect freezes. Survive the limit to advance; defeating every Boss advances immediately. Death on the last tick is still defeat.
+Zombie objectives and concurrency are **40% of v0.3.1**, with a maximum of 22 at HIGH and 16 at LOW. Enemies enter only through reachable original spawn points, never random ground near a player. Arrival windows alternate with recovery gaps. Family speeds differ; distant or wall-obscured approaches accelerate and slow for contact. Ordinary/charger HP is 2.5×, devil/priest/Boss HP 2×; devils have consumable armor worth 30% HP, Bosses 40%.
 
-Ordinary waves continuously replenish enemies within difficulty/detail concurrency caps, with a quick opening and faster late-wave arrivals. Nearby reachable entrances are preferred; safe ground arrivals warn for 0.8 seconds. Timeouts clear enemies, projectiles and fire damage without kill rewards. Map objects, placed equipment and existing supply crates remain.
+New models rebuild all visible body parts while retaining animation rigs and functional anchors. Runners flank from wave 3; heavy brutes warn before a close cleave from wave 6. From wave 8, gunners use one of four player-inspired identities and pistol/UZI/shotgun models; locked aim warnings precede slow, dodgeable projectiles. Armored butchers and fan-firing hunters join from waves 12/18, with Boss forms at 15/20. Boss families rotate charger, priest, butcher and hunter; disabling devils selects chargers. Encounters contain one Boss at 5/10, two at 15/20 and at most three from 25. Each has a compact overhead health/armor bar and counts under DEVIL.
 
-Each player gets three choices between waves, with **12 seconds** to confirm. Everyone confirming advances immediately; timeout takes the displayed default **Firepower**. Move/weapon-switch controls select, fire confirms, or click a card. Holding fire from combat does not automatically confirm. Combat, regeneration and supply timers freeze during selection.
+Between waves, each player sees an offense, defense and utility card with current-to-next previews. **There is no countdown or automatic selection. Both players must confirm READY.** Movement or weapon keys navigate; fire confirms. Mouse clicks select a card, then READY confirms it. P1 **Tab**, P2 **R**, or gamepad **Y** opens an independent attribute sheet; its keyboard key can be rebound. Combat-entry held fire cannot confirm accidentally. LAN sheets show confirmed stats.
 
 | Upgrade | One reward |
 |---|---|
-| Firepower | +8% weapon damage bonus |
-| Vitality | +10% maximum-health bonus; living players receive the added capacity |
-| Shield | +10% maximum-armor bonus; no instant refill |
-| Magazine | +15% finite-ammo capacity bonus; receive the added capacity |
-| First aid | Restore 35% maximum health |
-| Resupply | Restore 35% maximum capacity for owned weapons |
+| Firepower / Vitality / Shield | +8% damage / +10% health / +10% armor bonus |
+| Magazine | +8% capacity training, with diminishing returns |
+| Haste / Mobility | +6% cadence / +4% movement training, with diminishing returns |
+| Penetration / Supply | +12% armor penetration / +10% recovery training, with diminishing returns |
+| First aid / Resupply | Restore 35% maximum health / owned finite ammo, improved by supply efficiency |
 
-Bonuses accumulate within the run and survive saves, retries and respawns. New runs reset them. Firepower is always offered; two distinct seeded alternatives exclude useless heals/refills. Selected high waves distribute the four permanent bonuses evenly and derive baseline XP from map duration and spawn pacing without replaying earlier waves or assuming Boss rewards.
+Rewards persist within the run, including saves and retries; new runs reset them. Useless/capped choices are excluded. Defeating all Bosses doubles one reward per player; survival earns the ordinary reward. Selected-wave builds distribute eight permanent attributes and derive earned XP without replaying prior waves or assuming Boss kills.
 
-**Bone Tyrant / Ember Lord** alternate every five waves, with at most four ordinary zombie reinforcements. Disabling devils always selects the Tyrant. Below half health, the Tyrant performs two independently warned/aimed charges; the Lord's three-mark spell speeds up from eight to six seconds. Ordinary nonfatal hits do not interrupt Boss skills. Defeating all Bosses doubles each player's one chosen reward; surviving the time limit gives the normal reward.
+Finite ammo approaches at most 3× authored capacity; only the authored pistol stays infinite. Cadence has per-weapon ceilings. Shotgun pellets deal 65% damage and fall off with range; direct rocket self-blast damage is 15% before armor. Modern supplies replenish 40% of maximum, improved by bounded efficiency, instead of automatically filling everything. Existing natural regeneration and weapon unlocks remain.
 
-Boss waves 5/10 contain one Boss, 15/20 contain two, and 25 onward contain at most three. Defeat all members to advance immediately with one doubled draft reward; a partial defeat followed by timeout earns the normal reward. Each Boss has one compact numeric-free overhead bar and counts under DEVIL. The clock fits inside WAVE. Bars use confirmed LAN health and hide on pause, offscreen or defeat.
-
-Optional v2 extensions retain remaining time, choices, bonuses and Boss HP/skills. Old saves convert once, preserving score, equipment, current health/armor/ammo and crates while restarting the current wave timer and supplying the basic build without free refills. Later continues retain time/offers. LAN negotiates timed-waves-v1, wave-draft-v1, boss-waves-v1 and boss-encounters-v1 with dependencies; incompatible peers keep their prior rules and cannot load a newer-rule save.
-
-Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchanted tracers, rockets and muzzle effects are clearer; variant/Boss armor follows the original body animation. Classic assets remain available for reference, and art adds no protocol fields.
+Optional save/rollback fields preserve timers, offers, bonuses, new identities, armor and pending skills. Old saves finish their current combat under their prior rules and migrate at the next wave without free refills or lost earned progress. LAN negotiates combat-pve-v2 and draft-ready-v1 with all dependencies; older peers retain supported rules. Classic art and assertions remain available.
 
 <p align="center"><img src="../assets/readme/coop-crate.png" alt="Coop death weapon crate" width="640"></p>
 
@@ -46,7 +37,7 @@ Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchan
   owner exactly and gives the teammate the best of both.
 - **Devil supplies** — every base devil drops one equally likely blue armor, olive ammunition or bright green medical
   crate. These crates stay across waves and saves until a living player can benefit. Armor fills only armor,
-  medical fills only health, and ammunition fills all owned weapons without unlocking new ones. Full players
+  medical restores only health, and ammunition replenishes all owned weapons without unlocking new ones. Full players
   leave the crate for later or for their teammate. Modern LAN peers negotiate these rules; older peers retain
   their supported rules.
 - **Red boxes** — 10% armor, 10% ammunition, 10% medical effects, otherwise the original weighted pool of owned
@@ -58,7 +49,7 @@ Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchan
   starting or switching; Enter/blur commits, Escape restores the last valid value. Each visit starts at wave 1,
   and typing never unlocks waves. The LAN host edits against their own save cap; the guest sees a readonly value.
 - **Personal PvE progression** — solo, local co-op and LAN share last-hit scores, permanent levels and weapon upgrades
-  for each player. Zombies award 1 XP and devils 5 XP. New runs use basic level costs of 2–5 XP through level 10,
+  for each player. Ordinary zombies award 2 XP, chargers 4, devils 10, priests 12, and Bosses 50 (new Boss forms 70); new ordinary subtypes have individual rewards. New runs use basic level costs of 2–5 XP through level 10,
   6–15 XP through level 30, then 20 XP plus 3 per further level. Existing runs retain their saved curve.
   The original weapon unlock table remains at levels 1–125, with no modern PvE level cap. Top corner
   score/level/XP panels flank WAVE and its clock. Ordinary-wave counts include the unspawned objective;
@@ -77,9 +68,9 @@ Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchan
 - **Endless weapon growth** — new runs add 1% weapon damage and 0.5% finite capacity per level at 11–30,
   then 2% and 1% per level from 31 onward. Existing saved curves retain their post-125 growth of 1% damage and
   `max(1, ceil(capacity at level 125 × 0.005))` finite ammo per level. Only the added capacity is supplied;
-  inherited higher capacity remains valid. Saves restore current supplies without a bonus refill.
+  modern capacity is bounded and obsolete excess is clamped at migration. Saves restore current supplies without a bonus refill.
 - **Four PvE difficulty curves** — Single and co-op retain Beginner, Intermediate, Expert and Nightmare pacing,
-  active caps and speed ceilings. Modern timed waves replenish continuously; legacy finite-wave budgets stop at 200 zombies and 10 devils, including variants.
+  active caps and speed ceilings. Modern waves replenish within a finite reduced objective; legacy finite-wave budgets stop at 200 zombies and 10 devils, including variants.
   Enemy health/damage continue scaling from the earned-wave reference level. LAN enables new rules after negotiation.
   See the [balance audit and explosion measurements](verification/v0.2.8/README.md).
 - **Bone Charger and Ember Priest** — deterministic subtype slots start at waves 8/20, with at most four
@@ -95,7 +86,7 @@ Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchan
   Surviving enchanted stock in older saves becomes a weapon enchantment without granting ammo. LAN requires both peers to support persistent-enchantment-v1.
   Authored infinite ammunition stays enchanted. Fake walls leave the crate available for an offensive weapon.
 - **Reliable pickups and spacing** — supply effects synchronize personal maxima and preserve higher inherited
-  capacities. Red single-weapon rewards fill only the selected weapon. P1/P2 notices use three evenly spaced
+  capacities within the modern cap. Red single-weapon rewards replenish only the selected weapon. P1/P2 notices use three evenly spaced
   confirmed HUD rows with smooth entry and fade; conditional lobby controls have separate action rows.
 - **LAN multiplayer** (portable build) — host & auto-discover or join by IP for co-op and death match.
   Rollback applies local input on the next simulation tick without waiting for the peer, with immediate local

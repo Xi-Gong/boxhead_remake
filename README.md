@@ -17,7 +17,7 @@ gamepads and LAN multiplayer. Intentional additions are documented in [PARITY.md
 ## Quick Start
 
 **Windows portable:** download the single-file exe from [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest).
-**[v0.3.1](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.1)** brings timed survival, escalating Boss encounters, run upgrades, tiered growth and refined combat art. See the [release verification](docs/verification/v0.3.1/README.md).
+**[v0.3.2](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.2)** brings fewer, tougher enemies with entirely new models, short tactical rounds, balanced ammunition and weapons, and unlimited co-op upgrade drafts with individual stat sheets. See the [release verification](docs/verification/v0.3.2/README.md).
 Saves and settings live in `%USERPROFILE%\.boxhead`.
 
 **Run from source:**
@@ -60,7 +60,7 @@ Gamepads work throughout (stick to move, RT/A to shoot, START to pause); keys ar
 - **Reliable supplies and clearer UI** — refills preserve inherited weapon capacity; confirmed P1/P2 pickup messages remain evenly spaced, and conditional lobby actions have room to breathe.
 - **Co-op weapon crates** — fallen players drop their arsenal and remaining ammunition for recovery.
 
-[Feature details](docs/features.md) · [v0.3.1 release verification](docs/verification/v0.3.1/README.md) · [v0.3.0-rc2 verification](docs/verification/v0.3.0-rc2/README.md)
+[Feature details](docs/features.md) · [v0.3.2 release verification](docs/verification/v0.3.2/README.md) · [v0.3.0-rc2 verification](docs/verification/v0.3.0-rc2/README.md)
 
 <p align="center"><img src="assets/readme/coop-crate.png" alt="Co-op weapon recovery" width="640"></p>
 
