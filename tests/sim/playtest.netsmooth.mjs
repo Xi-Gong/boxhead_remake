@@ -38,7 +38,7 @@ const RESPONSE_LIMIT_MS = EXPLOSIONS ? 100 : 60;
 if (!Number.isFinite(DELAY_MS) || DELAY_MS < 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>=0]');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const OUT = join(ROOT,FUNCTIONAL?`generated/reports/v030/netsmooth-functional-${DELAY_MS}`:'generated/reports/qa');
+const OUT = resolve(ROOT,process.env.BOXHEAD_QA_OUT??(FUNCTIONAL?`generated/reports/v030/netsmooth-functional-${DELAY_MS}`:'generated/reports/qa'));
 mkdirSync(OUT, { recursive: true });
 for (const d of ['netsmooth-host', 'netsmooth-client']) {
   try { rmSync(join(OUT, d), { recursive: true, force: true }); } catch { /* best effort */ }
@@ -298,6 +298,10 @@ try {
     report.audio=await Promise.all([H,C].map(P=>P.page.evaluate(()=>window.__game.audio())));
     if(report.audio.some(a=>a.state!=='running'||a.decoded!==31||a.failed.length))throw new Error('functional audio gate failed');
     await shot('confirmed_paused',H.page);step('functional confirmed gameplay, ordered sound/decal identities and enchanted shots agree');
+    if(process.env.BOXHEAD_QA_RELEASE_GATES==='1'){
+      const {verifyV031Lan}=await import('../e2e/v031-lan.mjs');
+      await verifyV031Lan(H,C,report,OUT);
+    }
   }else{
 
   // (2) the smoothness window: constant steering on both machines; sample the observability fields.
@@ -583,6 +587,10 @@ try {
   report.ok = report.errors.length === 0;
 } catch (e) {
   report.errors.push(String(e?.message ?? e));
+  if(process.env.BOXHEAD_QA_RELEASE_GATES==='1')for(const [name,P]of [['host',H],['client',C]])if(P){
+    (report.failureStates??={})[name]=await P.page.evaluate(()=>({state:window.__game?.state(),lan:window.__game?.lan(),tick:window.__game?.main().mcWorld?.mTick,timed:window.__game?.main().mcWorld?.mUpgrades?.timedWave})).catch(String);
+    await shot('failure-'+name,P.page).catch(()=>{});
+  }
 } finally {
   try { await H?.app.close(); } catch {}
   try { await C?.app.close(); } catch {}
