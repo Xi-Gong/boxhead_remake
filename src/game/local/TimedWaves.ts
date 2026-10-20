@@ -76,9 +76,13 @@ export function chooseTimedSpawn(world:any,family:'Zombie'|'Devil'): {point:any;
   const players=livingWavePlayers(world);if(!players.length)return;
   if(combatWorld(world)){
     const reachable=walkDistances(world,players.map(p=>p.mPosition));
-    const entrances=(world['mSpawnPoint_'+family]??[]).filter((s:any)=>reachable.has(s.mNextCell)
+    const usable=(points:any[])=>points.filter((s:any)=>reachable.has(s.mNextCell)
       &&!(s.mCell.mCollide&World.Map.CMap_Cell.mCollide_NoSpawn)&&!(s.mNextCell.mCollide&World.Map.CMap_Cell.mCollide_NonMovable)
       &&safeDistance(players,s.mPosition.mX,s.mPosition.mY));
+    let entrances=usable(world['mSpawnPoint_'+family]??[]);
+    // Some authored rooms put every Devil marker behind fixed obstacles. Use another original entrance;
+    // otherwise a pending Devil Boss prevents all later members/reinforcements for the whole round.
+    if(!entrances.length&&family==='Devil')entrances=usable(world.mSpawnPoint_Zombie??[]);
     if(!entrances.length)return;
     // Prefer the active section, while cycling equally useful authored entrances in stable map order.
     const nearest=Math.min(...entrances.map((s:any)=>reachable.get(s.mNextCell)!));

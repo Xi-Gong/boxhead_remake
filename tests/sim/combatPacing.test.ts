@@ -41,6 +41,14 @@ it('accelerates an obscured approach but returns to the family pace in clear sig
  const cell=w.mMap.mCells[8][5],old=cell.mCollide;cell.mCollide|=World.Map.CMap_Cell.mCollide_Solid;e.State_CellToCell_Init();const hidden=e.mStateCount;
  expect(e.mSpeed).toBe(.06);cell.mCollide=old;e.State_CellToCell_Init();expect(e.mStateCount).toBeGreaterThan(hidden);expect(e.mSpeed).toBe(.06);g.quit();
 });
+it('enters Devil Bosses through original zombie entrances when every authored Devil path is blocked',()=>{
+ for(const [room,difficulty]of [[7,3],[14,1]] as const){
+  const g=createHeadlessGame({room,difficulty,seed:1000+room}),w=g.world();
+  const route=chooseTimedSpawn(w,'Devil');expect(route?.warning).toBe(false);expect(w.mSpawnPoint_Zombie).toContain(route?.point);
+  g.tick(12);expect(timedWave(w)!.boss!.members!.every(b=>b.id)).toBe(true);
+  expect(w.mUpgrades.Level.mDevilCount).toBeGreaterThan(0);expect(g.errors).toEqual([]);g.quit();
+ }
+});
 it('preserves entrance rotation, deadline and objective across saves/rollback; old combat migrates at next wave',()=>{
  const g=createHeadlessGame(),w=g.world();attemptTimedSpawn(w,'Zombie');g.tick(1);const saved=capture(w),ctx=makeSnapCtx(w),data=captureWorldSnap(w,ctx,false),instances=ctx.instances,sharedObjs=ctx.sharedObjs;
  const run=()=>{for(let i=0;i<5;i++)attemptTimedSpawn(w,'Zombie');};run();const digest=simulationDigest(captureWorldSnap(w,ctx,false));
