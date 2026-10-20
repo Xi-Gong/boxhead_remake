@@ -1,0 +1,15 @@
+{
+  "verifiedEntries": 271,
+  "status": "candidate-not-published",
+  "evidence": "v0.3.1-candidate-evidence.zip",
+  "sourceCommit": "f6ace3e",
+  "profileCachesExcluded": true,
+  "ownedPreviewServicesRemaining": 0,
+  "directory": "C:/Users/royxg/boxhead-exe-archive/v0.3.1-candidate-f6ace3e",
+  "evidenceSHA256": "13b42ca568c03486fed1128e1b8b51244c059347fe81584f9dedc13a693c9c1c",
+  "ok": true,
+  "archiveBytes": 106731060,
+  "ownedGameProcessesRemaining": 0,
+  "exe": "Boxhead 2Play Rooms-0.3.1-portable.exe",
+  "exeSHA256": "48677da3a150c7fbb8e886bbda9517e8d9432381708c187977cea92102feedd2"
+}

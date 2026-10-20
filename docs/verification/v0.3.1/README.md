@@ -23,6 +23,8 @@ The actual **0.3.1 portable candidate passed** its short single-instance 640×48
 
 Initial failures and subsequent corrections are retained under `generated/reports/v031/` and described in each evidence manifest. The art scene's explicit stationary placement did not substitute for a behavior test: the discovered invisible first cast received a separate failing regression, fix and production-browser check.
 
+The candidate EXE and 271 evidence files (screenshots, motion clips, logs, manifests and reproduction scripts) are archived outside the checkout at `C:/Users/royxg/boxhead-exe-archive/v0.3.1-candidate-f6ace3e`. Every archived entry was checked against its source SHA256; browser profile caches are excluded. The archive captures source commit `f6ace3e`, before this receipt/index addition. See [archive receipt and checksums](archive.json). All owned game/GPU processes and preview services were stopped after acceptance.
+
 ## Pending full gates
 
 Fresh authorization is still required for the full Vitest, browser UI/audio, existing browser and packaged playtests, live two-peer LAN, Electron and complete portable gates. Long-duration behavior in lightweight tests used controlled simulation clocks, not multi-minute unattended sessions. No multi-instance benchmark, extreme stress, foreground-window test or performance claim is included.
