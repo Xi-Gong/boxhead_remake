@@ -7,7 +7,7 @@ const style=process.env.PLAY_STYLE??'active',wave=Number(process.env.PLAY_WAVE??
 const budget=Number(process.env.PLAY_BUDGET_MS??330000),tag=process.env.PLAY_TAG??'baseline';
 const out=`generated/reports/v031/pacing/${tag}-${style}-w${wave}-r${room}-${Date.now()}`;
 mkdirSync(out,{recursive:true});const report={ok:false,style,wave,room,tag,samples:[],inputOnly:true,realTime:true};
-report.controller=5;
+report.controller=6;
 const browser=await launch();let g;const held=new Set();
 async function keys(want){for(const k of [...held])if(!want.includes(k)){await g.page.keyboard.up(k);held.delete(k);}for(const k of want)if(!held.has(k)){await g.page.keyboard.down(k);held.add(k);}}
 try{
@@ -23,8 +23,15 @@ try{
  let waypoint=0;
  function escapeDirection(s){
   if(Math.hypot(s.x-goals[waypoint][0]-.5,s.y-goals[waypoint][1]-.5)<1.2)waypoint=(waypoint+1)%goals.length;
-  const start=[Math.floor(s.x),Math.floor(s.y)],queue=[start],parents=new Map([[start.join(),null]]),goal=goals[waypoint].join();let found;
-  for(let i=0;i<queue.length;i++){const q=queue[i];if(q.join()===goal){found=q;break;}for(const [dx,dy]of [[1,0],[0,1],[-1,0],[0,-1]]){const next=[q[0]+dx,q[1]+dy],key=next.join();if(grid[next[1]]?.[next[0]]&&!parents.has(key)){parents.set(key,q);queue.push(next);}}}
+  for(let i=0;i<4&&s.enemies.some(e=>Math.hypot(e.x-goals[waypoint][0]-.5,e.y-goals[waypoint][1]-.5)<2.5);i++)waypoint=(waypoint+1)%goals.length;
+  const start=[Math.floor(s.x),Math.floor(s.y)],queue=[{q:start,cost:0}],parents=new Map([[start.join(),null]]),costs=new Map([[start.join(),0]]),goal=goals[waypoint].join();let found;
+  // Weighted routes avoid walking through the horde just to reach the next corner. This is controller-only.
+  while(queue.length){queue.sort((a,b)=>b.cost-a.cost);const item=queue.pop(),q=item.q;if(item.cost!==costs.get(q.join()))continue;if(q.join()===goal){found=q;break;}
+   for(const [dx,dy]of [[1,0],[0,1],[-1,0],[0,-1]]){const next=[q[0]+dx,q[1]+dy],key=next.join();if(!grid[next[1]]?.[next[0]])continue;
+    const danger=s.enemies.reduce((v,e)=>{const d=Math.hypot(e.x-next[0]-.5,e.y-next[1]-.5);return v+(d<4?15/Math.max(.35,d)**3:0);},0),cost=item.cost+1+danger;
+    if(cost<(costs.get(key)??Infinity)){costs.set(key,cost);parents.set(key,q);queue.push({q:next,cost});}
+   }
+  }
   if(found){while(parents.get(found.join())?.join()!==start.join()&&parents.get(found.join()))found=parents.get(found.join());
    const dx=found[0]+.5-s.x,dy=found[1]+.5-s.y;
    return s.dirs.filter(d=>d.free).map(d=>({d:d.d,score:(Math.cos(d.d*Math.PI/4)*dx+Math.sin(d.d*Math.PI/4)*dy)/Math.max(.1,Math.hypot(dx,dy))+.08*d.space+s.enemies.slice(0,6).reduce((v,e)=>v-.5/Math.max(.2,Math.hypot(e.x-d.x,e.y-d.y))**2,0)})).sort((a,b)=>b.score-a.score)[0]?.d??-1;
@@ -89,7 +96,9 @@ try{
   await keys(want);await g.page.waitForTimeout(80);n++;
  }
  await keys([]);await g.shot(`${out}/final.png`,false);report.wallMs=Date.now()-start;report.last=report.samples.at(-1);
- assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
+ assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);
+ report.outcome=report.result?.life<=0?'defeat':report.result?.phase==='draft'?'wave-completed':report.result?'state-transition':'interrupted';
+ assert(report.result,'play budget exhausted before a terminal wave/player result');report.ok=true;
 }catch(error){report.error=String(error);throw error;}
 finally{await g?.close();await browser.close();writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
 console.log('REAL-TIME PACING PLAY FINISHED '+out);

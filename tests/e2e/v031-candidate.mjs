@@ -5,21 +5,23 @@ import {join} from 'node:path';
 export async function verifyV031Candidate(g,out){
  mkdirSync(out,{recursive:true});const report={ok:false};
  try{
-  const initial=await g.expr('(()=>{const w=m.mcWorld,t=w.mUpgrades.timedWave;return {wave:w.mUpgrades.mLevelIndex,total:t.totalTicks,size:w.mMap.mSize,damage:w.mUpgrades.waveDraft.bonuses[0].damage};})()');
+  const initial=await g.expr('(()=>{const w=m.mcWorld,t=w.mUpgrades.timedWave;return {wave:w.mUpgrades.mLevelIndex,total:t.totalTicks,size:w.mMap.mSize,damage:w.mUpgrades.waveDraft.bonuses[0].damage,clear:t.clear,growth:w.mUpgrades.lanGrowth.players[0]};})()');
   const {x,y}=initial.size,longest=Math.max(x,y),seconds=longest>=64||x*y>2000?300:x*y<=800&&longest<=40?180:240;
-  assert.equal(initial.total,seconds*25);report.initial=initial;
+  assert.equal(initial.total,seconds*25);assert.equal(initial.clear.rule,'clearable-waves-v1');assert(initial.clear.zombies>0);assert.equal(initial.growth.tiered,'tiered-growth-v1');report.initial=initial;
   await g.page.keyboard.down('ArrowRight');await g.page.waitForTimeout(80);await g.page.keyboard.up('ArrowRight');
   await g.page.keyboard.down('Slash');await g.page.waitForTimeout(80);await g.page.keyboard.up('Slash');
   await g.expr('m.mcWorld.mUpgrades.timedWave.remainingTicks=1');assert(await g.waitExpr('m.mcWorld.mUpgrades.timedWave.phase==="draft"'));
+  assert(await g.waitExpr('m.mcWorld._LanGrowthHud._Wave._Zombies.text==="0"&&m.mcWorld._LanGrowthHud._Wave._Devils.text==="0"'));
   await g.page.waitForTimeout(120);await g.shot(join(out,'draft.png'),false);
   await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');assert(await g.waitExpr(`m.mcWorld.mUpgrades.mLevelIndex===${initial.wave+1}`));
   assert.equal(await g.expr('m.mcWorld.mUpgrades.waveDraft.bonuses[0].damage'),initial.damage+1);
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));
-  report.saved=await g.expr('({remaining:m.mcWorld.mUpgrades.timedWave.remainingTicks,wave:m.mcWorld.mUpgrades.mLevelIndex,damage:m.mcWorld.mUpgrades.waveDraft.bonuses[0].damage})');
+  report.saved=await g.expr('({remaining:m.mcWorld.mUpgrades.timedWave.remainingTicks,wave:m.mcWorld.mUpgrades.mLevelIndex,damage:m.mcWorld.mUpgrades.waveDraft.bonuses[0].damage,clear:m.mcWorld.mUpgrades.timedWave.clear,growth:m.mcWorld.mUpgrades.lanGrowth.players[0]})');
   await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert(await g.waitScreen('State_Main','Screen_Main'));await g.clickClip('m.mcScreen.mcContinue');assert(await g.waitExpr('m.mcWorld?.mLoaded&&g.state()==="State_RunWorld"'));
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));
-  report.restored=await g.expr('({remaining:m.mcWorld.mUpgrades.timedWave.remainingTicks,wave:m.mcWorld.mUpgrades.mLevelIndex,damage:m.mcWorld.mUpgrades.waveDraft.bonuses[0].damage})');
+  report.restored=await g.expr('({remaining:m.mcWorld.mUpgrades.timedWave.remainingTicks,wave:m.mcWorld.mUpgrades.mLevelIndex,damage:m.mcWorld.mUpgrades.waveDraft.bonuses[0].damage,clear:m.mcWorld.mUpgrades.timedWave.clear,growth:m.mcWorld.mUpgrades.lanGrowth.players[0]})');
   assert.equal(report.restored.wave,report.saved.wave);assert.equal(report.restored.damage,report.saved.damage);assert(report.restored.remaining<=report.saved.remaining&&report.restored.remaining>report.saved.remaining-30);
+  assert.deepEqual(report.restored.growth,report.saved.growth);assert.equal(report.restored.clear.killedZombies,report.saved.clear.killedZombies);assert.equal(report.restored.clear.killedDevils,report.saved.clear.killedDevils);assert.equal(report.restored.clear.zombies,report.saved.clear.zombies);
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('!m.mcWorld.mPaused'));
   await g.expr('(m.mcWorld.mUpgrades.AdvanceTimedWave(),m.mcWorld.mUpgrades.__set__mLevel(5))');
   assert(await g.waitExpr('Object.values(m.mcWorld.mThing_Collection.mThings).some(e=>e.mBossKind&&e.mMaxLife>1000&&e.mCellID)'));

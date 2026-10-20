@@ -1,12 +1,92 @@
 {
-  "status": "lightweight-in-progress",
+  "status": "lightweight-accepted-not-published",
   "method": "Serial headless Chrome, 640x480 LOW, real-time real keyboard input. No combat stats, clocks, enemies or XP rewritten. Selected-wave QA menu unlocks only.",
-  "rules": {"ordinarySeconds": [180,240,300], "bossExtraSeconds": 60, "finiteObjective": "65% of unobstructed full-duration arrivals; cooperation 1.35x budget and cadence", "growth": "tiered-growth-v1"},
-  "ordinaryClear": {"report": "generated/reports/v031/pacing/clear-controller4-active-w1-r0-1792475484495/report.json", "wallMs":171695,"remainingTicks":190,"kills":152,"target":152,"level":24,"life":320,"result":"draft before deadline"},
+  "rules": {
+    "ordinarySeconds": [
+      180,
+      240,
+      300
+    ],
+    "bossExtraSeconds": 60,
+    "finiteObjective": "65% of unobstructed full-duration arrivals; cooperation 1.35x budget and cadence",
+    "growth": "tiered-growth-v1"
+  },
+  "ordinaryClear": {
+    "report": "generated/reports/v031/pacing/clear-controller4-active-w1-r0-1792475484495/report.json",
+    "wallMs": 171695,
+    "remainingTicks": 190,
+    "kills": 152,
+    "target": 152,
+    "level": 24,
+    "life": 320,
+    "result": "draft before deadline"
+  },
   "ui": "generated/reports/v031/pacing/ui-1792475687132/report.json",
-  "tests": {"log":"generated/reports/v031/clear-waves/tests-final.log","files":12,"passed":193},
-  "build": "generated/reports/v031/clear-waves/build-final.log",
-  "audit": "generated/reports/v031/clear-waves/code-inventory.json",
-  "failuresRetained": ["generated/reports/v031/tiered-growth/tests-1.log","generated/reports/v031/clear-waves/tests-1.log","generated/reports/v031/clear-waves/tests-save-hud.log"],
-  "limits": "No full release gate or actual two-peer LAN. Failed controller runs retained; no measured performance claim. Current EXE is the earlier candidate until rebuilt."
+  "tests": {
+    "log": "generated/reports/v031/clear-waves/tests-final.log",
+    "files": 12,
+    "passed": 193
+  },
+  "build": "generated/reports/v031/pacing/build-final.log",
+  "audit": "generated/reports/v031/pacing/code-inventory.json",
+  "failuresRetained": [
+    "generated/reports/v031/tiered-growth/tests-1.log",
+    "generated/reports/v031/clear-waves/tests-1.log",
+    "generated/reports/v031/clear-waves/tests-save-hud.log",
+    "generated/reports/v031/pacing/clear-controller5-survive-w1-r0-1792475717561/report.json",
+    "generated/reports/v031/pacing/stale-artifact-rejected.log"
+  ],
+  "limits": "Actual input-only play covered ordinary room 1 and Boss rooms 1/3, not all maps or human manual play. Simulation covered all 18 map deadlines. Full release gate and two-peer LAN await fresh authorization; no measured performance claim.",
+  "sourceCommit": "30ef319",
+  "sourceBranch": "codex/feature-v0.3.1-gameplay-art",
+  "noFireSurvival": {
+    "report": "generated/reports/v031/pacing/clear-controller6-survive-w1-r0-1792476015557/report.json",
+    "wallMs": 179439,
+    "remainingTicks": 0,
+    "level": 1,
+    "xp": 0,
+    "score": 0,
+    "kills": 0,
+    "life": 200,
+    "result": "draft at timeout"
+  },
+  "bossTrials": [
+    {
+      "report": "generated/reports/v031/pacing/clear-controller5-active-w5-r0-1792475928686/report.json",
+      "room": 1,
+      "wave": 5,
+      "kind": "charger",
+      "wallMs": 30136,
+      "level": 44,
+      "remainingTicks": 5230,
+      "totalTicks": 6000,
+      "defeated": true
+    },
+    {
+      "report": "generated/reports/v031/pacing/clear-controller6-active-w10-r2-1792476223082/report.json",
+      "room": 3,
+      "wave": 10,
+      "kind": "priest",
+      "wallMs": 55699,
+      "level": 63,
+      "remainingTicks": 6091,
+      "totalTicks": 7500,
+      "defeated": true
+    }
+  ],
+  "conclusion": "Retain ordinary 3/4/5-minute survival ceilings and Boss +1 minute. Finite objectives and Boss kills allow early finishes. No Boss HP increase based on the isolated old 6-second run.",
+  "displayCorrection": {
+    "commit": "30ef319",
+    "reason": "zero enemy HUD counts after timeout cleanup during draft; no XP or kill-counter changes",
+    "tests": "generated/reports/v031/pacing/draft-count-tests.log",
+    "passed": 32
+  },
+  "interruptedPackaging": {
+    "log": "generated/reports/v031/pacing/package.log",
+    "output": "C:/Users/royxg/boxhead-build/v031-pacing",
+    "status": "interrupted-superseded-before-acceptance",
+    "reason": "HUD correction required a fresh build; owned packaging tree stopped"
+  },
+  "candidate": "candidate.json",
+  "portable": "generated/reports/v031/pacing/portable/timed-candidate/report.json"
 }
