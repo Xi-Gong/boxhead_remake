@@ -44,6 +44,7 @@ import {setClassicWaveDraftFixture} from '../../src/game/local/WaveDraft.ts';
 import {setClassicBossWavesFixture} from '../../src/game/local/BossWaves.ts';
 import {setClassicWeaponArtFixture} from '../../src/game/local/WeaponArt.ts';
 import {setClassicProjectileArtFixture} from '../../src/game/local/ProjectileArt.ts';
+import {setClassicVariantArtFixture} from '../../src/game/local/VariantArt.ts';
 import { CMain, Screen, Thing, World } from '../../src/game/packages.ts';
 
 export type GameMode = 'Single' | 'Coop' | 'DeathMatch';
@@ -94,6 +95,7 @@ export interface HeadlessGameOptions {
   classicBossWaves?: boolean;
   classicWeaponArt?: boolean;
   classicProjectileArt?: boolean;
+  classicVariantArt?: boolean;
   seed?: number;
   options?: GameOptions;
   /** Cells per Nav_Update call (deviation NAV_BUDGET_TEST_HOOK); null = original getTimer budget. Default 300. */
@@ -453,6 +455,7 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   if(opts.classicBossWaves)setClassicBossWavesFixture(m);
   if(opts.classicWeaponArt)setClassicWeaponArtFixture(m);
   if(opts.classicProjectileArt)setClassicProjectileArtFixture(m);
+  if(opts.classicVariantArt)setClassicVariantArtFixture(m);
   const sd = m.constructor.mSaveData ?? (CMain as any).mSaveData;
   const o = opts.options ?? {};
   // options window fields (CScreen_SelectWorld.RegisterButton_Option writes CMain.mSaveData[field] = value)

@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'ENEMY_BOSS_ART',
+    file:'local/VariantArt.ts, EnemyVariants.ts',
+    description:'v0.3.1 derives separate ordinary/Boss armor, bracers, crowns, bone spines and furnace '+
+      'inlays. Original animations, return frames, feet and XSI_Info remain intact; old variant art is an '+
+      'explicit fixture. Collections bake during loading and cache by resource identity. Charge warnings '+
+      'show the actual combined hit radius and clip to the same static obstruction sweep; fire marks '+
+      'retain their real one-cell radius. No hitboxes, skill timings or network fields change.',
+  },
+  {
     id:'PROJECTILE_ART',
     file:'local/ProjectileArt.ts; scope.ts',
     description:'v0.3.1 draws warm bullet/pellet tracers, cyan rail cores, directional rocket bodies and short '+

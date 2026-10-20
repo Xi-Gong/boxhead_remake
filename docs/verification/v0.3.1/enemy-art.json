@@ -1,0 +1,21 @@
+{
+  "feature": "ordinary variant and Boss geometry, materials, skill poses and accurate warning outlines",
+  "tests": {"passed":40,"files":3,"workers":1,"suites":["variantArt","enemyVariants","bossWaves"]},
+  "invariants": ["all sixteen facing mappings and all logical action frames", "unchanged original foot geometry and XSI_Info", "eight-frame walk return and complete skill final poses", "independent ordinary/Boss collections baked during loading", "classic variant fixture retained", "finite nondegenerate derived faces and aligned arrays", "drawing preserves every simulation digest category", "charge warning uses the same static obstruction sweep and combined player/enemy radius"],
+  "typechecks": ["tsconfig.json","config/tsconfig.strict.json","config/tsconfig.tools.json"],
+  "build": "main-CQkB8rej.js",
+  "audit": {"modules":538,"portedModules":117,"changedPorts":[]},
+  "browser": {
+    "render2x": "generated/reports/v031/enemy-art/run-1792469284080-2x/report.json",
+    "render1x": "generated/reports/v031/enemy-art/run-1792469346128-1x/report.json",
+    "source": "Vite source server; source import grants the tool access to the classic fixture without production test interfaces. Production build independently completed; packaged review follows.",
+    "mode": "serial single-instance headless Chrome, 640x480, real movement and fire keys",
+    "logicalFramesPerEnemy":49,
+    "evidence": ["all-directions.png: old variants, current variants and Bosses", "details.png: four cardinal closeups", "NAME-actions.png: all frames and sixteen facings", "NAME-walk/dying/warning/cast.png: separate readable action sheets", "walk-skills.webm: about seven seconds with final poses", "combat-classic/new.png", "warnings-low.png"],
+    "lowWarningPixels": {"render2x":1608,"render1x":1687},
+    "review": "direct screenshot, pixel and geometry review without zai; action sheets inspected directly, video recorded",
+    "limits": "Static combat-art fixture explicitly registers and places all four models. A separate first-movement visibility defect was discovered and remains for an independent behavior fix. Full release gates not run."
+  },
+  "retainedRuns": ["run-1792468830334-2x: failed zone-count fixture with prior spells retained", "run-1792468977536-2x: passed earlier visual iteration", "run-1792469167702-2x: failed pixel indexing on fractional camera Y"],
+  "corrections": ["Refined bracers after image review showed broad metal caps hiding rust material.","Classic model uses Red/Black/PeachPuff face materials; remapped only derived priest faces to deep red/charcoal/molten colors.","New material names exposed authored zero-area edge-on faces. Removed those invisible faces only in derived non-foot parts; kept geometry assertions and original assets.","Sized action sheets from actual bitmap extents to avoid crown/death-pose clipping.","Controlled warning fixture clears previous spells and rounds screen coordinates for pixel-array sampling."]
+}

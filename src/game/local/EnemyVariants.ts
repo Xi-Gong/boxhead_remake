@@ -92,6 +92,16 @@ export function beginEmberCast(enemy:any):boolean{
  enemy.mVariantCooldown=w.mTick+ticks(5);enemy.SetState('State_VariantCast');enemy.PlaySound(CSound.mSamples.Creature_Zombie_Hit_1_wav);return true;
 }
 const drawViews=new WeakMap<object,any>();
+/** Render-only sweep of the same step length/radii and static obstruction query as the charge. */
+export function chargeWarningGeometry(enemy:any):{length:number;radius:number}{
+ const w=enemy.mWorld,radius=enemy.mRadius+Math.max(0,...players(w).map(p=>p.mRadius));let distance=0;
+ for(let i=1;i<=50;i++){
+  const next=i*.08;
+  if(blocked(w,enemy.mPosition.mX+enemy.mChargeX*next,enemy.mPosition.mY+enemy.mChargeY*next,enemy.mRadius,true))break;
+  distance=next;
+ }
+ return {length:distance*32,radius:radius*32};
+}
 function drawZones(w:any):void{
  const zones=emberZones(w),chargers=things(w).filter(e=>e.Process&&e.mStateID==='State_VariantCharge'&&e.mVariantPhase==='warning');if(!zones.length&&!chargers.length)return;
  let mc=drawViews.get(w);if(!mc){mc=w.createEmptyMovieClip('_EmberArt',w.getNextHighestDepth());mc._visible=false;drawViews.set(w,mc);}
@@ -122,10 +132,12 @@ function drawZones(w:any):void{
  }
  for(const e of chargers){
   const progress=1-e.mVariantTicks/ticks(.6);
-  mc.clear();mc.lineStyle(1.5,0xf1ce82,95);mc.beginFill(0x9e7444,12);mc.moveTo(8,-4);
-  for(const [x,y]of [[104,-4],[104,-10],[124,0],[104,10],[104,4],[8,4],[8,-4]])mc.lineTo(x,y);mc.endFill();
+  const geometry=chargeWarningGeometry(e),length=geometry.length,radius=geometry.radius;
+  mc.clear();mc.lineStyle(1.5,0xf1ce82,95);mc.beginFill(0x9e7444,10);
+  for(let i=0;i<=16;i++){const a=-Math.PI/2+i*Math.PI/16,x=length+Math.cos(a)*radius,y=Math.sin(a)*radius;i?mc.lineTo(x,y):mc.moveTo(x,y);}
+  for(let i=0;i<=16;i++){const a=Math.PI/2+i*Math.PI/16;mc.lineTo(Math.cos(a)*radius,Math.sin(a)*radius);}mc.lineTo(length,-radius);mc.endFill();
   mc.lineStyle(2,0xe5bd76,65+progress*25);
-  for(let i=0;i<3;i++){const x=34+i*25;mc.moveTo(x-5,-6);mc.lineTo(x+2,0);mc.lineTo(x-5,6);}
+  for(let i=0;i<3;i++){const x=(i+1)*length/4;if(x<8)continue;mc.moveTo(x-5,-6);mc.lineTo(x+2,0);mc.lineTo(x-5,6);}
   const p=w.GetScreenPosition(e.mPosition);w.bmCurrentDraw.draw(mc,new flash.geom.Matrix(e.mChargeX,e.mChargeY,-e.mChargeY,e.mChargeX,p.x,p.y),undefined,'normal',undefined,true);
  }
 }
@@ -151,7 +163,7 @@ export function installEnemyVariantsScope():void{
  };
  for(const ctor of [Thing.Creature.CThing_Creature_Zombie,Thing.Creature.CThing_Creature_Devil]){
   const p=ctor.prototype as any,init=p.Process_Init,goto=p.State_GotoPlayer;
-  p.Process_Init=function(this:any):any{const result=init.call(this);if(this.mEnemyVariant&&variantsWorld(this.mWorld)){this.mLife=this.mMaxLife=this.mMaxLife*(this.mEnemyVariant==='charger'?1.6:1.2);this.mScore=this.mEnemyVariant==='charger'?200:1500;this.mVariantCooldown=0;this.mXSI_Animation.mCollection=variantCollection(this.mEnemyVariant);this.mXSI_Animation.SetAnimation_FORCED('stand');}return result;};
+  p.Process_Init=function(this:any):any{const result=init.call(this);if(this.mEnemyVariant&&variantsWorld(this.mWorld)){this.mLife=this.mMaxLife=this.mMaxLife*(this.mEnemyVariant==='charger'?1.6:1.2);this.mScore=this.mEnemyVariant==='charger'?200:1500;this.mVariantCooldown=0;this.mXSI_Animation.mCollection=variantCollection(this.mEnemyVariant,!!this.mBossKind);this.mXSI_Animation.SetAnimation_FORCED('stand');}return result;};
   p.State_GotoPlayer=function(this:any):any{if(this.mEnemyVariant==='charger'&&beginCharge(this))return;if(this.mEnemyVariant==='priest'&&beginEmberCast(this))return;return goto.call(this);};
  }
  const devil=Thing.Creature.CThing_Creature_Devil.prototype as any,decision=devil.State_Attack_Decision;
