@@ -19,6 +19,12 @@ Only lightweight serial targeted checks and short single-instance low-resolution
 
 ## Completed items
 
+### Butcher/hunter devils and Boss forms
+
+Wave-12/18 replacements add armored melee butchers and fan-firing hunters, one ordinary active each, 2600/2100 base HP, 30% armor, 14/12 XP. Wave-15/20 Boss forms join the four-family rotation and existing 1–3-member encounters. Locked 1s cleaves and .9s fans recover after firing; each Boss follow-up gets a fresh .7s warning, with rotated cleaves/interleaved fan gaps. Boss armor remains 40%; new Boss kill XP 70, party kill rewards remain once and doubled only after all Bosses die.
+
+Six related suites passed 52 tests; final persistence/art affected four suites passed 42, including no modern fields on old-capability resume. First failures were fixture enumeration, missing affect setup/shot position; assertions retained. Production `demons-1792508409524` failed pixels because the prepared scene did not update camera tracking; corrected fixture `generated/reports/v032/demons-1792508530048` passed all four forms/actions/16 directions, 64×7 Boss bar geometry, armor and warning pixels. Directly reviewed details, full butcher actions and warnings. Review also moved the blade from an undrawn hand node to its animated forearm. All typechecks/build passed; 117 mechanical ports unchanged. These are prepared art/behavior checks, not normal combat acceptance.
+
 ### Player-skin gunner zombies
 
 Wave-8 replacement uses four seeded injured player skins and pistol/UZI/shotgun views, no extra subtype RNG. A locked .6s warning precedes one shot/three-shot burst/three-pellet fan and recovery. New .22-cell/tick bullets sweep at <=.08-cell steps, hit players only, stop at walls and can be dodged. Skin/gun/pending aim persist; in-flight bullet rollback roundtrips exactly. Four suites passed 38 tests; typechecks/build `main-C34_1AJU.js` passed and 117 ports remain unchanged.

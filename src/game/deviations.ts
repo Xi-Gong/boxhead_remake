@@ -768,4 +768,12 @@ export const DEVIATIONS: Deviation[] = [
       'player-skin collections and gun views bake while loading and preserve gun/foot anchors. Saves retain '+
       'skin, gun and pending fire; generic rollback includes flying bullets.',
   },
+  {
+    id:'DEMON_ROSTER',file:'local/Demons.ts, DemonArt.ts, CombatRosterRules.ts, BossWaves.ts, BossHealthUi.ts, EnemyVariants.ts',
+    description:'Modern butcher/hunter devils replace original slots from waves 12/18 and add Boss forms '+
+      'from 15/20. Locked cleaves and spaced projectile fans each warn before emission, including Boss '+
+      'follow-ups, then recover. Four independently baked armor silhouettes retain native anchors/actions. '+
+      'Mixed encounters, depleted armor and pending chains persist; protected Boss skills still admit '+
+      'normal lethal attribution. Old-capability variants gain no new optional fields on resume.',
+  },
 ];

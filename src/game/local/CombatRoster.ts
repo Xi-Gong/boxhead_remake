@@ -32,7 +32,7 @@ export function installCombatRoster():void{
   if(combatWorld(w)&&!e.mBossKind&&!e.mEnemyVariant&&!e.mCombatKind&&['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(e._CLASSID_)&&s){
    const family=e._CLASSID_==='CThing_Creature_Zombie'?'Zombie':'Devil',ordinal=family==='Zombie'?s.zombie:s.devil;
    const kind=ordinal>0?combatOrdinal(w.mUpgrades.mLevelIndex,ordinal,family):undefined;
-   if(kind&&(Object.values(this.mThings)as any[]).filter(t=>t.mCombatKind===kind&&t.Process&&t.mLife>0&&!t.lanKillLogged).length<2)e.mCombatKind=kind;
+   if(kind&&(Object.values(this.mThings)as any[]).filter(t=>t.mCombatKind===kind&&t.Process&&t.mLife>0&&!t.lanKillLogged).length<(family==='Devil'?1:2))e.mCombatKind=kind;
   }return result;
  };
  for(const ctor of [Thing.Creature.CThing_Creature_Zombie,Thing.Creature.CThing_Creature_Devil]){

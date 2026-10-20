@@ -8,10 +8,11 @@ import { TIMED_WAVES_RULE, spawnIntervalSeconds, waveSeconds } from './TimedWave
 import {CLEAR_WAVES_RULE,clearWaveKeys,type ClearWaveState} from './ClearWaveRules.ts';
 import {combatWorld} from './CombatRules.ts';
 import {walkDistances} from './CombatPacing.ts';
+import type {BossKind} from './CombatRosterRules.ts';
 
 export type SpawnRole='boss'|'reinforcement';
 export interface SpawnWarning { family:'Zombie'|'Devil'; x:number; y:number; ticks:number; role?:SpawnRole }
-export interface BossMemberState { kind:'charger'|'priest'; id?:string; defeated:boolean; life:number; maximum:number }
+export interface BossMemberState { kind:BossKind; id?:string; defeated:boolean; life:number; maximum:number }
 export interface BossWaveState extends BossMemberState { reinforcementTicks:number; members?:BossMemberState[] }
 export function bossMembers(boss:BossWaveState):BossMemberState[]{return boss.members??[boss];}
 export interface TimedWaveState {

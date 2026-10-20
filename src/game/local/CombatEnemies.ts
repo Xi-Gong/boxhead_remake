@@ -11,7 +11,8 @@ export function captureEnemyArmor(world:any):EnemyArmor[]{
   .map(e=>({id:e.sUniqueID,armor:e.mEnemyArmor,maximum:e.mEnemyArmorMaximum,boss:!!e.mBossKind}));
 }
 export function combatKillXp(enemy:any):number{
- if(enemy.mBossKind)return 50;
+ if(enemy.mBossKind)return enemy.mBossKind==='butcher'||enemy.mBossKind==='hunter'?70:50;
+ if(enemy.mCombatKind==='butcher')return 14;if(enemy.mCombatKind==='hunter')return 12;
  if(enemy.mCombatKind)return enemy.mCombatKind==='brute'?4:enemy.mCombatKind==='gunner'?3:2;
  return enemy._CLASSID_==='CThing_Creature_Devil'?(enemy.mEnemyVariant==='priest'?12:10):(enemy.mEnemyVariant==='charger'?4:2);
 }

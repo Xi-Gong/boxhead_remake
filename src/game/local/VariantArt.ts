@@ -26,7 +26,7 @@ export function solid(model:any,cx:number,cy:number,angle:number,width:number,de
  const v=[[-width/2,-depth/2,0],[width/2,-depth/2,0],[width/2,depth/2,0],[-width/2,depth/2,0],[-width*taper/2,-depth*taper/2,height],[width*taper/2,-depth*taper/2,height],[width*taper/2,depth*taper/2,height],[-width*taper/2,depth*taper/2,height]];
  mesh(model,cx,cy,angle,v,[[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]],material);
 }
-function horn(model:any,cx:number,cy:number,angle:number,width:number,depth:number,height:number,lean:number,material:string):void{
+export function horn(model:any,cx:number,cy:number,angle:number,width:number,depth:number,height:number,lean:number,material:string):void{
  mesh(model,cx,cy,angle,[[-width/2,-depth/2,0],[width/2,-depth/2,0],[width/2,depth/2,0],[-width/2,depth/2,0],[lean,0,height]],[[0,1,4],[1,2,4],[2,3,4],[3,0,4]],material);
 }
 function faceDetails(model:any,kind:EnemyVariant,phase:number,pose:string):void{

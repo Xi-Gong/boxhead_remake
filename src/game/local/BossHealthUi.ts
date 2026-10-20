@@ -47,7 +47,7 @@ function paintBar(layer:any,layout:NonNullable<ReturnType<typeof bossHealthLayou
     if(w<=0)return;
     layer.beginFill(color, alpha); capsule(layer,x,y,w,h); layer.endFill();
   };
-  const accent = boss.kind === 'charger' ? 0xd5c89a : 0xffae64;
+  const accent = boss.kind === 'charger' ? 0xd5c89a : boss.kind==='butcher'?0xd99a88:boss.kind==='hunter'?0x9cd4cf:0xffae64;
   pill(0,0,WIDTH,HEIGHT,0x171a18,94);
   pill(1,1,WIDTH-2,HEIGHT-2,0x534844);
   pill(1,1,Math.max(1,(WIDTH-2)*layout.fraction),HEIGHT-2,accent);

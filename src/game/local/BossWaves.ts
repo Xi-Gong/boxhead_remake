@@ -3,6 +3,7 @@ import {CMain,CSound,Thing,World} from '../packages.ts';
 import {netSession} from './Net/NetSession.ts';
 import {worldEnemyGrowth} from './Endless.ts';
 import {combatWorld} from './CombatRules.ts';
+import type {BossKind} from './CombatRosterRules.ts';
 import {variantsWorld,variantSight,emberZones} from './EnemyVariants.ts';
 import {attemptTimedSpawn,bossMembers,livingWavePlayers,reachableSpawnCells,roomForTimedSpawn,timedSpawnRole,timedWave,timedWavesConfigured,type BossWaveState} from './TimedWaves.ts';
 
@@ -19,7 +20,8 @@ export function setClassicBossWavesFixture(main:object):void{classic.add(main);}
 export function bossWavesConfigured():boolean{
   const s=netSession();return timedWavesConfigured()&&(s?s.startOpts?.cfg.bossWaves===BOSS_WAVES_RULE&&s.startOpts.cfg.variants==='enemy-variants-v1':!classic.has(CMain._this));
 }
-export function bossKind(wave:number,devils=true):'charger'|'priest'|undefined{
+export function bossKind(wave:number,devils=true,modern=false):BossKind|undefined{
+  if(modern&&devils&&wave%5===0)return (['charger','priest','butcher','hunter']as const)[(Math.floor(wave/5)-1)%4];
   return wave%5?undefined:devils&&Math.floor(wave/5)%2===0?'priest':'charger';
 }
 export function bossMaximum(wave:number,health:number,coop:boolean):number{
@@ -72,15 +74,17 @@ export function installBossWaves():void{
   upgrades.__set__mLevel=function(this:any,wave:number):any{
     const value=level.call(this,wave),state=this.timedWave;
     if(bossWavesConfigured()&&variantsWorld(this.mWorld)&&state){
-      const kind=bossKind(wave,netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive());
+      const devils=netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive(),modern=this.combat?.rule==='combat-pve-v2'&&this.combat.pendingWave===undefined;
+      const kind=bossKind(wave,devils,modern);
       if(kind){
         state.totalTicks+=ticks(60);state.remainingTicks=state.totalTicks;
         state.boss={kind,defeated:false,life:0,maximum:0,reinforcementTicks:ticks(2)};
+        const available:BossKind[]=!devils?['charger']:modern?wave>=20?['charger','priest','butcher','hunter']:wave>=15?['charger','priest','butcher']:['charger','priest']:['charger','priest'];
         if(bossEncountersConfigured())state.boss.members=Array.from({length:bossCount(wave)},(_,i)=>({
-          kind:i%2===0?kind:kind==='charger'&&(netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive())?'priest':'charger',
+          kind:modern?available[(available.indexOf(kind)+i)%available.length]!:i%2===0?kind:kind==='charger'&&devils?'priest':'charger',
           defeated:false,life:0,maximum:0}));
         const members=bossMembers(state.boss);
-        this.Level.Zombie_Count=4+members.filter(m=>m.kind==='charger').length;this.Level.Devil_Count=members.filter(m=>m.kind==='priest').length;
+        this.Level.Zombie_Count=4+members.filter(m=>m.kind==='charger').length;this.Level.Devil_Count=members.filter(m=>m.kind!=='charger').length;
       }
     }return value;
   };
@@ -110,7 +114,12 @@ export function installBossWaves():void{
     if(boss&&role&&['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(enemy._CLASSID_)){
       if(role==='boss'){
         const members=bossMembers(boss),index=members.findIndex(m=>!m.id&&!m.defeated),member=members[index];
-        if(member){enemy.mBossKind=enemy.mEnemyVariant=member.kind;member.id=enemy.sUniqueID;if(boss.members)enemy.mBossSlot=index;}
+        if(member){
+          enemy.mBossKind=member.kind;
+          if(member.kind==='butcher'||member.kind==='hunter'){delete enemy.mEnemyVariant;enemy.mCombatKind=member.kind;}
+          else enemy.mEnemyVariant=member.kind;
+          member.id=enemy.sUniqueID;if(boss.members)enemy.mBossSlot=index;
+        }
       }
       else delete enemy.mEnemyVariant;
     }return result;
@@ -150,7 +159,7 @@ export function installBossWaves():void{
   const reactions=new WeakMap<object,{fields:(PropertyDescriptor|undefined)[];angle:number}>(),keys=['mStateCount','mDelta','mHitAngle'];
   const affects=creature.ProcessAffects,setState=creature.SetState;
   creature.ProcessAffects=function(this:any):any{
-    if(this.mBossKind&&(this.mStateID==='State_VariantCharge'||this.mStateID==='State_VariantCast'))
+    if(this.mBossKind&&(this.mStateID==='State_VariantCharge'||this.mStateID==='State_VariantCast'||this.mStateID==='State_CombatCleave'||this.mStateID==='State_CombatHunt'))
       reactions.set(this,{fields:keys.map(k=>Object.getOwnPropertyDescriptor(this,k)),angle:this.mAngle.mRadians});
     try{
       const result=affects.call(this);

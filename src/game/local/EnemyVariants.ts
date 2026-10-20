@@ -29,7 +29,7 @@ export function variantSight(w:any,a:any,b:any):boolean{
 }
 export interface EmberZone {id:number;caster:string;target:number;mPosition:any;mAngle:any;damage:number;born:number;warning:number;duration:number;interval:number;lastPulse:number}
 export function emberZones(w:any):EmberZone[]{return w.mUpgrades.enemyVariantState?.zones??[];}
-const skillFields=['mLife','mMaxLife','mVariantCooldown','mVariantPhase','mVariantTicks','mChargeX','mChargeY','mChargeDistance','mBossKind','mBossChargesRemaining','mEnemyArmor','mEnemyArmorMaximum','mCombatKind','mCombatCooldown','mCombatPhase','mCombatTicks','mCombatAimX','mCombatAimY','mCombatAimRange','mCombatShots','mGunnerSkin','mGunnerWeapon'] as const;
+const skillFields=['mLife','mMaxLife','mVariantCooldown','mVariantPhase','mVariantTicks','mChargeX','mChargeY','mChargeDistance','mBossKind','mBossChargesRemaining','mEnemyArmor','mEnemyArmorMaximum','mCombatKind','mCombatCooldown','mCombatPhase','mCombatTicks','mCombatAimX','mCombatAimY','mCombatAimRange','mCombatShots','mGunnerSkin','mGunnerWeapon','mCombatChain','mCombatWarnTotal'] as const;
 export interface VariantSave {
  rule:typeof VARIANTS_RULE;wave:number;zombie:number;devil:number;nextZone:number;
  zones:(Omit<EmberZone,'mPosition'|'mAngle'>&{x:number;y:number;angle:number})[];
@@ -40,7 +40,7 @@ export function captureVariants(w:any):VariantSave|undefined{
  const s=w.mUpgrades.enemyVariantState;
  return {rule:VARIANTS_RULE,wave:s.wave,zombie:s.zombie,devil:s.devil,nextZone:s.nextZone,
   zones:s.zones.map(({mPosition:p,mAngle:a,...rest}:EmberZone)=>({...rest,x:p.mX,y:p.mY,angle:a.__get__mAngle()})),
-  enemies:things(w).filter(e=>(e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mCombatKind??e.mEnemyVariant??'devil',x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
+  enemies:things(w).filter(e=>(e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mCombatKind??e.mEnemyVariant??'devil',x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.filter(k=>Object.hasOwn(e,k)).map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
 }
 export function restoreVariants(w:any,s:VariantSave|undefined):void{
  if(!variantsWorld(w)||s?.rule!==VARIANTS_RULE)return;
@@ -56,8 +56,8 @@ export function restoreVariants(w:any,s:VariantSave|undefined):void{
   w.mThing_Collection.AddThing(e);e.Process_Init();
   e.ClearCollideCell();e.Move(position(saved.x,saved.y));e.SetCollideDirection(e.mPosition,World.Map.CMap_Cell.mCollide_Creature);e.mFlags|=Thing.CThing.mFlag_Collidable;
   e.Affect_Setup(Thing.Affect.CThing_Affect.mAffect_Bullet|Thing.Affect.CThing_Affect.mAffect_Explosion|Thing.Affect.CThing_Affect.mAffect_FireBall);
-  e.mBaseStateID='State_GotoPlayer';e.SetState(saved.state==='State_VariantCharge'||saved.state==='State_VariantCast'||saved.state==='State_CombatSmash'||saved.state==='State_CombatAim'?saved.state:'State_GotoPlayer');Object.assign(e,saved.fields);
-  e.mXSI_Animation.SetAnimation_FORCED(e.mStateID==='State_CombatAim'?'stand':e.mStateID==='State_CombatSmash'?'attack':e.mStateID==='State_VariantCast'?'cast':e.mStateID==='State_VariantCharge'?(e.mVariantPhase==='warning'?'warning':e.mVariantPhase==='charge'?'charge':'recovery'):'walk',saved.frame??0);
+  e.mBaseStateID='State_GotoPlayer';e.SetState(['State_VariantCharge','State_VariantCast','State_CombatSmash','State_CombatAim','State_CombatCleave','State_CombatHunt'].includes(saved.state)?saved.state:'State_GotoPlayer');Object.assign(e,saved.fields);
+  e.mXSI_Animation.SetAnimation_FORCED(e.mStateID==='State_CombatAim'?'stand':['State_CombatCleave','State_CombatHunt'].includes(e.mStateID)?e.mCombatPhase==='warning'?'attack':'stand':e.mStateID==='State_CombatSmash'?'attack':e.mStateID==='State_VariantCast'?'cast':e.mStateID==='State_VariantCharge'?(e.mVariantPhase==='warning'?'warning':e.mVariantPhase==='charge'?'charge':'recovery'):'walk',saved.frame??0);
   if(saved.damageSound)e.mSound.Damage=CSound.mSamples[saved.damageSound];if(saved.deathSound)e.mSound.Death=CSound.mSamples[saved.deathSound];
   if(family==='Zombie')w.mUpgrades.Level.mZombieCount++;else w.mUpgrades.Level.mDevilCount++;
   identities.set(saved.id,e.sUniqueID);
