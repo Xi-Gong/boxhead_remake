@@ -12,6 +12,7 @@ import { lanBridge } from './bridge.ts';
 import { RoomSettingsPanel } from './RoomSettingsPanel.ts';
 import { WaveInput } from '../WaveInput.ts';
 import { waveArrow } from '../StartWaveUi.ts';
+import { showWaveLimit } from '../TimedWaveUi.ts';
 import { SCREEN_LAN_SETUP_LINKAGE } from '../localSymbols.ts';
 import { BODY_FONT, GREY, INK, glow, pillButton, setButtonEnabled, setButtonLabel, text } from '../UiStyle.ts';
 
@@ -215,6 +216,7 @@ export class CScreen_LanSetup extends CScreen {
       return;
     }
     const sel = b.sel;
+    showWaveLimit(this.widgets,sel.levelIdx,sel.mode==='Coop'&&b.timedWavesAvailable(),20,390,180);
     if (sel.mode !== this.subMode) this.attachSubScreen();
 
     setButtonLabel(this.bMode, sel.mode === 'Coop' ? 'CO-OP' : 'DEATHMATCH');

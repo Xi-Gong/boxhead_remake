@@ -1,0 +1,24 @@
+{
+  "scope": "Timed ordinary waves and continuous spawning; feature branch development, not release acceptance",
+  "branch": "codex/feature-v0.3.1-gameplay-art",
+  "simulation": [
+    "All 18 rooms: actual grid sizes, 3/4/5 minute classification, duration boundary rules",
+    "Spawn cadence floor, opening arrivals, retained concurrent caps, warned reachable fallback and reselection",
+    "Pause, terminal-tick defeat precedence, cleanup without score/XP/loot, preserved placed objects",
+    "v2 save continuity, first classic-save migration without refills, rollback replay, downgrade rejection",
+    "Existing endless, resume, enemy counter, LAN setup, growth HUD and bridge assertions retained"
+  ],
+  "browser": {
+    "mode": "One installed headless Chrome instance, 640x480, isolated context, short real-input check",
+    "build": "main-BzQM2mf8.js",
+    "report": "generated/reports/v031/timed-waves/run-1792464925767/report.json",
+    "screenshots": ["selection.png", "combat.png", "arrival-warning.png"],
+    "countdownLightPixels": 196,
+    "countdownBounds": {"x":264,"y":54,"width":112,"height":24},
+    "review": "Direct screenshot inspection plus geometry, pixel and real mouse/keyboard checks; no zai",
+    "retainedFailure": "generated/reports/v031/timed-waves/report.json: fixture assumed small default map; actual selection was medium. Retested with explicit small-map selection."
+  },
+  "build": "Three TypeScript configurations and production renderer/Electron build passed; code audit: 515 modules, 117 unchanged mechanical ports",
+  "notRun": ["Full release gates", "Multi-instance LAN gameplay", "Performance/stress benchmarks", "Portable candidate acceptance"],
+  "pending": ["Wave draft", "Boss waves", "Reference progression retuning", "Enemy and gun art", "Final candidate package", "Fresh authorization for heavy gates"]
+}

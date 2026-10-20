@@ -29,6 +29,8 @@ import { layoutMainMenu, menuTextItem, text } from './local/UiStyle.ts';
 import { installViewport } from './local/Viewport.ts';
 import { desktop } from '../engine/platform/desktop.ts';
 import { installArmorScope } from './local/Armor.ts';
+import { installTimedWaves } from './local/TimedWaves.ts';
+import { installTimedWaveUi } from './local/TimedWaveUi.ts';
 import { installExplosionFlash } from './local/ExplosionFlash.ts';
 import {installBalanceScope} from './local/Balance.ts';
 import { installFriendlyFire } from './local/FriendlyFire.ts';
@@ -108,6 +110,8 @@ let applied = false;
 export function applyScope(): void {
   if (applied) return;
   applied = true;
+  installTimedWaves();
+  installTimedWaveUi();
   installArmorScope();
   installBalanceScope();
   installEndlessScope();

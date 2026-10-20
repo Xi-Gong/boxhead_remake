@@ -67,14 +67,17 @@ class LanBridge {
   private peerLoot = false;
   private peerRefill = false;
   private peerEndless = false;
+  private peerTimedWaves = false;
   private peerVariants = false;
   private peerEnchantment = false;
   private supportsEndless():boolean{return this.peerEndless&&this.peerGrowth&&this.peerSupplies&&this.peerSurvival&&this.peerLoot&&this.peerBalance;}
   private waveMaximum():number{return this.supportsEndless()?maxUnlockedWave():Math.min(100,maxUnlockedWave());}
+  timedWavesAvailable():boolean{return this.supportsEndless()&&this.peerTimedWaves;}
   private peerSupportsRun():boolean{
     const c=this.session?.startOpts?.cfg;
     return !(c?.endless&&!this.supportsEndless()||c?.variants&&(!this.supportsEndless()||!this.peerVariants)||c?.refill&&!this.peerRefill
-      ||c?.enchantment&&(!this.supportsEndless()||!this.peerVariants||!this.peerEnchantment));
+      ||c?.enchantment&&(!this.supportsEndless()||!this.peerVariants||!this.peerEnchantment)
+      ||c?.timedWaves&&(!this.supportsEndless()||!this.peerTimedWaves));
   }
   session: NetSession | null = null;
   sid: string | undefined;
@@ -296,6 +299,7 @@ class LanBridge {
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival && this.peerLoot ? {loot:'supply-crates-v2' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerSurvival && this.peerLoot && this.peerRefill ? {refill:'reliable-supplies-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()?{endless:'endless-pve-v1' as const}:{}),
+      ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerTimedWaves?{timedWaves:'timed-waves-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerVariants?{variants:'enemy-variants-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerVariants&&this.peerEnchantment?{enchantment:'persistent-enchantment-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerBalance ? {balance:'pve-balance-v1' as const}:{}),
@@ -389,6 +393,7 @@ class LanBridge {
       this.peerLoot = Array.isArray(msg.features) && msg.features.includes('supply-crates-v2');
       this.peerRefill = Array.isArray(msg.features) && msg.features.includes('reliable-supplies-v1');
       this.peerEndless = Array.isArray(msg.features) && msg.features.includes('endless-pve-v1');
+      this.peerTimedWaves = Array.isArray(msg.features) && msg.features.includes('timed-waves-v1');
       this.peerVariants = Array.isArray(msg.features) && msg.features.includes('enemy-variants-v1');
       this.peerEnchantment = Array.isArray(msg.features) && msg.features.includes('persistent-enchantment-v1');
       if(this.isHost){const maxWave=this.waveMaximum();this.sel={...this.sel,maxWave,wave:Math.min(this.sel.wave,maxWave)};}
@@ -404,9 +409,11 @@ class LanBridge {
       }
       if (this.session) {
         if(this.peerSupportsRun())this.session.onHello(msg);
-        else this.message=this.session.startOpts?.cfg.enchantment
-          ?'This saved game requires v0.3.0-rc2 persistent enchantment on both players.'
-          :'This saved game requires v0.3.0 gameplay features on both players.';
+        else this.message=this.session.startOpts?.cfg.timedWaves
+          ?'This saved game requires v0.3.1 timed waves on both players.'
+          :this.session.startOpts?.cfg.enchantment
+            ?'This saved game requires v0.3.0-rc2 persistent enchantment on both players.'
+            :'This saved game requires v0.3.0 gameplay features on both players.';
       } // A replacement older peer must never reinterpret an active modern checkpoint.
       this.notify();
       return;

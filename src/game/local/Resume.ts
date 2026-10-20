@@ -27,6 +27,7 @@ import { SURVIVAL_RULE, survivalEnabled, settleVitals } from './SurvivalRules.ts
 import { LOOT_RULE, modernLoot, type SupplyState } from './LootRules.ts';
 import { ENDLESS_RULE } from './EndlessRules.ts';
 import { endlessWorld } from './Endless.ts';
+import { timedWave, copyTimedWave, type TimedWaveState } from './TimedWaves.ts';
 import {VARIANTS_RULE,captureVariants,restoreVariants,variantsWorld,type VariantSave} from './EnemyVariants.ts';
 import {ENCHANTMENT_RULE,persistentEnchantment,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
 
@@ -85,6 +86,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  timedWave?: TimedWaveState;
   enchantment?: typeof ENCHANTMENT_RULE;
   variants?: VariantSave;
   endless?: typeof ENDLESS_RULE;
@@ -250,6 +252,7 @@ export function capture(world: any): RunSnapshot {
   return {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
     ...(endlessWorld(world)?{endless:ENDLESS_RULE}:{}),
+    ...(timedWave(world)?{timedWave:copyTimedWave(world)}:{}),
     ...(variantsWorld(world)?{variants:captureVariants(world)}:{}),
     ...(persistentEnchantment(world)?{enchantment:ENCHANTMENT_RULE}:{}),
     ...(survivalEnabled(world) ? { survival: SURVIVAL_RULE } : {}),
@@ -425,6 +428,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if ((snap.endless === ENDLESS_RULE || snap.growth?.players.some(p => p.endless)) && !endlessWorld(world)) return false;
   if(snap.variants?.rule===VARIANTS_RULE&&!variantsWorld(world))return false;
   if(snap.enchantment===ENCHANTMENT_RULE&&!persistentEnchantment(world))return false;
+  if(snap.timedWave&&!timedWave(world))return false;
   const u = world.mUpgrades;
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);
@@ -456,13 +460,18 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     const c = snap.waveCounters;
     u.Level.mSpawnCount_Zombie = c.spawnZombie;
     u.Level.mSpawnCount_Devil = c.spawnDevil;
-    u.Level.Zombie_Count = c.zombieCount;
-    u.Level.Zombie_TotalCount = c.zombieTotal;
-    u.Level.Devil_Count = c.devilCount;
-    u.Level.Devil_TotalCount = c.devilTotal;
+    if(!timedWave(world)){
+      u.Level.Zombie_Count = c.zombieCount;
+      u.Level.Zombie_TotalCount = c.zombieTotal;
+      u.Level.Devil_Count = c.devilCount;
+      u.Level.Devil_TotalCount = c.devilTotal;
+    }else{
+      u.Level.Zombie_TotalCount=0;u.Level.Devil_TotalCount=0;
+    }
     u.Level.mZombieCount = 0;
     u.Level.mDevilCount = 0;
     u.Level.mPlayerCount = c.playerCount;
+    if(snap.timedWave)u.timedWave={...snap.timedWave,warnings:snap.timedWave.warnings.map(w=>({...w}))};
     for (const s of snap.players) applyPlayer(world, s);
     restoreVariants(world,snap.variants);
     applyObjects(world, snap);

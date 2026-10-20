@@ -14,6 +14,14 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'TIMED_WAVES',
+    file:'local/TimedWaves.ts, TimedWaveRules.ts, Resume.ts; local/Net/protocol.ts, bridge.ts',
+    description:'v0.3.1 optional timed-waves-v1 replaces finite enemy budgets with map-sized simulation timers '+
+      'and continuous capped spawns. Nearby reachable entries are preferred; ground arrivals receive a warning. '+
+      'Timeout disposes combat entities without kill rewards before recording the next checkpoint. '+
+      'Old peers and explicit classic fixtures retain the original finite waves; v2 saves carry remaining ticks.',
+  },
+  {
     id:'PERSISTENT_ENCHANTMENT',
     file:'local/EnchantmentRules.ts, Enchantment.ts, Resume.ts, WeaponCrate.ts; local/Net/protocol.ts, bridge.ts; electron/lan.ts',
     description:'v0.3.0-rc2 optional persistent-enchantment-v1 requires enemy variants. Purple crates enchant '+

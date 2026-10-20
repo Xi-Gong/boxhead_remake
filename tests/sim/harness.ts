@@ -39,6 +39,7 @@ import {setClassicWaveFixture} from '../../src/game/local/Balance.ts';
 import {setClassicGrowthFixture} from '../../src/game/local/LocalGrowth.ts';
 import {setClassicEndlessFixture} from '../../src/game/local/Endless.ts';
 import {setClassicEnchantmentFixture} from '../../src/game/local/EnchantmentRules.ts';
+import {setClassicTimedWavesFixture} from '../../src/game/local/TimedWaves.ts';
 import { CMain, Screen, Thing, World } from '../../src/game/packages.ts';
 
 export type GameMode = 'Single' | 'Coop' | 'DeathMatch';
@@ -83,6 +84,8 @@ export interface HeadlessGameOptions {
   classicEndless?: boolean;
   /** v0.3.0-rc1 enchanted-stock rules; modern weapons retain their enchantment across refills. */
   classicEnchantment?: boolean;
+  /** Original finite wave budgets before timed-waves-v1. */
+  classicTimedWaves?: boolean;
   seed?: number;
   options?: GameOptions;
   /** Cells per Nav_Update call (deviation NAV_BUDGET_TEST_HOOK); null = original getTimer budget. Default 300. */
@@ -437,6 +440,7 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   if(opts.classicGrowth)setClassicGrowthFixture(m);
   if(opts.classicEndless)setClassicEndlessFixture(m);
   if(opts.classicEnchantment)setClassicEnchantmentFixture(m);
+  if(opts.classicTimedWaves)setClassicTimedWavesFixture(m);
   const sd = m.constructor.mSaveData ?? (CMain as any).mSaveData;
   const o = opts.options ?? {};
   // options window fields (CScreen_SelectWorld.RegisterButton_Option writes CMain.mSaveData[field] = value)

@@ -109,6 +109,7 @@ export interface SetupSelection {
 export interface GameConfig {
   /** Unlimited personal progression and stat-scaled bounded wave budgets; requires modern PvE rules. */
   endless?: 'endless-pve-v1';
+  timedWaves?: 'timed-waves-v1';
   variants?: 'enemy-variants-v1';
   /** Weapon enchantment survives replenishment until empty; requires enemy variants. */
   enchantment?: 'persistent-enchantment-v1';
