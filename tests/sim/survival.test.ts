@@ -25,7 +25,7 @@ it.each([[1,200],[50,396],[125,696]])('level %i has health and armor cap %i; pic
   p.mLife=73;refillArmor(p);expect(p.mArmor).toBe(max);expect(p.mLife).toBe(73);game.quit();
 });
 it('actual fresh difficulty starts get full scaled health while old saves keep current health',()=>{
-  const g=createHeadlessGame({mode:'Single',difficulty:2,classicWaveDraft:true}),p=g.players()[0];
+  const g=createHeadlessGame({mode:'Single',difficulty:2,classicWaveDraft:true,classicTimedWaves:true}),p=g.players()[0];
   expect(p.mMaxLife).toBe(468);expect(p.mLife).toBe(468);expect(p.mArmor).toBeUndefined();
   const snap=capture(g.world());delete snap.survival;snap.players[0]!.life=73;snap.players[0]!.maxLife=200;
   expect(applyToWorld(g.world(),snap)).toBe(true);expect(p.mMaxLife).toBe(468);expect(p.mLife).toBe(73);g.quit();

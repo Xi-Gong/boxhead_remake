@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'TIMED_REFERENCE_GROWTH',
+    file:'local/TimedGrowthRules.ts, Endless.ts, LocalGrowth.ts; local/Net/NetSession.ts',
+    description:'Timed PvE derives selected-wave levels and enemy growth from map duration, the three spawn '+
+      'stages, difficulty, enabled devils and an equal cooperative kill share. Boss reference experience '+
+      'counts timed reinforcements without assuming a Boss kill. A bounded 100-wave prefix and closed-form '+
+      'five-wave tail replace unbounded replay; only the current enemy-growth result is cached per world. '+
+      'Existing saved personal levels, XP, current vitals, ammunition and the original unlock table persist.',
+  },
+  {
     id:'BOSS_WAVES',
     file:'local/BossWaves.ts, TimedWaves.ts, TimedWaveUi.ts, EnemyVariants.ts, Resume.ts; local/Net/bridge.ts',
     description:'v0.3.1 optional boss-waves-v1 requires timed waves and enemy variants. Every fifth wave has '+

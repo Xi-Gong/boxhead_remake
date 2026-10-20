@@ -4,7 +4,7 @@ import { balancedStartLevel, difficultyIndex, DIFFICULTY_START_WAVES } from './B
 import { grantGrowthLoadout, growthOf, MAX_LEVEL, newGrowth } from './Net/Growth.ts';
 import { netActive } from './Net/NetSession.ts';
 import { settleVitals } from './SurvivalRules.ts';
-import { endlessWorld } from './Endless.ts';
+import { endlessWorld, timedWorldStartLevel } from './Endless.ts';
 import { endlessStartLevel } from './EndlessRules.ts';
 
 const classicFixtures = new WeakSet<object>();
@@ -23,7 +23,7 @@ export function initializeLocalGrowth(world: any, restored: boolean): void {
   const upgrades = world.mUpgrades, single = World.CWorld.mGameMode === 'Single';
   const difficulty = difficultyIndex(CMain.mSaveData.__get__mDifficulty());
   const wave = Math.max(upgrades.mLevelIndex, DIFFICULTY_START_WAVES[difficulty]!);
-  const level = (endless?endlessStartLevel:balancedStartLevel)(wave, !!CMain.mSaveData.__get__mDevilsActive(), single ? 1 : 2);
+  const level = upgrades.timedWave?timedWorldStartLevel(world,wave):(endless?endlessStartLevel:balancedStartLevel)(wave, !!CMain.mSaveData.__get__mDevilsActive(), single ? 1 : 2);
   const state = upgrades.lanGrowth = newGrowth(level, true,endless);
   if (restored) {
     // No new weapons or refill on migration. Owned weapons supply a lower bound even if the old multiplier decayed.

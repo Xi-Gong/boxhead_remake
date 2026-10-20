@@ -39,7 +39,7 @@ describe('local permanent personal growth',()=>{
     expect(hasCheckpoint()).toBe(true);expect(game.errors).toEqual([]);
   });
   it.each(['Single','Coop'] as const)('%s selected-wave and difficulty floors share the earned-wave model',mode=>{
-    const game=createHeadlessGame({mode,menuOnly:'Select'}); CMain.mSaveData.mDifficulty=3;
+    const game=createHeadlessGame({mode,menuOnly:'Select',classicTimedWaves:true}); CMain.mSaveData.mDifficulty=3;
     start(game,20); const world=game.world(),level=balancedStartLevel(35,true,mode==='Single'?1:2);
     expect(world.mUpgrades.mLevelIndex).toBe(20);
     expect(growthOf(world)!.players[0]).toEqual({score:0,level,xp:0,curve:'pve-balance-v1',endless:true});
@@ -48,7 +48,7 @@ describe('local permanent personal growth',()=>{
   it('single progression uses all previous kills, cooperation an equal share; disabling devils excludes their XP',()=>{
     const levels=[];
     for(const mode of ['Single','Coop'] as const){
-      const game=createHeadlessGame({mode,menuOnly:'Select'}); CMain.mSaveData.mDevilsActive=0;start(game,20);
+      const game=createHeadlessGame({mode,menuOnly:'Select',classicTimedWaves:true}); CMain.mSaveData.mDevilsActive=0;start(game,20);
       levels.push(growthOf(game.world())!.players[0].level);
       expect(levels.at(-1)).toBe(balancedStartLevel(20,false,mode==='Single'?1:2));
     }

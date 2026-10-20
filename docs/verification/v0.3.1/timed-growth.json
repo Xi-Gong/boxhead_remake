@@ -1,0 +1,19 @@
+{
+  "feature": "timed reference growth",
+  "checks": {"passedAcrossRelevantSuites": 102, "files": 9, "workers": 1, "suites": ["timedGrowth", "endless", "localGrowth", "survival", "bossWaves", "enemyVariants", "waveDraft", "resume", "netGrowthHud"]},
+  "coverage": ["18 actual selected maps", "all difficulty/devil/Boss combinations against a simple per-wave arithmetic oracle", "cooperative equal share", "fixed prefix and five-wave tail", "million-wave and MAX_SAFE_INTEGER inputs", "saved levels and damaged inventory unchanged", "original thresholds retained in classic fixtures"],
+  "referenceAssumption": "continuously cleared spawns, excluding assumed Boss kill XP; not a measured completion or performance claim",
+  "example": {"wave": 20, "difficulty": "Beginner", "players": 1, "devils": true, "bosses": true, "levelsByMapSize": [148,172,192]},
+  "typechecks": ["tsconfig.json", "config/tsconfig.strict.json", "config/tsconfig.tools.json"],
+  "build": "main-OMj8D8F8.js",
+  "browser": {
+    "report": "generated/reports/v031/timed-growth/run-1792466928465/report.json",
+    "mode": "single headless Chrome at 640x480; real mouse and keyboard text entry",
+    "screenshot": "selected-growth.png",
+    "review": "direct screenshot review, exact state, text geometry and scoped pixels; no zai",
+    "result": {"level":148,"wave":20,"bonuses":[5,5,5,4],"totalTicks":6000,"textBounds":[280,16],"textPixels":99},
+    "failedRunRetained": "generated/reports/v031/timed-growth/run-1792466805938"
+  },
+  "initialFailures": ["Selection fixture changed preview without saved map index; fixed fixture and added actual grid-size assertion.", "Full-screen white-pixel threshold was inappropriate for gray stats; replaced with scoped text geometry/color check after direct review.", "Review also found stale pause overlays; fixed and pushed separately as 30390de."],
+  "releaseGates": "not run; heavy QA still requires fresh authorization"
+}

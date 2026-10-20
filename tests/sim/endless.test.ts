@@ -84,7 +84,7 @@ it('shots and placed explosives carry scaled damage once; high damage cannot lau
  z.mDelta=new Thing.Math.CThing_Position(1000,0,0);z.State_BulletHit_Init();expect(z.mDelta.__get__mLength()).toBeCloseTo(.3,10);g.quit();
 });
 it('bounds enemy budgets while health and normal damage keep rising after wave 100',()=>{
- const g=createHeadlessGame({mode:'Coop'});noSpawn(g);const w=g.world(),p=g.players()[0],values=[];
+ const g=createHeadlessGame({mode:'Coop',classicTimedWaves:true});noSpawn(g);const w=g.world(),p=g.players()[0],values=[];
  for(const wave of [100,200,1000]){
   w.mUpgrades.__set__mLevel(wave);const l=w.mUpgrades.Level;expect([l.Zombie_TotalCount,l.Devil_TotalCount]).toEqual([200,10]);
   const z=w.mThing_Collection.AddThing(new Thing.Creature.CThing_Creature_Zombie(p.mPosition.Clone(),p.mAngle.Clone()));z.Process_Init();
