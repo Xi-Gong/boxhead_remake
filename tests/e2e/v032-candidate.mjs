@@ -13,7 +13,7 @@ export async function verifyV032Candidate(g,out){
   await g.page.keyboard.down('ArrowRight');await g.page.waitForTimeout(80);await g.page.keyboard.up('ArrowRight');await g.page.keyboard.press('Slash');
   await g.expr('m.mcWorld.mUpgrades.timedWave.remainingTicks=1');assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._visible'));
   assert(await g.waitExpr('m.mcWorld._LanGrowthHud._Wave._Zombies.text==="0"&&m.mcWorld._LanGrowthHud._Wave._Devils.text==="0"'));
-  await g.page.keyboard.press('Tab');assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Stats._visible'));await g.shot(join(out,'stats.png'),false);await g.page.keyboard.press('Tab');
+  await g.page.keyboard.press('Tab');assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Stats._visible'));await g.page.waitForTimeout(700);report.header=await g.expr('(()=>{const h=m.mcWorld._WaveDraftHud;return [h._Title,h._Clock].map(t=>({text:t.text,width:t._width,format:t.getTextFormat(),rect:t.$rect,layout:t.$getLayout()}));})()');await g.shot(join(out,'stats.png'),false);await g.page.keyboard.press('Tab');
   await g.shot(join(out,'draft.png'),false);const first=await choose();assert(await g.waitExpr(`m.mcWorld.mUpgrades.mLevelIndex===${initial.wave+1}`));awarded(first.before,first.reward,1,await bonuses());
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));
   const saved=await g.expr('({wave:m.mcWorld.mUpgrades.mLevelIndex,remaining:m.mcWorld.mUpgrades.timedWave.remainingTicks,bonuses:{...m.mcWorld.mUpgrades.waveDraft.bonuses[0]},growth:{...m.mcWorld.mUpgrades.lanGrowth.players[0]},clear:{...m.mcWorld.mUpgrades.timedWave.clear}})');report.saved=saved;

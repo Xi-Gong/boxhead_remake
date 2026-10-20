@@ -132,3 +132,9 @@ Final full Vitest JSON (`release-gates/vitest-final.json`) passed 1784 tests, ze
 External packaging used that fresh build. `release-gates/artifact.json` verifies package/lock 0.3.2, all 70 built files byte-for-byte in asar, all modern runtime/art prefixes and a 417-input source fingerprint. Portable is 101669486 bytes; SHA256 `2b7763970c0ff026ef617baf8c55d27c5a4bc588ee41af0eeddd1c3e947e01ac`; asar SHA256 `09beeb077799e59f7377152b11624201e345c10e6241a274bf9fbe2d2b763ab5`. Staged ignored copy: `release/v032-final`; EXE archive also copied. Actual packaged gates follow.
 
 The complete revised audio gate passed **54/54** checks on the final renderer: 49 original assertions plus 5 real-menu completion assertions. Nonzero recovered waveform peaks were 0.8395. Archived at `release-gates/audio-final`; no audio runtime was altered.
+
+### Actual portable EXE gate
+
+`release-gates/portable/launch-0.3.2.json` passed actual NSIS single-file launch via a unique CDP port, isolated saves, 640x480 viewport, all 31 decoded sounds and save/continue. The extracted complete asar hash equals the validated unpacked package; current renderer/main/preload bytes match. `timed-candidate/report.json` passed modern profile/deadline, real keys/Tab/card/READY, full bonus/growth persistence, baked fresh collections, butcher/charger member armor and 64x7 bars, plus exactly one dynamic doubled Boss reward. Boss kills/clock in that helper are explicit fixtures, separate from input-only play.
+
+Portable stats/cards and Boss images were directly reviewed. Initial browser captures taken immediately during appearance showed partial header text; honoring the established ~700ms transition wait produces complete headers (169px/282px text inside 496px fields) in the actual portable screenshot. This is a capture timing repair, not a product text/render change. The old partial capture remains in its original folder.
