@@ -52,7 +52,7 @@ import { endlessStartLevel } from '../EndlessRules.ts';
 import {BALANCE_RULE,balancedStartLevel,DIFFICULTY_START_WAVES,difficultyIndex} from '../BalanceRules.ts';
 import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
 import { copyTimedWave, type TimedWaveState } from '../TimedWaves.ts';
-import { takeDraftChoice } from '../WaveDraftInput.ts';
+import { takeDraftChoice,draftSampleBits } from '../WaveDraftInput.ts';
 import { copyWaveDraft, type WaveDraftState } from '../WaveDraftRules.ts';
 import { settleVitals } from '../SurvivalRules.ts';
 import {capturePlayerStats,type PlayerStats} from '../PlayerStats.ts';
@@ -1001,18 +1001,20 @@ export class NetSession {
     const input = CMain.mInput as Record<string, any> | undefined;
     if (!input) return 0;
     const held: Record<string, boolean> = {};
-    const consume = (slot: any): boolean => {
+    let pressed=0;
+    const consume = (slot: any,index:number): boolean => {
       if (!slot) return false;
       const latch = slot.mPressed === true;
+      if(latch)pressed|=1<<index;
       if (latch) slot.IsPressed(); // consume: the next sample reports only fresh presses
       return slot.mDown === true || latch;
     };
-    for (const name of SLOT_ORDER) {
-      const primary = consume(input['KEY_' + name]);
-      const secondary = consume(input['KEY_' + name + '2']);
+    for (const [index,name] of SLOT_ORDER.entries()) {
+      const primary = consume(input['KEY_' + name],index);
+      const secondary = consume(input['KEY_' + name + '2'],index);
       held[name] = primary || secondary;
     }
-    return takeDraftChoice(this.world,this.role)??packBits(held as Record<SlotBitName, boolean>);
+    return takeDraftChoice(this.world,this.role)??draftSampleBits(this.world,packBits(held as Record<SlotBitName, boolean>),pressed);
   }
 
   slot(playerIndex: number, name: string): NetSlot {

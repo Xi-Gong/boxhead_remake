@@ -2,6 +2,13 @@
 import {encodeDraftChoice} from './WaveDraftRules.ts';
 import {draftInputBlocked} from './DraftStatsInput.ts';
 const clicks=new WeakMap<object,Map<number,{wave:number;bits:number}[]>>();
+/** Fresh physical edges become actions, so adjacent short taps need no artificial empty tick. */
+export function draftSampleBits(world:any,bits:number,pressed:number):number{
+ if(!world?.mUpgrades?.waveDraft?.round?.readyRule)return bits;
+ if(pressed&(1|4|64))return 104;
+ if(pressed&(2|8|32))return 105;
+ return bits&16;
+}
 export function queueDraftCommand(world:any,player:number,bits:number,wave:number):void{
  let map=clicks.get(world);if(!map)clicks.set(world,map=new Map());
  const queue=(map.get(player)??[]).filter(x=>x.wave===wave);

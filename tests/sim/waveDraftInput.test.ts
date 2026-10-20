@@ -5,6 +5,14 @@ import {beginWaveDraft,processWaveDraft,waveDraft} from '../../src/game/local/Wa
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
 import {CMain} from '../../src/game/packages.ts';
 
+it('keeps consecutive sub-tick navigation taps for P2 without a sampled release tick',()=>{
+ const g=createHeadlessGame({mode:'Coop'}),w=g.world();beginWaveDraft(w);
+ try{for(let i=1;i<=2;i++){
+  g.keyDown(KEYS.P2.DOWN);CMain.mInput.ProcessAllKeys();g.keyUp(KEYS.P2.DOWN);CMain.mInput.ProcessAllKeys();
+  processWaveDraft(w);expect(waveDraft(w)!.round!.selected).toEqual([0,i]);
+ }}finally{g.quit();}
+});
+
 it('does not send hidden gamepad cursor clicks into a running wave or its draft',()=>{
  const g=createHeadlessGame({mode:'Coop'}),w=g.world();
  let clicks=0,pressed=false;
@@ -41,6 +49,16 @@ it('routes both keyboard sets and either assigned pad to the LAN client draft wi
     direction=0;h.poll(false);sample();direction=-1;h.poll(false);sample();
     expect(waveDraft(w)!.round!.selected).toEqual([0,0]);
    }finally{h.dispose();sample();}
+  }
+  waveDraft(w)!.round!.readyRule='draft-ready-v1';
+  for(const keys of [KEYS.P1,KEYS.P2]){
+   waveDraft(w)!.round!.selected[1]=0;
+   for(let i=1;i<=2;i++){
+    g.keyDown(keys.DOWN);CMain.mInput.ProcessAllKeys();g.keyUp(keys.DOWN);CMain.mInput.ProcessAllKeys();
+    sample();expect(waveDraft(w)!.round!.selected).toEqual([0,i]);
+   }
+   g.keyDown(keys.DOWN);sample();const held=waveDraft(w)!.round!.selected[1];
+   sample();expect(waveDraft(w)!.round!.selected[1]).toBe(held);g.keyUp(keys.DOWN);sample();
   }
  }finally{g.quit();}
 });

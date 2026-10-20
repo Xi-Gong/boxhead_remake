@@ -19,6 +19,12 @@ Only lightweight serial targeted checks and short single-instance low-resolution
 
 ## Completed items
 
+### Consecutive draft taps
+
+Current production browser keyboard/pad mapping and both-player ready flow passed in `generated/reports/v032/draft-input-1792506455083`; `p2-choice.png` directly reviewed. Real two-peer transport remains pending.
+
+Reproduced two P2 down taps each shorter than a tick: the second remained on card 1 instead of card 2. New ready rounds encode physical navigation edges as reserved 104/105 commands, so adjacent taps survive sampling and rollback without requiring an empty tick. Held directions do not repeat unexpectedly; ordinary gameplay and old draft packets retain their interpretation. Four suites passed 24 tests, including both LAN-client keyboard sets and held-input coverage; final input suite passed again after extending client coverage. Typechecks/build passed (`main-CA9iVdWU.js`).
+
 ### Broader builds and recovery choices
 
 Modern drafts offer one offense, defense and utility choice, with ten total rewards and useful capacity/cadence/healing filters. Movement, cadence, armor penetration and supply efficacy diminish; starting-wave builds distribute eight permanent stats in bounded work. Permanent modern supplies restore 40% plus efficacy, draft recovery 35%; legacy transient crates and classic saves retain full-refill behavior. Armor penetration is captured by each emission and saved on placed explosives.

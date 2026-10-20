@@ -7,7 +7,7 @@ import {combatWorld,passiveBonuses,restoredSupply} from './CombatRules.ts';
 import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {syncVitals} from './SurvivalRules.ts';
-import {takeDraftChoice} from './WaveDraftInput.ts';
+import {takeDraftChoice,draftSampleBits} from './WaveDraftInput.ts';
 import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,DRAFT_CONFIRM,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
 const classic=new WeakSet<object>();
 const classicReady=new WeakSet<object>();
@@ -50,10 +50,13 @@ export function rewardOffers(p:any):Reward[] {
   return ['damage',pool.splice(random(pool.length),1)[0]!,pool.splice(random(pool.length),1)[0]!];
 }
 function heldBits(p:any,playerIndex=0,consumeTap=false):number {
-  return SLOT_ORDER.reduce((bits,name,index)=>{
+  let pressed=0;
+  const bits=SLOT_ORDER.reduce((bits,name,index)=>{
     const slot=p?.mControls[name]??CMain.mInput?.['KEY_'+name+(playerIndex?'2':'')],tap=consumeTap&&slot?.IsPressed();
+    if(tap)pressed|=1<<index;
     return bits|(slot?.IsDown()||tap?1<<index:0);
   },0);
+  return consumeTap?draftSampleBits(p?.mWorld,bits,pressed):bits;
 }
 export function beginWaveDraft(world:any,multiplier=1):void {
   const state=waveDraft(world),timed=timedWave(world);if(!state||!timed||timed.phase==='draft')return;
@@ -89,6 +92,7 @@ export function processWaveDraft(world:any):void {
     if(!(bits&16))round.armed[index]=true;
     if(round.readyRule&&bits>=100&&bits<=102)round.selected[index]=bits-100;
     else if(round.readyRule&&bits===DRAFT_CONFIRM)round.confirmed[index]=true;
+    else if(round.readyRule&&(bits===104||bits===105))round.selected[index]=(round.selected[index]!+(bits===104?2:1))%3;
     else if(direct!==undefined){round.selected[index]=direct;round.confirmed[index]=true;}
     else {
       if(fresh&(1|4|64))round.selected[index]=(round.selected[index]!+2)%3;
