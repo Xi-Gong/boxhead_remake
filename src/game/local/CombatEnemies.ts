@@ -39,6 +39,7 @@ export function installCombatEnemies():void{
    const devil=this._CLASSID_==='CThing_Creature_Devil';
    this.mLife=this.mMaxLife=this.mMaxLife*(this.mBossKind?2:devil?2:2.5);
    this.mSpeed*=this.mEnemyVariant?1.1:devil?1.12:1.2;
+   this.mSpeed=Math.max(this.mSpeed,devil ? .08 : this.mEnemyVariant ? .075 : .06);
    if(devil||this.mBossKind)this.mEnemyArmor=this.mEnemyArmorMaximum=Math.ceil(this.mMaxLife*(this.mBossKind?.4:.3));
    const boss=timedWave(this.mWorld)?.boss,member=boss&&bossMembers(boss).find(m=>m.id===this.sUniqueID);
    if(member){member.life=this.mLife;member.maximum=this.mMaxLife;}

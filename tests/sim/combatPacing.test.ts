@@ -8,6 +8,8 @@ import {balancedWave} from '../../src/game/local/BalanceRules.ts';
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,restoreWorldSnap,makeSnapCtx} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
+import {Thing,World} from '../../src/game/packages.ts';
+import {placePlayer,pos} from './fxkit.ts';
 
 it('sizes all eighteen maps around 90/120 seconds and cuts original objectives and concurrency by at least 60%',()=>{
  const report=[];
@@ -32,6 +34,12 @@ it('defers blocked/near entrances with no ground fallback or stored arrival burs
  const reachable=walkDistances(w,g.players().map(p=>p.mPosition));expect(reachable.size).toBeGreaterThan(400);
  w.mSpawnPoint_Zombie=[];expect(chooseTimedSpawn(w,'Zombie')).toBeUndefined();
  for(let i=0;i<200;i++)w.mUpgrades.Process();expect(state.warnings).toEqual([]);expect(state.clear!.emittedZombies).toBe(0);g.quit();
+});
+it('accelerates an obscured approach but returns to the family pace in clear sight without modifying stored speed',()=>{
+ const g=createHeadlessGame(),w=g.world();placePlayer(g,9.5,8.5,0);
+ const e:any=new Thing.Creature.CThing_Creature_Zombie(pos(1.5,8.5));w.mThing_Collection.AddThing(e);e.Process_Init();e.mAngle.__set__mAngle(0);e.mSpeed=.06;
+ const cell=w.mMap.mCells[8][5],old=cell.mCollide;cell.mCollide|=World.Map.CMap_Cell.mCollide_Solid;e.State_CellToCell_Init();const hidden=e.mStateCount;
+ expect(e.mSpeed).toBe(.06);cell.mCollide=old;e.State_CellToCell_Init();expect(e.mStateCount).toBeGreaterThan(hidden);expect(e.mSpeed).toBe(.06);g.quit();
 });
 it('preserves entrance rotation, deadline and objective across saves/rollback; old combat migrates at next wave',()=>{
  const g=createHeadlessGame(),w=g.world();attemptTimedSpawn(w,'Zombie');g.tick(1);const saved=capture(w),ctx=makeSnapCtx(w),data=captureWorldSnap(w,ctx,false),instances=ctx.instances,sharedObjs=ctx.sharedObjs;

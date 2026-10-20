@@ -742,7 +742,8 @@ export const DEVIATIONS: Deviation[] = [
     id:'COMBAT_PACING',file:'local/CombatPacing.ts, TimedWaves.ts, TimedWaveUi.ts, TimedWaveRules.ts, ClearWaveRules.ts, TimedGrowthRules.ts, Endless.ts, BossWaves.ts',
     description:'combat-pve-v2 reduces finite zombie objectives and active caps to 40% of the v0.3.1 '+
       'reference. Authored entrances use full-map reachability without ground fallback, with bounded '+
-      'arrival cadence/recovery gaps. Static area and primary-start path metrics yield ordinary 80–105s '+
+      'arrival cadence/recovery gaps. Family minimum speeds and accelerated obscured approaches prevent '+
+      'long empty openings while restoring stored combat speed at contact. Static area and primary-start path metrics yield ordinary 80–105s '+
       'and Boss +30s deadlines; selected-wave references and old-save next-wave migration share the rule.',
   },
   {

@@ -14,7 +14,7 @@ function enemy(g:any,family:string,kind?:string):any{
 it('multiplies each existing family HP, gives devil armor and differentiates combat speeds',()=>{
  const old=createHeadlessGame({classicCombat:true}),base=[enemy(old,'Zombie'),enemy(old,'Zombie','charger'),enemy(old,'Devil'),enemy(old,'Devil','priest')].map(e=>({hp:e.mMaxLife,speed:e.mSpeed}));old.quit();
  const g=createHeadlessGame(),enemies=[enemy(g,'Zombie'),enemy(g,'Zombie','charger'),enemy(g,'Devil'),enemy(g,'Devil','priest')];
- enemies.forEach((e,i)=>{expect(e.mMaxLife).toBeCloseTo(base[i]!.hp*(i<2?2.5:2));expect(e.mSpeed).toBeGreaterThan(base[i]!.speed);if(i>1)expect(e.mEnemyArmor).toBe(Math.ceil(e.mMaxLife*.3));});g.quit();
+ enemies.forEach((e,i)=>{expect(e.mMaxLife).toBeCloseTo(base[i]!.hp*(i<2?2.5:2));expect(e.mSpeed).toBeGreaterThan(base[i]!.speed);expect(e.mSpeed).toBeGreaterThanOrEqual(i<2?.06:.08);if(i>1)expect(e.mEnemyArmor).toBe(Math.ceil(e.mMaxLife*.3));});g.quit();
 });
 it('consumes armor without regeneration, records lethal ownership after absorption, and grants larger real kill XP',()=>{
  const g=createHeadlessGame(),w=g.world(),p=g.players()[0],e=enemy(g,'Devil');e.mLife=100;e.mEnemyArmor=200;

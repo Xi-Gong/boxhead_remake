@@ -5,14 +5,17 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
 const style=process.env.PLAY_STYLE??'active',wave=Number(process.env.PLAY_WAVE??1),room=Number(process.env.PLAY_ROOM??0);
 const budget=Number(process.env.PLAY_BUDGET_MS??330000),tag=process.env.PLAY_TAG??'baseline';
-const out=`generated/reports/v031/pacing/${tag}-${style}-w${wave}-r${room}-${Date.now()}`;
+const difficulty=Number(process.env.PLAY_DIFFICULTY??0),version=process.env.PLAY_REPORT_VERSION??'v031';
+const evadeDistance=Number(process.env.PLAY_EVADE_DISTANCE??1.35);
+const coverFire=process.env.PLAY_COVER_FIRE==='1';
+const out=`generated/reports/${version}/pacing/${tag}-${style}-w${wave}-r${room}-${Date.now()}`;
 mkdirSync(out,{recursive:true});const report={ok:false,style,wave,room,tag,samples:[],inputOnly:true,realTime:true};
-report.controller=6;
+report.controller=coverFire?7:6;report.difficulty=difficulty;report.evadeDistance=evadeDistance;report.coverFire=coverFire;report.inputs=[];
 const browser=await launch();let g;const held=new Set();
-async function keys(want){for(const k of [...held])if(!want.includes(k)){await g.page.keyboard.up(k);held.delete(k);}for(const k of want)if(!held.has(k)){await g.page.keyboard.down(k);held.add(k);}}
+async function keys(want){if(JSON.stringify([...held].sort())!==JSON.stringify([...want].sort()))report.inputs.push({at:Date.now(),keys:want});for(const k of [...held])if(!want.includes(k)){await g.page.keyboard.up(k);held.delete(k);}for(const k of want)if(!held.has(k)){await g.page.keyboard.down(k);held.add(k);}}
 try{
  g=await openGame(browser,{query:'?scale=1'});await toMainMenu(g);
- await g.expr(`(P.CMain.mSaveData.__set__mDetail(false),P.CMain.mSaveData.__set__mGameSpeed(1),P.CSaveData.mSharedObject.data.mMaxWaveReached=${wave})`);
+ await g.expr(`(P.CMain.mSaveData.__set__mDetail(false),P.CMain.mSaveData.__set__mGameSpeed(1),P.CMain.mSaveData.__set__mDifficulty(${difficulty}),P.CSaveData.mSharedObject.data.mMaxWaveReached=${wave})`);
  await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
  await g.expr(`(P.CMain.mSaveData.mLevelIndex_Single=${room},m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons.gotoAndStop(${room+1}),m.mcScreen.ChangeLevel(m.mcScreen.mcSubScreen.mcLevel_Selection,${room}))`);
  if(wave>1){const field=g.page.getByRole('textbox',{name:'Start wave'});await field.click();await g.page.keyboard.press('Control+A');await g.page.keyboard.type(String(wave));await g.page.keyboard.press('Enter');await g.click(210,400);}
@@ -47,7 +50,7 @@ try{
    const solid=P.World.Map.CMap_Cell.mCollide_StaticImpassable|P.World.Map.CMap_Cell.mCollide_Object;
    const px=p?.mPosition.mX??0,py=p?.mPosition.mY??0;
    const free=(x,y)=>[[-.35,-.35],[.35,-.35],[-.35,.35],[.35,.35]].every(([dx,dy])=>{const c=w.mMap.mCells[Math.floor(y+dy)]?.[Math.floor(x+dx)];return c&&!(c.mCollide&solid);});
-   const positions=enemies.map(e=>({x:e.mPosition.mX,y:e.mPosition.mY,boss:!!e.mBossKind,hp:e.mLife})).sort((a,b)=>Math.hypot(a.x-px,a.y-py)-Math.hypot(b.x-px,b.y-py));
+   const positions=enemies.map(e=>({x:e.mPosition.mX,y:e.mPosition.mY,boss:!!e.mBossKind,hp:e.mLife,kind:e.mCombatKind??e.mEnemyVariant??e._CLASSID_})).sort((a,b)=>Math.hypot(a.x-px,a.y-py)-Math.hypot(b.x-px,b.y-py));
    const dirs=Array.from({length:8},(_,d)=>{const a=d*Math.PI/4,x=px+Math.cos(a)*.7,y=py+Math.sin(a)*.7;return {d,x,y,free:free(x,y),space:[1,2,3].filter(r=>free(px+Math.cos(a)*r,py+Math.sin(a)*r)).length};});
    const weapons=Object.fromEntries(Object.entries(p?.mWeapons??{}).map(([k,v])=>[k,{active:v.mActive,ammo:v.mThing?.mAmmo,damage:v.mThing?.mDamage,rate:v.mThing?.mFireRate,range:v.mThing?.mRange,wide:v.mThing?.mWideShot}]));
    return {state:window.__game.state(),phase:t?.phase,wave:u.mLevelIndex,tick:w.mTick,remaining:t?.remainingTicks,total:t?.totalTicks,
@@ -56,7 +59,7 @@ try{
     weapon:p?.mWeapon_Current?.mNameID,auto:p?.mWeapon_Current?.mAuto,ammo:p?.mWeapon_Current?.mAmmo,weapons,enemies:positions,dirs,boss:t?.boss};
   });
   const elapsed=Date.now()-start;
-  if(elapsed-lastSample>=5000){report.samples.push({ms:elapsed,...s,enemies:s.enemies?.length});writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));lastSample=elapsed;}
+  if(elapsed-lastSample>=5000){report.samples.push({ms:elapsed,...s,composition:s.enemies?.reduce((out,e)=>(out[e.kind]=(out[e.kind]??0)+1,out),{}),enemies:s.enemies?.length});writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));lastSample=elapsed;}
   if(elapsed-lastShot>=30000){await g.shot(`${out}/play-${Math.round(elapsed/1000)}s.png`,false);lastShot=elapsed;console.log(JSON.stringify({ms:elapsed,wave:s.wave,level:s.level,life:Math.round(s.life??0),remaining:s.remaining,enemies:s.enemies?.length,score:s.score,bossHP:s.boss?.life}));}
   if(s.state!=='State_RunWorld'||s.phase==='draft'||s.wave!==wave){report.result={ms:elapsed,...s,enemies:s.enemies?.length};break;}
   const want=[];
@@ -72,7 +75,7 @@ try{
      if(along>-.15&&perp<.38&&perp<best){best=perp;shoot=d;}}
    }
    const aligned=target&&distance<7.5&&shoot===s.dir;
-   const evade=style==='survive'||distance<1.35||previous.stuck>5;
+   const evade=style==='survive'||distance<evadeDistance||previous.stuck>5;
    if(evade){
     direction=escapeDirection(s);
    }else if(style==='active'&&aligned){if(s.auto||n%3!==0)want.push('Slash');}
@@ -85,6 +88,8 @@ try{
    }else direction=escapeDirection(s);
    if(direction>=0){if(!s.dirs[direction]?.free)direction=s.dirs.find(d=>d.free)?.d??-1;
     if(direction>=0){const dx=[1,1,0,-1,-1,-1,0,1][direction],dy=[0,1,1,1,0,-1,-1,-1][direction];if(dx)want.push(dx>0?'ArrowRight':'ArrowLeft');if(dy)want.push(dy>0?'ArrowDown':'ArrowUp');}}
+   // The infinite fallback gun can cover movement; this changes only the input controller, never the game.
+   if(coverFire&&style==='active'&&s.weapon==='pistol'&&n%3!==0&&!want.includes('Slash'))want.push('Slash');
    if(style==='active'&&n-lastSwitch>30){
     const order=['railgun','uzi','shotgun','pistol'].filter(k=>s.weapons[k]?.active).sort((a,b)=>{
      const power=k=>{const v=s.weapons[k];return v.damage*(k==='shotgun'?(v.wide?5:3):1)*25/Math.max(1,v.rate);};return power(b)-power(a);

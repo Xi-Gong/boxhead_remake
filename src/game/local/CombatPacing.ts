@@ -6,6 +6,7 @@ import {combatWaveBudget} from './ClearWaveRules.ts';
 import {waveSeconds} from './TimedWaveRules.ts';
 import {combatWorld} from './CombatRules.ts';
 import {netSession} from './Net/NetSession.ts';
+import {variantSight} from './EnemyVariants.ts';
 export interface MapPacing {area:number;entranceDistance:number;seconds:number}
 const profiles=new WeakMap<object,MapPacing>();
 export function walkDistances(world:any,starts:any[]):Map<any,number>{
@@ -52,7 +53,8 @@ export function installCombatPacing():void{
  p.State_CellToCell_Init=function(this:any):any{
   if(!combatWorld(this.mWorld)||!['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(this._CLASSID_))return move.call(this);
   const target=this.mThing_Collection.GetClosestPlayer(this.mPosition),speed=this.mSpeed,d=target?.mPosition.Distance2D(this.mPosition)??0;
-  this.mSpeed=Math.max(speed,Math.min(.18,Math.max(0,(d-10)/8)*.18));
+  const hidden=target&&d>4&&!variantSight(this.mWorld,this.mPosition,target.mPosition)?(d-4)/6:0;
+  this.mSpeed=Math.max(speed,Math.min(.18,Math.max(0,(d-10)/8,hidden)*.18));
   try{return move.call(this);}finally{this.mSpeed=speed;}
  };
 }
