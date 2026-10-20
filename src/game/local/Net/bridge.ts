@@ -69,17 +69,20 @@ class LanBridge {
   private peerEndless = false;
   private peerTimedWaves = false;
   private peerWaveDraft = false;
+  private peerBossWaves = false;
   private peerVariants = false;
   private peerEnchantment = false;
   private supportsEndless():boolean{return this.peerEndless&&this.peerGrowth&&this.peerSupplies&&this.peerSurvival&&this.peerLoot&&this.peerBalance;}
   private waveMaximum():number{return this.supportsEndless()?maxUnlockedWave():Math.min(100,maxUnlockedWave());}
   timedWavesAvailable():boolean{return this.supportsEndless()&&this.peerTimedWaves;}
+  bossWavesAvailable():boolean{return this.timedWavesAvailable()&&this.peerVariants&&this.peerBossWaves;}
   private peerSupportsRun():boolean{
     const c=this.session?.startOpts?.cfg;
     return !(c?.endless&&!this.supportsEndless()||c?.variants&&(!this.supportsEndless()||!this.peerVariants)||c?.refill&&!this.peerRefill
       ||c?.enchantment&&(!this.supportsEndless()||!this.peerVariants||!this.peerEnchantment)
       ||c?.timedWaves&&(!this.supportsEndless()||!this.peerTimedWaves)
-      ||c?.waveDraft&&(!this.supportsEndless()||!this.peerTimedWaves||!this.peerWaveDraft));
+      ||c?.waveDraft&&(!this.supportsEndless()||!this.peerTimedWaves||!this.peerWaveDraft)
+      ||c?.bossWaves&&!this.bossWavesAvailable());
   }
   session: NetSession | null = null;
   sid: string | undefined;
@@ -303,6 +306,7 @@ class LanBridge {
       ...(sel.mode==='Coop'&&this.supportsEndless()?{endless:'endless-pve-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerTimedWaves?{timedWaves:'timed-waves-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.timedWavesAvailable()&&this.peerWaveDraft?{waveDraft:'wave-draft-v1' as const}:{}),
+      ...(sel.mode==='Coop'&&this.bossWavesAvailable()?{bossWaves:'boss-waves-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerVariants?{variants:'enemy-variants-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerVariants&&this.peerEnchantment?{enchantment:'persistent-enchantment-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerBalance ? {balance:'pve-balance-v1' as const}:{}),
@@ -398,6 +402,7 @@ class LanBridge {
       this.peerEndless = Array.isArray(msg.features) && msg.features.includes('endless-pve-v1');
       this.peerTimedWaves = Array.isArray(msg.features) && msg.features.includes('timed-waves-v1');
       this.peerWaveDraft = Array.isArray(msg.features) && msg.features.includes('wave-draft-v1');
+      this.peerBossWaves = Array.isArray(msg.features) && msg.features.includes('boss-waves-v1');
       this.peerVariants = Array.isArray(msg.features) && msg.features.includes('enemy-variants-v1');
       this.peerEnchantment = Array.isArray(msg.features) && msg.features.includes('persistent-enchantment-v1');
       if(this.isHost){const maxWave=this.waveMaximum();this.sel={...this.sel,maxWave,wave:Math.min(this.sel.wave,maxWave)};}

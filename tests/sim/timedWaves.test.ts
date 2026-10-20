@@ -29,6 +29,7 @@ it('uses the three pacing stages with an absolute 0.2 second floor',()=>{
 it('spawns promptly, retains concurrent caps after kills and freezes the simulation timer during pause',()=>{
   const game=createHeadlessGame(),world=game.world(),state=timedWave(world)!,level=world.mUpgrades.Level;
   const before=state.remainingTicks;game.tick(1);
+  expect([level.Zombie_TotalCount,level.Devil_TotalCount]).toEqual([0,0]);
   expect(state.remainingTicks).toBe(before-1);
   expect(level.mZombieCount+state.warnings.length).toBeGreaterThan(0);
   const cap=level.Zombie_Count;world.mUpgrades.__set__mZombieCount(level.mZombieCount-1);

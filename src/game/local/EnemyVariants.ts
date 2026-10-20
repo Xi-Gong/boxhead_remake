@@ -28,7 +28,7 @@ export function variantSight(w:any,a:any,b:any):boolean{
 }
 export interface EmberZone {id:number;caster:string;target:number;mPosition:any;mAngle:any;damage:number;born:number;warning:number;duration:number;interval:number;lastPulse:number}
 export function emberZones(w:any):EmberZone[]{return w.mUpgrades.enemyVariantState?.zones??[];}
-const skillFields=['mLife','mMaxLife','mVariantCooldown','mVariantPhase','mVariantTicks','mChargeX','mChargeY','mChargeDistance'] as const;
+const skillFields=['mLife','mMaxLife','mVariantCooldown','mVariantPhase','mVariantTicks','mChargeX','mChargeY','mChargeDistance','mBossKind','mBossChargesRemaining'] as const;
 export interface VariantSave {
  rule:typeof VARIANTS_RULE;wave:number;zombie:number;devil:number;nextZone:number;
  zones:(Omit<EmberZone,'mPosition'|'mAngle'>&{x:number;y:number;angle:number})[];
@@ -47,7 +47,9 @@ export function restoreVariants(w:any,s:VariantSave|undefined):void{
  const identities=new Map<string,string>();
  for(const saved of s.enemies){
   const ctor=saved.kind==='charger'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil;
-  const e:any=new ctor(position(saved.x,saved.y),new Thing.Math.CThing_Angle(saved.angle));e.mEnemyVariant=saved.kind;w.mThing_Collection.AddThing(e);e.Process_Init();
+  const e:any=new ctor(position(saved.x,saved.y),new Thing.Math.CThing_Angle(saved.angle));e.mEnemyVariant=saved.kind;
+  if(saved.fields.mBossKind)e.mBossKind=saved.fields.mBossKind;
+  w.mThing_Collection.AddThing(e);e.Process_Init();
   e.ClearCollideCell();e.Move(position(saved.x,saved.y));e.SetCollideDirection(e.mPosition,World.Map.CMap_Cell.mCollide_Creature);e.mFlags|=Thing.CThing.mFlag_Collidable;
   e.Affect_Setup(Thing.Affect.CThing_Affect.mAffect_Bullet|Thing.Affect.CThing_Affect.mAffect_Explosion|Thing.Affect.CThing_Affect.mAffect_FireBall);
   e.mBaseStateID='State_GotoPlayer';e.SetState(saved.state==='State_VariantCharge'||saved.state==='State_VariantCast'?saved.state:'State_GotoPlayer');Object.assign(e,saved.fields);
@@ -80,7 +82,7 @@ export function beginCharge(enemy:any):boolean{
  enemy.mAngle.__set__mAngle(Math.atan2(direction.mY,direction.mX));enemy.SetState('State_VariantCharge');return true;
 }
 export function beginEmberCast(enemy:any):boolean{
- if(enemy.mEnemyVariant!=='priest'||enemy.mWorld.mTick<(enemy.mVariantCooldown??0))return false;
+ if(enemy.mEnemyVariant!=='priest'||enemy.mBossKind||enemy.mWorld.mTick<(enemy.mVariantCooldown??0))return false;
  const w=enemy.mWorld,state=w.mUpgrades.enemyVariantState,zones=emberZones(w),targets=players(w).filter(p=>p.mPosition.Distance2D(enemy.mPosition)<=7&&variantSight(w,enemy.mPosition,p.mPosition)&&!zones.some(z=>z.target===p.mPlayerIndex));
  if(!targets.length||zones.length>=(World.CWorld.mGameMode==='Single'?2:4))return false;
  for(const p of targets){

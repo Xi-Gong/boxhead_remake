@@ -1,0 +1,21 @@
+{
+  "feature": "boss-waves-v1",
+  "status": "lightweight checks passed; new art, reference growth and heavy release gates pending",
+  "tests": {"files": 5, "passed": 112, "suites": ["bossWaves", "timedWaves", "waveDraft", "enemyVariants", "lanBridge"], "workers": 1},
+  "initialFailures": [
+    "Existing variant test exposed transient finite total 45 before first spawn; fixed outer endless table to keep timed totals zero immediately.",
+    "Two new rollback assertions used object identity for equal digest objects; changed to deep equality, preserving all digest fields.",
+    "Browser run-1792466490257: paused test world was not redrawn before accessing the reward card; test setup fixed, failed report retained."
+  ],
+  "typechecks": ["tsconfig.json", "config/tsconfig.strict.json", "config/tsconfig.tools.json"],
+  "build": "main-DkwYvYxH.js",
+  "audit": {"modules": 526, "portedModules": 117, "changedPorts": []},
+  "browser": {
+    "report": "generated/reports/v031/boss-waves/run-1792466533775/report.json",
+    "mode": "single headless Chrome, 640x480, serial, real mouse and keyboard",
+    "review": "direct screenshot review plus geometry and pixels; zai not used",
+    "bar": {"width": 260, "height": 46, "halfHealthPixels": 732},
+    "screenshots": ["selection.png", "tyrant.png", "double-reward.png", "ember-lord.png"],
+    "artStatus": "existing variant models only; dedicated Boss geometry and final art QA remain pending"
+  }
+}

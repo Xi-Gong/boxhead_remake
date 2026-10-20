@@ -6,7 +6,9 @@ import { difficultyIndex } from './BalanceRules.ts';
 import { netSession } from './Net/NetSession.ts';
 import { TIMED_WAVES_RULE, spawnIntervalSeconds, waveSeconds } from './TimedWaveRules.ts';
 
-export interface SpawnWarning { family:'Zombie'|'Devil'; x:number; y:number; ticks:number }
+export type SpawnRole='boss'|'reinforcement';
+export interface SpawnWarning { family:'Zombie'|'Devil'; x:number; y:number; ticks:number; role?:SpawnRole }
+export interface BossWaveState { kind:'charger'|'priest'; id?:string; defeated:boolean; life:number; maximum:number; reinforcementTicks:number }
 export interface TimedWaveState {
   rule:typeof TIMED_WAVES_RULE;
   phase:'combat'|'draft';
@@ -14,6 +16,7 @@ export interface TimedWaveState {
   zombieTicks:number; devilTicks:number;
   opening:number;
   warnings:SpawnWarning[];
+  boss?:BossWaveState;
 }
 const classic = new WeakSet<object>();
 export function setClassicTimedWavesFixture(main:object):void { classic.add(main); }
@@ -23,7 +26,7 @@ export function timedWavesConfigured():boolean {
 }
 export function timedWave(world:any):TimedWaveState|undefined { return world?.mUpgrades?.timedWave; }
 export function copyTimedWave(world:any):TimedWaveState|undefined {
-  const state=timedWave(world); return state ? {...state,warnings:state.warnings.map(w=>({...w}))} : undefined;
+  const state=timedWave(world); return state ? {...state,warnings:state.warnings.map(w=>({...w})),...(state.boss?{boss:{...state.boss}}:{})} : undefined;
 }
 export function resetTimedWave(world:any,upgrades=world.mUpgrades):void {
   const size=world.mMap.mSize,totalTicks=waveSeconds(size.x,size.y)*CMain.mFPS;
@@ -77,20 +80,23 @@ export function chooseTimedSpawn(world:any,family:'Zombie'|'Devil'): {point:any;
   return {point:{mCell:cell,mPosition:new Thing.Math.CThing_Position(cell.mID.x+.5,cell.mID.y+.5,0)},warning:true};
 }
 const spawning=new WeakMap<object,any>();
-function emit(world:any,family:'Zombie'|'Devil',point:any):boolean {
+const roles=new WeakMap<object,SpawnRole>();
+export function timedSpawnRole(world:any):SpawnRole|undefined{return roles.get(world);}
+function emit(world:any,family:'Zombie'|'Devil',point:any,role?:SpawnRole):boolean {
   spawning.set(world,point);
-  try{return world['Spawn_'+family]();}finally{spawning.delete(world);}
+  if(role)roles.set(world,role);
+  try{return world['Spawn_'+family]();}finally{spawning.delete(world);roles.delete(world);}
 }
-function attempt(world:any,family:'Zombie'|'Devil'):boolean {
+export function attemptTimedSpawn(world:any,family:'Zombie'|'Devil',role?:SpawnRole):boolean {
   const choice=chooseTimedSpawn(world,family);if(!choice)return false;
-  if(!choice.warning)return emit(world,family,choice.point);
+  if(!choice.warning)return emit(world,family,choice.point,role);
   const p=choice.point.mPosition;
-  timedWave(world)!.warnings.push({family,x:p.mX,y:p.mY,ticks:Math.ceil(.8*CMain.mFPS)});return true;
+  timedWave(world)!.warnings.push({family,x:p.mX,y:p.mY,ticks:Math.ceil(.8*CMain.mFPS),...(role?{role}:{})});return true;
 }
 function cap(world:any,family:'Zombie'|'Devil'):number {
   return Math.min(world.mUpgrades.Level[family+'_Count']??0,family==='Zombie'?(_root._quality==='LOW'?40:60):Infinity);
 }
-function roomFor(world:any,family:'Zombie'|'Devil'):boolean {
+export function roomForTimedSpawn(world:any,family:'Zombie'|'Devil'):boolean {
   return (world.mUpgrades.Level['m'+family+'Count']??0)+timedWave(world)!.warnings.filter(w=>w.family===family).length<cap(world,family);
 }
 function processWarnings(world:any):void {
@@ -98,12 +104,12 @@ function processWarnings(world:any):void {
   for(const warning of [...state.warnings]){
     if(--warning.ticks>0)continue;
     state.warnings.splice(state.warnings.indexOf(warning),1);
-    if(!roomFor(world,warning.family))continue;
+    if(!roomForTimedSpawn(world,warning.family))continue;
     const players=livingWavePlayers(world),cell=world.mMap.mCells[Math.floor(warning.y)]?.[Math.floor(warning.x)];
     const reachable=players.some(p=>Math.hypot(p.mPosition.mX-warning.x,p.mPosition.mY-warning.y)<=8&&reachableSpawnCells(world,p).includes(cell));
     if(reachable&&vacant(world,warning.x,warning.y)&&safeDistance(players,warning.x,warning.y)){
-      emit(world,warning.family,{mPosition:new Thing.Math.CThing_Position(warning.x,warning.y,0)});
-    }else attempt(world,warning.family); // A replacement always receives its own full warning.
+      emit(world,warning.family,{mPosition:new Thing.Math.CThing_Position(warning.x,warning.y,0)},warning.role);
+    }else attemptTimedSpawn(world,warning.family,warning.role); // A replacement always receives its own full warning.
   }
 }
 /** Dispose without LogKill/Affect so timeout never awards score, XP, loot or explosive chains. */
@@ -160,20 +166,24 @@ export function installTimedWaves():void {
       this.FinishTimedWave();return;
     }
     processWarnings(world);
+    this.ProcessTimedSpawns();
+    if(this.mMultipleKillsTick--<0)this.__set__mMultipleKill(0);
+    if(this.mMultiplierTick--<0)this.__set__mMultiplier(this.__get__mMultiplier()-1);
+  };
+  upgrades.ProcessTimedSpawns=function(this:any):void{
+    const world=this.mWorld,state=timedWave(world)!;
     const difficulty=difficultyIndex(netSession()?.startOpts?.cfg.difficulty??CMain.mSaveData.__get__mDifficulty());
     const interval=Math.ceil(CMain.mFPS*spawnIntervalSeconds(difficulty,this.mLevelIndex,1-state.remainingTicks/state.totalTicks));
     const empty=(this.Level.mZombieCount??0)+(this.Level.mDevilCount??0)===0;
     const attempts=state.opening>0?state.opening:1;state.opening=0;
     if(--state.zombieTicks<=0||empty){
-      for(let i=0;i<attempts&&roomFor(world,'Zombie');i++)attempt(world,'Zombie');
+      for(let i=0;i<attempts&&roomForTimedSpawn(world,'Zombie');i++)attemptTimedSpawn(world,'Zombie');
       state.zombieTicks=interval;
     }
     if(--state.devilTicks<=0){
-      if(roomFor(world,'Devil'))attempt(world,'Devil');
+      if(roomForTimedSpawn(world,'Devil'))attemptTimedSpawn(world,'Devil');
       state.devilTicks=Math.max(CMain.mFPS*2,this.Level.Devil_SpawnRate??0);
     }
-    if(this.mMultipleKillsTick--<0)this.__set__mMultipleKill(0);
-    if(this.mMultiplierTick--<0)this.__set__mMultiplier(this.__get__mMultiplier()-1);
   };
   const world=World.CWorld.prototype as any;
   for(const name of ['Spawn_ValidPosition','Spawn_ValidPosition_NonStrict']){

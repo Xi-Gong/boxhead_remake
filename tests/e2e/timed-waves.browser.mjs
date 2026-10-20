@@ -8,7 +8,7 @@ try{
   g=await openGame(browser);await toMainMenu(g);
   await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
   await g.expr('(P.CMain.mSaveData.mLevelIndex_Single=0,m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons.gotoAndStop(1),m.mcScreen.ChangeLevel(m.mcScreen.mcSubScreen.mcLevel_Selection,0))');
-  assert.equal(await g.expr('m.mcScreen._WaveLimit.text'),'SURVIVE 3:00');
+  assert.equal(await g.expr('m.mcScreen._WaveLimit.text'),'SURVIVE 3:00 / BOSS 4:00');
   await g.page.waitForTimeout(700);await g.shot(`${out}/selection.png`,false);report.shots.push('selection.png');
   const selector=await g.centreOf('m.mcScreen._WaveLimit');assert(selector.x-selector.w/2>=0&&selector.x+selector.w/2<=640);
   await g.click(380,230);assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));

@@ -216,7 +216,7 @@ export class CScreen_LanSetup extends CScreen {
       return;
     }
     const sel = b.sel;
-    showWaveLimit(this.widgets,sel.levelIdx,sel.mode==='Coop'&&b.timedWavesAvailable(),20,390,180);
+    showWaveLimit(this.widgets,sel.levelIdx,sel.mode==='Coop'&&b.timedWavesAvailable(),20,390,230,b.bossWavesAvailable());
     if (sel.mode !== this.subMode) this.attachSubScreen();
 
     setButtonLabel(this.bMode, sel.mode === 'Coop' ? 'CO-OP' : 'DEATHMATCH');

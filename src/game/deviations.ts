@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'BOSS_WAVES',
+    file:'local/BossWaves.ts, TimedWaves.ts, TimedWaveUi.ts, EnemyVariants.ts, Resume.ts; local/Net/bridge.ts',
+    description:'v0.3.1 optional boss-waves-v1 requires timed waves and enemy variants. Every fifth wave has '+
+      'one alternating Boss, one extra minute, and at most four ordinary zombie reinforcements. Half health '+
+      'enables a separately warned second charge or faster three-mark casting. Nonfatal hits preserve active '+
+      'skills; lethal hits resolve normally. Defeating the Boss doubles the one draft reward, while timeout '+
+      'survival keeps the ordinary reward. Encounter HP and skills persist in snapshots and optional v2 saves.',
+  },
+  {
     id:'WAVE_DRAFT',
     file:'local/WaveDraft.ts, WaveDraftRules.ts, WaveDraftInput.ts, WaveDraftUi.ts; local/Net/Growth.ts, NetSession.ts; local/Resume.ts',
     description:'v0.3.1 optional wave-draft-v1 requires timed waves. Between waves, combat and supplies freeze '+

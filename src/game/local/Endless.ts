@@ -46,6 +46,7 @@ export function installEndlessScope():void {
       const tuning=endlessWave(wave,rule.difficulty,CMain.mFPS);
       if(!rule.devils){tuning.Devil_Count=0;tuning.Devil_TotalCount=0;}
       for(const key of ['Zombie_SpawnRate','Zombie_Count','Zombie_TotalCount','Devil_SpawnRate','Devil_Count','Devil_TotalCount'])this.Level[key]=(tuning as any)[key];
+      if(this.timedWave){this.Level.Zombie_TotalCount=0;this.Level.Devil_TotalCount=0;}
       this.Level.mSpawnCount_Zombie=tuning.Zombie_SpawnRate;this.Level.mSpawnCount_Devil=tuning.Devil_SpawnRate;
     }
     return result;

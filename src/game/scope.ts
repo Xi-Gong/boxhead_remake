@@ -32,6 +32,7 @@ import { installArmorScope } from './local/Armor.ts';
 import { installTimedWaves } from './local/TimedWaves.ts';
 import { installTimedWaveUi } from './local/TimedWaveUi.ts';
 import { installWaveDraft } from './local/WaveDraft.ts';
+import { installBossWaves } from './local/BossWaves.ts';
 import { installWaveDraftUi } from './local/WaveDraftUi.ts';
 import { installExplosionFlash } from './local/ExplosionFlash.ts';
 import {installBalanceScope} from './local/Balance.ts';
@@ -118,6 +119,7 @@ export function applyScope(): void {
   installBalanceScope();
   installEndlessScope();
   installEnemyVariantsScope();
+  installBossWaves();
   installWaveDraft();
   installWaveDraftUi();
   installFriendlyFire();
