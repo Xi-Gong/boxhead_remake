@@ -147,7 +147,7 @@ describe('local screens (scope)', () => {
     // This gate verifies score submission, independently of a bot's aim under changing wave tuning.
     // Produce its positive score through a real bullet and the original death accounting path.
     const owner=g.players()[0],target=w.mThing_Collection.AddThing(new Thing.Creature.CThing_Creature_Zombie(owner.mPosition.Clone(),owner.mAngle.Clone()));
-    target.Process_Init();new Thing.Affect.CThing_Affect_Bullet(owner,owner,100,owner.mAngle).AffectThing(target);
+    target.Process_Init();new Thing.Affect.CThing_Affect_Bullet(owner,owner,target.mLife,owner.mAngle).AffectThing(target);
     target.SetState('State_Dying');g.tick(2);
     if (g.state() === 'State_RunWorld') g.quit();
     const score = w.mHud.nTotalScore;
