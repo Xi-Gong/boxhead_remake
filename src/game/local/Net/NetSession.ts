@@ -46,6 +46,7 @@ import { EventJournal } from './Events.ts';
 import { NetPresentation } from './Presentation.ts';
 import { PauseBarrier } from './PauseBarrier.ts';
 import { GROWTH_RULE, newGrowth, copyGrowth, growthOf, grantGrowthLoadout, type GrowthState } from './Growth.ts';
+import {tieredGrowthConfigured} from '../TieredGrowth.ts';
 import { endlessWorld, timedWorldStartLevel } from '../Endless.ts';
 import { endlessStartLevel } from '../EndlessRules.ts';
 import {BALANCE_RULE,balancedStartLevel,DIFFICULTY_START_WAVES,difficultyIndex} from '../BalanceRules.ts';
@@ -489,7 +490,7 @@ export class NetSession {
       const endless=endlessWorld(world);
       const baseWave=Math.max(world.mUpgrades.mLevelIndex,DIFFICULTY_START_WAVES[difficultyIndex(this.startOpts.cfg.difficulty)]!);
       const reference=world.mUpgrades.timedWave?timedWorldStartLevel(world,baseWave):balanced?(endless?endlessStartLevel:balancedStartLevel)(baseWave,this.startOpts.cfg.devils):world.mUpgrades.mMultiplierIndex;
-      world.mUpgrades.lanGrowth ??= newGrowth(reference,balanced,endless);
+      world.mUpgrades.lanGrowth ??= newGrowth(reference,balanced,endless,fresh&&tieredGrowthConfigured());
       if(balanced){
         for(const player of world.mUpgrades.lanGrowth.players){player.curve=BALANCE_RULE;if(endless)player.endless=true;else delete player.endless;}
         if(fresh)grantGrowthLoadout(world);

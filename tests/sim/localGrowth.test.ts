@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createHeadlessGame } from './harness.ts';
+import { createHeadlessGame as createPriorGrowthGame } from './harness.ts';
 import { CMain, Thing } from '../../src/game/packages.ts';
 import { growthOf, copyGrowth, xpRequired } from '../../src/game/local/Net/Growth.ts';
 import { balancedStartLevel } from '../../src/game/local/BalanceRules.ts';
@@ -9,6 +9,8 @@ import { recordWaveReached } from '../../src/game/local/WaveUnlock.ts';
 import { setSelectedStartWave } from '../../src/game/local/StartWave.ts';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
 import { SharedObject } from '../../src/engine/flash/SharedObject.ts';
+// Explicit pre-tiered curve fixture: retain the original progression assertions alongside modern tests.
+const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true});
 
 function kill(world:any, player:any, devil=false) {
   const ctor=devil?Thing.Creature.CThing_Creature_Devil:Thing.Creature.CThing_Creature_Zombie;

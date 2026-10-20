@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame} from './harness.ts';
+import {createHeadlessGame as createPriorGrowthGame} from './harness.ts';
 import {noSpawn} from './fxkit.ts';
 import {ENDLESS_RULE,endlessWave,endlessStartLevel,experienceBeforeLevel,growthFromExperience,previousWaveExperience} from '../../src/game/local/EndlessRules.ts';
 import {awardKill,newGrowth,growthOf,xpRequired} from '../../src/game/local/Net/Growth.ts';
@@ -12,6 +12,8 @@ import {recordWaveReached,maxUnlockedWave} from '../../src/game/local/WaveUnlock
 import {setSelectedStartWave} from '../../src/game/local/StartWave.ts';
 import {captureWorldSnap,restoreWorldSnap,makeSnapCtx} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
+// Explicit pre-tiered curve fixture: retain the original progression assertions alongside modern tests.
+const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true});
 
 it('crosses 125 repeatedly while legacy growth retains its cap and XP rules',()=>{
  const p=newGrowth(124,true,true).players[0];p.xp=64;

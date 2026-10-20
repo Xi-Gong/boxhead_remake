@@ -2,7 +2,8 @@
 import {balancedWave} from './BalanceRules.ts';
 import {growthFromExperience} from './EndlessRules.ts';
 import {spawnIntervalSeconds} from './TimedWaveRules.ts';
-export interface TimedGrowthConfig {seconds:number;difficulty:number;devils:boolean;players:number;bosses:boolean}
+import {tieredGrowthFromExperience} from './TieredGrowthRules.ts';
+export interface TimedGrowthConfig {seconds:number;difficulty:number;devils:boolean;players:number;bosses:boolean;tiered?:boolean}
 /** Reference assumes survival through Boss time, without awarding an assumed Boss kill or doubled perk. */
 export function timedWaveExperience(wave:number,config:TimedGrowthConfig):number{
   const {seconds,difficulty,devils,bosses}=config;
@@ -29,5 +30,5 @@ export function timedPreviousExperience(wave:number,config:TimedGrowthConfig):bi
   return xp/BigInt(Math.max(1,Math.floor(config.players)));
 }
 export function timedStartLevel(wave:number,config:TimedGrowthConfig):number{
-  return growthFromExperience(timedPreviousExperience(wave,config)).level;
+  return (config.tiered?tieredGrowthFromExperience:growthFromExperience)(timedPreviousExperience(wave,config)).level;
 }

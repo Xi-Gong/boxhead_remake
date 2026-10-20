@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { createHeadlessGame, KEYS } from './harness.ts';
+import { createHeadlessGame as createPriorGrowthGame, KEYS } from './harness.ts';
 import { noSpawn, addZombie, placePlayer, recordAdds } from './fxkit.ts';
 import { CMain, Thing } from '../../src/game/packages.ts';
 import { growthOf } from '../../src/game/local/Net/Growth.ts';
@@ -10,6 +10,8 @@ import { captureWorldSnap, makeSnapCtx, restoreWorldSnap } from '../../src/game/
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
 import { NetSession } from '../../src/game/local/Net/NetSession.ts';
+// Explicit pre-tiered curve fixture: retain the original progression assertions alongside modern tests.
+const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true});
 
 function boot() {
   const game=createHeadlessGame({mode:'Coop'});noSpawn(game);const p=placePlayer(game,6.5,8.5,0);

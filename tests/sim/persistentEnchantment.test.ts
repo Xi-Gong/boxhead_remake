@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame} from './harness.ts';
+import {createHeadlessGame as createPriorGrowthGame} from './harness.ts';
 import {noSpawn,placePlayer} from './fxkit.ts';
 import {enchantHeldWeapon,enchantedWeapon,canEnchant,persistentWeapon,ENCHANTMENT_RULE} from '../../src/game/local/EnchantmentRules.ts';
 import {CThing_Object_SupplyCrate,refillAmmo} from '../../src/game/local/Supplies.ts';
@@ -10,6 +10,8 @@ import {captureWorldSnap,makeSnapCtx,restoreWorldSnap} from '../../src/game/loca
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
 import {withTimerValue} from '../../src/engine/flash/clock.ts';
+// Explicit pre-tiered curve fixture: retain the original progression assertions alongside modern tests.
+const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true});
 
 function boot(){
  const g=createHeadlessGame({mode:'Single'});noSpawn(g);const p=placePlayer(g,5.5,8.5);

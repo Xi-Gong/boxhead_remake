@@ -8,6 +8,7 @@ import { netSession } from './Net/NetSession.ts';
 import { timedStartLevel } from './TimedGrowthRules.ts';
 import { waveSeconds } from './TimedWaveRules.ts';
 import { bossWavesConfigured } from './BossWaves.ts';
+import {tieredGrowthWorld} from './TieredGrowth.ts';
 const classic=new WeakSet<object>();
 const worlds=new WeakMap<object,{difficulty:number;devils:boolean;players:number}>();
 export function setClassicEndlessFixture(main:object):void {classic.add(main);}
@@ -23,17 +24,17 @@ export function endlessSelectionEnabled():boolean {
 export function endlessWorld(world:any):boolean {return worlds.has(world);}
 export function timedWorldStartLevel(world:any,wave:number):number {
   const rule=worlds.get(world)!;
-  return timedStartLevel(wave,{...rule,seconds:waveSeconds(world.mMap.mSize.x,world.mMap.mSize.y),bosses:bossWavesConfigured()});
+  return timedStartLevel(wave,{...rule,seconds:waveSeconds(world.mMap.mSize.x,world.mMap.mSize.y),bosses:bossWavesConfigured(),tiered:tieredGrowthWorld(world)});
 }
 // Only the current wave's immutable result is cached. Switching/replaying waves replaces it, never grows a table.
-const growthCache=new WeakMap<object,{wave:number;value:{health:number;damage:number}}>();
+const growthCache=new WeakMap<object,{wave:number;tiered:boolean;value:{health:number;damage:number}}>();
 export function worldEnemyGrowth(world:any):{health:number;damage:number} {
   const rule=worlds.get(world);if(!rule)return {health:1,damage:1};
   const wave=world.mUpgrades.mLevelIndex;
   if(!world.mUpgrades.timedWave)return enemyGrowth(wave,rule.devils,rule.players);
-  const cached=growthCache.get(world);if(cached?.wave===wave)return cached.value;
+  const tiered=tieredGrowthWorld(world),cached=growthCache.get(world);if(cached?.wave===wave&&cached.tiered===tiered)return cached.value;
   const excess=Math.max(0,timedWorldStartLevel(world,wave)-125),value={health:1+.02*excess,damage:1+.008*excess};
-  growthCache.set(world,{wave,value});return value;
+  growthCache.set(world,{wave,tiered,value});return value;
 }
 export function installEndlessScope():void {
   const creature=Thing.Creature.CThing_Creature.prototype as any,hit=creature.State_BulletHit_Init;

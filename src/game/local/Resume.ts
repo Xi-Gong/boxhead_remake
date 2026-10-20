@@ -30,6 +30,7 @@ import { endlessWorld } from './Endless.ts';
 import { timedWave, copyTimedWave, cloneTimedWave, type TimedWaveState } from './TimedWaves.ts';
 import { waveDraft } from './WaveDraft.ts';
 import { BOSS_WAVES_RULE,BOSS_ENCOUNTERS_RULE,bossWavesConfigured,bossEncountersConfigured,reconnectSavedBoss } from './BossWaves.ts';
+import {tieredGrowthConfigured} from './TieredGrowth.ts';
 import { copyWaveDraft, newWaveDraft, type WaveDraftState } from './WaveDraftRules.ts';
 import {VARIANTS_RULE,captureVariants,restoreVariants,variantsWorld,type VariantSave} from './EnemyVariants.ts';
 import {ENCHANTMENT_RULE,persistentEnchantment,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
@@ -445,6 +446,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if((snap.bossWaves||snap.timedWave?.boss||snap.variants?.enemies.some(e=>e.fields.mBossKind))&&!bossWavesConfigured())return false;
   if((snap.bossEncounters||snap.timedWave?.boss?.members)&&!bossEncountersConfigured())return false;
   if(snap.timedWave?.phase==='draft'&&!snap.waveDraft?.round)return false;
+  if(snap.growth?.players.some(p=>p.tiered)&&!tieredGrowthConfigured())return false;
   const u = world.mUpgrades;
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);

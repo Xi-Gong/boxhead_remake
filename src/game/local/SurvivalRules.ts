@@ -1,5 +1,6 @@
 // GROWING_SURVIVAL: immutable per-world capability; all mutable vitals live on snapshot-owned players.
 import { draftBonuses } from './WaveDraftRules.ts';
+import {TIERED_GROWTH_RULE,tieredLevelStats} from './TieredGrowthRules.ts';
 export const SURVIVAL_RULE = 'survival-v1';
 const worlds = new WeakSet<object>();
 export function setSurvivalEnabled(world: object, enabled: boolean): void {
@@ -9,6 +10,7 @@ export function survivalEnabled(world: any): boolean { return worlds.has(world);
 function playerBaseMaximum(player: any): number {
   const growth=player.mWorld?.mUpgrades?.lanGrowth?.players[player.mPlayerIndex];
   const level=growth?.level??1;
+  if(growth?.tiered===TIERED_GROWTH_RULE)return tieredLevelStats(level).vitality;
   return 200 + 4 * (Math.max(1, growth?.endless?level:Math.min(125,level)) - 1);
 }
 export function playerMaximum(player:any):number {return Math.round(playerBaseMaximum(player)*(1+.1*draftBonuses(player.mWorld,player.mPlayerIndex).health));}

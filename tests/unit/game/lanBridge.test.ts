@@ -133,6 +133,16 @@ describe('LAN bridge operation lifetime',()=>{
    (b as any).session={startOpts:{cfg:{...start.cfg,bossWaves:'boss-waves-v1',bossEncounters:'boss-encounters-v1'}}};expect((b as any).peerSupportsRun()).toBe(!missing);
   }finally{b.session=null;CMain.mSaveData=previous;launch.mockRestore();}
  });
+ it.each([undefined,'tiered-growth-v1','endless-pve-v1','personal-growth-v1'])('negotiates tiered growth and rejects incompatible resumed rules (missing %s)',missing=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  const features=['personal-growth-v1','armor-ammo-v1','pve-balance-v1','survival-v1','supply-crates-v2','endless-pve-v1','tiered-growth-v1'].filter(f=>f!==missing);
+  try{
+   lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',sid:'qa',char:0,features});b.phase='setup';b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.tieredGrowth).toBe(missing?undefined:'tiered-growth-v1');
+   (b as any).session={startOpts:{cfg:{...start.cfg,tieredGrowth:'tiered-growth-v1'}}};expect((b as any).peerSupportsRun()).toBe(!missing);
+  }finally{b.session=null;CMain.mSaveData=previous;launch.mockRestore();}
+ });
  it('a restarted client without history rejects in-place recovery',()=>{
   lanBridge();
   lan.onMessage.mock.calls[0]![0]({t:'recover',stage:'offer',generation:3,seed:7,need:90,head:95});

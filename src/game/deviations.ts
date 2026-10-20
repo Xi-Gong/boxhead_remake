@@ -685,4 +685,13 @@ export const DEVIATIONS: Deviation[] = [
       'retain original wave rules. A main-owned weak test fixture keeps exact original port-contract assertions '+
       'runnable alongside the new actual-spawn and balance tests; it has no player-facing switch.',
   },
+  {
+    id:'TIERED_GROWTH',
+    file:'local/TieredGrowthRules.ts, TieredGrowth.ts, Net/Growth.ts, SurvivalRules.ts, TimedGrowthRules.ts',
+    description:'User-requested tiered-growth-v1: new modern runs have low opening XP costs and progressively '+
+      'slower later levels with stronger automatic vitality, damage and finite-ammo capacity rewards. '+
+      'Original weapon milestones and old saved-run curves remain intact. Optional LAN negotiation requires '+
+      'endless growth; saved markers are snapshot-owned and incapable worlds reject them before mutation. '+
+      'Classic fixtures retain the previous XP/stat assertions; reference starts use the negotiated curve.',
+  },
 ];

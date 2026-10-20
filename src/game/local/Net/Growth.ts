@@ -7,22 +7,23 @@ import { recordGrowthScore } from './FloatingScores.ts';
 import { syncVitals } from '../SurvivalRules.ts';
 import { endlessXpRequired, experienceBeforeLevel, growthFromExperience } from '../EndlessRules.ts';
 import { draftBonuses } from '../WaveDraftRules.ts';
+import {TIERED_GROWTH_RULE,tieredXpRequired,tieredExperienceBeforeLevel,tieredGrowthFromExperience,tieredLevelStats,levelRewardTier} from '../TieredGrowthRules.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
 export const MAX_LEVEL = 125;
 export const XP_PER_LEVEL = 5;
-export interface PlayerGrowth { score: number; level: number; xp: number; curve?: typeof BALANCE_RULE; endless?: true }
+export interface PlayerGrowth { score: number; level: number; xp: number; curve?: typeof BALANCE_RULE; endless?: true; tiered?:typeof TIERED_GROWTH_RULE }
 export interface GrowthState { version: 1; players: [PlayerGrowth, PlayerGrowth] }
-export function newGrowth(level: number,balanced=false,endless=false): GrowthState {
+export function newGrowth(level: number,balanced=false,endless=false,tiered=false): GrowthState {
   const base = Math.max(1, Math.min(endless?Number.MAX_SAFE_INTEGER:MAX_LEVEL, Math.floor(level)));
-  const player=():PlayerGrowth=>({score:0,level:base,xp:0,...(balanced?{curve:BALANCE_RULE}:{}),...(endless?{endless:true as const}:{})});
+  const player=():PlayerGrowth=>({score:0,level:base,xp:0,...(balanced?{curve:BALANCE_RULE}:{}),...(endless?{endless:true as const}:{}),...(tiered?{tiered:TIERED_GROWTH_RULE}:{})});
   return { version: 1, players: [player(),player()] };
 }
 export function copyGrowth(state: GrowthState): GrowthState {
   return { version: 1, players: [{ ...state.players[0] }, { ...state.players[1] }] };
 }
 export function growthOf(world: any): GrowthState | undefined { return world?.mUpgrades?.lanGrowth; }
-export function xpRequired(player:PlayerGrowth):number{return player.endless?endlessXpRequired(player.level):player.curve===BALANCE_RULE?balancedXpRequired(player.level):XP_PER_LEVEL;}
+export function xpRequired(player:PlayerGrowth):number{return player.tiered===TIERED_GROWTH_RULE?tieredXpRequired(player.level):player.endless?endlessXpRequired(player.level):player.curve===BALANCE_RULE?balancedXpRequired(player.level):XP_PER_LEVEL;}
 export function growthAtMaximum(player:PlayerGrowth):boolean{return !player.endless&&player.level===MAX_LEVEL;}
 export function grantGrowthLoadout(world:any):void{
   const state=growthOf(world);if(!state)return;
@@ -66,6 +67,12 @@ export function awardKill(state: PlayerGrowth, baseScore: number, xp: number): n
   const amount = baseScore * state.level;
   state.score += amount;
   let total = state.xp + xp;
+  if(state.tiered===TIERED_GROWTH_RULE){
+    const exact=BigInt(state.xp)+BigInt(xp);
+    if(exact>=BigInt(xpRequired(state)))Object.assign(state,tieredGrowthFromExperience(tieredExperienceBeforeLevel(state.level)+exact));
+    else state.xp=Number(exact);
+    return amount;
+  }
   if(state.endless){
     if(total>=xpRequired(state))Object.assign(state,growthFromExperience(experienceBeforeLevel(state.level)+BigInt(total)));
     else state.xp=total;
@@ -106,16 +113,18 @@ function applyPersonal(upgrades: any, thing: any, previous: any): any {
   if(index!==undefined&&state.players[index]!.endless&&thing._CLASSID_.startsWith('CThing_Weapon_')){
     const raw=original?.mOriginalStats;
     if(raw){
-      const excess=Math.max(0,level-MAX_LEVEL),damage=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;
+      const tiered=state.players[index]!.tiered===TIERED_GROWTH_RULE,stats=tieredLevelStats(level);
+      const excess=tiered?0:Math.max(0,level-MAX_LEVEL),damage=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;
       const bonus=draftBonuses(upgrades.mWorld,index);
-      if(raw.mDamage!==undefined)thing.mDamage=raw.mDamage*damage*(1+.01*excess)*(1+.08*bonus.damage);
+      if(raw.mDamage!==undefined)thing.mDamage=raw.mDamage*damage*(1+(tiered?stats.damage:.01*excess))*(1+.08*bonus.damage);
       const infinite=flags?.InfinateAmmo||raw.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
       if(!infinite){
         const base=raw.mTotalAmmo*(flags?.QuadAmmo?4:flags?.DoubleAmmo?2:1);
         const step=Math.max(1,Math.ceil(base*.005));
         const gained=Math.max(0,level-(thing.mEndlessLevel??MAX_LEVEL))*step;
         const unmodifiedCapacity=Math.max(0,(beforeCapacity??0)-previousDraftCapacity);
-        const capacity=Math.max(base+step*excess,unmodifiedCapacity+(fresh?0:gained));
+        const capacity=tiered?Math.max(base+Math.floor(base*stats.capacity),unmodifiedCapacity):Math.max(base+step*excess,unmodifiedCapacity+(fresh?0:gained));
+        if(tiered)thing.mAmmo=fresh?capacity:Math.min(capacity,beforeAmmo+Math.max(0,capacity-unmodifiedCapacity));
         if(excess>0){
           if(fresh)thing.mAmmo=capacity;
           else thing.mAmmo=Math.min(capacity,beforeAmmo+(thing.mEndlessLevel===level?0:Math.max(0,capacity-beforeCapacity)));
@@ -213,6 +222,7 @@ export function installGrowthScope(): void {
       const player = findPlayer(this, slot);
       if (player) syncVitals(player, 'level');
       if(player&&personal.endless)for(const entry of player.mWeaponList??[])if(entry.mActive&&entry.mThing)this.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
+      if(personal.tiered)hud.AddMessage_Info('Level '+personal.level+' · '+levelRewardTier(personal.level)+' upgrade',slot);
       for (let n = before! + 1; n <= Math.min(MAX_LEVEL,personal.level); n++) for (const key of forIn(this.mUpgrades.mMultipliers[n])) {
         const item = this.mUpgrades.mMultipliers[n][key];
         if (item.mClassID === 'CThing_Creature_Player' && typeof item.mValue === 'string' && player?.mWeapons?.[item.mValue]) player.NewWeapon(item.mValue);

@@ -6,6 +6,7 @@ import { netActive } from './Net/NetSession.ts';
 import { settleVitals } from './SurvivalRules.ts';
 import { endlessWorld, timedWorldStartLevel } from './Endless.ts';
 import { endlessStartLevel } from './EndlessRules.ts';
+import {tieredGrowthConfigured} from './TieredGrowth.ts';
 
 const classicFixtures = new WeakSet<object>();
 /** Explicit oracle fixture; never exposed in player settings or saves. */
@@ -24,7 +25,7 @@ export function initializeLocalGrowth(world: any, restored: boolean): void {
   const difficulty = difficultyIndex(CMain.mSaveData.__get__mDifficulty());
   const wave = Math.max(upgrades.mLevelIndex, DIFFICULTY_START_WAVES[difficulty]!);
   const level = upgrades.timedWave?timedWorldStartLevel(world,wave):(endless?endlessStartLevel:balancedStartLevel)(wave, !!CMain.mSaveData.__get__mDevilsActive(), single ? 1 : 2);
-  const state = upgrades.lanGrowth = newGrowth(level, true,endless);
+  const state = upgrades.lanGrowth = newGrowth(level, true,endless,!restored&&tieredGrowthConfigured());
   if (restored) {
     // No new weapons or refill on migration. Owned weapons supply a lower bound even if the old multiplier decayed.
     for (const player of Object.values(world.mThing_Collection.mPlayerThings) as any[]) {
