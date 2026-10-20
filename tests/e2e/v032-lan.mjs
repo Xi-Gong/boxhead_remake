@@ -69,7 +69,7 @@ export async function verifyV032Lan(H,C,report,out){
  await both('m.mcWorld.mUpgrades.timedWave.phase==="draft"&&m.mcWorld.mUpgrades.waveDraft.round.multiplier===2');
  // The simulation can enter draft before the LAN confirmed HUD has rendered its cards.
  for(const [i,g]of games.entries())assert(await g.waitExpr(`typeof m.mcWorld._WaveDraftHud?._Player${i}?._Card0?.onRelease==="function"`));
- // Both physical keyboard sets must navigate the LAN client without moving P1.
+ // Both supported keyboard sets must navigate the LAN client without moving P1.
  const initial=(await states())[0].round.selected;
  await C.page.keyboard.press('KeyS');await both(`m.mcWorld.mUpgrades.waveDraft.round.selected[1]===${(initial[1]+1)%3}`);
  await C.page.keyboard.press('ArrowDown');await both(`m.mcWorld.mUpgrades.waveDraft.round.selected[1]===${(initial[1]+2)%3}&&m.mcWorld.mUpgrades.waveDraft.round.selected[0]===${initial[0]}`);
@@ -81,7 +81,7 @@ export async function verifyV032Lan(H,C,report,out){
  await games[0].clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');
  await both('m.mcWorld.mUpgrades.waveDraft.round?.confirmed[0]');
  await H.page.waitForTimeout(14000);await both('m.mcWorld.mUpgrades.mLevelIndex===15&&m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]&&!m.mcWorld.mUpgrades.waveDraft.round.confirmed[1]');
- const draft=(await states())[0];result.draft=draft;result.waitedWithoutDefaultMs=14000;
+ const draft=(await states())[0];result.draft=draft;assert.equal(draft.round.readyRule,'draft-ready-v1');result.waitedWithoutDefaultMs=14000;
  await games[1].clickClip('m.mcWorld._WaveDraftHud._Player1._Card0');
  await games[1].clickClip('m.mcWorld._WaveDraftHud._Player1._Ready');
  await both('m.mcWorld.mUpgrades.mLevelIndex===16&&m.mcWorld.mUpgrades.timedWave.phase==="combat"');
