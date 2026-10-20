@@ -11,7 +11,7 @@ import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,makeSnapCtx,restoreWorldSnap} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
-import {bossHealthLayout,compactBossHealth,drawBossHealth} from '../../src/game/local/BossHealthUi.ts';
+import {bossHealthLayout,drawBossHealth} from '../../src/game/local/BossHealthUi.ts';
 
 function encounter(kind:'charger'|'priest'='charger',mode:'Single'|'Coop'='Single'){
  const g=createHeadlessGame({mode}),w=g.world();clearWaveCombat(w);w.mUpgrades.__set__mLevel(kind==='charger'?5:10);
@@ -98,9 +98,11 @@ it('rejects Boss saves on an incapable world before mutation and preserves class
  world.mUpgrades.__set__mLevel(5);expect(timedWave(world)!.boss).toBeUndefined();expect(timedWave(world)!.totalTicks).toBe(normal);old.quit();
 });
 it('hides timed and draft overlays immediately on pause even when the world no longer draws',()=>{
- const {g,w,e}=encounter();w.mHud.Draw(w.bmDraw);expect(w._BossWaveHud._visible).toBe(true);
- w.mHud.Pause(true);expect(w._BossWaveHud._visible).toBe(false);expect(w._TimedWaveHud._visible).toBe(false);
- w.mHud.Pause(false);w.mHud.Draw(w.bmDraw);expect(w._BossWaveHud._visible).toBe(true);
+ const {g,w,e}=encounter();w.mHud.Draw(w.bmDraw);expect(w._BossHealthHud._visible).toBe(true);
+ expect(w._BossWaveHud).toBeUndefined();expect(w._TimedWaveHud).toBeUndefined();
+ expect(w._LanGrowthHud._Wave._Clock.text).toMatch(/^\d+:\d{2}$/);
+ w.mHud.Pause(true);expect(w._BossHealthHud._visible).toBe(false);expect(w._LanGrowthHud._visible).toBe(false);
+ w.mHud.Pause(false);w.mHud.Draw(w.bmDraw);expect(w._BossHealthHud._visible).toBe(true);
  e.mLife=0;e.CheckForDead();w.mUpgrades.Process();w.mHud.Draw(w.bmDraw);expect(w._WaveDraftHud._visible).toBe(true);
  w.mHud.Pause(true);expect(w._WaveDraftHud._visible).toBe(false);g.quit();
 });
@@ -115,9 +117,15 @@ it('keeps LAN Boss HP in confirmed metadata, independent of speculative changes'
  expect(recorded.life).not.toBe(234);expect(s.confirmedTimedWave?.boss).toBeUndefined();g.quit();
 });
 
-it('keeps large Boss health labels compact without rounding living slivers down to zero',()=>{
- expect([.01,6000,10000,12500,1234567,2e9,3e12,Number.MAX_SAFE_INTEGER].map(compactBossHealth))
-  .toEqual(['1','6000','10K','12.5K','1.23M','2B','3T','9.01e15']);
+it('uses a compact numeric-free bar at all health scales, keeping tiny living slivers visible',()=>{
+ const {g,w}=encounter();try{const boss=timedWave(w)!.boss!;
+ DrawPrimitive.XSI.CDrawPrimitive_XSI_DI.RenderStack_Process(0,Infinity);
+ for(const maximum of [6000,1e12,Number.MAX_SAFE_INTEGER]){
+  const state={...boss,maximum,life:maximum/2};expect(bossHealthLayout(w,state)!.fraction).toBe(.5);
+  drawBossHealth(w,{...state,life:.01},true);expect(w._BossHealthHud._visible).toBe(true);
+  expect(w._BossHealthHud._Health).toBeUndefined();expect(bossHealthLayout(w,state)!.width).toBe(64);
+ }
+ }finally{g.quit();}
 });
 
 it.each(['charger','priest']as const)('anchors %s health above its art, follows the camera and hides on lifecycle transitions',kind=>{
@@ -128,9 +136,9 @@ it.each(['charger','priest']as const)('anchors %s health above its art, follows 
   const ctx=makeSnapCtx(w),digest=()=>simulationDigest(captureWorldSnap(w,ctx,false));
   const before=digest(),keys=Object.keys(e),layout=bossHealthLayout(w,boss)!;
   expect(layout).toBeDefined();expect(layout.fraction).toBe(.5);
-  expect(layout.y+layout.height+3).toBeLessThanOrEqual(layout.headTop);
+  expect(layout.y+layout.height+5).toBeLessThanOrEqual(layout.headTop);
   drawBossHealth(w,boss,true);const layer=w._BossHealthHud;
-  expect(layer._visible).toBe(true);expect(layer._Health.text).toBe(layout.label);
+  expect(layer._visible).toBe(true);expect(layer._Health).toBeUndefined();
   expect(Object.keys(e)).toEqual(keys);expect(digest()).toEqual(before);
   const oldCamera=w.mDrawPosition.clone();w.mDrawPosition.x-=7;w.mDrawPosition.y-=9;
   const moved=bossHealthLayout(w,boss)!;
@@ -151,7 +159,7 @@ it('renders supplied confirmed Boss HP without leaking speculative damage or a n
   const ctx=makeSnapCtx(w),digest=()=>simulationDigest(captureWorldSnap(w,ctx,false)),before=digest();
   e.mLife=1;timedWave(w)!.boss!.life=1;
   drawBossHealth(w,confirmed,true);
-  expect(w._BossHealthHud._Health.text).toBe('4321 / 6000');
+  expect(w._BossHealthHud._visible).toBe(true);expect(w._BossHealthHud._Health).toBeUndefined();
   expect(bossHealthLayout(w,confirmed)!.fraction).toBe(4321/6000);
   const changed=digest();drawBossHealth(w,confirmed,true);expect(digest()).toEqual(changed);
   expect(changed).not.toEqual(before);

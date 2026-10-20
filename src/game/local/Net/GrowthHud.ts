@@ -1,7 +1,9 @@
 // LAN_PERSONAL_GROWTH: display-only, world-owned clips. No simulation fields, timers or DOM listeners.
 import { flash, TextFormat } from '../../../engine/runtime.ts';
 import { nowMs } from '../../../engine/flash/clock.ts';
-import { World } from '../../packages.ts';
+import { CMain, World } from '../../packages.ts';
+import { timedWave } from '../TimedWaves.ts';
+import { clockLabel } from '../TimedWaveRules.ts';
 import { BODY_FONT, MENU_FONT, INK, RED, text, capsule } from '../UiStyle.ts';
 import { growthOf, MAX_LEVEL, xpRequired, growthAtMaximum, infiniteGrowthWeapon, type GrowthState } from './Growth.ts';
 import { netSession } from './NetSession.ts';
@@ -55,6 +57,7 @@ function create(hud: any): HudView {
   const center=clip.createEmptyMovieClip('_Wave',clip.getNextHighestDepth()); backing(center,GROWTH_HUD.centerWidth,46);
   text(center,'_Caption',54,0,64,17,BODY_FONT,10,INK,true,'center','WAVE');
   const wave=text(center,'_Number',54,14,64,30,MENU_FONT,22,0xffffff,false,'center',''); wave.filters=outlined();
+  text(center,'_Clock',54,30,64,15,BODY_FONT,11,INK,true,'center','');
   text(center,'_ZombieCaption',0,0,54,17,BODY_FONT,10,0x49554a,true,'center','ZOMBIE');
   text(center,'_DevilCaption',118,0,54,17,BODY_FONT,10,RED,true,'center','DEVIL');
   const zombies=text(center,'_Zombies',0,18,54,26,MENU_FONT,18,INK,false,'center','');
@@ -69,6 +72,11 @@ function create(hud: any): HudView {
 }
 function update(hud: any, state: GrowthState, wave: number, enemies: EnemyCounts): void {
   const view=views.get(hud)??create(hud), width=hud.mWorld.mScreenSize.x, time=nowMs();
+  const session=netSession(),timer=session?session.confirmedTimedWave:timedWave(hud.mWorld);
+  const size=timer?18:22;
+  view.wave._y=timer?10:14;view.wave._height=timer?24:30;
+  view.center._Clock._visible=!!timer&&timer.phase==='combat';
+  if(timer){view.center._Clock.text=clockLabel(timer.remainingTicks,CMain.mFPS);view.center._Clock.textColor=timer.remainingTicks<=CMain.mFPS*30?RED:INK;}
   view.clip._visible=!hud.mcScreenPause;
   if(view.lastWidth!==width){
     const layout=growthLayout(width);
@@ -78,8 +86,8 @@ function update(hud: any, state: GrowthState, wave: number, enemies: EnemyCounts
     view.lastWidth=width;
   }
   if(view.lastWave!==wave){
-    view.wave.text=String(wave);view.wave.setTextFormat(new TextFormat(MENU_FONT,22,0xffffff,false,false,false,undefined,undefined,'center'));
-    if(view.wave.textWidth>60)view.wave.setTextFormat(new TextFormat(MENU_FONT,22*60/view.wave.textWidth,0xffffff,false,false,false,undefined,undefined,'center'));
+    view.wave.text=String(wave);view.wave.setTextFormat(new TextFormat(MENU_FONT,size,0xffffff,false,false,false,undefined,undefined,'center'));
+    if(view.wave.textWidth>60)view.wave.setTextFormat(new TextFormat(MENU_FONT,size*60/view.wave.textWidth,0xffffff,false,false,false,undefined,undefined,'center'));
     view.lastWave=wave;
   }
   if(view.zombies.text!==String(enemies.zombies))view.zombies.text=String(enemies.zombies);

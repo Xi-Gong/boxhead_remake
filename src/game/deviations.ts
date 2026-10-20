@@ -16,10 +16,10 @@ export const DEVIATIONS: Deviation[] = [
   {
     id:'BOSS_OVERHEAD_HEALTH',
     file:'local/BossHealthUi.ts, TimedWaveUi.ts',
-    description:'Boss encounters also show a compact current/maximum HP bar above the rendered Boss frame. '+
-      'The label follows the camera and interpolated pose, uses confirmed LAN health and entity identity, '+
-      'and hides offscreen, during drafts/pause or after defeat. Large HP values use compact units. '+
-      'This adds only display objects, without simulation, save or protocol fields.',
+    description:'Bosses show one compact numeric-free rounded health bar above their rendered frame, '+
+      'following the camera/interpolated pose with confirmed LAN health and identity. The standalone '+
+      'top Boss panel is removed; the clock fits inside the existing WAVE cell. Bars hide offscreen, '+
+      'during drafts/pause or after defeat. These UI changes add no simulation or protocol fields.',
   },
   {
     id:'TIMED_ARRIVAL_VISIBILITY',

@@ -27,7 +27,7 @@ export async function verifyV031Candidate(g,out){
   report.boss=await g.expr('(()=>{const w=m.mcWorld,e=Object.values(w.mThing_Collection.mThings).find(e=>e.mBossKind),sets=P.DrawPrimitive.XSI.CDrawPrimitive_XSI_DI.mAnimationSets;return {kind:e.mBossKind,life:e.mLife,total:w.mUpgrades.timedWave.totalTicks,registered:!!e.mCellID,newBody:!!sets.Boss_charger_stand,newGun:!!sets.Polished_Player_Handgun_Stand,classicFoot:!!sets.Zombie_Zombie_Stand};})()');
   assert.equal(report.boss.total,(seconds+60)*25);assert(report.boss.newBody&&report.boss.newGun&&report.boss.classicFoot);
   report.boss.overhead=await g.expr('(()=>{const w=m.mcWorld,e=Object.values(w.mThing_Collection.mThings).find(e=>e.mBossKind),p=Object.values(w.mThing_Collection.mPlayerThings)[0];e.Move(new P.Thing.Math.CThing_Position(p.mPosition.mX,p.mPosition.mY+2,0));e.mLife=w.mUpgrades.timedWave.boss.life=e.mMaxLife/2;w.mHud.Pause(false);w.mPaused=false;w.Draw();w.mPaused=true;const l=w._BossHealthHud;return {visible:l?._visible,label:l?._Health.text,x:l?._x,y:l?._y};})()');
-  assert(report.boss.overhead.visible);assert.equal(report.boss.overhead.label,'3000 / 6000');
+  assert(report.boss.overhead.visible);assert.equal(report.boss.overhead.label,undefined);
   await g.page.waitForTimeout(120);await g.shot(join(out,'boss.png'),false);
   const damage=await g.expr('m.mcWorld.mUpgrades.waveDraft.bonuses[0].damage');
   await g.expr('(()=>{const w=m.mcWorld,e=Object.values(w.mThing_Collection.mThings).find(e=>e.mBossKind);e.mLife=0;e.lanFatalSlot=0;e.CheckForDead();w.mUpgrades.Process();w.mPaused=false;w.Draw();})()');

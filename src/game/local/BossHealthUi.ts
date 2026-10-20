@@ -1,21 +1,8 @@
 // BOSS_OVERHEAD_HEALTH: presentation only; HP is supplied by the same confirmed state as the wave HUD.
 import type { BossWaveState } from './TimedWaves.ts';
-import { BODY_FONT, text } from './UiStyle.ts';
+import { capsule } from './UiStyle.ts';
 
-const WIDTH = 118, HEIGHT = 28, GAP = 5;
-
-export function compactBossHealth(value: number): string {
-  const hp = Math.max(0, Math.ceil(value));
-  if (!Number.isFinite(hp)) return '?';
-  if (hp < 10000) return String(hp);
-  for (const [limit, unit] of [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']] as const) {
-    if (hp >= limit && hp < 1e15) {
-      const scaled = hp / limit;
-      return Number(scaled.toFixed(scaled < 10 ? 2 : 1)) + unit;
-    }
-  }
-  return hp.toExponential(2).replace('+', '');
-}
+const WIDTH = 64, HEIGHT = 7, GAP = 5;
 
 /** Uses the rendered frame's crown/shoulder bounds without updating animation or simulation state. */
 export function bossHealthLayout(world: any, boss: BossWaveState | undefined) {
@@ -35,9 +22,7 @@ export function bossHealthLayout(world: any, boss: BossWaveState | undefined) {
   const y = Math.round(Math.max(2, top - HEIGHT - GAP));
   const life = Math.min(boss.maximum, boss.life);
   return { x, y, width: WIDTH, height: HEIGHT, headTop: top,
-    anchorX: Math.max(4, Math.min(WIDTH - 4, position.x - x)),
-    fraction: Math.max(0, Math.min(1, life / boss.maximum)),
-    label: `${compactBossHealth(life)} / ${compactBossHealth(boss.maximum)}` };
+    fraction: Math.max(0, Math.min(1, life / boss.maximum)) };
 }
 
 export function drawBossHealth(world: any, boss: BossWaveState | undefined, visible: boolean): void {
@@ -45,24 +30,19 @@ export function drawBossHealth(world: any, boss: BossWaveState | undefined, visi
   let layer = world._BossHealthHud;
   if (layout && !layer) {
     layer = world.createEmptyMovieClip('_BossHealthHud', world.getNextHighestDepth());
-    text(layer, '_Health', 2, 0, WIDTH - 4, 19, BODY_FONT, 12, 0xffffff, true, 'center', '');
   }
   if (!layer) return;
   layer._visible = !!layout;
   if (!layout) return;
-  layer._x = layout.x; layer._y = layout.y; layer._Health.text = layout.label;
+  layer._x = layout.x; layer._y = layout.y;
   layer.clear();
-  const rect = (x: number, y: number, w: number, h: number, color: number, alpha = 100): void => {
-    layer.beginFill(color, alpha); layer.moveTo(x, y); layer.lineTo(x + w, y);
-    layer.lineTo(x + w, y + h); layer.lineTo(x, y + h); layer.lineTo(x, y); layer.endFill();
+  const pill = (x: number, y: number, w: number, h: number, color: number, alpha = 100): void => {
+    if(w<=0)return;
+    layer.beginFill(color, alpha); capsule(layer,x,y,w,h); layer.endFill();
   };
   const accent = boss!.kind === 'charger' ? 0xd5c89a : 0xffae64;
-  rect(0, 0, WIDTH, HEIGHT, 0x171a18, 94);
-  rect(3, 19, WIDTH - 6, 6, 0x534844);
-  rect(3, 19, (WIDTH - 6) * layout.fraction, 6, accent);
-  rect(3, 19, (WIDTH - 6) * layout.fraction, 1, 0xffecd0);
-  // Small pointer keeps ownership clear when the label shifts inward at a screen edge.
-  layer.beginFill(accent); layer.moveTo(layout.anchorX - 3, HEIGHT);
-  layer.lineTo(layout.anchorX, HEIGHT + 3); layer.lineTo(layout.anchorX + 3, HEIGHT);
-  layer.lineTo(layout.anchorX - 3, HEIGHT); layer.endFill();
+  pill(0,0,WIDTH,HEIGHT,0x171a18,94);
+  pill(1,1,WIDTH-2,HEIGHT-2,0x534844);
+  pill(1,1,Math.max(1,(WIDTH-2)*layout.fraction),HEIGHT-2,accent);
+  pill(2,1,Math.max(0,(WIDTH-2)*layout.fraction-2),1,0xffecd0,65);
 }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
-const scale=Number(process.env.ART_SCALE??2),out=`generated/reports/v031/boss-health/run-${Date.now()}-${scale}x`;
+const scale=Number(process.env.ART_SCALE??2),out=`generated/reports/v031/compact-hud/run-${Date.now()}-${scale}x`;
 mkdirSync(out,{recursive:true});
 const browser=await launch(),report={ok:false,scale,cases:[]};let g;
 try{
@@ -26,20 +26,22 @@ try{
    e.mLife=boss.life=kind==='charger'?3000:934500;e.mMaxLife=boss.maximum=kind==='charger'?6000:1250000;
    w.mHud.Pause(false);w.mPaused=false;w.Draw();w.mPaused=true;
    const l=w._BossHealthHud,f=e.mXSI_Animation.mCurrentFrame,position=w.GetScreenPosition(e.mPosition);
-   return {kind,id:e.sUniqueID,visible:l._visible,label:l._Health.text,x:l._x,y:l._y,width:118,height:28,
-    headTop:position.y+f.mDisp.y,position,fraction:boss.life/boss.maximum};
+   const wave=w._LanGrowthHud._Wave;
+   return {kind,id:e.sUniqueID,visible:l._visible,noNumber:!l._Health,x:l._x,y:l._y,width:64,height:7,
+    headTop:position.y+f.mDisp.y,position,fraction:boss.life/boss.maximum,
+    noExtraLayers:!w._TimedWaveHud&&!w._BossWaveHud,clock:wave._Clock.text,clockBounds:wave._Clock.getBounds(wave)};
   },kind);
-  assert(result.visible);assert.equal(result.label,kind==='charger'?'3000 / 6000':'934.5K / 1.25M');
-  assert(result.y+result.height+3<=result.headTop);assert(result.x>=0&&result.x+118<=640);
+  assert(result.visible&&result.noNumber&&result.noExtraLayers);assert.match(result.clock,/^\d+:\d{2}$/);
+  assert(result.clockBounds.xMin>=54&&result.clockBounds.xMax<=118&&result.clockBounds.yMax<=46);
+  assert(result.y+result.height+5<=result.headTop);assert(result.x>=0&&result.x+64<=640);
   await g.page.waitForTimeout(120);await g.shot(`${out}/${kind}.png`,false);
-  const png=PNG.sync.read(readFileSync(`${out}/${kind}.png`));let fill=0,white=0;
+  const png=PNG.sync.read(readFileSync(`${out}/${kind}.png`));let fill=0;
   const accent=kind==='charger'?[213,200,154]:[255,174,100];
-  for(let y=result.y;y<result.y+28;y++)for(let x=result.x;x<result.x+118;x++){
+  for(let y=result.y;y<result.y+7;y++)for(let x=result.x;x<result.x+64;x++){
    const i=(y*png.width+x)*4,rgb=[...png.data.subarray(i,i+3)];
-   if(y>=result.y+20&&y<result.y+25&&rgb.every((c,i)=>Math.abs(c-accent[i])<3))fill++;
-   if(y<result.y+19&&rgb.every(c=>c>210))white++;
+   if(y>=result.y+2&&y<result.y+6&&rgb.every((c,i)=>Math.abs(c-accent[i])<3))fill++;
   }
-  assert(fill>112*result.fraction*3);assert(white>25);result.fillPixels=fill;result.textPixels=white;
+  assert(fill>62*result.fraction*2);result.fillPixels=fill;
   await g.expr('P.CMain.mSaveData.__set__mDetail(false)');
   await g.expr('(()=>{const w=m.mcWorld;w.mPaused=false;w.Draw();w.mPaused=true;})()');
   assert.equal(await g.expr('m.mcWorld._BossHealthHud._visible'),true);
