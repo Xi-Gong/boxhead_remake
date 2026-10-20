@@ -38,12 +38,12 @@ export const INSTRUCTIONS = {
   },
   pause: 'P  =  PAUSE',
   modes: [
-    ['SINGLE PLAY', 'Survive the endless waves of zombies and devils. Kill quickly to raise the multiplier: it unlocks new weapons and upgrades.'],
-    ['COOPERATIVE', 'Two players on one keyboard. A fallen player comes back next to the partner - the game ends when both are dead.'],
+    ['SINGLE PLAY', 'Clear enemies early or survive the clock. Kills grant XP: fast basic levels, slower elite rewards. Every fifth wave has Bosses.'],
+    ['COOPERATIVE', 'Choose one of three upgrades between waves. A fallen player returns beside the partner; the run ends when both are dead.'],
     ['DEATH MATCH', 'Split screen, player against player. The first to reach the number of frags set in OPTIONS (5, 10, 20 or 50) wins.'],
   ],
   weaponsTitle: 'WEAPONS',
-  weaponsNote: '(unlocked at kill multiplier)',
+  weaponsNote: '(unlocked at personal level; legacy: multiplier)',
   weapons: [
     ['1', 'Pistol', ''],
     ['2', 'UZI', 'x5'],

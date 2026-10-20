@@ -1,0 +1,12 @@
+{
+  "status": "lightweight-in-progress",
+  "method": "Serial headless Chrome, 640x480 LOW, real-time real keyboard input. No combat stats, clocks, enemies or XP rewritten. Selected-wave QA menu unlocks only.",
+  "rules": {"ordinarySeconds": [180,240,300], "bossExtraSeconds": 60, "finiteObjective": "65% of unobstructed full-duration arrivals; cooperation 1.35x budget and cadence", "growth": "tiered-growth-v1"},
+  "ordinaryClear": {"report": "generated/reports/v031/pacing/clear-controller4-active-w1-r0-1792475484495/report.json", "wallMs":171695,"remainingTicks":190,"kills":152,"target":152,"level":24,"life":320,"result":"draft before deadline"},
+  "ui": "generated/reports/v031/pacing/ui-1792475687132/report.json",
+  "tests": {"log":"generated/reports/v031/clear-waves/tests-final.log","files":12,"passed":193},
+  "build": "generated/reports/v031/clear-waves/build-final.log",
+  "audit": "generated/reports/v031/clear-waves/code-inventory.json",
+  "failuresRetained": ["generated/reports/v031/tiered-growth/tests-1.log","generated/reports/v031/clear-waves/tests-1.log","generated/reports/v031/clear-waves/tests-save-hud.log"],
+  "limits": "No full release gate or actual two-peer LAN. Failed controller runs retained; no measured performance claim. Current EXE is the earlier candidate until rebuilt."
+}

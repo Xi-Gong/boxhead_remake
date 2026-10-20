@@ -694,4 +694,13 @@ export const DEVIATIONS: Deviation[] = [
       'endless growth; saved markers are snapshot-owned and incapable worlds reject them before mutation. '+
       'Classic fixtures retain the previous XP/stat assertions; reference starts use the negotiated curve.',
   },
+  {
+    id:'CLEARABLE_WAVES',
+    file:'local/ClearWaveRules.ts, ClearWaves.ts, TimedWaves.ts, TimedGrowthRules.ts, Net/EnemyCounts.ts',
+    description:'Latest user pacing request supersedes infinite ordinary arrivals: optional clearable-waves-v1 '+
+      'keeps continuous nearby arrivals up to a finite map/difficulty/team budget. Clear all enemies early or '+
+      'survive the unchanged deadline; timeout gives no passive XP or kill rewards. Ordinary HUD counts include '+
+      'unspawned enemies. Saved kills/time/warnings persist and omitted ordinary enemies return to the arrival '+
+      'budget. Rollback restores the whole objective; legacy peers retain their original timed rules.',
+  },
 ];

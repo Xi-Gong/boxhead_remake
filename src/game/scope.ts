@@ -33,6 +33,7 @@ import { installTimedWaves } from './local/TimedWaves.ts';
 import { installTimedWaveUi } from './local/TimedWaveUi.ts';
 import { installWaveDraft } from './local/WaveDraft.ts';
 import { installBossWaves } from './local/BossWaves.ts';
+import { installClearWaves } from './local/ClearWaves.ts';
 import { installWeaponArt } from './local/WeaponArt.ts';
 import { installProjectileArt } from './local/ProjectileArt.ts';
 import { installWaveDraftUi } from './local/WaveDraftUi.ts';
@@ -124,6 +125,7 @@ export function applyScope(): void {
   installWeaponArt();
   installProjectileArt();
   installBossWaves();
+  installClearWaves();
   installWaveDraft();
   installWaveDraftUi();
   installFriendlyFire();

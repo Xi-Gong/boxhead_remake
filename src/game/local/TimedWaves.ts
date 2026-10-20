@@ -5,6 +5,7 @@ import { endlessConfigured } from './Endless.ts';
 import { difficultyIndex } from './BalanceRules.ts';
 import { netSession } from './Net/NetSession.ts';
 import { TIMED_WAVES_RULE, spawnIntervalSeconds, waveSeconds } from './TimedWaveRules.ts';
+import {CLEAR_WAVES_RULE,clearWaveKeys,type ClearWaveState} from './ClearWaveRules.ts';
 
 export type SpawnRole='boss'|'reinforcement';
 export interface SpawnWarning { family:'Zombie'|'Devil'; x:number; y:number; ticks:number; role?:SpawnRole }
@@ -19,6 +20,8 @@ export interface TimedWaveState {
   opening:number;
   warnings:SpawnWarning[];
   boss?:BossWaveState;
+  clear?:ClearWaveState;
+  clearable?:typeof CLEAR_WAVES_RULE;
 }
 const classic = new WeakSet<object>();
 export function setClassicTimedWavesFixture(main:object):void { classic.add(main); }
@@ -31,7 +34,7 @@ export function copyTimedWave(world:any):TimedWaveState|undefined {
   const state=timedWave(world);return state?cloneTimedWave(state):undefined;
 }
 export function cloneTimedWave(state:TimedWaveState):TimedWaveState {
-  return {...state,warnings:state.warnings.map(w=>({...w})),...(state.boss?{boss:{...state.boss,...(state.boss.members?{members:state.boss.members.map(m=>({...m}))}:{})}}:{})};
+  return {...state,warnings:state.warnings.map(w=>({...w})),...(state.clear?{clear:{...state.clear}}:{}),...(state.boss?{boss:{...state.boss,...(state.boss.members?{members:state.boss.members.map(m=>({...m}))}:{})}}:{})};
 }
 export function resetTimedWave(world:any,upgrades=world.mUpgrades):void {
   const size=world.mMap.mSize,totalTicks=waveSeconds(size.x,size.y)*CMain.mFPS;
@@ -93,6 +96,7 @@ function emit(world:any,family:'Zombie'|'Devil',point:any,role?:SpawnRole):boole
   try{return world['Spawn_'+family]();}finally{spawning.delete(world);roles.delete(world);}
 }
 export function attemptTimedSpawn(world:any,family:'Zombie'|'Devil',role?:SpawnRole):boolean {
+  if(!roomForTimedSpawn(world,family))return false;
   const choice=chooseTimedSpawn(world,family);if(!choice)return false;
   if(!choice.warning)return emit(world,family,choice.point,role);
   const p=choice.point.mPosition;
@@ -102,7 +106,8 @@ function cap(world:any,family:'Zombie'|'Devil'):number {
   return Math.min(world.mUpgrades.Level[family+'_Count']??0,family==='Zombie'?(_root._quality==='LOW'?40:60):Infinity);
 }
 export function roomForTimedSpawn(world:any,family:'Zombie'|'Devil'):boolean {
-  return (world.mUpgrades.Level['m'+family+'Count']??0)+timedWave(world)!.warnings.filter(w=>w.family===family).length<cap(world,family);
+  const state=timedWave(world)!,pending=state.warnings.filter(w=>w.family===family).length,c=state.clear,keys=clearWaveKeys(family);
+  return (!c||c[keys.emitted]+pending<c[keys.total])&&(world.mUpgrades.Level['m'+family+'Count']??0)+pending<cap(world,family);
 }
 function processWarnings(world:any):void {
   const state=timedWave(world)!;
@@ -185,7 +190,8 @@ export function installTimedWaves():void {
   upgrades.ProcessTimedSpawns=function(this:any):void{
     const world=this.mWorld,state=timedWave(world)!;
     const difficulty=difficultyIndex(netSession()?.startOpts?.cfg.difficulty??CMain.mSaveData.__get__mDifficulty());
-    const interval=Math.ceil(CMain.mFPS*spawnIntervalSeconds(difficulty,this.mLevelIndex,1-state.remainingTicks/state.totalTicks));
+    const team=state.clear&&World.CWorld.mGameMode!=='Single'?1.35:1;
+    const interval=Math.ceil(CMain.mFPS*spawnIntervalSeconds(difficulty,this.mLevelIndex,1-state.remainingTicks/state.totalTicks)/team);
     const empty=(this.Level.mZombieCount??0)+(this.Level.mDevilCount??0)===0;
     const attempts=state.opening>0?state.opening:1;state.opening=0;
     if(--state.zombieTicks<=0||empty){
@@ -194,7 +200,7 @@ export function installTimedWaves():void {
     }
     if(--state.devilTicks<=0){
       if(roomForTimedSpawn(world,'Devil'))attemptTimedSpawn(world,'Devil');
-      state.devilTicks=Math.max(CMain.mFPS*2,this.Level.Devil_SpawnRate??0);
+      state.devilTicks=Math.ceil(Math.max(CMain.mFPS*2,this.Level.Devil_SpawnRate??0)/team);
     }
   };
   const world=World.CWorld.prototype as any;

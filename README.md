@@ -48,14 +48,14 @@ Gamepads work throughout (stick to move, RT/A to shoot, START to pause); keys ar
 
 - **Save, resume & retry** — continue a saved run, retry the failed wave, or select a previously reached wave.
 - **LAN co-op & death match** — discover rooms or join by IP in the desktop app, with rollback and reconnect support.
-- **Timed, endless PvE** — survive 3/4/5-minute waves with the clock inside WAVE. Every fifth wave adds one minute and 1–3 Bosses as the run progresses, each with one compact overhead bar and counted under DEVIL.
+- **Timed, endless PvE** — clear finite enemy groups early or survive 3/4/5-minute waves with the clock inside WAVE. Every fifth wave adds one minute and 1–3 Bosses as the run progresses, each with one compact overhead bar and counted under DEVIL.
 - **Build between waves** — each player chooses one of three upgrades within 12 seconds. Defeating every Boss doubles that wave's reward. Damage, health, armor and ammunition bonuses accumulate through the run.
-- **Endless PvE growth** — continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Wave selection follows your best progress beyond wave 100 and grants a map-duration-based starting build.
+- **Tiered, endless PvE growth** — low early XP costs and basic rewards lead to slower elite levels with stronger vitality, damage and ammunition rewards. Continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Wave selection follows your best progress beyond wave 100 and grants a map-duration-based starting build.
 - **Two enemy variants** — Bone Chargers telegraph a locked-direction rush; Ember Priests mark the ground with delayed flames. Both have distinct modeled parts and animated skill poses.
 - **Purple enchantment crates** — priests have a 30% purple-drop chance. Enchant your held weapon for +35% damage and two extra bullet penetrations. Refills, upgrades and weapon switching retain the enchantment until ammunition runs out; later refills do not restore a depleted enchantment. Enchanted ammo text stays purple.
 - **More supplies** — devils drop equally likely blue armor, olive ammo or green medical crates, which remain until needed. Random red boxes replenish the floor during play.
 - **Comfort and setup** — type an unlocked starting wave directly, change LAN room rules as host, and enjoy softer explosion flashes and automatic audio recovery.
-- **Four survival difficulties** — tuned pacing, concurrency and speed ceilings, with increasingly strong enemies. Modern timed waves have no total kill quota; older peers retain their supported wave rules.
+- **Four survival difficulties** — tuned pacing, concurrency and speed ceilings, with increasingly strong enemies. A finite objective rewards active clearing; survival to the limit also advances. Older peers retain their supported rules.
 - **Clearer combat art** — five refined gun models, warm bullet tracers, cyan rail beams, directional rockets and matching enchanted effects. Chargers, priests and both Bosses have distinct armor, crowns and skill poses.
 - **Reliable supplies and clearer UI** — refills preserve inherited weapon capacity; confirmed P1/P2 pickup messages remain evenly spaced, and conditional lobby actions have room to breathe.
 - **Co-op weapon crates** — fallen players drop their arsenal and remaining ammunition for recovery.

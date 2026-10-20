@@ -10,7 +10,7 @@ import { setSelectedStartWave } from '../../src/game/local/StartWave.ts';
 import { getRandomState } from '../../src/engine/flash/rng.ts';
 import { SharedObject } from '../../src/engine/flash/SharedObject.ts';
 // Explicit pre-tiered curve fixture: retain the original progression assertions alongside modern tests.
-const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true});
+const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true,classicClearWaves:true});
 
 function kill(world:any, player:any, devil=false) {
   const ctor=devil?Thing.Creature.CThing_Creature_Devil:Thing.Creature.CThing_Creature_Zombie;

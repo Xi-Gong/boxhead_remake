@@ -11,7 +11,7 @@ import {startingBonuses} from '../../src/game/local/WaveDraftRules.ts';
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {getRandomState} from '../../src/engine/flash/rng.ts';
 // Explicit pre-tiered curve fixture: retain the original progression assertions alongside modern tests.
-const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true});
+const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true,classicClearWaves:true});
 const config:TimedGrowthConfig={seconds:180,difficulty:0,devils:true,players:1,bosses:true};
 it('sums the bounded prefix and repeating tail exactly against a simple per-wave oracle',()=>{
  for(const seconds of [180,240,300])for(const difficulty of [0,1,2,3])for(const devils of [false,true])for(const bosses of [false,true]){

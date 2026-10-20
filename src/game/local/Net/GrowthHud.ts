@@ -9,6 +9,7 @@ import { growthOf, MAX_LEVEL, xpRequired, growthAtMaximum, infiniteGrowthWeapon,
 import { netSession } from './NetSession.ts';
 import { remainingEnemies, type EnemyCounts } from './EnemyCounts.ts';
 import { compactStat, draftBonuses } from '../WaveDraftRules.ts';
+import {TIERED_GROWTH_RULE,tieredLevelStats} from '../TieredGrowthRules.ts';
 
 export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 172, top: 4 } as const;
 export function growthLayout(width: number): { left: number; right: number; center: number; bottom: number } {
@@ -136,9 +137,9 @@ function pauseGrowth(hud: any, state: GrowthState): void {
     const heading=text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${growthAtMaximum(p)?'MAX':p.xp+'/'+xpRequired(p)+' XP'}`);
     if(heading.textWidth>276){const format=heading.getTextFormat();format.size*=276/heading.textWidth;heading.setTextFormat(format);}
     if(p.endless){
-      const session=netSession(),bonus=session?session.confirmedWaveDraft?.bonuses[i]:hud.mWorld.mUpgrades.waveDraft?draftBonuses(hud.mWorld,i):undefined,base=200+4*(p.level-1);
-      const caption=bonus?`HP ${compactStat(base*(1+.1*bonus.health))} / SHIELD ${compactStat(base*(1+.1*bonus.armor))} | DMG +${compactStat(((1+.01*Math.max(0,p.level-125))*(1+.08*bonus.damage)-1)*100)}% | AMMO +${compactStat(bonus.capacity*15)}%`
-        :`HP / ARMOR ${base}  |  GROWTH DMG +${Math.max(0,p.level-125)}%`;
+      const session=netSession(),bonus=session?session.confirmedWaveDraft?.bonuses[i]:hud.mWorld.mUpgrades.waveDraft?draftBonuses(hud.mWorld,i):undefined;
+      const tiered=p.tiered===TIERED_GROWTH_RULE,stats=tieredLevelStats(p.level),base=tiered?stats.vitality:200+4*(p.level-1),damage=tiered?stats.damage:.01*Math.max(0,p.level-125),capacity=tiered?stats.capacity:0;
+      const caption=`HP ${compactStat(Math.round(base*(1+.1*(bonus?.health??0))))} / SHIELD ${compactStat(Math.round(base*(1+.1*(bonus?.armor??0))))} | DMG +${compactStat(((1+damage)*(1+.08*(bonus?.damage??0))-1)*100)}% | AMMO +${compactStat(((1+capacity)*(1+.15*(bonus?.capacity??0))-1)*100)}%`;
       const summary=text(layer,'_GrowthStats'+i,x,122,280,16,BODY_FONT,10,0xcccccc,false,'left',caption);
       if(summary.textWidth>276){const format=summary.getTextFormat();format.size*=276/summary.textWidth;summary.setTextFormat(format);}
     }

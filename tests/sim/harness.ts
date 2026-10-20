@@ -46,6 +46,7 @@ import {setClassicWeaponArtFixture} from '../../src/game/local/WeaponArt.ts';
 import {setClassicProjectileArtFixture} from '../../src/game/local/ProjectileArt.ts';
 import {setClassicVariantArtFixture} from '../../src/game/local/VariantArt.ts';
 import {setClassicTieredGrowthFixture} from '../../src/game/local/TieredGrowth.ts';
+import {setClassicClearWavesFixture} from '../../src/game/local/ClearWaves.ts';
 import { CMain, Screen, Thing, World } from '../../src/game/packages.ts';
 
 export type GameMode = 'Single' | 'Coop' | 'DeathMatch';
@@ -99,6 +100,7 @@ export interface HeadlessGameOptions {
   classicProjectileArt?: boolean;
   classicVariantArt?: boolean;
   classicTieredGrowth?: boolean;
+  classicClearWaves?: boolean;
   seed?: number;
   options?: GameOptions;
   /** Cells per Nav_Update call (deviation NAV_BUDGET_TEST_HOOK); null = original getTimer budget. Default 300. */
@@ -461,6 +463,7 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   if(opts.classicProjectileArt)setClassicProjectileArtFixture(m);
   if(opts.classicVariantArt)setClassicVariantArtFixture(m);
   if(opts.classicTieredGrowth)setClassicTieredGrowthFixture(m);
+  if(opts.classicClearWaves)setClassicClearWavesFixture(m);
   const sd = m.constructor.mSaveData ?? (CMain as any).mSaveData;
   const o = opts.options ?? {};
   // options window fields (CScreen_SelectWorld.RegisterButton_Option writes CMain.mSaveData[field] = value)

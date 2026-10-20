@@ -50,6 +50,7 @@ it('applies late-level HP/shield maxima, damage and only the new ammo capacity d
   const e:any=new Thing.Creature.CThing_Creature_Zombie(p.mPosition.Clone());w.mThing_Collection.AddThing(e);e.Process_Init();e.mLife=0;e.lanFatalSlot=0;w.LogKill(e);
   expect(state.level).toBe(31);expect(p.mMaxLife-maximum).toBe(10);expect(p.mLife).toBe(95);expect(p.mArmor).toBe(19);
   expect(gun.mDamage).toBeCloseTo(35*1.22);expect(gun.mTotalAmmo).toBeGreaterThan(capacity);expect(gun.mAmmo).toBe(7+gun.mTotalAmmo-capacity);
+  w.mHud.Pause(true);expect(w.mHud.mcScreenPause._PersonalUpgrades._GrowthStats0.text).toContain('HP 366 / SHIELD 366');
  }finally{g.quit();}
 });
 it('persists new curves and rejects incapable loads before mutation while preserving old run progression',()=>{

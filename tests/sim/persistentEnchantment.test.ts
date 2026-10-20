@@ -11,7 +11,7 @@ import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
 import {withTimerValue} from '../../src/engine/flash/clock.ts';
 // Explicit pre-tiered curve fixture: retain the original progression assertions alongside modern tests.
-const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true});
+const createHeadlessGame=(options:Parameters<typeof createPriorGrowthGame>[0]={})=>createPriorGrowthGame({...options,classicTieredGrowth:true,classicClearWaves:true});
 
 function boot(){
  const g=createHeadlessGame({mode:'Single'});noSpawn(g);const p=placePlayer(g,5.5,8.5);

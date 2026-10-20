@@ -4,7 +4,7 @@
 
 ## Survive the clock and build your run
 
-- Ordinary waves last **3, 4 or 5 minutes** according to map size. Enemies keep arriving from nearby reachable entrances or warned safe ground, with a fast opening and a stronger final phase.
+- Ordinary waves have **3, 4 or 5 minute survival limits** according to map size. Clear the finite enemy objective to finish early, or survive until time runs out. Enemies keep arriving from nearby reachable entrances or warned safe ground, with a fast opening and a stronger final phase.
 - Every fifth wave brings **one extra minute** and an escalating encounter: one Boss at waves 5/10, two at 15/20 and at most three from wave 25. Defeat every Boss to advance immediately, or survive the limit for the normal reward. The clock sits inside WAVE and freezes during pause/disconnect holds.
 - Each player chooses one of three upgrades between waves, within **12 seconds**. Firepower, vitality, shield and magazine bonuses accumulate; first aid and resupply restore current resources. Everyone confirming starts the next wave immediately.
 - Defeating all Bosses doubles each player's one selected reward. Timeout clearing grants no extra kill XP or drops, while map objects, placed equipment and existing supply crates remain.
@@ -25,7 +25,7 @@
 
 ## Also included since stable v0.2.9
 
-- Endless personal growth beyond level 125 and wave selection beyond 100, with bounded high-wave initialization. Timed selected-wave builds now account for map duration and spawn pacing without replaying every previous wave.
+- Tiered personal growth: inexpensive basic levels, then progressively slower elite levels with stronger health/shield, damage and finite-ammo rewards. Existing saved runs retain their prior curve; weapon milestones remain. Growth continues beyond level 125 and wave selection beyond 100, with bounded high-wave initialization. Timed selected-wave builds now account for map duration and spawn pacing without replaying every previous wave.
 - Purple priest crates enchant the held weapon for **35% extra damage** and additional ordinary-bullet penetration. Supplies, upgrades, switching, saves and recovery crates preserve a nonempty weapon's enchantment; depletion ends it, including after a later refill.
 - Supplies preserve inherited capacities, single-weapon rewards refill the right weapon, and confirmed P1/P2 pickup messages keep stable spacing. Main-menu and conditional LAN controls have clearer layouts.
 - Optional save extensions preserve timers, drafts and Boss state. Old saves migrate once without refilling current health, armor or ammunition. LAN negotiates optional new rules; older peers and death match retain their supported behavior.
