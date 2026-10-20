@@ -194,6 +194,13 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   };
 
   const moveCursor = (p: PadPoll): void => {
+    // Gameplay (including drafts) uses per-player keys. A hidden cursor's mouse-up must not
+    // click a newly displayed card and lock its player READY before they can navigate.
+    const main=CMain?._this,world=main?.mcWorld;
+    if(main?.fState===main?.State_RunWorld&&world?.mLoaded&&!world.mPaused){
+      if(mouseIsDown){opts.player.mouseUp();mouseIsDown=false;}
+      domClick=false;updateCursorDom(false);return;
+    }
     // The physical mouse wins: snap the pad cursor to its position as soon as it moved.
     let snapped = false;
     if (opts.mouse && (opts.mouse.x !== lastMouseX || opts.mouse.y !== lastMouseY)) {

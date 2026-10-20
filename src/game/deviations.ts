@@ -703,4 +703,11 @@ export const DEVIATIONS: Deviation[] = [
       'unspawned enemies. Saved kills/time/warnings persist and omitted ordinary enemies return to the arrival '+
       'budget. Rollback restores the whole objective; legacy peers retain their original timed rules.',
   },
+  {
+    id:'DRAFT_GAMEPAD_INPUT',
+    file:'local/Gamepad.ts',
+    description:'Gamepad A drives the player fire/confirm slot during an active world, including wave drafts. '+
+      'The virtual mouse is restricted to menus and pause so hidden cursor releases cannot confirm cards. '+
+      'Keyboard remapping and both LAN-local key sets remain intact; no wire or simulation format changes.',
+  },
 ];
