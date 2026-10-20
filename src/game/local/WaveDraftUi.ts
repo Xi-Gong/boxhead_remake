@@ -21,6 +21,18 @@ function drawIcon(c:any,reward:Reward):void{
   c.beginFill(RED,90);c.moveTo(12.5,20);c.curveTo(1,12,6,7);c.curveTo(10,3,12.5,8);c.curveTo(16,3,20,7);c.curveTo(24,12,12.5,20);c.endFill();
  }else if(reward==='armor'){
   c.moveTo(12.5,4);c.lineTo(20,7);c.lineTo(18,16);c.lineTo(12.5,21);c.lineTo(7,16);c.lineTo(5,7);c.lineTo(12.5,4);c.moveTo(12.5,7);c.lineTo(12.5,17);
+ }else if(reward==='haste'){
+  for(let i=0;i<=12;i++){const a=i*Math.PI/6,x=12.5+8*Math.cos(a),y=12.5+8*Math.sin(a);i?c.lineTo(x,y):c.moveTo(x,y);}
+  c.moveTo(12.5,7);c.lineTo(12.5,13);c.lineTo(17,15);
+ }else if(reward==='mobility'){
+  c.moveTo(6,5);c.lineTo(12,5);c.lineTo(13,13);c.lineTo(21,17);c.lineTo(20,21);c.lineTo(5,21);c.lineTo(6,5);
+  c.moveTo(7,10);c.lineTo(11,10);c.moveTo(7,13);c.lineTo(11,13);
+ }else if(reward==='penetration'){
+  c.moveTo(7,4);c.lineTo(18,7);c.lineTo(17,18);c.lineTo(12,21);c.lineTo(7,18);c.lineTo(7,4);
+  c.moveTo(3,12);c.lineTo(22,12);c.moveTo(17,8);c.lineTo(22,12);c.lineTo(17,16);
+ }else if(reward==='scavenging'){
+  c.moveTo(5,8);c.lineTo(20,8);c.lineTo(20,21);c.lineTo(5,21);c.lineTo(5,8);c.moveTo(9,8);c.lineTo(9,4);c.lineTo(16,4);c.lineTo(16,8);
+  c.moveTo(12.5,11);c.lineTo(12.5,18);c.moveTo(9,14.5);c.lineTo(16,14.5);
  }else{
   for(let i=0;i<3;i++){const x=6+i*5;c.moveTo(x,19);c.lineTo(x,8);c.lineTo(x+2,5);c.lineTo(x+4,8);c.lineTo(x+4,19);c.lineTo(x,19);}
  }
@@ -34,9 +46,13 @@ export function rewardPreview(stats:PlayerStats|undefined,reward:Reward,m:number
  if(reward==='damage')return `DAMAGE  ${number(stats.damage)}  >  ${number(stats.previews?.damage[m-1]??stats.damage/(1+.08*b.damage)*(1+.08*(b.damage+m)))}`;
  if(reward==='health')return `MAX HP  ${number(stats.maximum)}  >  ${number(stats.maximum/(1+.1*b.health)*(1+.1*(b.health+m)))}`;
  if(reward==='armor')return `MAX SHIELD  ${number(stats.armorMaximum)}  >  ${number(stats.armorMaximum/(1+.1*b.armor)*(1+.1*(b.armor+m)))}`;
+ if(reward==='haste')return `RATE  ${stats.rate.toFixed(1)}  >  ${(stats.previews?.haste?.[m-1]??stats.rate).toFixed(1)} per sec`;
+ if(reward==='mobility')return `MOVEMENT  ${number(stats.speed/.16*100)}%  >  ${number(stats.previews?.mobility?.[m-1]??100)}%`;
+ if(reward==='penetration')return `PIERCING  ${number(stats.penetration*100)}%  >  ${number(stats.previews?.penetration?.[m-1]??0)}%`;
+ if(reward==='scavenging')return `SUPPLY EFFECT  +${number(stats.supply*100)}%  >  +${number(stats.previews?.scavenging?.[m-1]??0)}%`;
  if(reward==='capacity')return stats.infinite?'CAPACITY  /  FINITE WEAPONS':`CAPACITY  ${ammo(stats.capacity)}  >  ${ammo(stats.previews?.capacity[m-1]??stats.capacity+Math.floor(stats.capacityBase*.15*(b.capacity+m))-Math.floor(stats.capacityBase*.15*b.capacity))}`;
- if(reward==='heal')return `HP  ${number(stats.life)}  >  ${number(Math.min(stats.maximum,stats.life+stats.maximum*.35*m))}`;
- return stats.infinite?'RESTORE AMMO TO FINITE WEAPONS':`AMMO  ${ammo(stats.ammo)}  >  ${ammo(Math.min(stats.capacity,stats.ammo+Math.ceil(stats.capacity*.35*m)))}`;
+ if(reward==='heal')return `HP  ${number(stats.life)}  >  ${number(Math.min(stats.maximum,stats.life+stats.maximum*.35*m*(1+stats.supply)))}`;
+ return stats.infinite?'RESTORE AMMO TO FINITE WEAPONS':`AMMO  ${ammo(stats.ammo)}  >  ${ammo(Math.min(stats.capacity,stats.ammo+Math.ceil(stats.capacity*.35*m*(1+stats.supply))))}`;
 }
 function create(world:any,state:WaveDraftState):DraftView{
  views.get(world)?.clip.removeMovieClip();

@@ -731,4 +731,11 @@ export const DEVIATIONS: Deviation[] = [
       'explosions keep their behavior. Old saves finish the current wave and activate modern tuning at the '+
       'next boundary without free ammo or lost earned progress. Legacy assertions use explicit fixtures.',
   },
+  {
+    id:'BUILD_CHOICES',file:'local/WaveDraft.ts, WaveDraftRules.ts, Combat.ts, CombatRules.ts, Supplies.ts, SupplyDrops.ts, PlayerStats.ts',
+    description:'Modern drafts draw separate offense/defense/utility choices, including diminishing movement, '+
+      'cadence, armor penetration and supply efficacy. Penetration is captured at emission and persists for '+
+      'placed explosives. Modern permanent supplies restore a bounded portion rather than a full refill; '+
+      'legacy crates and exact classic assertions retain their previous semantics.',
+  },
 ];

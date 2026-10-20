@@ -29,7 +29,7 @@ import { ENDLESS_RULE } from './EndlessRules.ts';
 import { endlessWorld } from './Endless.ts';
 import { timedWave, copyTimedWave, cloneTimedWave, type TimedWaveState } from './TimedWaves.ts';
 import { waveDraft,draftReadyConfigured } from './WaveDraft.ts';
-import {combatConfigured} from './Combat.ts';
+import {combatConfigured,settleCombatPlayers} from './Combat.ts';
 import {COMBAT_RULE,type CombatState} from './CombatRules.ts';
 import { BOSS_WAVES_RULE,BOSS_ENCOUNTERS_RULE,bossWavesConfigured,bossEncountersConfigured,reconnectSavedBoss } from './BossWaves.ts';
 import {tieredGrowthConfigured} from './TieredGrowth.ts';
@@ -81,6 +81,7 @@ export interface ObjectState {
   /** Placed barrel / mine / charge pack damage. */
   damage?: number;
   enchanted?: boolean;
+  penetration?:number;
   /** Walls only (marker + placed). */
   life?: number;
   /** Marker pickups only: taken and counting down to reappear. */
@@ -238,6 +239,7 @@ function captureObject(t: any): ObjectState {
   }
   if (t.mSupplyId) o.supply = { kind: t.mSupplyKind, id: t.mSupplyId };
   if(t.mEnchanted)o.enchanted=true;
+  if(t.mCombatPenetration!==undefined)o.penetration=t.mCombatPenetration;
   if (t.mRandomRedId) o.randomRed = { id: t.mRandomRedId, remainingTicks: t.mDeleteCounter, alpha: t.mAlpha };
   return o;
 }
@@ -386,6 +388,7 @@ function recreatePlaced(world: any, s: ObjectState): void {
   }
   world.mThing_Collection.AddThing(t);
   if(s.enchanted&&variantsWorld(world))t.mEnchanted=true;
+  if(s.penetration!==undefined)t.mCombatPenetration=s.penetration;
   if (s.supply || s.randomRed) {
     // Reattach without processing a pickup during restore, and without spending a remaining lifetime tick.
     world.mMap.mMapwho.AddThing(t);
@@ -521,6 +524,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
       }
     }
     settleVitals(world, true);
+    settleCombatPlayers(world);
     setRandomState(snap.rngState);
     world.mTick = snap.tick;
   } finally {

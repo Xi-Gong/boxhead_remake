@@ -32,7 +32,7 @@ import { installArmorScope } from './local/Armor.ts';
 import { installTimedWaves } from './local/TimedWaves.ts';
 import { installTimedWaveUi } from './local/TimedWaveUi.ts';
 import { installWaveDraft } from './local/WaveDraft.ts';
-import {installCombatScope} from './local/Combat.ts';
+import {installCombatScope,settleCombatPlayers} from './local/Combat.ts';
 import { installBossWaves } from './local/BossWaves.ts';
 import { installClearWaves } from './local/ClearWaves.ts';
 import { installWeaponArt } from './local/WeaponArt.ts';
@@ -299,6 +299,7 @@ export function applyScope(): void {
     initFinished.call(this);
     const restored = consumePending(this);
     initializeLocalGrowth(this, restored);
+    settleCombatPlayers(this);
     if (localGrowthEnabled()) recordCheckpoint(this);
     recordRunStartWave(this.mUpgrades.mLevelIndex);
     recordWaveReached(this.mUpgrades.mLevelIndex); // v0.2.4: starting AT wave N counts as entering it

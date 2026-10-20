@@ -10,7 +10,7 @@ import { getRandomState, setRandomState, setMathRandomSource, mathRandom, random
 import { captureWorldSnap, makeSnapCtx, restoreWorldSnap } from '../../src/game/local/Net/WorldSnap.ts';
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 
-function boot(mode:'Single'|'Coop'='Single',room=1){const g=createHeadlessGame({mode,room});noSpawn(g);return g;}
+function boot(mode:'Single'|'Coop'='Single',room=1,classicCombat=false){const g=createHeadlessGame({mode,room,classicCombat});noSpawn(g);return g;}
 function special(g:any,kind:SupplyKind,where:any=pos(12.5,8.5)){
   const w=g.world(),box=w.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(where,kind,supplyIdentity(w,'s')));
   box.Process_Init();return box;
@@ -39,7 +39,7 @@ it('permanent boxes survive elapsed time, wave advance and accumulation with no 
   expect(g.errors).toEqual([]);g.quit();
 });
 it.each(['armor','ammo','medical'] as const)('%s remains while full, applies only its effect, and cannot be claimed twice',kind=>{
-  const g=boot(),p=g.players()[0];refillArmor(p);p.NewWeapon('uzi');refillAmmo(p);p.mLife=p.mMaxLife;
+  const g=boot('Single',1,true),p=g.players()[0];refillArmor(p);p.NewWeapon('uzi');refillAmmo(p);p.mLife=p.mMaxLife;
   const box=special(g,kind,p.mPosition.Clone());expect(box.mSupplyConsumed).toBe(false);expect(box.Process).toBe(box.Process_Normal);
   p.mLife=73;p.mArmor=37;p.mWeapons.uzi.mThing.mAmmo=7;const active=p.mWeaponList.map((e:any)=>e.mActive);
   box.PickedUp();expect(box.mSupplyConsumed).toBe(true);expect(box.Process).toBeUndefined();
@@ -48,13 +48,13 @@ it.each(['armor','ammo','medical'] as const)('%s remains while full, applies onl
   p.mLife=31;p.mArmor=11;p.mWeapons.uzi.mThing.mAmmo=3;box.PickedUp();expect([p.mLife,p.mArmor,p.mWeapons.uzi.mThing.mAmmo]).toEqual([31,11,3]);g.quit();
 });
 it('ammo boxes remain when there is no owned weapon missing ammo; locked weapons are not granted',()=>{
-  const g=boot(),p=g.players()[0],box=special(g,'ammo',p.mPosition.Clone());
+  const g=boot('Single',1,true),p=g.players()[0],box=special(g,'ammo',p.mPosition.Clone());
   expect(box.mSupplyConsumed).toBe(false);expect(p.mWeapons.uzi.mActive).toBe(false);
   p.NewWeapon('uzi');p.mWeapons.uzi.mThing.mAmmo=0;box.PickedUp();expect(box.mSupplyConsumed).toBe(true);
   expect(p.mWeapons.uzi.mThing.mAmmo).toBe(p.mWeapons.uzi.mThing.mTotalAmmo);expect(p.mWeapons.rocket.mActive).toBe(false);g.quit();
 });
 it('two players share a cell: full/dead players cannot block a valid picker, and one box has one winner',()=>{
-  const g=boot('Coop'),a=placePlayer(g,6.5,8.5,0,0),b=placePlayer(g,6.5,8.5,0,1);
+  const g=boot('Coop',1,true),a=placePlayer(g,6.5,8.5,0,0),b=placePlayer(g,6.5,8.5,0,1);
   a.mArmor=0;refillArmor(b);const first=special(g,'armor',a.mPosition.Clone());
   expect(first.mSupplyConsumed).toBe(true);expect([a.mArmor,b.mArmor]).toEqual([200,200]);
   a.mArmor=0;b.mArmor=0;special(g,'armor',a.mPosition.Clone());expect([a.mArmor,b.mArmor]).toEqual([0,200]);
@@ -62,7 +62,7 @@ it('two players share a cell: full/dead players cannot block a valid picker, and
   a.mLife=0;const remain=special(g,'medical',a.mPosition.Clone());expect(remain.mSupplyConsumed).toBe(false);g.quit();
 });
 it('red rewards split 10/10/10/70, retain the original weapon order/weights, and never heal in the weapon branch',()=>{
-  const g=boot(),p=g.players()[0];p.NewWeapon('uzi');p.NewWeapon('shotgun');const counts={armor:0,ammo:0,medical:0,weapon:0};
+  const g=boot('Single',1,true),p=g.players()[0];p.NewWeapon('uzi');p.NewWeapon('shotgun');const counts={armor:0,ammo:0,medical:0,weapon:0};
   for(let i=0;i<100;i++){
     p.mArmor=0;p.mLife=73;p.mWeapons.uzi.mThing.mAmmo=0;p.mWeapons.shotgun.mThing.mAmmo=0;
     redBoxReward(p,(i+.5)/100);

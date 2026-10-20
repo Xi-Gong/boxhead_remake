@@ -18,6 +18,7 @@ it('waits beyond the old deadline without a default or combat-side progress',()=
 });
 it('retains one ready player through save/restore and awards both once across rollback',()=>{
  const g=createHeadlessGame({mode:'Coop'}),w=g.world();noSpawn(g);beginWaveDraft(w,2);
+ waveDraft(w)!.round!.offers=[['damage','health','armor'],['damage','health','armor']];
  queueDraftChoice(w,0,0,1);g.tick(1);expect(waveDraft(w)!.round!.confirmed).toEqual([true,false]);
  const save=capture(w);expect(applyToWorld(w,save)).toBe(true);expect(waveDraft(w)!.round!.confirmed).toEqual([true,false]);
  g.tick(330);expect(w.mUpgrades.mLevelIndex).toBe(1);

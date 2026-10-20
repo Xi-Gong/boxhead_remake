@@ -2,7 +2,9 @@ import {random} from '../../engine/runtime.ts';
 import {CMain,Thing,World} from '../packages.ts';
 import {clearWaveCombat,timedWave,timedWavesConfigured} from './TimedWaves.ts';
 import {netSession} from './Net/NetSession.ts';
-import {infiniteGrowthWeapon} from './Net/Growth.ts';
+import {infiniteGrowthWeapon,modernWeaponProjection} from './Net/Growth.ts';
+import {combatWorld,passiveBonuses,restoredSupply} from './CombatRules.ts';
+import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {syncVitals} from './SurvivalRules.ts';
 import {takeDraftChoice} from './WaveDraftInput.ts';
@@ -19,7 +21,7 @@ export function waveDraftConfigured():boolean {
 }
 export function waveDraft(world:any):WaveDraftState|undefined{return world?.mUpgrades?.waveDraft;}
 export function initializeWaveDraft(world:any):void {
-  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex);
+  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world));
 }
 function player(world:any,index:number):any {
   return (Object.values(world.mThing_Collection.mPlayerThings) as any[]).find(p=>p.mPlayerIndex===index);
@@ -29,6 +31,20 @@ function finiteWeapons(p:any):any[] {
 }
 export function rewardOffers(p:any):Reward[] {
   const alive=p&&p.mLife>0&&!(p.mFlags&Thing.CThing.mFlag_DEAD);
+  if(p&&combatWorld(p.mWorld)){
+    const w=p.mWorld,b=waveDraft(w)!.bonuses[p.mPlayerIndex]!,weapons=(p.mWeaponList??[]).filter((e:any)=>e.mActive&&e.mThing).map((e:any)=>e.mThing);
+    const canWeapon=(key:'haste'|'capacity')=>weapons.some((gun:any)=>{
+      if(key==='capacity'&&infiniteGrowthWeapon(gun))return false;
+      const next=modernWeaponProjection(w,p.mPlayerIndex,gun._CLASSID_,{...b,[key]:(b[key]??0)+1});
+      return next&&(key==='capacity'?next.capacity>gun.mTotalAmmo:next.fireRate<gun.mFireRate);
+    });
+    const offense:Reward[]=['damage','penetration'];if(canWeapon('haste'))offense.push('haste');
+    const defense:Reward[]=['health','armor'];if(alive&&p.mLife<p.mMaxLife)defense.push('heal');
+    const utility:Reward[]=['scavenging'];
+    if(passiveBonuses({...b,mobility:(b.mobility??0)+1}).movement-passiveBonuses(b).movement>1e-6)utility.push('mobility');
+    if(canWeapon('capacity'))utility.push('capacity');if(finiteWeapons(p).some(gun=>gun.mAmmo<gun.mTotalAmmo))utility.push('ammo');
+    return [offense,defense,utility].map(pool=>pool[random(pool.length)]!);
+  }
   const pool=REWARDS.filter(r=>r!=='damage'&&(r!=='heal'||alive&&p.mLife<p.mMaxLife)
     &&(r!=='ammo'||finiteWeapons(p).some(w=>w.mAmmo<w.mTotalAmmo)));
   return ['damage',pool.splice(random(pool.length),1)[0]!,pool.splice(random(pool.length),1)[0]!];
@@ -52,14 +68,15 @@ export function beginWaveDraft(world:any,multiplier=1):void {
 }
 export function applyWaveReward(world:any,index:number,reward:Reward,multiplier:number):void {
   const state=waveDraft(world)!;const p=player(world,index);
-  if(reward==='damage'||reward==='health'||reward==='armor'||reward==='capacity')state.bonuses[index]![reward]+=multiplier;
+  if(reward!=='heal'&&reward!=='ammo')state.bonuses[index]![reward]=(state.bonuses[index]![reward]??0)+multiplier;
   if(!p)return;
   if(reward==='health')syncVitals(p,'level');
-  else if(reward==='damage'||reward==='capacity'){
+  else if(reward==='damage'||reward==='capacity'||reward==='haste'){
     for(const entry of p.mWeaponList??[])if(entry.mActive&&entry.mThing)world.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
   }
-  else if(reward==='heal'&&p.mLife>0&&!(p.mFlags&Thing.CThing.mFlag_DEAD))p.mLife=Math.min(p.mMaxLife,p.mLife+p.mMaxLife*.35*multiplier);
-  else if(reward==='ammo')for(const weapon of finiteWeapons(p))weapon.mAmmo=Math.min(weapon.mTotalAmmo,weapon.mAmmo+Math.ceil(weapon.mTotalAmmo*.35*multiplier));
+  else if(reward==='heal'&&p.mLife>0&&!(p.mFlags&Thing.CThing.mFlag_DEAD))p.mLife=Math.min(p.mMaxLife,p.mLife+(combatWorld(world)?restoredSupply(p.mMaxLife,p.mSupplyEfficiency??0,.35*multiplier):p.mMaxLife*.35*multiplier));
+  else if(reward==='ammo')for(const weapon of finiteWeapons(p))weapon.mAmmo=Math.min(weapon.mTotalAmmo,weapon.mAmmo+restoredSupply(weapon.mTotalAmmo,combatWorld(world)?p.mSupplyEfficiency??0:0,.35*multiplier));
+  if(reward==='mobility'||reward==='penetration'||reward==='scavenging')syncCombatPlayer(p);
 }
 export function processWaveDraft(world:any):void {
   const state=waveDraft(world)!,round=state.round;if(!round)return;

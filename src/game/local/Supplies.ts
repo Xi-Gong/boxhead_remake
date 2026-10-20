@@ -5,6 +5,7 @@ import {CThing_Object_Pickup} from '../Thing/Object/CThing_Object_Pickup.ts';
 import { playerArmorMaximum, survivalEnabled } from './SurvivalRules.ts';
 import { reliableSupplies, syncSupplyWeapon, syncSupplyVitals } from './ReliableSupplies.ts';
 import {canEnchant,enchantHeldWeapon} from './EnchantmentRules.ts';
+import {combatWorld,restoredSupply} from './CombatRules.ts';
 
 export const SUPPLY_RULE='armor-ammo-v1';
 export const ARMOR_MAX=100;
@@ -40,6 +41,15 @@ export function supplyCanBenefit(player:any,kind:SupplyKind):boolean{
 export function applySupplyEffect(player:any,kind:SupplyKind):boolean{
   if(!supplyCanBenefit(player,kind))return false;
   if(kind==='enchant')return enchantHeldWeapon(player);
+  if(combatWorld(player.mWorld)){
+    const efficiency=player.mSupplyEfficiency??0;
+    if(kind==='armor')player.mArmor=Math.min(armorMaximum(player),(player.mArmor??0)+restoredSupply(armorMaximum(player),efficiency));
+    else if(kind==='medical')player.mLife=Math.min(player.mMaxLife,player.mLife+restoredSupply(player.mMaxLife,efficiency));
+    else for(const e of player.mWeaponList??[])if(e.mActive&&e.mThing){
+      const gun=e.mThing;player.mWorld.mUpgrades.ApplyUpgrade_Weapon(gun);gun.mAmmo=Math.min(gun.mTotalAmmo,gun.mAmmo+restoredSupply(gun.mTotalAmmo,efficiency));
+    }
+    return true;
+  }
   if(kind==='armor')refillArmor(player);
   else if(kind==='ammo')refillAmmo(player);
   else player.mLife=player.mMaxLife;
@@ -135,7 +145,7 @@ export class CThing_Object_SupplyCrate extends CThing_Object_Pickup {
     this.mSupplyConsumed=true;
     if(this.mSupplyId)applySupplyEffect(player,this.mSupplyKind);
     else if(this.mSupplyKind==='armor')refillArmor(player);else if(this.mSupplyKind==='ammo')refillAmmo(player);else player.mLife=player.mMaxLife;
-    this.mWorld.mHud.AddMessage_Info(this.mSupplyKind==='enchant'?`P${player.mPlayerIndex+1}: ${player.mWeapon_Current.mName} enchanted!`:`P${player.mPlayerIndex+1}: ${this.mSupplyKind==='armor'?'Armor':this.mSupplyKind==='ammo'?'All ammo':'Health'} full!`);
+    this.mWorld.mHud.AddMessage_Info(this.mSupplyKind==='enchant'?`P${player.mPlayerIndex+1}: ${player.mWeapon_Current.mName} enchanted!`:`P${player.mPlayerIndex+1}: ${this.mSupplyKind==='armor'?'Armor':this.mSupplyKind==='ammo'?'All ammo':'Health'} ${this.mSupplyId&&combatWorld(this.mWorld)?'restored':'full'}!`);
     this.PlaySound(CSound.mSamples.Object_Pickup_wav);
     this.Delete();
   }

@@ -10,8 +10,8 @@ import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,makeSnapCtx,restoreWorldSnap} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 describe.each([true,false])('enchantment: classic stock=%s',classic=>{
-function boot(mode:'Single'|'Coop'='Single'){
- const g=createHeadlessGame({mode,classicEnchantment:classic});noSpawn(g);const p=placePlayer(g,5.5,8.5);p.NewWeapon('uzi');p.SelectWeapon('uzi');return {g,p,w:g.world(),gun:p.mWeapon_Current};
+function boot(mode:'Single'|'Coop'='Single',classicCombat=false){
+ const g=createHeadlessGame({mode,classicEnchantment:classic,classicCombat});noSpawn(g);const p=placePlayer(g,5.5,8.5);p.NewWeapon('uzi');p.SelectWeapon('uzi');return {g,p,w:g.world(),gun:p.mWeapon_Current};
 }
 function fire(p:any){p.mWeapon_Current.Fire(p.mPosition.Clone(),p.mAngle.Clone(),0);}
 it('retains the negotiated refill semantics after consuming the original enchanted stock',()=>{
@@ -25,7 +25,7 @@ it('retains the negotiated refill semantics after consuming the original enchant
  g.quit();
 });
 it('red weapon refills preserve enchanted stock and do not switch the held gun',()=>{
- const {g,p,gun}=boot();gun.mAmmo=7;enchantHeldWeapon(p);expect(redBoxReward(p,.5)).toBe(true);
+ const {g,p,gun}=boot('Single',true);gun.mAmmo=7;enchantHeldWeapon(p);expect(redBoxReward(p,.5)).toBe(true);
  expect(p.mWeapon_Current.mNameID).toBe('uzi');expect(p.mWeapon_Current.mEnchantedAmmo).toBe(7);expect(p.mWeapon_Current.mAmmo).toBe(p.mWeapon_Current.mTotalAmmo);g.quit();
 });
 it('shotgun enchants every pellet even when super.Fire consumes its last enchanted round first',()=>{

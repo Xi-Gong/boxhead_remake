@@ -4,13 +4,14 @@ import { CMain, CSound, Thing, World } from '../packages.ts';
 import { modernLoot, supplyIdentity, SUPPLY_KINDS, type SupplyState } from './LootRules.ts';
 import { applySupplyEffect, livingPicker } from './Supplies.ts';
 import { reliableSupplies, syncSupplyWeapon } from './ReliableSupplies.ts';
+import {combatWorld,restoredSupply} from './CombatRules.ts';
 
 /** One roll partitions the reward, then the remaining 70% preserves the original weapon pool's order/weights. */
 export function redBoxReward(player: any, roll: number): boolean {
   if (roll < .3) {
     const kind = SUPPLY_KINDS[roll < .1 ? 0 : roll < .2 ? 1 : 2]!;
     const granted = applySupplyEffect(player,kind);
-    if (granted) player.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${kind==='armor'?'Armor':kind==='ammo'?'All ammo':'Health'} full!`);
+    if (granted) player.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${kind==='armor'?'Armor':kind==='ammo'?'All ammo':'Health'} ${combatWorld(player.mWorld)?'restored':'full'}!`);
     return granted;
   }
   const pool: { name: string; end: number }[] = [];
@@ -24,6 +25,11 @@ export function redBoxReward(player: any, roll: number): boolean {
   const selected = (roll - .3) / .7 * total;
   const reward = pool.find(item => selected < item.end);
   if (!reward) return false;
+  if(combatWorld(player.mWorld)){
+    const gun=player.mWeapons[reward.name].mThing;player.mWorld.mUpgrades.ApplyUpgrade_Weapon(gun);
+    gun.mAmmo=Math.min(gun.mTotalAmmo,gun.mAmmo+restoredSupply(gun.mTotalAmmo,player.mSupplyEfficiency??0));
+    player.mWorld.mHud.AddMessage_Info(gun.mName+' ammo restored',player.mPlayerIndex);return true;
+  }
   const capacity = player.mWeapons[reward.name].mThing.mTotalAmmo;
   const weapon = player.AddWeapon(reward.name).mThing;
   if(reliableSupplies(player.mWorld)){

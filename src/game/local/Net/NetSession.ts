@@ -56,6 +56,7 @@ import { takeDraftChoice } from '../WaveDraftInput.ts';
 import { copyWaveDraft, type WaveDraftState } from '../WaveDraftRules.ts';
 import { settleVitals } from '../SurvivalRules.ts';
 import {capturePlayerStats,type PlayerStats} from '../PlayerStats.ts';
+import {settleCombatPlayers} from '../Combat.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -498,6 +499,7 @@ export class NetSession {
         if(fresh)grantGrowthLoadout(world);
       }
       settleVitals(world, !fresh);
+      settleCombatPlayers(world);
       this.confirmedGrowth = copyGrowth(world.mUpgrades.lanGrowth);
       this.confirmedWave = world.mUpgrades.mLevelIndex;
       this.confirmedEnemies = remainingEnemies(world);

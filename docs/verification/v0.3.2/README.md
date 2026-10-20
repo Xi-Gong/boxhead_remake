@@ -19,6 +19,12 @@ Only lightweight serial targeted checks and short single-instance low-resolution
 
 ## Completed items
 
+### Broader builds and recovery choices
+
+Modern drafts offer one offense, defense and utility choice, with ten total rewards and useful capacity/cadence/healing filters. Movement, cadence, armor penetration and supply efficacy diminish; starting-wave builds distribute eight permanent stats in bounded work. Permanent modern supplies restore 40% plus efficacy, draft recovery 35%; legacy transient crates and classic saves retain full-refill behavior. Armor penetration is captured by each emission and saved on placed explosives.
+
+Final related six suites passed 44 tests; enchantment, armor, supply-ammo and weapon checks also passed during this feature. Existing exact full-refill assertions remain in explicit classic fixtures. All typechecks/build passed (`main-CQIlV71F.js`). Single-instance real card clicks, Tab/R, actual derived values and save/continue passed in `generated/reports/v032/build-choices-1792506039103`; both cards and independent sheets directly reviewed at 640×480. The prepared cards test input and behavior, not ordinary progression. No live two-peer LAN or hardware pad claim.
+
 ### Hidden gamepad draft click
 
 `tests/sim/waveDraftInput.test.ts` first reproduced two virtual mouse events from held-A gameplay across draft entry, where no mouse events were expected. The virtual cursor now only operates outside an active unpaused world. Fire/confirm still uses each player's normal key slots. A client-role test covers both keyboard sets and swapped pad assignment without moving P1's choice.
