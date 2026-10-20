@@ -37,7 +37,7 @@ function update(world:any,state:WaveDraftState):void {
   view.clip._x=(world.mScreenSize.x-view.width)/2;view.clip._y=Math.max(82,(world.mScreenSize.y-360)/2);
   view.clip._visible=!world.mHud.mcScreenPause;
   view.title.text=round.multiplier===2?'BOSS DEFEATED — DOUBLE REWARD':'WAVE '+round.wave+' COMPLETE';
-  const message=`CHOOSE ONE  /  ${Math.ceil(round.remainingTicks/CMain.mFPS)}s  /  DEFAULT: FIREPOWER`;
+  const message=round.readyRule?'CHOOSE ONE  /  CONTINUE WHEN EVERYONE IS READY':`CHOOSE ONE  /  ${Math.ceil(round.remainingTicks/CMain.mFPS)}s  /  DEFAULT: FIREPOWER`;
   if(view.clock.text!==message)view.clock.text=message;
   const signature=JSON.stringify([round.selected,round.confirmed,round.offers,state.bonuses,round.multiplier,session?.role]);
   if(signature===view.signature)return;view.signature=signature;
@@ -53,7 +53,7 @@ function update(world:any,state:WaveDraftState):void {
       const card=view.cards[index]![choice],reward=round.offers[index]![choice]!,selected=round.selected[index]===choice;
       card.clear();card.lineStyle(selected?2:1,selected?0xf4ce8c:0x737e72,100);
       rect(card,(view.width-36-(round.offers.length-1)*14)/round.offers.length,60,selected?0x525b42:0x343d35);
-      card._Label.text=REWARD_LABELS[reward]+(choice===0?'  ·  DEFAULT':'');
+      card._Label.text=REWARD_LABELS[reward]+(!round.readyRule&&choice===0?'  ·  DEFAULT':'');
       card._Detail.text=REWARD_DETAILS[reward].replace(/\d+%/,n=>`${parseInt(n)*round.multiplier}%`);
       card._alpha=local||round.confirmed[index]?100:72;
       card.onRelease=local&&!round.confirmed[index]?()=>queueDraftChoice(world,index,choice,round.wave):undefined;

@@ -24,6 +24,11 @@ try{
  report.selected=await g.expr('m.mcWorld.mUpgrades.waveDraft.round.selected');
  assert.deepEqual(report.selected,[0,1]);
  await g.page.keyboard.press('Space');assert(await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.confirmed[1]'));
+ await g.page.waitForTimeout(14000);
+ assert.equal(await g.expr('m.mcWorld.mUpgrades.mLevelIndex'),1);
+ assert.equal(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.readyRule'),'draft-ready-v1');
+ assert(!/DEFAULT|\d+s/.test(await g.expr('m.mcWorld._WaveDraftHud._Clock.text')));
+ await g.shot(out+'/ready-wait.png',false);report.waitedWithoutDefaultMs=14000;
  await g.page.keyboard.press('Slash');assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
 }finally{await g?.close();await browser.close();writeFileSync(out+'/report.json',JSON.stringify(report,null,2));}

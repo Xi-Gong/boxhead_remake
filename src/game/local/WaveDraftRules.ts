@@ -1,8 +1,10 @@
 // WAVE_DRAFT: snapshot-owned rewards; derived percentages never mutate a cached weapon definition.
 export const WAVE_DRAFT_RULE='wave-draft-v1';
+export const DRAFT_READY_RULE='draft-ready-v1';
 export type Reward='damage'|'health'|'armor'|'capacity'|'heal'|'ammo';
 export interface WaveBonuses {damage:number;health:number;armor:number;capacity:number}
 export interface DraftRound {
+  readyRule?:typeof DRAFT_READY_RULE;
   wave:number;remainingTicks:number;multiplier:number;
   offers:Reward[][];selected:number[];confirmed:boolean[];armed:boolean[];previousBits:number[];
 }

@@ -6,8 +6,13 @@ import {infiniteGrowthWeapon} from './Net/Growth.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {syncVitals} from './SurvivalRules.ts';
 import {takeDraftChoice} from './WaveDraftInput.ts';
-import {WAVE_DRAFT_RULE,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
+import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
 const classic=new WeakSet<object>();
+const classicReady=new WeakSet<object>();
+export function setClassicDraftReadyFixture(main:object):void{classicReady.add(main);}
+export function draftReadyConfigured():boolean{
+ const s=netSession();return waveDraftConfigured()&&(s?s.startOpts?.cfg.draftReady===DRAFT_READY_RULE:!classicReady.has(CMain._this));
+}
 export function setClassicWaveDraftFixture(main:object):void {classic.add(main);}
 export function waveDraftConfigured():boolean {
   const s=netSession();return timedWavesConfigured()&&(s?s.startOpts?.cfg.waveDraft===WAVE_DRAFT_RULE:!classic.has(CMain._this));
@@ -41,6 +46,7 @@ export function beginWaveDraft(world:any,multiplier=1):void {
   // Discard battle latches, while retaining held flags for the entry release guard.
   for(const i of indices)heldBits(player(world,i),i,true);
   state.round={wave:world.mUpgrades.mLevelIndex,remainingTicks:Math.ceil(CMain.mFPS*12),multiplier,
+    ...(draftReadyConfigured()?{readyRule:DRAFT_READY_RULE,remainingTicks:0}:{}),
     offers:indices.map(i=>rewardOffers(player(world,i))),selected:indices.map(()=>0),confirmed:indices.map(()=>false),
     armed:indices.map(i=>!(heldBits(player(world,i),i)&16)),previousBits:indices.map(i=>heldBits(player(world,i),i))};
 }
@@ -72,7 +78,7 @@ export function processWaveDraft(world:any):void {
     }
     round.previousBits[index]=bits;
   }
-  if(--round.remainingTicks<=0){
+  if(!round.readyRule&&--round.remainingTicks<=0){
     for(let i=0;i<round.confirmed.length;i++)if(!round.confirmed[i]){round.selected[i]=0;round.confirmed[i]=true;}
   }
   if(round.confirmed.every(Boolean)){

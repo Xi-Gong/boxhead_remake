@@ -28,7 +28,7 @@ import { LOOT_RULE, modernLoot, type SupplyState } from './LootRules.ts';
 import { ENDLESS_RULE } from './EndlessRules.ts';
 import { endlessWorld } from './Endless.ts';
 import { timedWave, copyTimedWave, cloneTimedWave, type TimedWaveState } from './TimedWaves.ts';
-import { waveDraft } from './WaveDraft.ts';
+import { waveDraft,draftReadyConfigured } from './WaveDraft.ts';
 import { BOSS_WAVES_RULE,BOSS_ENCOUNTERS_RULE,bossWavesConfigured,bossEncountersConfigured,reconnectSavedBoss } from './BossWaves.ts';
 import {tieredGrowthConfigured} from './TieredGrowth.ts';
 import {clearWavesConfigured,reconcileSavedClearWave} from './ClearWaves.ts';
@@ -444,6 +444,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if(snap.enchantment===ENCHANTMENT_RULE&&!persistentEnchantment(world))return false;
   if(snap.timedWave&&!timedWave(world))return false;
   if(snap.waveDraft&&!waveDraft(world))return false;
+  if(snap.waveDraft?.round?.readyRule&&!draftReadyConfigured())return false;
   if((snap.bossWaves||snap.timedWave?.boss||snap.variants?.enemies.some(e=>e.fields.mBossKind))&&!bossWavesConfigured())return false;
   if((snap.bossEncounters||snap.timedWave?.boss?.members)&&!bossEncountersConfigured())return false;
   if(snap.timedWave?.phase==='draft'&&!snap.waveDraft?.round)return false;
@@ -462,6 +463,9 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     if(endlessWorld(world))u.__set__mLevel(snap.wave);
     else while (u.mLevelIndex < snap.wave) u.__set__mLevel(u.mLevelIndex + 1);
     if(waveDraft(world))u.waveDraft=copyWaveDraft(snap.waveDraft)??newWaveDraft(snap.wave);
+    if(u.waveDraft?.round&&draftReadyConfigured()){
+      u.waveDraft.round.readyRule='draft-ready-v1';u.waveDraft.round.remainingTicks=0;
+    }
     // Multiplier: climb step by step so tier upgrades activate at every crossed index (the LogKills path); a single
     // call would only activate the tiers of the final index. Decay below the built value is a plain set.
     if (snap.growth) u.mMultiplierIndex = snap.multiplierIndex;

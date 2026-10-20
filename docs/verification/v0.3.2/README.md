@@ -28,3 +28,9 @@ Four targeted suites: 27 passing tests. Production build (all three TypeScript c
 The narrow fix closes a verified accidental-confirmation path; it does not establish that every reported keyboard-navigation failure has the same cause. The unlimited-draft/explicit-ready work also removes the current 12-second lockout/default behavior.
 
 Browser verification passed against the current production build: `generated/reports/v032/draft-input-1792502785409/report.json`. Real W/S and injected pad up/down navigated P2, held-A release did not mark ready, each player confirmed independently. Screenshot `p2-choice.png` directly reviewed at 640×480. This is local Coop UI plus a separate simulated LAN-client input test, not a live two-peer transport claim.
+
+### Unlimited ready drafts
+
+Optional `draft-ready-v1` requires the old timed/draft capabilities. Local new runs wait indefinitely; old LAN peers keep their original semantics. Saves preserve ready flags/offers, rollback awards once, unsupported worlds reject the new pending round before mutation. An old pending round converts without changing offers or already-ready players.
+
+Six targeted suites passed 115 tests, then the added old-round migration test passed in the four-test readiness suite (116 distinct covered tests). Final build/typechecks passed: `main-CUTuAiny.js`. `generated/reports/v032/draft-input-1792503055472/report.json` records a real-input 14-second wait after P2 readiness, then P1 confirmation advancing. `ready-wait.png` directly reviewed. No live two-peer run.

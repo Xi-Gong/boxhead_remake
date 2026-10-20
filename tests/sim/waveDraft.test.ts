@@ -1,5 +1,6 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame,KEYS} from './harness.ts';
+import {createHeadlessGame as boot,KEYS,type HeadlessGameOptions} from './harness.ts';
+const createHeadlessGame=(opts:HeadlessGameOptions={})=>boot({...opts,classicDraftReady:true});
 import {noSpawn} from './fxkit.ts';
 import {CMain,Thing} from '../../src/game/packages.ts';
 import {timedWave} from '../../src/game/local/TimedWaves.ts';

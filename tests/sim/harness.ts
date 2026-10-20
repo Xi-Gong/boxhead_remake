@@ -40,7 +40,7 @@ import {setClassicGrowthFixture} from '../../src/game/local/LocalGrowth.ts';
 import {setClassicEndlessFixture} from '../../src/game/local/Endless.ts';
 import {setClassicEnchantmentFixture} from '../../src/game/local/EnchantmentRules.ts';
 import {setClassicTimedWavesFixture} from '../../src/game/local/TimedWaves.ts';
-import {setClassicWaveDraftFixture} from '../../src/game/local/WaveDraft.ts';
+import {setClassicWaveDraftFixture,setClassicDraftReadyFixture} from '../../src/game/local/WaveDraft.ts';
 import {setClassicBossWavesFixture,setClassicBossEncountersFixture} from '../../src/game/local/BossWaves.ts';
 import {setClassicWeaponArtFixture} from '../../src/game/local/WeaponArt.ts';
 import {setClassicProjectileArtFixture} from '../../src/game/local/ProjectileArt.ts';
@@ -94,6 +94,7 @@ export interface HeadlessGameOptions {
   /** Original finite wave budgets before timed-waves-v1. */
   classicTimedWaves?: boolean;
   classicWaveDraft?: boolean;
+  classicDraftReady?: boolean;
   classicBossWaves?: boolean;
   classicBossEncounters?: boolean;
   classicWeaponArt?: boolean;
@@ -457,6 +458,7 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   if(opts.classicEnchantment)setClassicEnchantmentFixture(m);
   if(opts.classicTimedWaves)setClassicTimedWavesFixture(m);
   if(opts.classicWaveDraft)setClassicWaveDraftFixture(m);
+  if(opts.classicDraftReady)setClassicDraftReadyFixture(m);
   if(opts.classicBossWaves)setClassicBossWavesFixture(m);
   if(opts.classicBossEncounters)setClassicBossEncountersFixture(m);
   if(opts.classicWeaponArt)setClassicWeaponArtFixture(m);

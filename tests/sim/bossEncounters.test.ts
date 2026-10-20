@@ -1,5 +1,6 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame} from './harness.ts';
+import {createHeadlessGame as boot,type HeadlessGameOptions} from './harness.ts';
+const createHeadlessGame=(opts:HeadlessGameOptions={})=>boot({...opts,classicDraftReady:true});
 import {bossCount} from '../../src/game/local/BossWaves.ts';
 import {clearWaveCombat,timedWave,copyTimedWave} from '../../src/game/local/TimedWaves.ts';
 import {remainingEnemies} from '../../src/game/local/Net/EnemyCounts.ts';

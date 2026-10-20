@@ -1,5 +1,6 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame} from './harness.ts';
+import {createHeadlessGame as boot,type HeadlessGameOptions} from './harness.ts';
+const createHeadlessGame=(opts:HeadlessGameOptions={})=>boot({...opts,classicDraftReady:true});
 import {placePlayer,pos} from './fxkit.ts';
 import {CMain,Thing,DrawPrimitive} from '../../src/game/packages.ts';
 import {bossKind,bossMaximum,beginBossCast} from '../../src/game/local/BossWaves.ts';

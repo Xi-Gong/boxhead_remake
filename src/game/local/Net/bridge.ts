@@ -69,6 +69,7 @@ class LanBridge {
   private peerEndless = false;
   private peerTimedWaves = false;
   private peerWaveDraft = false;
+  private peerDraftReady = false;
   private peerBossWaves = false;
   private peerBossEncounters = false;
   private peerTieredGrowth = false;
@@ -85,6 +86,7 @@ class LanBridge {
       ||c?.enchantment&&(!this.supportsEndless()||!this.peerVariants||!this.peerEnchantment)
       ||c?.timedWaves&&(!this.supportsEndless()||!this.peerTimedWaves)
       ||c?.waveDraft&&(!this.supportsEndless()||!this.peerTimedWaves||!this.peerWaveDraft)
+      ||c?.draftReady&&(!this.timedWavesAvailable()||!this.peerWaveDraft||!this.peerDraftReady)
       ||c?.bossWaves&&!this.bossWavesAvailable()
       ||c?.bossEncounters&&(!this.bossWavesAvailable()||!this.peerBossEncounters)
       ||c?.tieredGrowth&&(!this.supportsEndless()||!this.peerTieredGrowth)
@@ -312,6 +314,7 @@ class LanBridge {
       ...(sel.mode==='Coop'&&this.supportsEndless()?{endless:'endless-pve-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerTimedWaves?{timedWaves:'timed-waves-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.timedWavesAvailable()&&this.peerWaveDraft?{waveDraft:'wave-draft-v1' as const}:{}),
+      ...(sel.mode==='Coop'&&this.timedWavesAvailable()&&this.peerWaveDraft&&this.peerDraftReady?{draftReady:'draft-ready-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.bossWavesAvailable()?{bossWaves:'boss-waves-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.bossWavesAvailable()&&this.peerBossEncounters?{bossEncounters:'boss-encounters-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerTieredGrowth?{tieredGrowth:'tiered-growth-v1' as const}:{}),
@@ -411,6 +414,7 @@ class LanBridge {
       this.peerEndless = Array.isArray(msg.features) && msg.features.includes('endless-pve-v1');
       this.peerTimedWaves = Array.isArray(msg.features) && msg.features.includes('timed-waves-v1');
       this.peerWaveDraft = Array.isArray(msg.features) && msg.features.includes('wave-draft-v1');
+      this.peerDraftReady = Array.isArray(msg.features) && msg.features.includes('draft-ready-v1');
       this.peerBossWaves = Array.isArray(msg.features) && msg.features.includes('boss-waves-v1');
       this.peerBossEncounters = Array.isArray(msg.features) && msg.features.includes('boss-encounters-v1');
       this.peerTieredGrowth = Array.isArray(msg.features) && msg.features.includes('tiered-growth-v1');

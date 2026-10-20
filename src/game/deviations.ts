@@ -710,4 +710,10 @@ export const DEVIATIONS: Deviation[] = [
       'The virtual mouse is restricted to menus and pause so hidden cursor releases cannot confirm cards. '+
       'Keyboard remapping and both LAN-local key sets remain intact; no wire or simulation format changes.',
   },
+  {
+    id:'DRAFT_READY',file:'local/WaveDraft.ts, WaveDraftRules.ts, WaveDraftUi.ts, Resume.ts; local/Net; electron/lan.ts',
+    description:'Optional draft-ready-v1 removes the selection timer and automatic default. Every participant '+
+      'must explicitly confirm; selection/readiness persists through saves and rollback, and rewards remain '+
+      'once per wave. Old wave-draft-v1 peers retain their twelve-second rule and explicit classic fixtures.',
+  },
 ];

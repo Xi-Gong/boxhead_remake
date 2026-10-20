@@ -111,6 +111,7 @@ export interface GameConfig {
   endless?: 'endless-pve-v1';
   timedWaves?: 'timed-waves-v1';
   waveDraft?: 'wave-draft-v1';
+  draftReady?: 'draft-ready-v1';
   bossWaves?: 'boss-waves-v1';
   bossEncounters?: 'boss-encounters-v1';
   tieredGrowth?: 'tiered-growth-v1';
