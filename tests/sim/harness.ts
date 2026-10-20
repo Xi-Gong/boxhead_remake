@@ -41,7 +41,7 @@ import {setClassicEndlessFixture} from '../../src/game/local/Endless.ts';
 import {setClassicEnchantmentFixture} from '../../src/game/local/EnchantmentRules.ts';
 import {setClassicTimedWavesFixture} from '../../src/game/local/TimedWaves.ts';
 import {setClassicWaveDraftFixture} from '../../src/game/local/WaveDraft.ts';
-import {setClassicBossWavesFixture} from '../../src/game/local/BossWaves.ts';
+import {setClassicBossWavesFixture,setClassicBossEncountersFixture} from '../../src/game/local/BossWaves.ts';
 import {setClassicWeaponArtFixture} from '../../src/game/local/WeaponArt.ts';
 import {setClassicProjectileArtFixture} from '../../src/game/local/ProjectileArt.ts';
 import {setClassicVariantArtFixture} from '../../src/game/local/VariantArt.ts';
@@ -93,6 +93,7 @@ export interface HeadlessGameOptions {
   classicTimedWaves?: boolean;
   classicWaveDraft?: boolean;
   classicBossWaves?: boolean;
+  classicBossEncounters?: boolean;
   classicWeaponArt?: boolean;
   classicProjectileArt?: boolean;
   classicVariantArt?: boolean;
@@ -453,6 +454,7 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   if(opts.classicTimedWaves)setClassicTimedWavesFixture(m);
   if(opts.classicWaveDraft)setClassicWaveDraftFixture(m);
   if(opts.classicBossWaves)setClassicBossWavesFixture(m);
+  if(opts.classicBossEncounters)setClassicBossEncountersFixture(m);
   if(opts.classicWeaponArt)setClassicWeaponArtFixture(m);
   if(opts.classicProjectileArt)setClassicProjectileArtFixture(m);
   if(opts.classicVariantArt)setClassicVariantArtFixture(m);

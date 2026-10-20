@@ -8,7 +8,9 @@ import { TIMED_WAVES_RULE, spawnIntervalSeconds, waveSeconds } from './TimedWave
 
 export type SpawnRole='boss'|'reinforcement';
 export interface SpawnWarning { family:'Zombie'|'Devil'; x:number; y:number; ticks:number; role?:SpawnRole }
-export interface BossWaveState { kind:'charger'|'priest'; id?:string; defeated:boolean; life:number; maximum:number; reinforcementTicks:number }
+export interface BossMemberState { kind:'charger'|'priest'; id?:string; defeated:boolean; life:number; maximum:number }
+export interface BossWaveState extends BossMemberState { reinforcementTicks:number; members?:BossMemberState[] }
+export function bossMembers(boss:BossWaveState):BossMemberState[]{return boss.members??[boss];}
 export interface TimedWaveState {
   rule:typeof TIMED_WAVES_RULE;
   phase:'combat'|'draft';
@@ -26,7 +28,10 @@ export function timedWavesConfigured():boolean {
 }
 export function timedWave(world:any):TimedWaveState|undefined { return world?.mUpgrades?.timedWave; }
 export function copyTimedWave(world:any):TimedWaveState|undefined {
-  const state=timedWave(world); return state ? {...state,warnings:state.warnings.map(w=>({...w})),...(state.boss?{boss:{...state.boss}}:{})} : undefined;
+  const state=timedWave(world);return state?cloneTimedWave(state):undefined;
+}
+export function cloneTimedWave(state:TimedWaveState):TimedWaveState {
+  return {...state,warnings:state.warnings.map(w=>({...w})),...(state.boss?{boss:{...state.boss,...(state.boss.members?{members:state.boss.members.map(m=>({...m}))}:{})}}:{})};
 }
 export function resetTimedWave(world:any,upgrades=world.mUpgrades):void {
   const size=world.mMap.mSize,totalTicks=waveSeconds(size.x,size.y)*CMain.mFPS;

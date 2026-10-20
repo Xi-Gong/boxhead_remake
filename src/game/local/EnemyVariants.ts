@@ -39,7 +39,7 @@ export function captureVariants(w:any):VariantSave|undefined{
  const s=w.mUpgrades.enemyVariantState;
  return {rule:VARIANTS_RULE,wave:s.wave,zombie:s.zombie,devil:s.devil,nextZone:s.nextZone,
   zones:s.zones.map(({mPosition:p,mAngle:a,...rest}:EmberZone)=>({...rest,x:p.mX,y:p.mY,angle:a.__get__mAngle()})),
-  enemies:things(w).filter(e=>e.mEnemyVariant&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mEnemyVariant,x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries(skillFields.map(k=>[k,e[k]]))}))};
+  enemies:things(w).filter(e=>e.mEnemyVariant&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mEnemyVariant,x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
 }
 export function restoreVariants(w:any,s:VariantSave|undefined):void{
  if(!variantsWorld(w)||s?.rule!==VARIANTS_RULE)return;
@@ -49,6 +49,7 @@ export function restoreVariants(w:any,s:VariantSave|undefined):void{
   const ctor=saved.kind==='charger'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil;
   const e:any=new ctor(position(saved.x,saved.y),new Thing.Math.CThing_Angle(saved.angle));e.mEnemyVariant=saved.kind;
   if(saved.fields.mBossKind)e.mBossKind=saved.fields.mBossKind;
+  if(typeof saved.fields.mBossSlot==='number')e.mBossSlot=saved.fields.mBossSlot;
   w.mThing_Collection.AddThing(e);e.Process_Init();
   e.ClearCollideCell();e.Move(position(saved.x,saved.y));e.SetCollideDirection(e.mPosition,World.Map.CMap_Cell.mCollide_Creature);e.mFlags|=Thing.CThing.mFlag_Collidable;
   e.Affect_Setup(Thing.Affect.CThing_Affect.mAffect_Bullet|Thing.Affect.CThing_Affect.mAffect_Explosion|Thing.Affect.CThing_Affect.mAffect_FireBall);

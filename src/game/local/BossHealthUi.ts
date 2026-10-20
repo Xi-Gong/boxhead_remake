@@ -1,11 +1,11 @@
 // BOSS_OVERHEAD_HEALTH: presentation only; HP is supplied by the same confirmed state as the wave HUD.
-import type { BossWaveState } from './TimedWaves.ts';
+import {bossMembers,type BossWaveState,type BossMemberState} from './TimedWaves.ts';
 import { capsule } from './UiStyle.ts';
 
 const WIDTH = 64, HEIGHT = 7, GAP = 5;
 
 /** Uses the rendered frame's crown/shoulder bounds without updating animation or simulation state. */
-export function bossHealthLayout(world: any, boss: BossWaveState | undefined) {
+export function bossHealthLayout(world: any, boss: BossMemberState | undefined) {
   if (!boss?.id || boss.defeated || !(boss.life > 0) || !(boss.maximum > 0)) return;
   const enemy = world.mThing_Collection?.mThings[boss.id];
   if (!enemy?.mPosition || enemy.mBossKind !== boss.kind) return;
@@ -26,21 +26,28 @@ export function bossHealthLayout(world: any, boss: BossWaveState | undefined) {
 }
 
 export function drawBossHealth(world: any, boss: BossWaveState | undefined, visible: boolean): void {
-  const layout = visible ? bossHealthLayout(world, boss) : undefined;
+  const members=boss?bossMembers(boss):[],layouts=members.map(m=>visible?bossHealthLayout(world,m):undefined);
   let layer = world._BossHealthHud;
-  if (layout && !layer) {
+  if (layouts.some(Boolean) && !layer) {
     layer = world.createEmptyMovieClip('_BossHealthHud', world.getNextHighestDepth());
   }
   if (!layer) return;
-  layer._visible = !!layout;
-  if (!layout) return;
+  layer._visible=layouts.some(Boolean);
+  for(let i=0;i<3;i++)if(layer['_Boss'+i])layer['_Boss'+i]._visible=false;
+  for(const [i,layout]of layouts.entries()){
+    if(!layout)continue;
+    const bar=layer['_Boss'+i]??layer.createEmptyMovieClip('_Boss'+i,layer.getNextHighestDepth());
+    bar._visible=true;paintBar(bar,layout,members[i]!);
+  }
+}
+function paintBar(layer:any,layout:NonNullable<ReturnType<typeof bossHealthLayout>>,boss:BossMemberState):void{
   layer._x = layout.x; layer._y = layout.y;
   layer.clear();
   const pill = (x: number, y: number, w: number, h: number, color: number, alpha = 100): void => {
     if(w<=0)return;
     layer.beginFill(color, alpha); capsule(layer,x,y,w,h); layer.endFill();
   };
-  const accent = boss!.kind === 'charger' ? 0xd5c89a : 0xffae64;
+  const accent = boss.kind === 'charger' ? 0xd5c89a : 0xffae64;
   pill(0,0,WIDTH,HEIGHT,0x171a18,94);
   pill(1,1,WIDTH-2,HEIGHT-2,0x534844);
   pill(1,1,Math.max(1,(WIDTH-2)*layout.fraction),HEIGHT-2,accent);

@@ -14,7 +14,7 @@ import {NetSession} from '../../src/game/local/Net/NetSession.ts';
 import {bossHealthLayout,drawBossHealth} from '../../src/game/local/BossHealthUi.ts';
 
 function encounter(kind:'charger'|'priest'='charger',mode:'Single'|'Coop'='Single'){
- const g=createHeadlessGame({mode}),w=g.world();clearWaveCombat(w);w.mUpgrades.__set__mLevel(kind==='charger'?5:10);
+ const g=createHeadlessGame({mode,classicBossEncounters:true}),w=g.world();clearWaveCombat(w);w.mUpgrades.__set__mLevel(kind==='charger'?5:10);
  placePlayer(g,9.5,8.5,0);if(mode==='Coop')placePlayer(g,9.5,9.5,0,1);
  const C=kind==='charger'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil;
  const e:any=new C(pos(5.5,8.5));e.mBossKind=e.mEnemyVariant=kind;w.mThing_Collection.AddThing(e);e.Process_Init();
@@ -42,7 +42,7 @@ it('spawns just one Boss and at most four ordinary zombie reinforcements without
  expect(timedWave(w)!.warnings).toHaveLength(0);expect(timedWave(w)!.boss!.reinforcementTicks).toBeGreaterThan(0);g.quit();
 });
 it('uses the Bone Tyrant on every Boss wave when devils are disabled',()=>{
- const g=createHeadlessGame({options:{devils:0}}),w=g.world();
+ const g=createHeadlessGame({options:{devils:0},classicBossEncounters:true}),w=g.world();
  for(const wave of [5,10,20]){w.mUpgrades.__set__mLevel(wave);expect(timedWave(w)!.boss!.kind).toBe('charger');expect(w.mUpgrades.Level.Devil_Count).toBe(0);}g.quit();
 });
 it.each(['Single','Coop']as const)('scales %s Boss health and family damage once',mode=>{

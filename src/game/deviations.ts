@@ -14,6 +14,15 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'BOSS_ENCOUNTERS',
+    file:'local/BossWaves.ts, TimedWaves.ts, BossHealthUi.ts, EnemyVariants.ts, Resume.ts; local/Net/EnemyCounts.ts, bridge.ts, protocol.ts; electron/lan.ts',
+    description:'Optional boss-encounters-v1 depends on boss-waves-v1 and adds bounded encounter rosters: '+
+      'one Boss at waves 5/10, two at 15/20, and three from 25 onward. Each member retains HP, skills, '+
+      'identity/slot and defeated state through saves/rollback. Every Boss counts under DEVIL in the HUD, '+
+      'with original family counters retained for skills/caps. All members must die for one doubled draft. '+
+      'Old peers keep the single-Boss simulation; older saved encounters finish at their original size.',
+  },
+  {
     id:'BOSS_OVERHEAD_HEALTH',
     file:'local/BossHealthUi.ts, TimedWaveUi.ts',
     description:'Bosses show one compact numeric-free rounded health bar above their rendered frame, '+

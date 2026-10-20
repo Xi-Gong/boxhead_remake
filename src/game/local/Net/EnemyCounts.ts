@@ -3,7 +3,12 @@ export interface EnemyCounts { zombies: number; devils: number }
 export function remainingEnemies(world: any): EnemyCounts {
   const level=world?.mUpgrades?.Level;
   const count=(value: unknown): number=>typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.floor(value)):0;
-  return world?.mUpgrades?.timedWave
-    ? {zombies:count(level?.mZombieCount),devils:count(level?.mDevilCount)}
-    : {zombies:count(level?.Zombie_TotalCount),devils:count(level?.Devil_TotalCount)};
+  if(!world?.mUpgrades?.timedWave)return {zombies:count(level?.Zombie_TotalCount),devils:count(level?.Devil_TotalCount)};
+  // Bosses share DEVIL in the HUD, while their original family counters continue driving skills/spawn caps.
+  const boss=world.mUpgrades.timedWave.boss,members=boss?.members??(boss?[boss]:[]);
+  const chargers=members.filter((m:any)=>{
+    const e=world.mThing_Collection?.mThings[m.id];
+    return m.kind==='charger'&&e?.Process&&e.mLife>0&&!e.lanKillLogged;
+  }).length;
+  return {zombies:Math.max(0,count(level?.mZombieCount)-chargers),devils:count(level?.mDevilCount)+chargers};
 }

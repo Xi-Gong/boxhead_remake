@@ -18,14 +18,15 @@ try{
   const result=await g.eval(kind=>{
    const P=window.__game.pkg,w=window.__game.main().mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];
    P.CMain.mSaveData.__set__mDetail(true);
-   for(const e of Object.values(w.mThing_Collection.mThings))if(e._CLASSID_==='CThing_Creature_Zombie'||e._CLASSID_==='CThing_Creature_Devil')e.Dispose();
+   for(const e of Object.values(w.mThing_Collection.mThings))if(e._CLASSID_==='CThing_Creature_Zombie'||e._CLASSID_==='CThing_Creature_Devil'){e.ClearCollideCell();if(e.Process)e.Delete();e.Dispose();delete w.mThing_Collection.mThings[e.sUniqueID];}
    w.mUpgrades.__set__mLevel(kind==='charger'?5:10);p.Move(new P.Thing.Math.CThing_Position(10.5,8.5,0));w.TrackThing(p);
    const C=kind==='charger'?P.Thing.Creature.CThing_Creature_Zombie:P.Thing.Creature.CThing_Creature_Devil;
    const e=new C(new P.Thing.Math.CThing_Position(10.5,11.5,0));e.mBossKind=e.mEnemyVariant=kind;w.mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');
    const boss=w.mUpgrades.timedWave.boss;boss.id=e.sUniqueID;
-   e.mLife=boss.life=kind==='charger'?3000:934500;e.mMaxLife=boss.maximum=kind==='charger'?6000:1250000;
+   const member=boss.members?.[0]??boss;
+   e.mLife=member.life=boss.life=kind==='charger'?3000:934500;e.mMaxLife=member.maximum=boss.maximum=kind==='charger'?6000:1250000;
    w.mHud.Pause(false);w.mPaused=false;w.Draw();w.mPaused=true;
-   const l=w._BossHealthHud,f=e.mXSI_Animation.mCurrentFrame,position=w.GetScreenPosition(e.mPosition);
+   const l=w._BossHealthHud._Boss0,f=e.mXSI_Animation.mCurrentFrame,position=w.GetScreenPosition(e.mPosition);
    const wave=w._LanGrowthHud._Wave;
    return {kind,id:e.sUniqueID,visible:l._visible,noNumber:!l._Health,x:l._x,y:l._y,width:64,height:7,
     headTop:position.y+f.mDisp.y,position,fraction:boss.life/boss.maximum,
@@ -51,6 +52,26 @@ try{
   assert.equal(await g.expr('m.mcWorld._BossHealthHud._visible'),false);
   report.cases.push(result);
  }
+ report.multiple=await g.eval(()=>{
+  const P=window.__game.pkg,w=window.__game.main().mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];
+  for(const e of Object.values(w.mThing_Collection.mThings))if(e._CLASSID_==='CThing_Creature_Zombie'||e._CLASSID_==='CThing_Creature_Devil'){e.ClearCollideCell();if(e.Process)e.Delete();e.Dispose();delete w.mThing_Collection.mThings[e.sUniqueID];}
+  w.mUpgrades.__set__mLevel(25);p.Move(new P.Thing.Math.CThing_Position(11.5,8.5,0));w.TrackThing(p);
+  const boss=w.mUpgrades.timedWave.boss;
+  const entities=boss.members.map((member,i)=>{
+   const C=member.kind==='charger'?P.Thing.Creature.CThing_Creature_Zombie:P.Thing.Creature.CThing_Creature_Devil;
+   const e=new C(new P.Thing.Math.CThing_Position(8.5+i*3,11.5,0));e.mBossKind=e.mEnemyVariant=member.kind;e.mBossSlot=i;
+   w.mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');e.mLife=member.life=e.mMaxLife*(i+1)/4;
+   if(member.kind==='charger')w.mUpgrades.Level.mZombieCount++;else w.mUpgrades.Level.mDevilCount++;
+   return e;
+  });
+  w.mUpgrades.Process();w.mHud.Pause(false);w.mPaused=false;w.Draw();w.mPaused=true;
+  const layer=w._BossHealthHud,wave=w._LanGrowthHud._Wave;
+  return {count:boss.members.length,devils:wave._Devils.text,zombies:wave._Zombies.text,
+   bars:boss.members.map((_,i)=>({visible:layer['_Boss'+i]._visible,x:layer['_Boss'+i]._x,y:layer['_Boss'+i]._y})),clock:wave._Clock.text};
+ });
+ assert.equal(report.multiple.count,3);assert.equal(report.multiple.devils,'3');assert.equal(report.multiple.zombies,'0');
+ assert(report.multiple.bars.every(b=>b.visible));assert.equal(new Set(report.multiple.bars.map(b=>b.x)).size,3);
+ await g.page.waitForTimeout(120);await g.shot(`${out}/three-bosses.png`,false);
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
 }catch(error){report.error=String(error);throw error;}
 finally{await g?.close();await browser.close();writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}

@@ -70,6 +70,7 @@ class LanBridge {
   private peerTimedWaves = false;
   private peerWaveDraft = false;
   private peerBossWaves = false;
+  private peerBossEncounters = false;
   private peerVariants = false;
   private peerEnchantment = false;
   private supportsEndless():boolean{return this.peerEndless&&this.peerGrowth&&this.peerSupplies&&this.peerSurvival&&this.peerLoot&&this.peerBalance;}
@@ -82,7 +83,8 @@ class LanBridge {
       ||c?.enchantment&&(!this.supportsEndless()||!this.peerVariants||!this.peerEnchantment)
       ||c?.timedWaves&&(!this.supportsEndless()||!this.peerTimedWaves)
       ||c?.waveDraft&&(!this.supportsEndless()||!this.peerTimedWaves||!this.peerWaveDraft)
-      ||c?.bossWaves&&!this.bossWavesAvailable());
+      ||c?.bossWaves&&!this.bossWavesAvailable()
+      ||c?.bossEncounters&&(!this.bossWavesAvailable()||!this.peerBossEncounters));
   }
   session: NetSession | null = null;
   sid: string | undefined;
@@ -307,6 +309,7 @@ class LanBridge {
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerTimedWaves?{timedWaves:'timed-waves-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.timedWavesAvailable()&&this.peerWaveDraft?{waveDraft:'wave-draft-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.bossWavesAvailable()?{bossWaves:'boss-waves-v1' as const}:{}),
+      ...(sel.mode==='Coop'&&this.bossWavesAvailable()&&this.peerBossEncounters?{bossEncounters:'boss-encounters-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerVariants?{variants:'enemy-variants-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerVariants&&this.peerEnchantment?{enchantment:'persistent-enchantment-v1' as const}:{}),
       ...(sel.mode === 'Coop' && this.peerGrowth && this.peerSupplies && this.peerBalance ? {balance:'pve-balance-v1' as const}:{}),
@@ -403,6 +406,7 @@ class LanBridge {
       this.peerTimedWaves = Array.isArray(msg.features) && msg.features.includes('timed-waves-v1');
       this.peerWaveDraft = Array.isArray(msg.features) && msg.features.includes('wave-draft-v1');
       this.peerBossWaves = Array.isArray(msg.features) && msg.features.includes('boss-waves-v1');
+      this.peerBossEncounters = Array.isArray(msg.features) && msg.features.includes('boss-encounters-v1');
       this.peerVariants = Array.isArray(msg.features) && msg.features.includes('enemy-variants-v1');
       this.peerEnchantment = Array.isArray(msg.features) && msg.features.includes('persistent-enchantment-v1');
       if(this.isHost){const maxWave=this.waveMaximum();this.sel={...this.sel,maxWave,wave:Math.min(this.sel.wave,maxWave)};}

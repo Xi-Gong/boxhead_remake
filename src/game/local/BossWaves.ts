@@ -3,9 +3,16 @@ import {CMain,CSound,Thing,World} from '../packages.ts';
 import {netSession} from './Net/NetSession.ts';
 import {worldEnemyGrowth} from './Endless.ts';
 import {variantsWorld,variantSight,emberZones} from './EnemyVariants.ts';
-import {attemptTimedSpawn,livingWavePlayers,reachableSpawnCells,roomForTimedSpawn,timedSpawnRole,timedWave,timedWavesConfigured} from './TimedWaves.ts';
+import {attemptTimedSpawn,bossMembers,livingWavePlayers,reachableSpawnCells,roomForTimedSpawn,timedSpawnRole,timedWave,timedWavesConfigured,type BossWaveState} from './TimedWaves.ts';
 
 export const BOSS_WAVES_RULE='boss-waves-v1';
+export const BOSS_ENCOUNTERS_RULE='boss-encounters-v1';
+const classicEncounters=new WeakSet<object>();
+export function setClassicBossEncountersFixture(main:object):void{classicEncounters.add(main);}
+export function bossEncountersConfigured():boolean {
+  const s=netSession();return bossWavesConfigured()&&(s?s.startOpts?.cfg.bossEncounters===BOSS_ENCOUNTERS_RULE:!classicEncounters.has(CMain._this));
+}
+export function bossCount(wave:number):number{return wave%5?0:Math.min(3,1+Math.floor((wave-5)/10));}
 const classic=new WeakSet<object>();
 export function setClassicBossWavesFixture(main:object):void{classic.add(main);}
 export function bossWavesConfigured():boolean{
@@ -18,6 +25,16 @@ export function bossMaximum(wave:number,health:number,coop:boolean):number{
   return 6000*health*(1+.25*Math.floor((wave-1)/5))*(coop?1.6:1);
 }
 const ticks=(seconds:number):number=>Math.ceil(CMain.mFPS*seconds);
+function syncBoss(world:any,boss:BossWaveState):void{
+  for(const member of bossMembers(boss)){
+    const enemy=world.mThing_Collection.mThings[member.id??''];
+    if(enemy&&!member.defeated){member.life=Math.max(0,enemy.mLife);member.maximum=enemy.mMaxLife;}
+  }
+  if(boss.members){
+    boss.life=boss.members.reduce((n,m)=>n+m.life,0);boss.maximum=boss.members.reduce((n,m)=>n+m.maximum,0);
+    boss.defeated=boss.members.every(m=>m.defeated);boss.id=boss.members[0]?.id;
+  }
+}
 export function beginBossCast(enemy:any):boolean{
   const w=enemy.mWorld;if(enemy.mBossKind!=='priest'||w.mTick<(enemy.mVariantCooldown??0))return false;
   const targets=livingWavePlayers(w).filter(p=>p.mPosition.Distance2D(enemy.mPosition)<=7&&variantSight(w,enemy.mPosition,p.mPosition));
@@ -41,9 +58,13 @@ export function beginBossCast(enemy:any):boolean{
 /** Restored enemies receive fresh allocation identities, but keep their captured skill and HP. */
 export function reconnectSavedBoss(world:any):void{
   const state=timedWave(world)?.boss;if(!state||state.defeated)return;
-  const enemy=(Object.values(world.mThing_Collection.mThings) as any[]).find(e=>e.mBossKind&&e.Process&&e.mLife>0);
-  if(enemy){state.id=enemy.sUniqueID;state.life=enemy.mLife;state.maximum=enemy.mMaxLife;}
-  else delete state.id;
+  const enemies=(Object.values(world.mThing_Collection.mThings) as any[]).filter(e=>e.mBossKind&&e.Process&&e.mLife>0);
+  for(const [index,member]of bossMembers(state).entries()){
+    if(member.defeated)continue;
+    const enemy=state.members?enemies.find(e=>e.mBossSlot===index):enemies[0];
+    if(enemy){member.id=enemy.sUniqueID;member.life=enemy.mLife;member.maximum=enemy.mMaxLife;}else delete member.id;
+  }
+  syncBoss(world,state);
 }
 export function installBossWaves():void{
   const upgrades=World.CUpgrades.prototype as any,level=upgrades.__set__mLevel,spawn=upgrades.ProcessTimedSpawns,process=upgrades.Process;
@@ -54,26 +75,31 @@ export function installBossWaves():void{
       if(kind){
         state.totalTicks+=ticks(60);state.remainingTicks=state.totalTicks;
         state.boss={kind,defeated:false,life:0,maximum:0,reinforcementTicks:ticks(2)};
-        this.Level.Zombie_Count=kind==='charger'?5:4;this.Level.Devil_Count=kind==='priest'?1:0;
+        if(bossEncountersConfigured())state.boss.members=Array.from({length:bossCount(wave)},(_,i)=>({
+          kind:i%2===0?kind:kind==='charger'&&(netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive())?'priest':'charger',
+          defeated:false,life:0,maximum:0}));
+        const members=bossMembers(state.boss);
+        this.Level.Zombie_Count=4+members.filter(m=>m.kind==='charger').length;this.Level.Devil_Count=members.filter(m=>m.kind==='priest').length;
       }
     }return value;
   };
   upgrades.ProcessTimedSpawns=function(this:any):any{
     const w=this.mWorld,state=timedWave(w)!,boss=state.boss;if(!boss)return spawn.call(this);
-    if(!boss.id){
-      if(!state.warnings.some(s=>s.role==='boss'))attemptTimedSpawn(w,boss.kind==='charger'?'Zombie':'Devil','boss');
+    const pending=bossMembers(boss).find(m=>!m.id&&!m.defeated);
+    if(pending){
+      if(!state.warnings.some(s=>s.role==='boss'))attemptTimedSpawn(w,pending.kind==='charger'?'Zombie':'Devil','boss');
       return;
     }
     if(--boss.reinforcementTicks<=0){
-      if(roomForTimedSpawn(w,'Zombie'))attemptTimedSpawn(w,'Zombie','reinforcement');
+      const adds=(Object.values(w.mThing_Collection.mThings)as any[]).filter(e=>e._CLASSID_==='CThing_Creature_Zombie'&&!e.mBossKind&&e.Process&&!e.lanKillLogged&&!(e.mFlags&Thing.CThing.mFlag_DEAD)).length;
+      if((!boss.members||adds+state.warnings.filter(s=>s.role==='reinforcement').length<4)&&roomForTimedSpawn(w,'Zombie'))attemptTimedSpawn(w,'Zombie','reinforcement');
       boss.reinforcementTicks=ticks(2);
     }
   };
   upgrades.Process=function(this:any):any{
     const w=this.mWorld,boss=timedWave(w)?.boss;
     if(boss){
-      const enemy=w.mThing_Collection.mThings[boss.id??''];
-      if(enemy){boss.life=Math.max(0,enemy.mLife);boss.maximum=enemy.mMaxLife;}
+      syncBoss(w,boss);
       if(boss.defeated&&w.mLoaded&&!w.mCompleteState&&livingWavePlayers(w).length){this.FinishTimedWave(2);return;}
     }return process.call(this);
   };
@@ -81,7 +107,10 @@ export function installBossWaves():void{
   collection.AddThing=function(this:any,enemy:any):any{
     const result=add.call(this,enemy),role=timedSpawnRole(this.mWorld),boss=timedWave(this.mWorld)?.boss;
     if(boss&&role&&['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(enemy._CLASSID_)){
-      if(role==='boss'){enemy.mBossKind=enemy.mEnemyVariant=boss.kind;boss.id=enemy.sUniqueID;}
+      if(role==='boss'){
+        const members=bossMembers(boss),index=members.findIndex(m=>!m.id&&!m.defeated),member=members[index];
+        if(member){enemy.mBossKind=enemy.mEnemyVariant=member.kind;member.id=enemy.sUniqueID;if(boss.members)enemy.mBossSlot=index;}
+      }
       else delete enemy.mEnemyVariant;
     }return result;
   };
@@ -91,7 +120,12 @@ export function installBossWaves():void{
       const result=init.call(this);if(this.mBossKind){
         this.mLife=this.mMaxLife=bossMaximum(this.mWorld.mUpgrades.mLevelIndex,worldEnemyGrowth(this.mWorld).health,World.CWorld.mGameMode!=='Single');
         if(this.mBossKind==='charger')this.mDamage*=1.5;else this.mAttackDamage*=1.5;
-        const boss=timedWave(this.mWorld)?.boss;if(boss){boss.life=this.mLife;boss.maximum=this.mMaxLife;}
+        const boss=timedWave(this.mWorld)?.boss;if(boss){
+          if(boss.members&&this.mBossSlot===undefined)this.mBossSlot=boss.members.findIndex(m=>!m.id&&m.kind===this.mBossKind&&!m.defeated);
+          const member=boss.members?boss.members[this.mBossSlot]:boss;
+          if(member){member.id=this.sUniqueID;member.life=this.mLife;member.maximum=this.mMaxLife;}
+          syncBoss(this.mWorld,boss);
+        }
       }return result;
     };
     p.State_GotoPlayer=function(this:any):any{if(this.mBossKind==='priest'&&beginBossCast(this))return;return goto.call(this);};
@@ -133,7 +167,10 @@ export function installBossWaves():void{
   const world=World.CWorld.prototype as any,kill=world.LogKill;
   world.LogKill=function(this:any,victim:any):any{
     const value=kill.call(this,victim),boss=timedWave(this)?.boss;
-    if(boss&&victim.mBossKind&&victim.sUniqueID===boss.id&&victim.mLife<=0){boss.defeated=true;boss.life=0;}
+    if(boss&&victim.mBossKind&&victim.mLife<=0){
+      const member=bossMembers(boss).find(m=>m.id===victim.sUniqueID);
+      if(member){member.defeated=true;member.life=0;syncBoss(this,boss);}
+    }
     return value;
   };
 }

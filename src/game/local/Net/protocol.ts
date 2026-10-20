@@ -112,6 +112,7 @@ export interface GameConfig {
   timedWaves?: 'timed-waves-v1';
   waveDraft?: 'wave-draft-v1';
   bossWaves?: 'boss-waves-v1';
+  bossEncounters?: 'boss-encounters-v1';
   variants?: 'enemy-variants-v1';
   /** Weapon enchantment survives replenishment until empty; requires enemy variants. */
   enchantment?: 'persistent-enchantment-v1';

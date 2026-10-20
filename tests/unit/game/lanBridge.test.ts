@@ -122,14 +122,15 @@ describe('LAN bridge operation lifetime',()=>{
    expect(start.cfg.loot).toBe(['personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2'].every(f=>features.includes(f))?'supply-crates-v2':undefined);
   } finally {CMain.mSaveData=previous;launch.mockRestore();}
  });
- it.each([undefined,'timed-waves-v1','enemy-variants-v1','boss-waves-v1'])('negotiates Boss encounters only with their complete dependencies (missing %s)',missing=>{
+ it.each([undefined,'timed-waves-v1','enemy-variants-v1','boss-waves-v1','boss-encounters-v1'])('negotiates Boss encounters only with their complete dependencies (missing %s)',missing=>{
   const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
-  const features=['personal-growth-v1','armor-ammo-v1','pve-balance-v1','survival-v1','supply-crates-v2','endless-pve-v1','enemy-variants-v1','timed-waves-v1','wave-draft-v1','boss-waves-v1'].filter(f=>f!==missing);
+  const features=['personal-growth-v1','armor-ammo-v1','pve-balance-v1','survival-v1','supply-crates-v2','endless-pve-v1','enemy-variants-v1','timed-waves-v1','wave-draft-v1','boss-waves-v1','boss-encounters-v1'].filter(f=>f!==missing);
   try{
    lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',sid:'qa',char:0,features});b.phase='setup';b.startGame(false);
-   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.bossWaves).toBe(missing?undefined:'boss-waves-v1');
-   (b as any).session={startOpts:{cfg:{...start.cfg,bossWaves:'boss-waves-v1'}}};expect((b as any).peerSupportsRun()).toBe(!missing);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.bossWaves).toBe(missing&&missing!=='boss-encounters-v1'?undefined:'boss-waves-v1');
+   expect(start.cfg.bossEncounters).toBe(missing?undefined:'boss-encounters-v1');
+   (b as any).session={startOpts:{cfg:{...start.cfg,bossWaves:'boss-waves-v1',bossEncounters:'boss-encounters-v1'}}};expect((b as any).peerSupportsRun()).toBe(!missing);
   }finally{b.session=null;CMain.mSaveData=previous;launch.mockRestore();}
  });
  it('a restarted client without history rejects in-place recovery',()=>{

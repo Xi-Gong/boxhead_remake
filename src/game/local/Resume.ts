@@ -27,9 +27,9 @@ import { SURVIVAL_RULE, survivalEnabled, settleVitals } from './SurvivalRules.ts
 import { LOOT_RULE, modernLoot, type SupplyState } from './LootRules.ts';
 import { ENDLESS_RULE } from './EndlessRules.ts';
 import { endlessWorld } from './Endless.ts';
-import { timedWave, copyTimedWave, type TimedWaveState } from './TimedWaves.ts';
+import { timedWave, copyTimedWave, cloneTimedWave, type TimedWaveState } from './TimedWaves.ts';
 import { waveDraft } from './WaveDraft.ts';
-import { BOSS_WAVES_RULE,bossWavesConfigured,reconnectSavedBoss } from './BossWaves.ts';
+import { BOSS_WAVES_RULE,BOSS_ENCOUNTERS_RULE,bossWavesConfigured,bossEncountersConfigured,reconnectSavedBoss } from './BossWaves.ts';
 import { copyWaveDraft, newWaveDraft, type WaveDraftState } from './WaveDraftRules.ts';
 import {VARIANTS_RULE,captureVariants,restoreVariants,variantsWorld,type VariantSave} from './EnemyVariants.ts';
 import {ENCHANTMENT_RULE,persistentEnchantment,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
@@ -91,6 +91,7 @@ export interface ObjectState {
 
 export interface RunSnapshot {
   bossWaves?: typeof BOSS_WAVES_RULE;
+  bossEncounters?: typeof BOSS_ENCOUNTERS_RULE;
   waveDraft?: WaveDraftState;
   timedWave?: TimedWaveState;
   enchantment?: typeof ENCHANTMENT_RULE;
@@ -262,6 +263,7 @@ export function capture(world: any): RunSnapshot {
     ...(timedWave(world)?{timedWave:copyTimedWave(world)}:{}),
     ...(waveDraft(world)?{waveDraft:copyWaveDraft(waveDraft(world))}:{}),
     ...(bossWavesConfigured()?{bossWaves:BOSS_WAVES_RULE}:{}),
+    ...(bossEncountersConfigured()?{bossEncounters:BOSS_ENCOUNTERS_RULE}:{}),
     ...(variantsWorld(world)?{variants:captureVariants(world)}:{}),
     ...(persistentEnchantment(world)?{enchantment:ENCHANTMENT_RULE}:{}),
     ...(survivalEnabled(world) ? { survival: SURVIVAL_RULE } : {}),
@@ -441,6 +443,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if(snap.timedWave&&!timedWave(world))return false;
   if(snap.waveDraft&&!waveDraft(world))return false;
   if((snap.bossWaves||snap.timedWave?.boss||snap.variants?.enemies.some(e=>e.fields.mBossKind))&&!bossWavesConfigured())return false;
+  if((snap.bossEncounters||snap.timedWave?.boss?.members)&&!bossEncountersConfigured())return false;
   if(snap.timedWave?.phase==='draft'&&!snap.waveDraft?.round)return false;
   const u = world.mUpgrades;
   const hud = world.mHud;
@@ -485,7 +488,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     u.Level.mZombieCount = 0;
     u.Level.mDevilCount = 0;
     u.Level.mPlayerCount = c.playerCount;
-    if(snap.timedWave)u.timedWave={...snap.timedWave,warnings:snap.timedWave.warnings.map(w=>({...w})),...(snap.timedWave.boss?{boss:{...snap.timedWave.boss}}:{})};
+    if(snap.timedWave)u.timedWave=cloneTimedWave(snap.timedWave);
     for (const s of snap.players) applyPlayer(world, s);
     restoreVariants(world,snap.variants);
     reconnectSavedBoss(world);
