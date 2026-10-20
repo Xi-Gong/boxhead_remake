@@ -11,7 +11,7 @@ export function redBoxReward(player: any, roll: number): boolean {
   if (roll < .3) {
     const kind = SUPPLY_KINDS[roll < .1 ? 0 : roll < .2 ? 1 : 2]!;
     const granted = applySupplyEffect(player,kind);
-    if (granted) player.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${kind==='armor'?'Armor':kind==='ammo'?'All ammo':'Health'} ${combatWorld(player.mWorld)?'restored':'full'}!`);
+    if (granted) player.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${kind==='armor'?'Armor':kind==='ammo'?(combatWorld(player.mWorld)?'Ammo':'All ammo'):'Health'} ${combatWorld(player.mWorld)?'replenished':'full'}!`);
     return granted;
   }
   const pool: { name: string; end: number }[] = [];
@@ -28,7 +28,7 @@ export function redBoxReward(player: any, roll: number): boolean {
   if(combatWorld(player.mWorld)){
     const gun=player.mWeapons[reward.name].mThing;player.mWorld.mUpgrades.ApplyUpgrade_Weapon(gun);
     gun.mAmmo=Math.min(gun.mTotalAmmo,gun.mAmmo+restoredSupply(gun.mTotalAmmo,player.mSupplyEfficiency??0));
-    player.mWorld.mHud.AddMessage_Info(gun.mName+' ammo restored',player.mPlayerIndex);return true;
+    player.mWorld.mHud.AddMessage_Info(gun.mName+' ammo replenished',player.mPlayerIndex);return true;
   }
   const capacity = player.mWeapons[reward.name].mThing.mTotalAmmo;
   const weapon = player.AddWeapon(reward.name).mThing;

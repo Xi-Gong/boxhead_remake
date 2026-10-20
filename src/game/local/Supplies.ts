@@ -145,7 +145,7 @@ export class CThing_Object_SupplyCrate extends CThing_Object_Pickup {
     this.mSupplyConsumed=true;
     if(this.mSupplyId)applySupplyEffect(player,this.mSupplyKind);
     else if(this.mSupplyKind==='armor')refillArmor(player);else if(this.mSupplyKind==='ammo')refillAmmo(player);else player.mLife=player.mMaxLife;
-    this.mWorld.mHud.AddMessage_Info(this.mSupplyKind==='enchant'?`P${player.mPlayerIndex+1}: ${player.mWeapon_Current.mName} enchanted!`:`P${player.mPlayerIndex+1}: ${this.mSupplyKind==='armor'?'Armor':this.mSupplyKind==='ammo'?'All ammo':'Health'} ${this.mSupplyId&&combatWorld(this.mWorld)?'restored':'full'}!`);
+    this.mWorld.mHud.AddMessage_Info(this.mSupplyKind==='enchant'?`P${player.mPlayerIndex+1}: ${player.mWeapon_Current.mName} enchanted!`:`P${player.mPlayerIndex+1}: ${this.mSupplyKind==='armor'?'Armor':this.mSupplyKind==='ammo'?(this.mSupplyId&&combatWorld(this.mWorld)?'Ammo':'All ammo'):'Health'} ${this.mSupplyId&&combatWorld(this.mWorld)?'replenished':'full'}!`);
     this.PlaySound(CSound.mSamples.Object_Pickup_wav);
     this.Delete();
   }
