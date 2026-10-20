@@ -5,15 +5,15 @@
 ## Survive the clock and build your run
 
 - Ordinary waves last **3, 4 or 5 minutes** according to map size. Enemies keep arriving from nearby reachable entrances or warned safe ground, with a fast opening and a stronger final phase.
-- Every fifth wave brings one Boss and **one extra minute**. Defeat it to advance immediately, or survive the time limit for the normal reward. The clock freezes during pause and disconnect holds.
+- Every fifth wave brings **one extra minute** and an escalating encounter: one Boss at waves 5/10, two at 15/20 and at most three from wave 25. Defeat every Boss to advance immediately, or survive the limit for the normal reward. The clock sits inside WAVE and freezes during pause/disconnect holds.
 - Each player chooses one of three upgrades between waves, within **12 seconds**. Firepower, vitality, shield and magazine bonuses accumulate; first aid and resupply restore current resources. Everyone confirming starts the next wave immediately.
-- Killing a Boss doubles each player's one selected reward. Timeout clearing grants no extra kill XP or drops, while map objects, placed equipment and existing supply crates remain.
+- Defeating all Bosses doubles each player's one selected reward. Timeout clearing grants no extra kill XP or drops, while map objects, placed equipment and existing supply crates remain.
 
 ## Meet the Bone Tyrant and Ember Lord
 
 - The **Bone Tyrant** gains a second independently warned and aimed charge below half health. The **Ember Lord** lays three fire marks and casts more frequently below half health. Ordinary nonfatal hits do not interrupt Boss skills.
 - At most four ordinary zombie reinforcements accompany a Boss. Disabling devils selects the Tyrant for every Boss wave.
-- A compact health bar above each Boss shows current and maximum HP, with abbreviated large values. It follows the Boss on screen and uses confirmed health in LAN play.
+- Each Boss has one compact, numeric-free overhead health bar and counts under DEVIL. Bars follow the Boss and use confirmed health in LAN play.
 - Bone Chargers and Ember Priests retain their distinct ordinary skills. Refined bone armor, rust bracers, layered crowns, molten seams and the Lord's furnace chest follow the original body animation.
 - Charge warnings reflect the real hit radius and stop at static obstacles. Fire warnings remain visible at LOW detail. Timed arrivals appear before their first stationary spell.
 

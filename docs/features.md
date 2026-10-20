@@ -12,7 +12,7 @@ Solo, local co-op and compatible LAN co-op loop indefinitely. Death match retain
 | Medium: remaining maps | 4 minutes | 5 minutes |
 | Large/long: maps 14–18 | 5 minutes | 6 minutes |
 
-The longest side at least 64 cells or area above 2,000 cells makes a map large; at most 800 cells and longest side at most 40 makes it small. Menus show the time limit. The simulation clock stops on pause/disconnect freezes. Survive the limit to advance; killing the Boss advances immediately. Death on the last tick is still defeat.
+The longest side at least 64 cells or area above 2,000 cells makes a map large; at most 800 cells and longest side at most 40 makes it small. Menus show the time limit. The simulation clock stops on pause/disconnect freezes. Survive the limit to advance; defeating every Boss advances immediately. Death on the last tick is still defeat.
 
 Ordinary waves continuously replenish enemies within difficulty/detail concurrency caps, with a quick opening and faster late-wave arrivals. Nearby reachable entrances are preferred; safe ground arrivals warn for 0.8 seconds. Timeouts clear enemies, projectiles and fire damage without kill rewards. Map objects, placed equipment and existing supply crates remain.
 
@@ -29,11 +29,11 @@ Each player gets three choices between waves, with **12 seconds** to confirm. Ev
 
 Bonuses accumulate within the run and survive saves, retries and respawns. New runs reset them. Firepower is always offered; two distinct seeded alternatives exclude useless heals/refills. Selected high waves distribute the four permanent bonuses evenly and derive baseline XP from map duration and spawn pacing without replaying earlier waves or assuming Boss rewards.
 
-**Bone Tyrant / Ember Lord** alternate every five waves, with at most four ordinary zombie reinforcements. Disabling devils always selects the Tyrant. Below half health, the Tyrant performs two independently warned/aimed charges; the Lord's three-mark spell speeds up from eight to six seconds. Ordinary nonfatal hits do not interrupt Boss skills. A Boss kill doubles each player's one chosen reward; surviving the time limit gives the normal reward.
+**Bone Tyrant / Ember Lord** alternate every five waves, with at most four ordinary zombie reinforcements. Disabling devils always selects the Tyrant. Below half health, the Tyrant performs two independently warned/aimed charges; the Lord's three-mark spell speeds up from eight to six seconds. Ordinary nonfatal hits do not interrupt Boss skills. Defeating all Bosses doubles each player's one chosen reward; surviving the time limit gives the normal reward.
 
-Each Boss also has a health bar above its head showing current/maximum HP; large values use compact units such as `934.5K / 1.25M`. It follows the Boss and camera, uses confirmed LAN health, and hides when paused, offscreen or defeated.
+Boss waves 5/10 contain one Boss, 15/20 contain two, and 25 onward contain at most three. Defeat all members to advance immediately with one doubled draft reward; a partial defeat followed by timeout earns the normal reward. Each Boss has one compact numeric-free overhead bar and counts under DEVIL. The clock fits inside WAVE. Bars use confirmed LAN health and hide on pause, offscreen or defeat.
 
-Optional v2 extensions retain remaining time, choices, bonuses and Boss HP/skills. Old saves convert once, preserving score, equipment, current health/armor/ammo and crates while restarting the current wave timer and supplying the basic build without free refills. Later continues retain time/offers. LAN negotiates timed-waves-v1, wave-draft-v1 and boss-waves-v1 with dependencies; incompatible peers keep their prior rules and cannot load a newer-rule save.
+Optional v2 extensions retain remaining time, choices, bonuses and Boss HP/skills. Old saves convert once, preserving score, equipment, current health/armor/ammo and crates while restarting the current wave timer and supplying the basic build without free refills. Later continues retain time/offers. LAN negotiates timed-waves-v1, wave-draft-v1, boss-waves-v1 and boss-encounters-v1 with dependencies; incompatible peers keep their prior rules and cannot load a newer-rule save.
 
 Five gun models retain their exact gameplay muzzle/hand anchors. Ordinary/enchanted tracers, rockets and muzzle effects are clearer; variant/Boss armor follows the original body animation. Classic assets remain available for reference, and art adds no protocol fields.
 

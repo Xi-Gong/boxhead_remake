@@ -48,8 +48,8 @@ Gamepads work throughout (stick to move, RT/A to shoot, START to pause); keys ar
 
 - **Save, resume & retry** — continue a saved run, retry the failed wave, or select a previously reached wave.
 - **LAN co-op & death match** — discover rooms or join by IP in the desktop app, with rollback and reconnect support.
-- **Timed, endless PvE** — survive 3/4/5-minute waves on small/medium/large maps with continuous nearby reinforcements. Every fifth wave has a Boss and one extra minute; defeating it ends the wave immediately.
-- **Build between waves** — each player chooses one of three upgrades within 12 seconds. Boss kills double that wave's reward. Damage, health, armor and ammunition bonuses accumulate through the run.
+- **Timed, endless PvE** — survive 3/4/5-minute waves with the clock inside WAVE. Every fifth wave adds one minute and 1–3 Bosses as the run progresses, each with one compact overhead bar and counted under DEVIL.
+- **Build between waves** — each player chooses one of three upgrades within 12 seconds. Defeating every Boss doubles that wave's reward. Damage, health, armor and ammunition bonuses accumulate through the run.
 - **Endless PvE growth** — continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Wave selection follows your best progress beyond wave 100 and grants a map-duration-based starting build.
 - **Two enemy variants** — Bone Chargers telegraph a locked-direction rush; Ember Priests mark the ground with delayed flames. Both have distinct modeled parts and animated skill poses.
 - **Purple enchantment crates** — priests have a 30% purple-drop chance. Enchant your held weapon for +35% damage and two extra bullet penetrations. Refills, upgrades and weapon switching retain the enchantment until ammunition runs out; later refills do not restore a depleted enchantment. Enchanted ammo text stays purple.

@@ -1,16 +1,39 @@
 {
   "status": "lightweight-passed",
-  "curve": {"5":1,"10":1,"15":2,"20":2,"25+":3},
+  "curve": {
+    "5": 1,
+    "10": 1,
+    "15": 2,
+    "20": 2,
+    "25+": 3
+  },
   "capability": "boss-encounters-v1 requires boss-waves-v1; old peers retain their single-Boss rules",
   "ui": "one 64x7 numeric-free bar per visible Boss; every Boss counts under DEVIL; timer inside existing WAVE cell",
-  "tests": {"files":6,"passed":124,"log":"generated/reports/v031/boss-encounters/tests-bounded-count.log"},
+  "tests": {
+    "files": 6,
+    "passed": 124,
+    "log": "generated/reports/v031/boss-encounters/tests-bounded-count.log"
+  },
   "build": "generated/reports/v031/boss-encounters/build-bounded-count.log",
   "renderer": "main-L0mwFj92.js",
   "browser": [
-    {"scale":2,"report":"generated/reports/v031/compact-hud/run-1792473132608-2x/report.json","note":"before bounded counter query; identical bar geometry"},
-    {"scale":1,"report":"generated/reports/v031/compact-hud/run-1792473217313-1x/report.json","note":"final production build"}
+    {
+      "scale": 2,
+      "report": "generated/reports/v031/compact-hud/run-1792473132608-2x/report.json",
+      "note": "before bounded counter query; identical bar geometry"
+    },
+    {
+      "scale": 1,
+      "report": "generated/reports/v031/compact-hud/run-1792473217313-1x/report.json",
+      "note": "final production build"
+    }
   ],
   "review": "Direct screenshot review of both final three-bosses sheets; single-instance 640x480, real menu/movement/pause input, LOW detail, fill pixels and clock bounds. No zai.",
   "failures": "Retained: uninitialized add-count defect fixed; incorrect fixture assumptions corrected; test type errors corrected; stale-build UI run excluded; disposed fixture entities removed before count assertions.",
-  "pending": "Full release gates including two live LAN peers remain unauthorized and unexecuted. Portable refresh recorded in candidate.json."
+  "pending": "Full release gates including two live LAN peers remain unauthorized and unexecuted. Portable refresh recorded in candidate.json.",
+  "portable": {
+    "report": "generated/reports/v031/boss-encounters/portable/timed-candidate/report.json",
+    "launch": "generated/reports/v031/boss-encounters/portable/launch-0.3.1.json",
+    "ok": true
+  }
 }
