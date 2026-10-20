@@ -760,4 +760,12 @@ export const DEVIATIONS: Deviation[] = [
       'movement. Independent loading-time XSI geometry keeps source feet, metadata and return frames. '+
       'Saved skill state and family counters reconstruct new identities without refilling HP.',
   },
+  {
+    id:'GUNNER_ZOMBIES',file:'local/Gunner.ts, GunnerArt.ts, EnemyBullet.ts, CombatRosterRules.ts, EnemyVariants.ts',
+    description:'From wave 8, modern ordinal replacements may use a seeded player-skin gunner with a pistol, '+
+      'UZI or shotgun. Snapshot-owned locked .6s aim/burst/recovery phases emit slow swept player-only '+
+      'projectiles, not player hitscan. Read-only RNG-derived identity adds no subtype draws. Four injured '+
+      'player-skin collections and gun views bake while loading and preserve gun/foot anchors. Saves retain '+
+      'skin, gun and pending fire; generic rollback includes flying bullets.',
+  },
 ];

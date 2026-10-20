@@ -38,7 +38,7 @@ export function installCombatRoster():void{
  for(const ctor of [Thing.Creature.CThing_Creature_Zombie,Thing.Creature.CThing_Creature_Devil]){
   const p=ctor.prototype as any,init=p.Process_Init,goto=p.State_GotoPlayer;
   p.Process_Init=function(this:any):any{
-   const result=init.call(this);if(!combatWorld(this.mWorld)||!this.mCombatKind)return result;
+   const result=init.call(this);if(!combatWorld(this.mWorld)||!['runner','brute'].includes(this.mCombatKind))return result;
    const kind=this.mCombatKind as CombatKind;
    this.mLife=this.mMaxLife=this.mMaxLife*(kind==='runner'?.8:2);
    this.mSpeed=kind==='runner'?Math.max(.105,Math.min(.175,this.mSpeed*2.2)):Math.max(.045,Math.min(.095,this.mSpeed*.8));

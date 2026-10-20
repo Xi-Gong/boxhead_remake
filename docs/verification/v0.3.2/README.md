@@ -19,6 +19,12 @@ Only lightweight serial targeted checks and short single-instance low-resolution
 
 ## Completed items
 
+### Player-skin gunner zombies
+
+Wave-8 replacement uses four seeded injured player skins and pistol/UZI/shotgun views, no extra subtype RNG. A locked .6s warning precedes one shot/three-shot burst/three-pellet fan and recovery. New .22-cell/tick bullets sweep at <=.08-cell steps, hit players only, stop at walls and can be dodged. Skin/gun/pending aim persist; in-flight bullet rollback roundtrips exactly. Four suites passed 38 tests; typechecks/build `main-C34_1AJU.js` passed and 117 ports remain unchanged.
+
+Production single-instance art/aim/projectile check passed `generated/reports/v032/gunner-1792507918163`; four skins × three guns × 16 directions and aim-lines images directly reviewed. This fixture is not an ordinary progression or physical multiplayer acceptance claim.
+
 ### Runner and heavy melee zombies
 
 Wave 3/6 ordinal replacements add flanking runners and telegraphed heavy brutes, at most two active of each. No extra subtype RNG, quotas unchanged. Brute .8s warning locks a 2.2-cell cone, followed by 1.2s recovery; escape and walls prevent damage. New save identities/skill state and rollback are covered. Derived loading-time art preserves all source feet, XSI metadata and return frames; classic collections remain.

@@ -2,7 +2,7 @@
 import {CMain,DrawPrimitive,Thing} from '../packages.ts';
 export const GUN_LINKS={pistol:'Handgun',uzi:'UZI',shotgun:'Shotgun',rocket:'Rocket',railgun:'Railgun'} as const;
 export type GunArtKind=keyof typeof GUN_LINKS;
-const palette={GunSteel:0x9caeb8,GunBlueSteel:0x526b78,GunDark:0x29333b,GunGrip:0x34302c,GunWood:0xa76c3e,
+export const palette={GunSteel:0x9caeb8,GunBlueSteel:0x526b78,GunDark:0x29333b,GunGrip:0x34302c,GunWood:0xa76c3e,
   GunWoodLight:0xc58b51,GunOlive:0x72805b,GunOliveDark:0x48573d,GunBand:0xa7aa91,GunBore:0x111b20,GunCold:0x77c8d6,GunBrass:0xcba65e};
 type Point=[number,number,number];
 interface Face {points:number[];material:string;shade:number;depth:number}
