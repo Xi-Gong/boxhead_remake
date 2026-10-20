@@ -73,6 +73,8 @@ export async function verifyV032Lan(H,C,report,out){
  const initial=(await states())[0].round.selected;
  await C.page.keyboard.press('KeyS');await both(`m.mcWorld.mUpgrades.waveDraft.round.selected[1]===${(initial[1]+1)%3}`);
  await C.page.keyboard.press('ArrowDown');await both(`m.mcWorld.mUpgrades.waveDraft.round.selected[1]===${(initial[1]+2)%3}&&m.mcWorld.mUpgrades.waveDraft.round.selected[0]===${initial[0]}`);
+ await C.page.keyboard.press('KeyW');await both(`m.mcWorld.mUpgrades.waveDraft.round.selected[1]===${(initial[1]+1)%3}`);
+ await C.page.keyboard.press('ArrowUp');await both(`m.mcWorld.mUpgrades.waveDraft.round.selected[1]===${initial[1]}&&m.mcWorld.mUpgrades.waveDraft.round.selected[0]===${initial[0]}`);
  await H.page.keyboard.press('Tab');assert(await games[0].waitExpr('m.mcWorld._WaveDraftHud._Player0._Stats._visible&&!m.mcWorld._WaveDraftHud._Player1._Stats._visible'));
  await C.page.keyboard.press('KeyR');assert(await games[1].waitExpr('m.mcWorld._WaveDraftHud._Player1._Stats._visible&&!m.mcWorld._WaveDraftHud._Player0._Stats._visible'));
  await games[0].shot(join(out,'v032-host-stats.png'),false);await games[1].shot(join(out,'v032-client-stats.png'),false);
@@ -81,7 +83,7 @@ export async function verifyV032Lan(H,C,report,out){
  await games[0].clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');
  await both('m.mcWorld.mUpgrades.waveDraft.round?.confirmed[0]');
  await H.page.waitForTimeout(14000);await both('m.mcWorld.mUpgrades.mLevelIndex===15&&m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]&&!m.mcWorld.mUpgrades.waveDraft.round.confirmed[1]');
- const draft=(await states())[0];result.draft=draft;assert.equal(draft.round.readyRule,'draft-ready-v1');result.waitedWithoutDefaultMs=14000;
+ const draft=(await states())[0];result.draft=draft;assert.equal(draft.round.readyRule,'draft-ready-v1');result.waitedWithoutDefaultMs=14000;step('client up/down on both keyboard sets, independent stats and a 14-second one-ready wait pass');
  await games[1].clickClip('m.mcWorld._WaveDraftHud._Player1._Card0');
  await games[1].clickClip('m.mcWorld._WaveDraftHud._Player1._Ready');
  await both('m.mcWorld.mUpgrades.mLevelIndex===16&&m.mcWorld.mUpgrades.timedWave.phase==="combat"');

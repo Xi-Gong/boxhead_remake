@@ -13,4 +13,15 @@ Reuse evidence only when relevant code/art bytes are unchanged. Runtime changes 
 
 Historical version-specific browser/Electron scripts remain available. Their overlapping risks are covered by the current combined gates; record omitted scripts explicitly rather than claiming them executed. Do not run the full delay/performance matrix or foreground tests. Stop only owned coordinators/game/GPU processes and listeners.
 
-Status: implementation features pushed; real-input play and final release gates in progress. No tag or Release published yet.
+All acceptance gates passed on the final renderer `main-DqmD-sRd.js` and verified v0.3.2 asar. Approved publication follows from the checked source commit.
+
+| Result | Evidence under `generated/reports/v032/` |
+|---|---|
+| 1784 passed, 0 failed, 71 existing skips; three typechecks/build; 117 unchanged ports | `release-gates/vitest-final.json`; build and audit output |
+| 188/188 UI, 54/54 audio | `release-gates/browser-ui-BtMFh9Vc/`, `release-gates/audio-final/`; the later entrance-only change has no UI/audio effects |
+| Natural 90s early and Coop waves; natural 120s Nightmare Boss wave | `pacing/cover-fire-actual-*`, `pacing/coop-actual-*`, `pacing/nightmare-boss-actual-*`; real-time input-only scripts, raw defeats/limitations retained |
+| Current fresh meshes, skills, shots, UI geometry/pixels/screenshots | Per-feature art reports linked in README; final portable and LAN images directly reviewed |
+| Functional LAN complete; supplemental W/S and arrows up/down complete | `release-gates/lan/`, `release-gates/lan-final/`; both clean up their owned peers and guarded isolated ports |
+| 70 packaged files identical; actual portable EXE and seven native groups pass | `release-gates/artifact.json`, `release-gates/portable/`, `release-gates/native/` |
+
+Portable SHA256: `2b7763970c0ff026ef617baf8c55d27c5a4bc588ee41af0eeddd1c3e947e01ac`. The earlier preliminary package was invalidated by the entrance repair and is not the release artifact. Source and evidence were pushed feature by feature to `codex/feature-v0.3.1-gameplay-art`.

@@ -1,4 +1,8 @@
-# v0.3.2 implementation and verification
+# v0.3.2 release verification
+
+Final acceptance passed: **1784 Vitest tests / 0 failures / 71 existing skips**, all three TypeScript configurations, 117 unchanged mechanical ports, **188/188 browser UI** and **54/54 audio** checks, input-only early/Nightmare/Boss/local-Coop play, hidden native acceptance, actual portable EXE launch, and packaged functional LAN with both keyboard sets in both directions, readiness, recovery and retry.
+
+Portable: `Boxhead 2Play Rooms-0.3.2-portable.exe` (101669486 bytes), SHA256 `2b7763970c0ff026ef617baf8c55d27c5a4bc588ee41af0eeddd1c3e947e01ac`. See [release notes](release-notes.md) and the [gate summary](release-gates.md). The chronological entries below retain earlier failures and their original limited scope; later final gates supersede their pending status. Physical gamepads and performance gains are not claimed.
 
 Approved on 2026-10-20. Work stays on `codex/feature-v0.3.1-gameplay-art`; each independent fix/feature is checked, committed and immediately pushed before the next completed item.
 
@@ -144,3 +148,11 @@ Portable stats/cards and Boss images were directly reviewed. Initial browser cap
 `release-gates/lan/net_smooth_report.json` passed one hidden 640x480 functional pair at 30ms one-way delay, isolated main-process ports 48630/48631..48640 and saves, with the error-dialog guard installed before rooms. Common confirmed full digests, ordered sound/decal identities and enchanted shots agreed. Two Bosses, fresh butcher identity, both armor records, compact overhead bars and real changing-input rollback agreed. Actual TCP close/rejoin retained both worlds, partial defeat, surviving HP/depleted armor and all bonuses.
 
 Client W/S and arrow key sets navigated P2 independently; host Tab/client R opened only the local sheet. One-ready 14-second wait did not advance. The other actual card/READY click advanced with exactly one doubled dynamic reward; natural all-dead routing and client RETRY restored wave-16 checkpoint without duplicate rewards. Client stats and both-Boss screenshots were directly reviewed. No physical gamepad or performance claim; Boss placement/defeat used synchronized future-tick fixtures, distinct from prior ordinary input-only play.
+
+### Hidden native acceptance
+
+`release-gates/native/report.json` passed all seven native groups: hidden/nonfocusable/opacity-zero creation and isolated data; sandboxed preload; app protocol MIME/missing/traversal; actual clicks/movement/pause; wide viewport transformed save click; native F11/IPC/Alt+Enter fullscreen round trips; and process restart persistence with remaining simulation time. The final pause screenshot was directly reviewed. Native fullscreen capture is deliberately not used; actual state, dimensions, intercepted shortcuts and persistent hidden/no-focus flags are asserted.
+
+Under the approved streamlined gate, historical `playtest.browser/v012/v019/v020/v023/v024/typing/lanui/net/netretry` scripts and the full rendered netsmooth delay/performance matrix were not rerun. Their overlapping functional risks are covered by current 188-check UI, full Vitest, current portable/native and the isolated 30ms functional LAN scenario. The historical scripts and original assertions remain; no foreground test, hardware controller, remote-machine latency or performance improvement is claimed.
+
+The supplemental complete functional scenario (`release-gates/lan-final`) also passed with explicit KeyW/KeyS/ArrowUp/ArrowDown checks on the LAN client, confirming both directions in both supported key sets. No runtime changed between the two functional runs.
