@@ -299,8 +299,9 @@ try {
     if(report.audio.some(a=>a.state!=='running'||a.decoded!==31||a.failed.length))throw new Error('functional audio gate failed');
     await shot('confirmed_paused',H.page);step('functional confirmed gameplay, ordered sound/decal identities and enchanted shots agree');
     if(process.env.BOXHEAD_QA_RELEASE_GATES==='1'){
-      const {verifyV031Lan}=await import('../e2e/v031-lan.mjs');
-      await verifyV031Lan(H,C,report,OUT);
+      if(process.env.BOXHEAD_QA_RELEASE_SCENARIO==='v032'){
+        const {verifyV032Lan}=await import('../e2e/v032-lan.mjs');await verifyV032Lan(H,C,report,OUT);
+      }else{const {verifyV031Lan}=await import('../e2e/v031-lan.mjs');await verifyV031Lan(H,C,report,OUT);}
     }
   }else{
 

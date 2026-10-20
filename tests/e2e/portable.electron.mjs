@@ -10,6 +10,7 @@ import { chromium } from 'playwright-core';
 import { Game, toMainMenu } from './lib.mjs';
 import { verifyPersistentEnchantment } from './persistent-enchantment.mjs';
 import { verifyV031Candidate } from './v031-candidate.mjs';
+import {verifyV032Candidate} from './v032-candidate.mjs';
 
 const expected=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
 const root=process.cwd(),out=resolve(process.env.BOXHEAD_QA_OUT??`generated/reports/v${expected.replaceAll('.','')}/portable`);
@@ -62,7 +63,7 @@ try{
   await g.clickClip('m.mcScreen.mcContinue');assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
   const audio=await g.expr('g.audio()');assert.equal(audio.decoded,31);assert.equal(audio.state,'running');
   if(process.env.BOXHEAD_QA_ENCHANTMENT==='1')await verifyPersistentEnchantment(g,join(out,'enchantment'));
-  if(process.env.BOXHEAD_QA_TIMED==='1')await verifyV031Candidate(g,join(out,'timed-candidate'));
+  if(process.env.BOXHEAD_QA_TIMED==='1')await (expected==='0.3.2'?verifyV032Candidate:verifyV031Candidate)(g,join(out,'timed-candidate'));
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
  }

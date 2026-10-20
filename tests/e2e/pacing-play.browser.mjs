@@ -7,17 +7,17 @@ const style=process.env.PLAY_STYLE??'active',wave=Number(process.env.PLAY_WAVE??
 const budget=Number(process.env.PLAY_BUDGET_MS??330000),tag=process.env.PLAY_TAG??'baseline';
 const difficulty=Number(process.env.PLAY_DIFFICULTY??0),version=process.env.PLAY_REPORT_VERSION??'v031';
 const evadeDistance=Number(process.env.PLAY_EVADE_DISTANCE??1.35);
-const coverFire=process.env.PLAY_COVER_FIRE==='1';
+const coverFire=process.env.PLAY_COVER_FIRE==='1',coop=process.env.PLAY_COOP==='1';
 const out=`generated/reports/${version}/pacing/${tag}-${style}-w${wave}-r${room}-${Date.now()}`;
 mkdirSync(out,{recursive:true});const report={ok:false,style,wave,room,tag,samples:[],inputOnly:true,realTime:true};
-report.controller=coverFire?7:6;report.difficulty=difficulty;report.evadeDistance=evadeDistance;report.coverFire=coverFire;report.inputs=[];
+report.coop=coop;report.controller=coverFire?7:6;report.difficulty=difficulty;report.evadeDistance=evadeDistance;report.coverFire=coverFire;report.inputs=[];
 const browser=await launch();let g;const held=new Set();
 async function keys(want){if(JSON.stringify([...held].sort())!==JSON.stringify([...want].sort()))report.inputs.push({at:Date.now(),keys:want});for(const k of [...held])if(!want.includes(k)){await g.page.keyboard.up(k);held.delete(k);}for(const k of want)if(!held.has(k)){await g.page.keyboard.down(k);held.add(k);}}
 try{
  g=await openGame(browser,{query:'?scale=1'});await toMainMenu(g);
  await g.expr(`(P.CMain.mSaveData.__set__mDetail(false),P.CMain.mSaveData.__set__mGameSpeed(1),P.CMain.mSaveData.__set__mDifficulty(${difficulty}),P.CSaveData.mSharedObject.data.mMaxWaveReached=${wave})`);
- await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
- await g.expr(`(P.CMain.mSaveData.mLevelIndex_Single=${room},m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons.gotoAndStop(${room+1}),m.mcScreen.ChangeLevel(m.mcScreen.mcSubScreen.mcLevel_Selection,${room}))`);
+ await g.clickClip(coop?'m.mcScreen.mcCoopPlay':'m.mcScreen.mcSinglePlay');assert(await g.waitScreen(coop?'State_SelectWorld_Coop':'State_SelectWorld_Single','Screen_SelectWorld'));
+ await g.expr(`(P.CMain.mSaveData.mLevelIndex_${coop?'Coop':'Single'}=${room},m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons.gotoAndStop(${room+1}),m.mcScreen.ChangeLevel(m.mcScreen.mcSubScreen.mcLevel_Selection,${room}))`);
  if(wave>1){const field=g.page.getByRole('textbox',{name:'Start wave'});await field.click();await g.page.keyboard.press('Control+A');await g.page.keyboard.type(String(wave));await g.page.keyboard.press('Enter');await g.click(210,400);}
  await g.click(380,230);assert(await g.waitExpr('m.mcWorld?.mLoaded&&g.state()==="State_RunWorld"'));
  await g.page.waitForTimeout(700);report.renderer=await g.page.evaluate(()=>document.querySelector('script[type="module"]')?.src);
@@ -54,7 +54,7 @@ try{
    const dirs=Array.from({length:8},(_,d)=>{const a=d*Math.PI/4,x=px+Math.cos(a)*.7,y=py+Math.sin(a)*.7;return {d,x,y,free:free(x,y),space:[1,2,3].filter(r=>free(px+Math.cos(a)*r,py+Math.sin(a)*r)).length};});
    const weapons=Object.fromEntries(Object.entries(p?.mWeapons??{}).map(([k,v])=>[k,{active:v.mActive,ammo:v.mThing?.mAmmo,damage:v.mThing?.mDamage,rate:v.mThing?.mFireRate,range:v.mThing?.mRange,wide:v.mThing?.mWideShot}]));
    return {state:window.__game.state(),phase:t?.phase,wave:u.mLevelIndex,tick:w.mTick,remaining:t?.remainingTicks,total:t?.totalTicks,
-    goal:t?.clear,life:p?.mLife,maxLife:p?.mMaxLife,armor:p?.mArmor,level:u.lanGrowth?.players[0]?.level,xp:u.lanGrowth?.players[0]?.xp,
+    players:Object.values(w.mThing_Collection.mPlayerThings).map(p=>({slot:p.mPlayerIndex,hp:p.mLife,armor:p.mArmor,x:p.mPosition.mX,y:p.mPosition.mY})),goal:t?.clear,life:p?.mLife,maxLife:p?.mMaxLife,armor:p?.mArmor,level:u.lanGrowth?.players[0]?.level,xp:u.lanGrowth?.players[0]?.xp,
     score:u.lanGrowth?.players[0]?.score,playerState:p?.mStateID,x:px,y:py,dir:p?.mAngle.__get__mDirection(),
     weapon:p?.mWeapon_Current?.mNameID,auto:p?.mWeapon_Current?.mAuto,ammo:p?.mWeapon_Current?.mAmmo,weapons,enemies:positions,dirs,boss:t?.boss};
   });
@@ -98,11 +98,12 @@ try{
     if(selected&&selected!==s.weapon){want.push({pistol:'Digit1',uzi:'Digit2',shotgun:'Digit3',railgun:'Digit0'}[selected]);lastSwitch=n;}
    }
   }
+  if(coop){const other={ArrowUp:'KeyW',ArrowDown:'KeyS',ArrowLeft:'KeyA',ArrowRight:'KeyD',Slash:'Space'};for(const k of [...want])if(other[k])want.push(other[k]);}
   await keys(want);await g.page.waitForTimeout(80);n++;
  }
  await keys([]);await g.shot(`${out}/final.png`,false);report.wallMs=Date.now()-start;report.last=report.samples.at(-1);
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);
- report.outcome=report.result?.life<=0?'defeat':report.result?.phase==='draft'?'wave-completed':report.result?'state-transition':'interrupted';
+ report.outcome=report.result?.phase==='draft'?'wave-completed':report.result?.players?.every(p=>p.hp<=0)?'defeat':report.result?'state-transition':'interrupted';
  assert(report.result,'play budget exhausted before a terminal wave/player result');report.ok=true;
 }catch(error){report.error=String(error);throw error;}
 finally{await g?.close();await browser.close();writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}

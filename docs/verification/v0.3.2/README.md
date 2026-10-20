@@ -108,3 +108,9 @@ Seven final targeted suites passed 142 tests. The first old tiered/inherited-cap
 Input-only early runs exposed a slow obscured approach. Family minimum speeds .06/.075/.08 and a distance-scaled obscured approach now retain stored speed and return to family combat pace with clear sight. The new wall/clear regression and enemy suite passed all 8 tests. Production build/typechecks passed (`main-y8bFhTHP.js`).
 
 `pacing/cover-fire-actual-active-w1-r2-1792510111042` completed the natural 90-second deadline: 11 real kills, level 8, 129.824/228 HP, 15 emitted enemies. The 60-second image was directly reviewed. Only real inputs were sent; controller 7 permits opportunistic infinite-pistol fire. Earlier controller runs and the narrow-map defeat are retained. Differing inputs are not performance comparisons. Nightmare/Boss/Coop acceptance follows separately.
+
+### Input-only Nightmare Boss and local Coop
+
+`pacing/nightmare-boss-actual-active-w20-r2-1792510354788` ran the natural 120-second Nightmare wave 20: two Bosses entered, hunter fans and armor were visible; survival ended the wave without Boss kill rewards (remaining combined HP 33707/42000). Its 90-second image was directly reviewed; this was survival acceptance, not evidence of killing Bosses.
+
+`pacing/coop-actual-active-w8-r2-1792510514902` reached the natural 90-second draft with P1 fallen and P2 at 264.91 HP. The final two-player cards were directly reviewed. Both players received actual keyboard inputs, no combat state injection. The initial report outcome incorrectly classified P1 death as party defeat; raw result.phase is draft and P2 lives. The controller classification is now corrected, with original raw evidence retained. This is scripted real-time input play, not a claim of physical gamepad testing.
