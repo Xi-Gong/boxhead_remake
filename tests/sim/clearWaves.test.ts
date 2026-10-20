@@ -39,7 +39,7 @@ it('lets a non-killing survivor time out without XP and gives party death priori
   const g=createHeadlessGame(),w=g.world(),s=timedWave(w)!,c=s.clear!;s.remainingTicks=1;
   if(cleared){c.killedZombies=c.zombies;c.killedDevils=c.devils;}
   const before=capture(w).growth;for(const p of g.players())p.mLife=0;w.mUpgrades.Process();expect(s.phase).toBe('combat');
-  g.players()[0].mLife=1;w.mUpgrades.Process();expect(s.phase).toBe('draft');expect(capture(w).growth).toEqual(before);g.quit();
+  g.players()[0].mLife=1;w.mUpgrades.Process();expect(s.phase).toBe('draft');expect(remainingEnemies(w)).toEqual({zombies:0,devils:0});expect(capture(w).growth).toEqual(before);g.quit();
  }
 });
 it('copies objectives independently and restores rollback counters and confirmed kill identities',()=>{

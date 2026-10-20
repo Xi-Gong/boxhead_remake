@@ -4,6 +4,7 @@ export function remainingEnemies(world: any): EnemyCounts {
   const level=world?.mUpgrades?.Level;
   const count=(value: unknown): number=>typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.floor(value)):0;
   if(!world?.mUpgrades?.timedWave)return {zombies:count(level?.Zombie_TotalCount),devils:count(level?.Devil_TotalCount)};
+  if(world.mUpgrades.timedWave.phase==='draft')return {zombies:0,devils:0};
   const c=world.mUpgrades.timedWave.clear;
   if(c)return {zombies:count(c.zombies-c.killedZombies),devils:count(c.devils-c.killedDevils)};
   // Bosses share DEVIL in the HUD, while their original family counters continue driving skills/spawn caps.
