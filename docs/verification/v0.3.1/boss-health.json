@@ -1,0 +1,25 @@
+{
+  "feature": "Boss overhead health",
+  "status": "lightweight-passed",
+  "behavior": "118x28 current/maximum HP plate above the rendered frame; large values use K/M/B/T or compact scientific notation. Camera/interpolated pose follows the entity; LAN HP and identity come from confirmed metadata. Hidden offscreen, during pause/drafts or after defeat.",
+  "tests": {
+    "command": "npx vitest run tests/sim/bossWaves.test.ts",
+    "passed": 18,
+    "log": "generated/reports/v031/boss-health/tests-final.log",
+    "coverage": ["both Boss shapes and crown clearance", "camera tracking", "pause/resume", "offscreen and defeated cleanup", "tiny and very large HP", "confirmed HP isolation and identity", "unchanged simulation digest", "all 14 existing Boss behavior assertions"]
+  },
+  "build": "generated/reports/v031/boss-health/build-final.log",
+  "renderer": "main-BYcI9ojS.js",
+  "typechecks": ["tsconfig.json", "config/tsconfig.strict.json", "config/tsconfig.tools.json"],
+  "browser": [
+    "generated/reports/v031/boss-health/run-1792470669865-2x/report.json",
+    "generated/reports/v031/boss-health/run-1792470700554-1x/report.json"
+  ],
+  "visualReview": "Direct review of normal-size charger.png and priest-low.png at 2x, followed by 1x screenshots. Real menu clicks, movement and pause input; both Bosses in HIGH/LOW; 118x28 plate geometry and fill/text pixel assertions. No zai.",
+  "corrections": [
+    "Initial digest assertions passed a live world rather than WorldSnap; corrected the fixture, retaining unchanged-digest assertions.",
+    "Restricted localhost initially produced ERR_NETWORK_ACCESS_DENIED and then a cross-sandbox timeout. Restarted only the owned preview service and reran with permitted localhost; failure reports retained."
+  ],
+  "audit": {"modules": 542, "portedModules": 117, "changedPorts": []},
+  "scope": "Short serial one-instance 640x480 browser checks only. Full release/LAN gates still require authorization; refreshed portable candidate recorded separately."
+}

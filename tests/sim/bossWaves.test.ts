@@ -1,7 +1,7 @@
 import {expect,it} from 'vitest';
 import {createHeadlessGame} from './harness.ts';
 import {placePlayer,pos} from './fxkit.ts';
-import {CMain,Thing} from '../../src/game/packages.ts';
+import {CMain,Thing,DrawPrimitive} from '../../src/game/packages.ts';
 import {bossKind,bossMaximum,beginBossCast} from '../../src/game/local/BossWaves.ts';
 import {timedWave,clearWaveCombat,copyTimedWave} from '../../src/game/local/TimedWaves.ts';
 import {beginCharge,emberZones,processEmberZones} from '../../src/game/local/EnemyVariants.ts';
@@ -11,6 +11,7 @@ import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,makeSnapCtx,restoreWorldSnap} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
+import {bossHealthLayout,compactBossHealth,drawBossHealth} from '../../src/game/local/BossHealthUi.ts';
 
 function encounter(kind:'charger'|'priest'='charger',mode:'Single'|'Coop'='Single'){
  const g=createHeadlessGame({mode}),w=g.world();clearWaveCombat(w);w.mUpgrades.__set__mLevel(kind==='charger'?5:10);
@@ -112,4 +113,49 @@ it('keeps LAN Boss HP in confirmed metadata, independent of speculative changes'
  expect(g.waitRunning(3000)).toBe(true);const w=g.world();w.mUpgrades.__set__mLevel(5);const tick=s.tickIndex(w);s.tickMeta.set(tick,{});s.executeWorldStep(w,tick);
  const recorded=s.tickMeta.get(tick).timedWave.boss;expect(recorded.kind).toBe('charger');timedWave(w)!.boss!.life=234;
  expect(recorded.life).not.toBe(234);expect(s.confirmedTimedWave?.boss).toBeUndefined();g.quit();
+});
+
+it('keeps large Boss health labels compact without rounding living slivers down to zero',()=>{
+ expect([.01,6000,10000,12500,1234567,2e9,3e12,Number.MAX_SAFE_INTEGER].map(compactBossHealth))
+  .toEqual(['1','6000','10K','12.5K','1.23M','2B','3T','9.01e15']);
+});
+
+it.each(['charger','priest']as const)('anchors %s health above its art, follows the camera and hides on lifecycle transitions',kind=>{
+ const {g,w,e}=encounter(kind);
+ try{
+  const boss=timedWave(w)!.boss!;e.mLife=boss.life=boss.maximum/2;
+  DrawPrimitive.XSI.CDrawPrimitive_XSI_DI.RenderStack_Process(0,Infinity);
+  const ctx=makeSnapCtx(w),digest=()=>simulationDigest(captureWorldSnap(w,ctx,false));
+  const before=digest(),keys=Object.keys(e),layout=bossHealthLayout(w,boss)!;
+  expect(layout).toBeDefined();expect(layout.fraction).toBe(.5);
+  expect(layout.y+layout.height+3).toBeLessThanOrEqual(layout.headTop);
+  drawBossHealth(w,boss,true);const layer=w._BossHealthHud;
+  expect(layer._visible).toBe(true);expect(layer._Health.text).toBe(layout.label);
+  expect(Object.keys(e)).toEqual(keys);expect(digest()).toEqual(before);
+  const oldCamera=w.mDrawPosition.clone();w.mDrawPosition.x-=7;w.mDrawPosition.y-=9;
+  const moved=bossHealthLayout(w,boss)!;
+  expect([moved.x-layout.x,moved.y-layout.y]).toEqual([7,9]);
+  w.mDrawPosition=oldCamera;
+  w.mHud.Pause(true);expect(layer._visible).toBe(false);
+  w.mHud.Pause(false);w.mHud.Draw(w.bmDraw);expect(layer._visible).toBe(true);
+  const x=e.mPosition.mX;e.mPosition.mX=-100;w.mHud.Draw(w.bmDraw);expect(layer._visible).toBe(false);e.mPosition.mX=x;
+  e.mLife=0;e.CheckForDead();w.mUpgrades.Process();w.mHud.Draw(w.bmDraw);expect(layer._visible).toBe(false);
+ }finally{g.quit();}
+});
+
+it('renders supplied confirmed Boss HP without leaking speculative damage or a new entity identity',()=>{
+ const {g,w,e}=encounter();
+ try{
+  const confirmed=copyTimedWave(w)!.boss!;confirmed.life=4321;
+  DrawPrimitive.XSI.CDrawPrimitive_XSI_DI.RenderStack_Process(0,Infinity);
+  const ctx=makeSnapCtx(w),digest=()=>simulationDigest(captureWorldSnap(w,ctx,false)),before=digest();
+  e.mLife=1;timedWave(w)!.boss!.life=1;
+  drawBossHealth(w,confirmed,true);
+  expect(w._BossHealthHud._Health.text).toBe('4321 / 6000');
+  expect(bossHealthLayout(w,confirmed)!.fraction).toBe(4321/6000);
+  const changed=digest();drawBossHealth(w,confirmed,true);expect(digest()).toEqual(changed);
+  expect(changed).not.toEqual(before);
+  drawBossHealth(w,{...confirmed,id:'not-this-boss'},true);expect(w._BossHealthHud._visible).toBe(false);
+  drawBossHealth(w,confirmed,false);expect(w._BossHealthHud._visible).toBe(false);
+ }finally{g.quit();}
 });

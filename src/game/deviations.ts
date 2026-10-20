@@ -14,6 +14,14 @@ export interface Deviation {
 
 export const DEVIATIONS: Deviation[] = [
   {
+    id:'BOSS_OVERHEAD_HEALTH',
+    file:'local/BossHealthUi.ts, TimedWaveUi.ts',
+    description:'Boss encounters also show a compact current/maximum HP bar above the rendered Boss frame. '+
+      'The label follows the camera and interpolated pose, uses confirmed LAN health and entity identity, '+
+      'and hides offscreen, during drafts/pause or after defeat. Large HP values use compact units. '+
+      'This adds only display objects, without simulation, save or protocol fields.',
+  },
+  {
     id:'TIMED_ARRIVAL_VISIBILITY',
     file:'local/TimedWaves.ts',
     description:'Timed PvE registers initialized enemies in mapwho before their first movement. '+

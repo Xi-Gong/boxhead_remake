@@ -5,6 +5,7 @@ import { timedWave, timedWavesConfigured } from './TimedWaves.ts';
 import { clockLabel, ROOM_DIMENSIONS, waveSeconds } from './TimedWaveRules.ts';
 import { BODY_FONT, menuText, text } from './UiStyle.ts';
 import { bossWavesConfigured } from './BossWaves.ts';
+import { drawBossHealth } from './BossHealthUi.ts';
 export function waveLimitLabel(index:number,bosses=false):string {
   const size=ROOM_DIMENSIONS[index];return size?`SURVIVE ${clockLabel(waveSeconds(...size),1)}`+(bosses?` / BOSS ${clockLabel(waveSeconds(...size,true),1)}`:''):'';
 }
@@ -23,7 +24,7 @@ export function installTimedWaveUi():void {
   hud.Pause=function(this:any,...args:any[]):any{
     const result=pause.apply(this,args);
     // Paused worlds do not call Draw, so visibility must change with the pause transition itself.
-    if(this.mcScreenPause)for(const name of ['_TimedWaveHud','_BossWaveHud','_WaveDraftHud'])if(this.mWorld[name])this.mWorld[name]._visible=false;
+    if(this.mcScreenPause)for(const name of ['_TimedWaveHud','_BossWaveHud','_BossHealthHud','_WaveDraftHud'])if(this.mWorld[name])this.mWorld[name]._visible=false;
     return result;
   };
   hud.Draw=function(this:any,...args:any[]):any{
@@ -57,6 +58,7 @@ export function installTimedWaveUi():void {
         rect(0,0,260,46,0x231f1b,85);rect(8,20,244,6,0x493d37,100);rect(8,20,244*fraction,6,boss.kind==='charger'?0xbcb68a:0xe79b50,100);
       }
     }
+    drawBossHealth(world,state?.boss,state?.phase==='combat'&&!this.mcScreenPause&&!session?.netPaused);
     return result;
   };
 }

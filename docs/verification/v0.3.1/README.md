@@ -14,6 +14,7 @@ Development is on `codex/feature-v0.3.1-gameplay-art`, with each independent com
 | Ordinary/enchanted tracers, rockets, muzzle effects and unchanged simulation | [Projectile art](projectile-art.json) |
 | Four enemy/Boss models, all directions/actions, classic fixtures and LOW warnings | [Enemy art](enemy-art.json) |
 | First-cast visibility before movement; failed reproduction then fix | [Timed arrival](timed-arrival.json) |
+| Boss overhead current/maximum health, large numbers and camera/confirmed-state tracking | [Boss health](boss-health.json) |
 
 Per-stage test sets overlap; their counts must not be added as a unique-test total. All three TypeScript configurations and production builds passed at the recorded stages. Mechanical AS2 ports and original assets remain unchanged. The latest targeted behavior/art batch has 62 tests in five files; it is not the complete Vitest suite.
 
