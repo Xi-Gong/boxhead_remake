@@ -40,6 +40,7 @@ try{
  await g.page.setViewportSize({width:640,height:480});await g.page.waitForTimeout(200);
  await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));
  assert.equal(await g.expr('m.mcWorld._WaveDraftHud._visible'),false);
+ await g.page.waitForTimeout(700);await g.shot(out+'/pause.png',false);report.shots.push('pause.png');
  await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert(await g.waitScreen('State_Main','Screen_Main'));
  await g.clickClip('m.mcScreen.mcContinue');assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._visible'));
  assert.deepEqual(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.selected'),[2,1]);assert.deepEqual(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.confirmed'),[true,false]);

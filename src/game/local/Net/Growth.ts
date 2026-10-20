@@ -1,12 +1,13 @@
 // LAN_PERSONAL_GROWTH: authoritative data stays on CUpgrades (included in the rollback graph).
 // Derived upgrade views are immutable caches owned by that world's upgrade table, never snapshot state.
 import { forIn } from '../../../engine/runtime.ts';
-import { Thing, World } from '../../packages.ts';
+import { CMain,Thing, World } from '../../packages.ts';
 import {BALANCE_RULE,balancedXpRequired} from '../BalanceRules.ts';
 import { recordGrowthScore } from './FloatingScores.ts';
 import { syncVitals } from '../SurvivalRules.ts';
 import { endlessXpRequired, experienceBeforeLevel, growthFromExperience } from '../EndlessRules.ts';
-import { draftBonuses } from '../WaveDraftRules.ts';
+import { draftBonuses,type WaveBonuses } from '../WaveDraftRules.ts';
+import {combatWorld,modernWeapon} from '../CombatRules.ts';
 import {TIERED_GROWTH_RULE,tieredXpRequired,tieredExperienceBeforeLevel,tieredGrowthFromExperience,tieredLevelStats,levelRewardTier} from '../TieredGrowthRules.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
@@ -89,6 +90,11 @@ function findPlayer(world: any, index: number): any {
 }
 
 /** Route the original stat application through a personal view, retaining its original-stat restoration. */
+export function modernWeaponProjection(world:any,index:number,classID:string,bonus:WaveBonuses):ReturnType<typeof modernWeapon>|undefined{
+ const u=world.mUpgrades,p=growthOf(world)?.players[index],raw=u[classID]?.mOriginalStats;if(!p||!raw)return;
+ const stats=p.tiered===TIERED_GROWTH_RULE?tieredLevelStats(p.level):{damage:.01*Math.max(0,p.level-MAX_LEVEL),capacity:.005*Math.max(0,p.level-MAX_LEVEL)};
+ return modernWeapon(raw,atLevel(u,Math.min(MAX_LEVEL,p.level))[classID],stats,bonus,classID,CMain.mFPS);
+}
 function applyPersonal(upgrades: any, thing: any, previous: any): any {
   const state = growthOf(upgrades.mWorld);
   if (!state) return previous.call(upgrades, thing);
@@ -116,6 +122,13 @@ function applyPersonal(upgrades: any, thing: any, previous: any): any {
       const tiered=state.players[index]!.tiered===TIERED_GROWTH_RULE,stats=tieredLevelStats(level);
       const excess=tiered?0:Math.max(0,level-MAX_LEVEL),damage=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;
       const bonus=draftBonuses(upgrades.mWorld,index);
+      if(combatWorld(upgrades.mWorld)){
+        const tuning=modernWeaponProjection(upgrades.mWorld,index,thing._CLASSID_,bonus)!;
+        if(raw.mDamage!==undefined)thing.mDamage=tuning.damage;
+        thing.mFireRate=tuning.fireRate;thing.mTotalAmmo=tuning.capacity;thing.mDraftCapacityBonus=0;
+        thing.mAmmo=fresh?tuning.capacity:Math.min(tuning.capacity,beforeAmmo+Math.max(0,tuning.capacity-beforeCapacity));
+        return value;
+      }
       if(raw.mDamage!==undefined)thing.mDamage=raw.mDamage*damage*(1+(tiered?stats.damage:.01*excess))*(1+.08*bonus.damage);
       const infinite=flags?.InfinateAmmo||raw.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
       if(!infinite){
@@ -149,6 +162,7 @@ export function infiniteGrowthWeapon(weapon:any):boolean{
   const u=weapon.mWorld?.mUpgrades,slot=playerSource(weapon),state=growthOf(weapon.mWorld);
   if(!u||slot===undefined||!state?.players[slot]?.endless)return weapon.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
   const flags=atLevel(u,state.players[slot]!.level)[weapon._CLASSID_];
+  if(combatWorld(weapon.mWorld))return u[weapon._CLASSID_]?.mOriginalStats?.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
   return !!flags?.InfinateAmmo||u[weapon._CLASSID_]?.mOriginalStats?.mTotalAmmo===Thing.Weapon.CThing_Weapon.mInfinateAmmo;
 }
 

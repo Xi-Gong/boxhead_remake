@@ -29,6 +29,8 @@ import { ENDLESS_RULE } from './EndlessRules.ts';
 import { endlessWorld } from './Endless.ts';
 import { timedWave, copyTimedWave, cloneTimedWave, type TimedWaveState } from './TimedWaves.ts';
 import { waveDraft,draftReadyConfigured } from './WaveDraft.ts';
+import {combatConfigured} from './Combat.ts';
+import {COMBAT_RULE,type CombatState} from './CombatRules.ts';
 import { BOSS_WAVES_RULE,BOSS_ENCOUNTERS_RULE,bossWavesConfigured,bossEncountersConfigured,reconnectSavedBoss } from './BossWaves.ts';
 import {tieredGrowthConfigured} from './TieredGrowth.ts';
 import {clearWavesConfigured,reconcileSavedClearWave} from './ClearWaves.ts';
@@ -92,6 +94,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  combat?:CombatState;
   bossWaves?: typeof BOSS_WAVES_RULE;
   bossEncounters?: typeof BOSS_ENCOUNTERS_RULE;
   waveDraft?: WaveDraftState;
@@ -261,6 +264,7 @@ export function capture(world: any): RunSnapshot {
     .map(captureObject);
   return {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
+    ...(u.combat?{combat:{...u.combat}}:{}),
     ...(endlessWorld(world)?{endless:ENDLESS_RULE}:{}),
     ...(timedWave(world)?{timedWave:copyTimedWave(world)}:{}),
     ...(waveDraft(world)?{waveDraft:copyWaveDraft(waveDraft(world))}:{}),
@@ -445,12 +449,14 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if(snap.timedWave&&!timedWave(world))return false;
   if(snap.waveDraft&&!waveDraft(world))return false;
   if(snap.waveDraft?.round?.readyRule&&!draftReadyConfigured())return false;
+  if(snap.combat&&!combatConfigured())return false;
   if((snap.bossWaves||snap.timedWave?.boss||snap.variants?.enemies.some(e=>e.fields.mBossKind))&&!bossWavesConfigured())return false;
   if((snap.bossEncounters||snap.timedWave?.boss?.members)&&!bossEncountersConfigured())return false;
   if(snap.timedWave?.phase==='draft'&&!snap.waveDraft?.round)return false;
   if(snap.growth?.players.some(p=>p.tiered)&&!tieredGrowthConfigured())return false;
   if((snap.timedWave?.clear||snap.timedWave?.clearable)&&!clearWavesConfigured())return false;
   const u = world.mUpgrades;
+  if(combatConfigured())u.combat=snap.combat?{...snap.combat}:{rule:COMBAT_RULE,pendingWave:snap.wave+1};
   const hud = world.mHud;
   if (snap.growth) u.lanGrowth = copyGrowth(snap.growth);
   else delete u.lanGrowth; // Old saves must replay their original multiplier before one-time conversion.

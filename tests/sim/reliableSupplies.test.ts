@@ -7,7 +7,7 @@ import { capture, applyToWorld } from '../../src/game/local/Resume.ts';
 import { NetSession } from '../../src/game/local/Net/NetSession.ts';
 
 it('a single-weapon red reward fills inherited capacity without changing the selected weapon', () => {
-  const g = createHeadlessGame({ mode: 'Single' }); noSpawn(g);
+  const g = createHeadlessGame({ mode: 'Single',classicCombat:true }); noSpawn(g);
   const p = g.players()[0]; p.NewWeapon('uzi'); p.SelectWeapon('uzi');
   p.mWeapon_Current.mTotalAmmo = 1200; p.mWeapon_Current.mAmmo = 17;
   expect(redBoxReward(p, .99)).toBe(true);
@@ -42,7 +42,7 @@ it.each([false,true])('negotiated refill rule=%s preserves the exact legacy path
 });
 
 it('whole-backpack supply preserves larger inherited capacities through an upgrade and resume', () => {
-  const g = createHeadlessGame({ mode: 'Coop' }); noSpawn(g);
+  const g = createHeadlessGame({ mode: 'Coop',classicCombat:true }); noSpawn(g);
   const p = g.players()[0], w = g.world(); p.NewWeapon('uzi'); p.NewWeapon('shotgun'); p.SelectWeapon('uzi');
   p.mWeapon_Current.mTotalAmmo = 1200; p.mWeapon_Current.mAmmo = 0;
   w.mUpgrades.lanGrowth.players[p.mPlayerIndex].level = 39;

@@ -31,10 +31,10 @@ const ammo=(n:number,infinite=false)=>infinite?'INF':number(n);
 export function rewardPreview(stats:PlayerStats|undefined,reward:Reward,m:number):string{
  if(!stats)return 'Current stats will appear when confirmed';
  const b=stats.bonuses;
- if(reward==='damage')return `DAMAGE  ${number(stats.damage)}  >  ${number(stats.damage/(1+.08*b.damage)*(1+.08*(b.damage+m)))}`;
+ if(reward==='damage')return `DAMAGE  ${number(stats.damage)}  >  ${number(stats.previews?.damage[m-1]??stats.damage/(1+.08*b.damage)*(1+.08*(b.damage+m)))}`;
  if(reward==='health')return `MAX HP  ${number(stats.maximum)}  >  ${number(stats.maximum/(1+.1*b.health)*(1+.1*(b.health+m)))}`;
  if(reward==='armor')return `MAX SHIELD  ${number(stats.armorMaximum)}  >  ${number(stats.armorMaximum/(1+.1*b.armor)*(1+.1*(b.armor+m)))}`;
- if(reward==='capacity')return stats.infinite?'CAPACITY  /  FINITE WEAPONS':`CAPACITY  ${ammo(stats.capacity)}  >  ${ammo(stats.capacity+Math.floor(stats.capacityBase*.15*(b.capacity+m))-Math.floor(stats.capacityBase*.15*b.capacity))}`;
+ if(reward==='capacity')return stats.infinite?'CAPACITY  /  FINITE WEAPONS':`CAPACITY  ${ammo(stats.capacity)}  >  ${ammo(stats.previews?.capacity[m-1]??stats.capacity+Math.floor(stats.capacityBase*.15*(b.capacity+m))-Math.floor(stats.capacityBase*.15*b.capacity))}`;
  if(reward==='heal')return `HP  ${number(stats.life)}  >  ${number(Math.min(stats.maximum,stats.life+stats.maximum*.35*m))}`;
  return stats.infinite?'RESTORE AMMO TO FINITE WEAPONS':`AMMO  ${ammo(stats.ammo)}  >  ${ammo(Math.min(stats.capacity,stats.ammo+Math.ceil(stats.capacity*.35*m)))}`;
 }
@@ -102,7 +102,8 @@ function update(world:any,state:WaveDraftState):void{
    card._visible=!open[i];card.clear();card.lineStyle(selected?2:1,selected?RED:0xcdcdc7,100);
    box(card,(view.width-36-(round.offers.length-1)*14)/round.offers.length,64,selected?0xfff5ef:PILL_FILL);
    drawIcon(card._Icon,reward);fit(card._Label,REWARD_LABELS[reward],14);
-   fit(card._Detail,REWARD_DETAILS[reward].replace(/\d+%/,n=>`${parseInt(n)*round.multiplier}%`),11);
+   const detail=reward==='capacity'&&s?.previews?'Ammo capacity +8% (diminishing)':REWARD_DETAILS[reward];
+   fit(card._Detail,detail.replace(/\d+%/,n=>`${parseInt(n)*round.multiplier}%`),11);
    fit(card._Preview,rewardPreview(s,reward,round.multiplier),10);card._alpha=local||ready?100:70;
    card.onRelease=local&&!ready?()=>round.readyRule?queueDraftCommand(world,i,encodeDraftSelection(choice),round.wave):queueDraftChoice(world,i,choice,round.wave):undefined;
    card.useHandCursor=!!card.onRelease;

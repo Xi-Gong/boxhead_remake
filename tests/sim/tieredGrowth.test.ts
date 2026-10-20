@@ -43,7 +43,7 @@ it('uses real kill credit to unlock opening weapon rewards sooner without passiv
  }finally{g.quit();}
 });
 it('applies late-level HP/shield maxima, damage and only the new ammo capacity delta',()=>{
- const g=createHeadlessGame(),w=g.world(),p=g.players()[0],state=growthOf(w)!.players[0];try{
+ const g=createHeadlessGame({classicCombat:true}),w=g.world(),p=g.players()[0],state=growthOf(w)!.players[0];try{
   state.level=30;state.xp=tieredXpRequired(30)-1;p.NewWeapon('uzi');syncVitals(p,'restore');
   const gun=p.mWeapons.uzi.mThing;w.mUpgrades.ApplyUpgrade_Weapon(gun);gun.mAmmo=7;p.mLife=85;p.mArmor=19;
   const maximum=playerMaximum(p),capacity=gun.mTotalAmmo;

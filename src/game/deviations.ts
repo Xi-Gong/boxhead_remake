@@ -723,4 +723,12 @@ export const DEVIATIONS: Deviation[] = [
       'with gameplay keys. New ready rounds separate mouse selection from readiness using reserved seven-bit '+
       'commands; old rounds retain their input interpretation. LAN sheets only display confirmed tick metadata.',
   },
+  {
+    id:'MODERN_COMBAT',file:'local/Combat.ts, CombatRules.ts; local/Net/Growth.ts, GrowthHud.ts; local/Resume.ts, ReliableSupplies.ts, WeaponCrate.ts',
+    description:'Optional combat-pve-v2 replaces multiplicative finite capacity with diminishing additive '+
+      'training, caps weapon fire cadence, reduces shotgun pellet damage and adds distance falloff. Rocket '+
+      'emissions/descendants retain their identity so direct self-blast damage is 15% before armor; other '+
+      'explosions keep their behavior. Old saves finish the current wave and activate modern tuning at the '+
+      'next boundary without free ammo or lost earned progress. Legacy assertions use explicit fixtures.',
+  },
 ];
