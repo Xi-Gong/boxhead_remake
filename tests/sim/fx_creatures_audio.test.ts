@@ -146,7 +146,7 @@ describe('devil', () => {
 
 describe('player', () => {
   it('invincible 200 ticks after the first spawn, blinking (not drawn on odd counts); 0.16 cells per tick; life 200', () => {
-    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 3 });
+    const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 3, classicSimplifiedCombat: true });
     const p = g.players()[0];
     expect([p.mMaxLife, p.mSpeed, p.mMass]).toEqual([200, 0.16, 2]);
     const left = p.mInvincible;
@@ -214,7 +214,7 @@ describe('player', () => {
 
   it('friendly fire off: bullets pass through the partner, explosions do not hurt players; on: both hurt', () => {
     for (const damage of [0, 1] as const) {
-      const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 6, options: { damage } });
+      const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 6, options: { damage }, classicSimplifiedCombat: true });
       noSpawn(g);
       clearBarrels(g);
       const [p1, p2] = g.players();

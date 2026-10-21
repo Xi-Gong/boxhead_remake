@@ -57,7 +57,7 @@ it('retains emitted shotgun origin and applies falloff once per victim across ro
 it('migrates old combat at the next wave without progress loss or free ammunition and rejects downgrade',()=>{
  const old=createHeadlessGame({classicCombat:true}),w0=old.world(),p0=old.players()[0];w0.mUpgrades.lanGrowth.players[0].level=500;p0.NewWeapon('uzi');
  w0.mUpgrades.ApplyUpgrade_Weapon(p0.mWeapons.uzi.mThing);p0.mWeapons.uzi.mThing.mAmmo=777;p0.mLife=67;p0.mArmor=19;
- const save=capture(w0);old.quit();const g=createHeadlessGame(),w=g.world(),p=g.players()[0];expect(applyToWorld(w,save)).toBe(true);
+ const save=capture(w0);old.quit();const g=createHeadlessGame({classicSimplifiedCombat:true}),w=g.world(),p=g.players()[0];expect(applyToWorld(w,save)).toBe(true);
  expect(combatWorld(w)).toBe(false);expect(p.mWeapons.uzi.mThing.mAmmo).toBe(777);
  w.mUpgrades.__set__mLevel(save.wave+1);expect(combatWorld(w)).toBe(true);expect(w.mUpgrades.lanGrowth.players[0].level).toBe(500);
  expect(p.mWeapons.uzi.mThing.mAmmo).toBe(p.mWeapons.uzi.mThing.mTotalAmmo);expect(p.mWeapons.uzi.mThing.mTotalAmmo).toBeLessThanOrEqual(300);

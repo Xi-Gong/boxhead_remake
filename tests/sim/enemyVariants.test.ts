@@ -10,7 +10,7 @@ import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,makeSnapCtx,restoreWorldSnap} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 import {tieredExperienceBeforeLevel} from '../../src/game/local/TieredGrowthRules.ts';
-function boot(mode:'Single'|'Coop'='Single',classicCombat=false){const g=createHeadlessGame({mode,classicCombat});noSpawn(g);placePlayer(g,9.5,8.5,0);return g;}
+function boot(mode:'Single'|'Coop'='Single',classicCombat=false){const g=createHeadlessGame({mode,classicCombat,classicSimplifiedCombat:true});noSpawn(g);placePlayer(g,9.5,8.5,0);return g;}
 function enemy(g:any,kind:'charger'|'priest',x=5.5,y=8.5){const C=kind==='charger'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil,e:any=new C(pos(x,y));e.mEnemyVariant=kind;g.world().mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');return e;}
 function supplies(g:any){return (Object.values(g.world().mThing_Collection.mThings)as any[]).filter(t=>t.mSupplyId&&t.Process);}
 it('replaces deterministic original slots at the exact per-wave ratios',()=>{

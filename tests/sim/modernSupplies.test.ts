@@ -10,7 +10,7 @@ import { getRandomState, setRandomState, setMathRandomSource, mathRandom, random
 import { captureWorldSnap, makeSnapCtx, restoreWorldSnap } from '../../src/game/local/Net/WorldSnap.ts';
 import { simulationDigest } from '../../src/game/local/Net/StateDigest.ts';
 
-function boot(mode:'Single'|'Coop'='Single',room=1,classicCombat=false){const g=createHeadlessGame({mode,room,classicCombat});noSpawn(g);return g;}
+function boot(mode:'Single'|'Coop'='Single',room=1,classicCombat=false){const g=createHeadlessGame({mode,room,classicCombat,classicSimplifiedCombat:true});noSpawn(g);return g;}
 function special(g:any,kind:SupplyKind,where:any=pos(12.5,8.5)){
   const w=g.world(),box=w.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(where,kind,supplyIdentity(w,'s')));
   box.Process_Init();return box;

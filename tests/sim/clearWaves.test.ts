@@ -68,7 +68,7 @@ it('rejects incapable saves before mutation, while legacy current waves keep the
  const g=createHeadlessGame(),saved=capture(g.world());g.quit();
  const old=createHeadlessGame({classicClearWaves:true}),w=old.world(),before=capture(w);
  expect(applyToWorld(w,saved)).toBe(false);expect(capture(w)).toEqual(before);expect(timedWave(w)!.clear).toBeUndefined();old.quit();
- const modern=createHeadlessGame();expect(applyToWorld(modern.world(),before)).toBe(true);expect(timedWave(modern.world())!.clear).toBeUndefined();
+ const modern=createHeadlessGame({classicSimplifiedCombat:true});expect(applyToWorld(modern.world(),before)).toBe(true);expect(timedWave(modern.world())!.clear).toBeUndefined();
  modern.world().mUpgrades.__set__mLevel(2);expect(timedWave(modern.world())!.clear).toBeDefined();modern.quit();
 });
 it('uses the clear objective for reference growth, with bounded high-wave sums and no assumed Boss credit',()=>{
