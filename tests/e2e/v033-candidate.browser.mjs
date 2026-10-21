@@ -1,13 +1,19 @@
 // Prepared UI fixtures are separate from the input-only balance playtests.
 import assert from 'node:assert/strict';
-import {mkdirSync,writeFileSync} from 'node:fs';
+import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
+import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
 const out=process.env.CANDIDATE_OUT??`generated/reports/v033/ui-${Date.now()}`;
 mkdirSync(out,{recursive:true});const report={ok:false,method:'One headless 640x480 production browser, prepared draft fixture and real clicks/keys'};
 const browser=await launch();let g;
 try{
- g=await openGame(browser);await toMainMenu(g);await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
- await g.click(320,230);assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));await g.page.waitForTimeout(700);
+ g=await openGame(browser);await toMainMenu(g);await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));console.log('v033: level selection ready');
+ await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons._Button');
+ if(!await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded',5000)){
+  if(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld',1000))await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons._Button');
+  if(!await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded',30000))throw new Error('world did not load: '+JSON.stringify(await g.expr('({state:g.state(),screen:m.mcScreen?.nState,link:m.mWorldLibLink,loaded:m.mcWorld?.mLoaded,worldName:m.mcWorld?._name,worldKeys:Object.keys(m).filter(k=>/world/i.test(k)),children:Array.from({length:12},(_,i)=>{const c=m.getInstanceAtDepth(i);return c?{depth:i,name:c._name,cls:c._CLASSID_}:null;})})')));
+ }
+ await g.page.waitForTimeout(700);
  report.initial=await g.expr('(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];p.NewWeapon("uzi");p.SelectWeapon("uzi");p.mWeapon_Current.mPersistentEnchantment=true;p.mWeapon_Current.mEnchantedAmmo=p.mWeapon_Current.mAmmo;return {rule:w.mUpgrades.combat.rule,health:p.mMaxLife};})()');
  assert.equal(report.initial.rule,'combat-pve-v3');assert.equal(report.initial.health,160);
  await g.expr('(()=>{const w=m.mcWorld;w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers=[["health","armor","damage"]];})()');
@@ -22,7 +28,29 @@ try{
  assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));assert.equal(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mMaxLife'),173);
  await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.shot(`${out}/pause.png`,false);
  assert.match(await g.expr('m.mcWorld.mHud.mcScreenPause._PersonalUpgrades._GrowthStats0.text'),/HP 173 \/ SHIELD 60/);
+ await g.page.keyboard.press('KeyP');assert(await g.waitExpr('!m.mcWorld.mPaused'));
+ report.bosses=await g.eval(()=>{
+  const P=window.__game.pkg,w=window.__game.main().mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];
+  w.mUpgrades.AdvanceTimedWave();w.mUpgrades.__set__mLevel(25);p.Move(new P.Thing.Math.CThing_Position(11.5,8.5,0));w.TrackThing(p);
+  w.mTrackPosition=p.mPosition.Clone();w.lTrackPosition=p.mPosition.Clone();
+  const boss=w.mUpgrades.timedWave.boss;
+  const enemies=boss.members.map((member,i)=>{
+   const C=member.kind==='charger'?P.Thing.Creature.CThing_Creature_Zombie:P.Thing.Creature.CThing_Creature_Devil;
+   const e=new C(new P.Thing.Math.CThing_Position(8.5+i*3,11.5,0));e.mBossKind=member.kind;e.mBossSlot=i;if(member.kind==='charger')e.mEnemyVariant='charger';
+   w.mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');e.mLife=member.life=e.mMaxLife*[1,.5,.1][i];member.maximum=e.mMaxLife;
+   return e;
+  });
+  w.Draw();w.mPaused=true;
+  return enemies.map((e,i)=>{const b=w._BossHealthHud['_Boss'+i],bounds=b.getBounds(b),a=e.mXSI_Animation,o=a.mAnimationObject,f=o.mDirections[o.mLookup256[e.mAngle.__get__mAngle256()&255]].mFrames[a.mCurrentFrameID&16777215];
+   return {kind:e.mBossKind,x:b._x,y:b._y,width:bounds.xMax-bounds.xMin,height:bounds.yMax-bounds.yMin,headTop:w.GetScreenPosition(e.mPosition).y+f.mDisp.y,armor:e.mEnemyArmor??0,fraction:e.mLife/e.mMaxLife,visible:b._visible};});
+ });
+ for(const b of report.bosses){assert(b.visible);assert.equal(b.width,b.kind==='charger'?44:40);assert.equal(b.height,5);assert.equal(b.armor,0);assert(b.y+b.height+3<=b.headTop);assert(b.x>=0&&b.x+b.width<=640);}
+ await g.shot(`${out}/bosses.png`,false);const png=PNG.sync.read(readFileSync(`${out}/bosses.png`));
+ for(const b of report.bosses){const rgb=b.kind==='charger'?[213,200,154]:[255,174,100];let pixels=0;
+  for(let y=b.y+2;y<b.y+4;y++)for(let x=b.x;x<b.x+b.width;x++){const k=(y*png.width+x)*4;if(rgb.every((v,c)=>Math.abs(v-png.data[k+c])<4))pixels++;}
+  assert(pixels>0);assert(pixels<=Math.ceil((b.width-2)*b.fraction)*2+4);b.fillPixels=pixels;
+ }
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
-}catch(error){report.error=String(error);throw error;}
+}catch(error){report.error=String(error);if(g){report.scriptErrors=await g.scriptErrors();report.browserLog=g.log;await g.shot(`${out}/failed.png`,false);}throw error;}
 finally{await g?.close();await browser.close();writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
 console.log('V033 CANDIDATE UI PASSED '+out);

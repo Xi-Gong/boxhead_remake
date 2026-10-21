@@ -1,6 +1,7 @@
 // BOSS_OVERHEAD_HEALTH: presentation only; HP is supplied by the same confirmed state as the wave HUD.
 import {bossMembers,type BossWaveState,type BossMemberState} from './TimedWaves.ts';
 import { capsule } from './UiStyle.ts';
+import {simplifiedWorld} from './CombatRules.ts';
 
 const WIDTH = 64, HEIGHT = 7, GAP = 5;
 
@@ -18,10 +19,11 @@ export function bossHealthLayout(world: any, boss: BossMemberState | undefined) 
   // Do not pin labels to screen edges for enemies outside this camera's visible playfield.
   if (position.x < 0 || position.x > screen.x || top > screen.y ||
       top + frame.sBMD.height < 0 || left + frame.sBMD.width < 0 || left > screen.x) return;
-  const x = Math.round(Math.max(2, Math.min(screen.x - WIDTH - 2, position.x - WIDTH / 2)));
-  const y = Math.round(Math.max(2, top - HEIGHT - GAP));
+  const simple=simplifiedWorld(world),width=simple?boss.kind==='charger'?44:40:WIDTH,height=simple?5:HEIGHT,gap=simple?4:GAP;
+  const x = Math.round(Math.max(2, Math.min(screen.x - width - 2, position.x - width / 2)));
+  const y = Math.round(Math.max(2, top - height - gap));
   const life = Math.min(boss.maximum, boss.life);
-  return { x, y, width: WIDTH, height: HEIGHT, headTop: top,
+  return { x, y, width, height, headTop: top,
     fraction: Math.max(0, Math.min(1, life / boss.maximum)) };
 }
 
@@ -42,14 +44,15 @@ export function drawBossHealth(world: any, boss: BossWaveState | undefined, visi
 }
 function paintBar(layer:any,layout:NonNullable<ReturnType<typeof bossHealthLayout>>,boss:BossMemberState):void{
   layer._x = layout.x; layer._y = layout.y;
+  const {width,height}=layout;
   layer.clear();
   const pill = (x: number, y: number, w: number, h: number, color: number, alpha = 100): void => {
     if(w<=0)return;
     layer.beginFill(color, alpha); capsule(layer,x,y,w,h); layer.endFill();
   };
   const accent = boss.kind === 'charger' ? 0xd5c89a : boss.kind==='butcher'?0xd99a88:boss.kind==='hunter'?0x9cd4cf:0xffae64;
-  pill(0,0,WIDTH,HEIGHT,0x171a18,94);
-  pill(1,1,WIDTH-2,HEIGHT-2,0x534844);
-  pill(1,1,Math.max(1,(WIDTH-2)*layout.fraction),HEIGHT-2,accent);
-  pill(2,1,Math.max(0,(WIDTH-2)*layout.fraction-2),1,0xffecd0,65);
+  pill(0,0,width,height,0x171a18,94);
+  pill(1,1,width-2,height-2,0x534844);
+  pill(1,1,Math.max(1,(width-2)*layout.fraction),height-2,accent);
+  pill(2,1,Math.max(0,(width-2)*layout.fraction-2),1,0xffecd0,65);
 }
