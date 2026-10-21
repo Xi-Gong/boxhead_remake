@@ -30,12 +30,14 @@ const CLIENT_FIRST = process.env.BOXHEAD_CLIENT_FIRST === '1';
 const ALL_RESPONSE = process.env.BOXHEAD_ALL_RESPONSE === '1';
 const HIDDEN = process.env.BOXHEAD_QA_HIDDEN === '1';
 const FUNCTIONAL=process.env.BOXHEAD_QA_FUNCTIONAL_ONLY==='1';
+const README_LAN=process.env.BOXHEAD_QA_README_LAN==='1';
 const SUPPLY_STRESS = Number(process.env.BOXHEAD_NET_SUPPLY_STRESS ?? 0);
 const EXPLOSIONS = Number(process.env.BOXHEAD_NET_EXPLOSIONS ?? 0);
 // User-approved practical acceptance: keep the ordinary one-tick-plus-frame target, allow a bounded
 // peak during 256 simultaneous explosive roots. Correctness and sustained-stall gates are unchanged.
 const RESPONSE_LIMIT_MS = EXPLOSIONS ? 100 : 60;
 if (!Number.isFinite(DELAY_MS) || DELAY_MS < 0) throw new Error('usage: node playtest.netsmooth.mjs [delayMs>=0]');
+if(README_LAN&&(!FUNCTIONAL||!MODERN||SUPPLY_STRESS||EXPLOSIONS||ALL_RESPONSE))throw new Error('README LAN requires the unstressed functional mode');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = resolve(ROOT,process.env.BOXHEAD_QA_OUT??(FUNCTIONAL?`generated/reports/v030/netsmooth-functional-${DELAY_MS}`:'generated/reports/qa'));
@@ -163,6 +165,7 @@ try {
     await x.click(...LAN_BTN);
     if (!(await x.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error(`${n}: no lobby`);
   }
+  if(README_LAN)for(const P of [H,C])await P.page.evaluate(()=>window.__game.__setWaveUnlock(3));
   await h.click(...CREATE_ROOM_BTN);
   if (!(await h.waitFor(() => window.__game?.lan?.()?.bridge === 'hosting', null, 20000))) throw new Error('host: CREATE ROOM did not host');
   await C.page.locator('input[type=text]').click();await C.page.keyboard.type('127.0.0.1');
@@ -187,6 +190,11 @@ try {
     window.__game.__setRollbackV2?.(modern);
     await window.__game.__setInfiniteLife(true);
   }, MODERN);
+  if(README_LAN){
+    for(const P of [H,C])await P.page.evaluate(()=>window.__game.__setInfiniteLife(false));
+    await h.click(596,399);await h.click(596,399);
+    if(!await c.waitFor(()=>window.__game.lan().sel.wave===3,null,10000))throw new Error('normal README starting wave did not mirror');
+  }
   if(ALL_RESPONSE){
     await H.page.evaluate(()=>{const s=window.__game.main().mcScreen.mcSubScreen.mcLevel_Selection;s.bLeft.onRelease.call(s.bLeft);});
     if(!await c.waitFor(()=>window.__game.lan().sel.levelIdx===17,null,10000))throw new Error('large response map did not synchronize');
@@ -199,7 +207,7 @@ try {
   }
   // Smoothness isolation: the original's own cheat switch - players take no damage, so the window measures
   // cadence, not survival.
-  for (const P of [H, C]) await P.page.evaluate(() => window.__game.__setInfiniteLife(true));
+  if(!README_LAN)for (const P of [H, C]) await P.page.evaluate(() => window.__game.__setInfiniteLife(true));
   // (1) Both peers agree on rollback coordination and an adaptive positive input delay.
   const lanH0 = await h.lan();
   report.environment = await H.page.evaluate(() => ({userAgent:navigator.userAgent,dpr:devicePixelRatio,width:innerWidth,height:innerHeight,
@@ -250,7 +258,10 @@ try {
   await shot('01_host_ingame', H.page);
   await shot('02_client_ingame', C.page);
 
-  if(FUNCTIONAL){
+  if(README_LAN){
+    report.scope='Normal selected-wave packaged LAN screenshot; no infinite-life flag, benchmark or stress';
+    const {verifyReadmeLan}=await import('../e2e/readme-lan.mjs');await verifyReadmeLan(H,C,report,OUT);
+  }else if(FUNCTIONAL){
     if(!MODERN||SUPPLY_STRESS||EXPLOSIONS||ALL_RESPONSE||process.env.BOXHEAD_NET_CPU_PROFILE==='1')throw new Error('functional QA forbids benchmark/stress options');
     report.scope='Short 640x480 functional LAN acceptance; no profiling, response benchmark or stress.';
     const target=Math.max((await h.worldInfo()).tick,(await c.worldInfo()).tick)+30;
