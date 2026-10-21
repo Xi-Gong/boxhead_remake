@@ -9,6 +9,7 @@ import {modernBudget} from './CombatPacing.ts';
 import {difficultyIndex} from './BalanceRules.ts';
 import {netSession} from './Net/NetSession.ts';
 import {timedWave,bossMembers} from './TimedWaves.ts';
+import {ENCHANT_DAMAGE,SIMPLE_ENCHANT_DAMAGE} from './EnchantmentRules.ts';
 
 function previousArmorMaximum(snap:RunSnapshot,index:number):number{
  if(snap.survival!==SURVIVAL_RULE)return ARMOR_MAX;
@@ -38,7 +39,7 @@ export function finishSimplifiedRestore(world:any,snap:RunSnapshot):void{
   p.mLife=saved.life>0?Math.max(1,Math.min(p.mMaxLife,Math.round(saved.life/Math.max(1,saved.maxLife)*p.mMaxLife))):saved.life;
   if(saved.armor!==undefined)p.mArmor=Math.round(Math.max(0,Math.min(1,saved.armor/previousArmorMaximum(snap,p.mPlayerIndex)))*armorMaximum(p));
  }
- for(const t of things)if(t.mEnchanted&&/^CThing_Object_(Barrel|Mine|ChargePack)$/.test(t._CLASSID_)&&typeof t.mDamage==='number')t.mDamage*=1.15/1.35;
+ for(const t of things)if(t.mEnchanted&&/^CThing_Object_(Barrel|Mine|ChargePack)$/.test(t._CLASSID_)&&typeof t.mDamage==='number')t.mDamage*=SIMPLE_ENCHANT_DAMAGE/ENCHANT_DAMAGE;
  const state=timedWave(world);if(!state||state.boss||state.phase!=='combat')return;
  const cfg=netSession()?.startOpts?.cfg,budget=modernBudget(world,snap.wave,difficultyIndex(cfg?.difficulty??CMain.mSaveData.__get__mDifficulty()),cfg?.devils??!!CMain.mSaveData.__get__mDevilsActive(),World.CWorld.mGameMode==='Single'?1:2);
  const old=snap.timedWave?.clear,c:ClearWaveState={rule:CLEAR_WAVES_RULE,...budget,emittedZombies:0,emittedDevils:0,killedZombies:0,killedDevils:0};

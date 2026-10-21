@@ -17,6 +17,7 @@ export function capturePlayerStats(world:any):PlayerStats[]{
  return (Object.values(world.mThing_Collection.mPlayerThings)as any[]).sort((a,b)=>a.mPlayerIndex-b.mPlayerIndex).map(p=>{
   const g=world.mUpgrades.lanGrowth?.players[p.mPlayerIndex],w=p.mWeapon_Current;
   const bonus=world.mUpgrades.waveDraft?.bonuses[p.mPlayerIndex]??{damage:0,health:0,armor:0,capacity:0};
+  const simple=simplifiedWorld(world);
   const projected=(kind:'damage'|'capacity'|'haste')=>[1,2].map(n=>{
    const next=modernWeaponProjection(world,p.mPlayerIndex,w._CLASSID_,{...bonus,[kind]:(bonus[kind]??0)+n});
    return next?kind==='haste'?CMain.mFPS/next.fireRate:next[kind]:0;
@@ -28,6 +29,6 @@ export function capturePlayerStats(world:any):PlayerStats[]{
    life:p.mLife,maximum:p.mMaxLife,armor:p.mArmor??0,armorMaximum:armorMaximum(p),speed:p.mSpeed,
    damage:w?.mDamage??0,rate:w?CMain.mFPS/Math.max(1,w.mFireRate):0,ammo:w?.mAmmo??0,capacity:w?.mTotalAmmo??0,
    capacityBase:(w?.mTotalAmmo??0)-(w?.mDraftCapacityBonus??0),infinite:w?infiniteGrowthWeapon(w):false,weapon:w?.mName??'None',enchanted:w?enchantedWeapon(w):false,penetration:p.mArmorPenetration??0,supply:p.mSupplyEfficiency??0,
-   bonuses:{...bonus},...(simplifiedWorld(world)?{simplified:true as const}:{}),...(combatWorld(world)&&w?{previews:{damage:projected('damage'),capacity:projected('capacity'),haste:projected('haste'),health:[1,2].map(n=>playerMaximum(p,{...bonus,health:bonus.health+n})),armor:[1,2].map(n=>playerArmorMaximum(p,{...bonus,armor:bonus.armor+n})),mobility:passive('mobility'),penetration:passive('penetration'),scavenging:passive('scavenging')}}:{})};
+   bonuses:{...bonus},...(simple?{simplified:true as const}:{}),...(combatWorld(world)&&w?{previews:{damage:projected('damage'),capacity:projected('capacity'),haste:projected('haste'),health:[1,2].map(n=>playerMaximum(p,{...bonus,health:bonus.health+n})),armor:[1,2].map(n=>playerArmorMaximum(p,{...bonus,armor:bonus.armor+n})),mobility:passive('mobility'),...(!simple?{penetration:passive('penetration')}:{}),scavenging:passive('scavenging')}}:{})};
  });
 }

@@ -6,7 +6,8 @@ import {CMain,Thing} from '../packages.ts';
 import {simplifiedWorld} from './CombatRules.ts';
 export const ENCHANT_COLOR=0xce8fff;
 export const ENCHANT_DAMAGE=1.35;
-export function enchantmentDamage(world:any):number{return simplifiedWorld(world)?1.15:ENCHANT_DAMAGE;}
+export const SIMPLE_ENCHANT_DAMAGE=1.15;
+export function enchantmentDamage(world:any):number{return simplifiedWorld(world)?SIMPLE_ENCHANT_DAMAGE:ENCHANT_DAMAGE;}
 export const ENCHANTMENT_RULE='persistent-enchantment-v1';
 const classic=new WeakSet<object>();
 /** Explicit historical fixture; never changes modern defaults. */

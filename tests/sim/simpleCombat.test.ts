@@ -78,6 +78,7 @@ it('separates health and armor at every growth boundary, with exact derived rewa
   const stats=capturePlayerStats(w)[0]!;applyWaveReward(w,0,'health',1);applyWaveReward(w,0,'armor',1);
   expect([playerMaximum(p),armorMaximum(p)]).toEqual([173,64]);expect([p.mLife,p.mArmor]).toEqual([93,7]);
   expect([stats.previews!.health![0],stats.previews!.armor![0]]).toEqual([173,64]);
+  expect(stats.previews!.penetration).toBeUndefined();
   w.mUpgrades.lanGrowth.players[0].level=31;const before=p.mMaxLife;syncVitals(p,'level');expect(p.mLife).toBe(93+p.mMaxLife-before);expect(p.mArmor).toBe(7);
  }finally{g.quit();}
 });

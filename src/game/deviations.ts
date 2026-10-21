@@ -787,10 +787,14 @@ export const DEVIATIONS: Deviation[] = [
       'explicit legacy oracle; new geometry and all actions are checked separately.',
   },
   {
-    id:'SIMPLIFIED_PVE',file:'local/CombatRules.ts, Combat.ts, EnemyVariants.ts, BossWaves.ts, Armor.ts, SupplyDrops.ts; local/Net/bridge.ts',
+    id:'SIMPLIFIED_PVE',file:'local/CombatRules.ts, Combat.ts, EnemyVariants.ts, BossWaves.ts, Armor.ts, SupplyDrops.ts, SurvivalRules.ts, EnchantmentRules.ts, CombatPacing.ts, CombatMigration.ts; local/Net/bridge.ts',
     description:'Negotiated combat-pve-v3 retains native zombies, chargers and native fireball devils only, '+
       'including charger/native-devil Bosses. Enemies have no armor. Red rewards use the existing weapon '+
       'pool exclusively; every devil drops exactly one permanent medical/armor/enchantment/ammo crate '+
-      'with one equal-quarter seeded roll. Explicit v2 fixtures and old peers retain their prior semantics.',
+      'with one equal-quarter seeded roll. Separate 160/60 tiered vitals, smaller growth/perk increments, '+
+      '15% enchantment with two-target bullets, seven-stat builds, two Boss reinforcements and objectives '+
+      'sized to actual map deadlines replace v2 tuning. Old runs migrate immediately and once, preserving '+
+      'vital fractions, earned state and clocks; compact Boss-only bars remain render-owned. '+
+      'Explicit v2 fixtures and old peers retain their prior semantics.',
   },
 ];
