@@ -11,7 +11,7 @@ import {captureWorldSnap,makeSnapCtx,restoreWorldSnap} from '../../src/game/loca
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 describe.each([true,false])('enchantment: classic stock=%s',classic=>{
 function boot(mode:'Single'|'Coop'='Single',classicCombat=false){
- const g=createHeadlessGame({mode,classicEnchantment:classic,classicCombat});noSpawn(g);const p=placePlayer(g,5.5,8.5);p.NewWeapon('uzi');p.SelectWeapon('uzi');return {g,p,w:g.world(),gun:p.mWeapon_Current};
+ const g=createHeadlessGame({classicSimplifiedCombat:true,mode,classicEnchantment:classic,classicCombat});noSpawn(g);const p=placePlayer(g,5.5,8.5);p.NewWeapon('uzi');p.SelectWeapon('uzi');return {g,p,w:g.world(),gun:p.mWeapon_Current};
 }
 function fire(p:any){p.mWeapon_Current.Fire(p.mPosition.Clone(),p.mAngle.Clone(),0);}
 it('retains the negotiated refill semantics after consuming the original enchanted stock',()=>{

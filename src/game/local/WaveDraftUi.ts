@@ -44,8 +44,8 @@ export function rewardPreview(stats:PlayerStats|undefined,reward:Reward,m:number
  if(!stats)return 'Current stats will appear when confirmed';
  const b=stats.bonuses;
  if(reward==='damage')return `DAMAGE  ${number(stats.damage)}  >  ${number(stats.previews?.damage[m-1]??stats.damage/(1+.08*b.damage)*(1+.08*(b.damage+m)))}`;
- if(reward==='health')return `MAX HP  ${number(stats.maximum)}  >  ${number(stats.maximum/(1+.1*b.health)*(1+.1*(b.health+m)))}`;
- if(reward==='armor')return `MAX SHIELD  ${number(stats.armorMaximum)}  >  ${number(stats.armorMaximum/(1+.1*b.armor)*(1+.1*(b.armor+m)))}`;
+ if(reward==='health')return `MAX HP  ${number(stats.maximum)}  >  ${number(stats.previews?.health?.[m-1]??stats.maximum/(1+.1*b.health)*(1+.1*(b.health+m)))}`;
+ if(reward==='armor')return `MAX SHIELD  ${number(stats.armorMaximum)}  >  ${number(stats.previews?.armor?.[m-1]??stats.armorMaximum/(1+.1*b.armor)*(1+.1*(b.armor+m)))}`;
  if(reward==='haste')return `RATE  ${stats.rate.toFixed(1)}  >  ${(stats.previews?.haste?.[m-1]??stats.rate).toFixed(1)} per sec`;
  if(reward==='mobility')return `MOVEMENT  ${number(stats.speed/.16*100)}%  >  ${number(stats.previews?.mobility?.[m-1]??100)}%`;
  if(reward==='penetration')return `PIERCING  ${number(stats.penetration*100)}%  >  ${number(stats.previews?.penetration?.[m-1]??0)}%`;
@@ -97,7 +97,7 @@ function statsRows(s:PlayerStats|undefined):[string,string][]{
  return [['LEVEL / XP',`${s.level}  /  ${number(s.xp)} / ${number(s.required)}`],['HEALTH',`${number(s.life)} / ${number(s.maximum)}`],
   ['SHIELD',`${number(s.armor)} / ${number(s.armorMaximum)}`],['MOVEMENT',`${Math.round(s.speed/.16*100)}%`],['WEAPON',s.weapon],
   ['DMG / RATE',`${number(s.damage)} / ${s.rate.toFixed(1)} per sec`],['AMMUNITION',`${ammo(s.ammo,s.infinite)} / ${ammo(s.capacity,s.infinite)}`],
-  ['PIERCE / SUPPLY',`${Math.round(s.penetration*100)}% / +${Math.round(s.supply*100)}%`],['ENCHANTMENT',s.enchanted?'ACTIVE  +35% DAMAGE':'NONE']];
+  [s.simplified?'SUPPLY EFFECT':'PIERCE / SUPPLY',s.simplified?`+${Math.round(s.supply*100)}%`:`${Math.round(s.penetration*100)}% / +${Math.round(s.supply*100)}%`],['ENCHANTMENT',s.enchanted?`ACTIVE  +${s.simplified?15:35}% DAMAGE`:'NONE']];
 }
 function update(world:any,state:WaveDraftState):void{
  const round=state.round!,session=netSession();let view=views.get(world);
@@ -111,14 +111,14 @@ function update(world:any,state:WaveDraftState):void{
  for(let i=0;i<round.offers.length;i++){
   const side=view.players[i],local=!session||session.role===i,ready=round.confirmed[i],s=stats?.find(p=>p.index===i),b=state.bonuses[i]!;
   fit(side._Status,`P${i+1}  /  ${ready?'READY':local?'CHOOSE YOUR UPGRADE':'PARTNER IS CHOOSING'}`,14);side._Status.textColor=ready?GREEN:INK;
-  fit(side._Bonuses,`DMG +${number(b.damage*8)}%  HP +${number(b.health*10)}%`,10);
+  fit(side._Bonuses,`DMG +${number(b.damage*8)}%  HP +${number(b.health*(s?.simplified?8:10))}%`,10);
   setButtonLabel(side._StatsButton,open[i]?'CARDS':`STATS / ${statsKeyLabel(i)}`);side._StatsButton.enabled=local;side._StatsButton._alpha=local?100:55;
   for(let choice=0;choice<3;choice++){
    const card=view.cards[i]![choice],reward=round.offers[i]![choice]!,selected=round.selected[i]===choice;
    card._visible=!open[i];card.clear();card.lineStyle(selected?2:1,selected?RED:0xcdcdc7,100);
    box(card,(view.width-36-(round.offers.length-1)*14)/round.offers.length,64,selected?0xfff5ef:PILL_FILL);
    drawIcon(card._Icon,reward);fit(card._Label,REWARD_LABELS[reward],14);
-   const detail=reward==='capacity'&&s?.previews?'Ammo capacity +8% (diminishing)':REWARD_DETAILS[reward];
+   const detail=s?.simplified&&reward==='health'?'Max health +8%':s?.simplified&&reward==='armor'?'Max shield +6%':reward==='capacity'&&s?.previews?'Ammo capacity +8% (diminishing)':REWARD_DETAILS[reward];
    fit(card._Detail,detail.replace(/\d+%/,n=>`${parseInt(n)*round.multiplier}%`),11);
    fit(card._Preview,rewardPreview(s,reward,round.multiplier),10);card._alpha=local||ready?100:70;
    card.onRelease=local&&!ready?()=>round.readyRule?queueDraftCommand(world,i,encodeDraftSelection(choice),round.wave):queueDraftChoice(world,i,choice,round.wave):undefined;

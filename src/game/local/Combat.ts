@@ -20,7 +20,7 @@ export function combatConfigured():boolean{
 export function syncCombatPlayer(p:any):void{
  if(!combatWorld(p.mWorld))return;
  const b=passiveBonuses(draftBonuses(p.mWorld,p.mPlayerIndex)),raw=p.mWorld.mUpgrades.CThing_Creature_Player?.mOriginalStats;
- p.mSpeed=(raw?.mSpeed??.16)*(1+b.movement);p.mArmorPenetration=b.penetration;p.mSupplyEfficiency=b.supply;
+ p.mSpeed=(raw?.mSpeed??.16)*(1+b.movement);p.mArmorPenetration=simplifiedWorld(p.mWorld)?0:b.penetration;p.mSupplyEfficiency=b.supply;
 }
 export function settleCombatPlayers(world:any):void{for(const p of Object.values(world.mThing_Collection?.mPlayerThings??{})as any[])syncCombatPlayer(p);}
 type Emission={kind:'player'|'shotgun'|'rocket';x?:number;y?:number;range?:number;penetration?:number;things:any[]};

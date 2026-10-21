@@ -4,7 +4,14 @@ import {Thing,World} from '../../src/game/packages.ts';
 import {clearWaveCombat,timedWave,attemptTimedSpawn} from '../../src/game/local/TimedWaves.ts';
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureEnemyArmor} from '../../src/game/local/CombatEnemies.ts';
-import {SIMPLE_COMBAT_RULE} from '../../src/game/local/CombatRules.ts';
+import {SIMPLE_COMBAT_RULE,simplifiedVitals} from '../../src/game/local/CombatRules.ts';
+import {playerMaximum,syncVitals} from '../../src/game/local/SurvivalRules.ts';
+import {armorMaximum,refillArmor} from '../../src/game/local/Supplies.ts';
+import {enchantHeldWeapon} from '../../src/game/local/EnchantmentRules.ts';
+import {rewardOffers,applyWaveReward} from '../../src/game/local/WaveDraft.ts';
+import {startingBonuses} from '../../src/game/local/WaveDraftRules.ts';
+import {capturePlayerStats} from '../../src/game/local/PlayerStats.ts';
+import {noSpawn,placePlayer,addZombie,pos} from './fxkit.ts';
 import {simpleDevilSupply} from '../../src/game/local/LootRules.ts';
 import {redBoxReward} from '../../src/game/local/SupplyDrops.ts';
 import {getRandomState,setRandomState} from '../../src/engine/flash/rng.ts';
@@ -62,5 +69,43 @@ it('keeps the negotiated v2 roster and enemy armor in the explicit previous-rule
  const g=createHeadlessGame({classicSimplifiedCombat:true});try{
   const e:any=new Thing.Creature.CThing_Creature_Devil(g.players()[0].mPosition.Clone());g.world().mThing_Collection.AddThing(e);e.Process_Init();
   expect(g.world().mUpgrades.combat.rule).toBe('combat-pve-v2');expect(e.mEnemyArmor).toBe(600);
+ }finally{g.quit();}
+});
+it('separates health and armor at every growth boundary, with exact derived reward previews',()=>{
+ expect([1,10,30,50].map(simplifiedVitals)).toEqual([{health:160,armor:60},{health:178,armor:69},{health:238,armor:109},{health:318,armor:169}]);
+ const g=createHeadlessGame(),w=g.world(),p=g.players()[0];try{
+  expect([p.mMaxLife,armorMaximum(p)]).toEqual([160,60]);p.mLife=80;p.mArmor=7;
+  const stats=capturePlayerStats(w)[0]!;applyWaveReward(w,0,'health',1);applyWaveReward(w,0,'armor',1);
+  expect([playerMaximum(p),armorMaximum(p)]).toEqual([173,64]);expect([p.mLife,p.mArmor]).toEqual([93,7]);
+  expect([stats.previews!.health![0],stats.previews!.armor![0]]).toEqual([173,64]);
+  w.mUpgrades.lanGrowth.players[0].level=31;const before=p.mMaxLife;syncVitals(p,'level');expect(p.mLife).toBe(93+p.mMaxLife-before);expect(p.mArmor).toBe(7);
+ }finally{g.quit();}
+});
+it('breaks the thin shield on the second 50-damage attack with normal overflow',()=>{
+ const g=createHeadlessGame(),p=g.players()[0];try{
+  noSpawn(g);placePlayer(g,6.5,8.5);p.mInvincible=0;refillArmor(p);
+  const foe={mPosition:p.mPosition.Add(new Thing.Math.CThing_Position(1,0,0)),mAngle:p.mAngle};
+  for(let n=0;n<2;n++){p.mAffectors=[new Thing.Affect.CThing_Affect_ZombieAttack(foe,50)];p.ProcessAffects();}
+  expect([p.mLife,p.mArmor]).toEqual([120,0]);
+ }finally{g.quit();}
+});
+it('offers no ineffective armor piercing and distributes all selected-wave points over seven stats',()=>{
+ const g=createHeadlessGame();try{for(let n=0;n<100;n++)expect(rewardOffers(g.players()[0])).not.toContain('penetration');}finally{g.quit();}
+ const b=startingBonuses(15,true,true);expect(b.penetration).toBeUndefined();expect(Object.values(b).reduce((a,n)=>a+n,0)).toBe(14);expect(b.scavenging).toBe(2);
+});
+it('enchanted bullets receive 15 percent once and hit at most two enemies, still stopping at walls',()=>{
+ const g=createHeadlessGame(),w=g.world();try{
+  noSpawn(g);const p=placePlayer(g,5.5,8.5);p.NewWeapon('uzi');p.SelectWeapon('uzi');const gun=p.mWeapon_Current;
+  const foes=[6.5,7.5,8.5].map(x=>{const e=addZombie(g,x,8.5);e.Process_Init();e.Move(e.mPosition);e.Affect_Setup(Thing.Affect.CThing_Affect.mAffect_Bullet);return e;});
+  enchantHeldWeapon(p);gun.Fire(p.mPosition.Clone(),p.mAngle.Clone());let shot=g.things().find(e=>e._CLASSID_==='CThing_Shot_Bullet');expect(shot.mDamage).toBeCloseTo(gun.mDamage*1.15);shot.Process_Init();
+  expect(foes.map(e=>e.mAffectors.length)).toEqual([1,1,0]);for(const e of foes)e.mAffectors=[];
+  w.mMap.GetCell(7,8).mCollide|=World.Map.CMap_Cell.mCollide_Solid;gun.Fire(p.mPosition.Clone(),p.mAngle.Clone());shot=g.things().filter(e=>e._CLASSID_==='CThing_Shot_Bullet').at(-1);shot.Process_Init();expect(foes.map(e=>e.mAffectors.length)).toEqual([1,0,0]);
+ }finally{g.quit();}
+});
+it('enchanted explosions retain the ordinary edge falloff instead of an extra 50 percent',()=>{
+ const g=createHeadlessGame(),w=g.world(),p=g.players()[0];try{
+  noSpawn(g);const e:any=w.mThing_Collection.AddThing_Effect(new Thing.Effect.CThing_Effect_Explosion(pos(9.5,8.5),p.mAngle,p,115));e.mEnchanted=true;e.Process_Init();
+  const victim=addZombie(g,11.5,8.5);victim.Process_Init();victim.Move(victim.mPosition);victim.mLife=1000;
+  expect(new Thing.Affect.CThing_Affect_Explosion(p,e,115,2.5).AffectThing(victim)).toBeCloseTo(115*.5);
  }finally{g.quit();}
 });

@@ -7,6 +7,11 @@ export interface CombatState {rule:CombatRule;pendingWave?:number}
 export function combatState(state:CombatState|undefined):boolean{return !!state&&(state.rule===COMBAT_RULE||state.rule===SIMPLE_COMBAT_RULE)&&state.pendingWave===undefined;}
 export function combatWorld(world:any):boolean{return combatState(world?.mUpgrades?.combat);}
 export function simplifiedWorld(world:any):boolean{return world?.mUpgrades?.combat?.rule===SIMPLE_COMBAT_RULE&&world.mUpgrades.combat.pendingWave===undefined;}
+export function simplifiedVitals(level:number):{health:number;armor:number}{
+ const n=Math.max(0,Math.floor(level)-1),basic=Math.min(9,n),middle=Math.min(20,Math.max(0,n-9)),elite=Math.max(0,n-29);
+ return {health:160+2*basic+3*middle+4*elite,armor:60+basic+2*middle+3*elite};
+}
+export function vitalityStep(world:any,kind:'health'|'armor'):number{return simplifiedWorld(world)?kind==='health'?.08:.06:.1;}
 export function diminishing(value:number,maximum=2):number{const n=Math.max(0,value);return maximum*n/(maximum+n);}
 export function passiveBonuses(b:WaveBonuses):{movement:number;penetration:number;supply:number}{return {
  movement:diminishing(.04*(b.mobility??0),.25),penetration:diminishing(.12*(b.penetration??0),.6),supply:diminishing(.1*(b.scavenging??0),.6)};}

@@ -3,7 +3,7 @@ import {CMain,Thing,World} from '../packages.ts';
 import {clearWaveCombat,timedWave,timedWavesConfigured} from './TimedWaves.ts';
 import {netSession} from './Net/NetSession.ts';
 import {infiniteGrowthWeapon,modernWeaponProjection} from './Net/Growth.ts';
-import {combatWorld,passiveBonuses,restoredSupply} from './CombatRules.ts';
+import {combatWorld,simplifiedWorld,passiveBonuses,restoredSupply} from './CombatRules.ts';
 import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {syncVitals} from './SurvivalRules.ts';
@@ -21,7 +21,7 @@ export function waveDraftConfigured():boolean {
 }
 export function waveDraft(world:any):WaveDraftState|undefined{return world?.mUpgrades?.waveDraft;}
 export function initializeWaveDraft(world:any):void {
-  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world));
+  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world),simplifiedWorld(world));
 }
 function player(world:any,index:number):any {
   return (Object.values(world.mThing_Collection.mPlayerThings) as any[]).find(p=>p.mPlayerIndex===index);
@@ -38,7 +38,7 @@ export function rewardOffers(p:any):Reward[] {
       const next=modernWeaponProjection(w,p.mPlayerIndex,gun._CLASSID_,{...b,[key]:(b[key]??0)+1});
       return next&&(key==='capacity'?next.capacity>gun.mTotalAmmo:next.fireRate<gun.mFireRate);
     });
-    const offense:Reward[]=['damage','penetration'];if(canWeapon('haste'))offense.push('haste');
+    const offense:Reward[]=simplifiedWorld(w)?['damage']:['damage','penetration'];if(canWeapon('haste'))offense.push('haste');
     const defense:Reward[]=['health','armor'];if(alive&&p.mLife<p.mMaxLife)defense.push('heal');
     const utility:Reward[]=['scavenging'];
     if(passiveBonuses({...b,mobility:(b.mobility??0)+1}).movement-passiveBonuses(b).movement>1e-6)utility.push('mobility');

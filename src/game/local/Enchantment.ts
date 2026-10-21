@@ -1,7 +1,8 @@
 // ENEMY_VARIANTS: source ports remain unchanged. All authoritative state lives on snapshot-owned things.
 import {DrawPrimitive,Thing,World} from '../packages.ts';
 import {flash} from '../../engine/runtime.ts';
-import {ENCHANT_COLOR,ENCHANT_DAMAGE,enchantedAmmo,enchantedWeapon,persistentWeapon} from './EnchantmentRules.ts';
+import {ENCHANT_COLOR,enchantmentDamage,enchantedAmmo,enchantedWeapon,persistentWeapon} from './EnchantmentRules.ts';
+import {simplifiedWorld} from './CombatRules.ts';
 import {variantsWorld} from './EnemyVariants.ts';
 interface Emission {weapon?:any;things:any[]}
 const emission=new WeakMap<object,Emission>();
@@ -32,7 +33,7 @@ export function installEnchantmentScope():void{
   p.Fire=function(this:any,...args:any[]):any{
    if(!variantsWorld(this.mWorld)||!enchantedWeapon(this))return fire.apply(this,args);
    const context:Emission={weapon:this,things:[]},damage=this.mDamage;
-   if(typeof damage==='number')this.mDamage=damage*ENCHANT_DAMAGE;
+   if(typeof damage==='number')this.mDamage=damage*enchantmentDamage(this.mWorld);
    try{return emitting(this.mThing_Collection,context,()=>fire.apply(this,args));}
    finally{if(typeof damage==='number')this.mDamage=damage;for(const t of context.things)if(t.mEffect)mark(t.mEffect);}
   };
@@ -76,9 +77,10 @@ export function installEnchantmentScope():void{
   if(!shot.mEnchanted||mapOnly||shot._CLASSID_!=='CThing_Shot_Bullet')return line.call(this,shot,a,b,r,flags,mapOnly);
   const hidden:[any,number][]=[];
   try{
-   for(let n=0;n<3;n++){
+   const maximum=simplifiedWorld(shot.mWorld)?2:3;
+   for(let n=0;n<maximum;n++){
     const hit=line.call(this,shot,a,b,r,flags,mapOnly),t=hit?.mThing;
-    if(n===2||!t||!['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(t._CLASSID_))return hit;
+    if(n===maximum-1||!t||!['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(t._CLASSID_))return hit;
     t.Affect(new Thing.Affect.CThing_Affect_Bullet(shot.mParent,shot,shot.mDamage,shot.mAngle));
     hidden.push([t,t.mAffectFlags]);t.mAffectFlags=0;
    }
@@ -96,7 +98,7 @@ export function installEnchantmentScope():void{
   if(!enchantSight(t.mWorld,this.mAffector.mPosition,t.mPosition))return 0;
   const d=t.mPosition.Distance2D(this.mAffector.mPosition)/this.mRange,before=this.mDamage;
   // An enchanted blast retains at least 75% of its boosted damage throughout its normal radius.
-  if(d>.75&&d<=1)this.mDamage*=1.5;
+  if(!simplifiedWorld(t.mWorld)&&d>.75&&d<=1)this.mDamage*=1.5;
   try{return damage.call(this,t);}finally{this.mDamage=before;}
  };
  for(const ctor of [Thing.Shot.CThing_Shot_Bullet,Thing.Shot.CThing_Shot_Railgun]){

@@ -14,18 +14,18 @@ export const REWARD_LABELS:Record<Reward,string>={damage:'FIREPOWER',health:'VIT
 export const REWARD_DETAILS:Record<Reward,string>={damage:'Weapon damage +8%',health:'Max health +10%',armor:'Max shield +10%',capacity:'Ammo capacity +15%',heal:'Recover 35% max health',ammo:'Recover 35% ammo per weapon',haste:'Fire rate +6% (diminishing)',mobility:'Move speed +4% (diminishing)',penetration:'Piercing +12% (diminishing)',scavenging:'Supply effect +10% (diminishing)'};
 const zero:Readonly<WaveBonuses>={damage:0,health:0,armor:0,capacity:0};
 export function draftBonuses(world:any,index:number):Readonly<WaveBonuses> {return world?.mUpgrades?.waveDraft?.bonuses[index]??zero;}
-export function startingBonuses(wave:number,modern=false):WaveBonuses {
+export function startingBonuses(wave:number,modern=false,simplified=false):WaveBonuses {
   if(modern){
-    const count=Math.max(0,Math.floor(wave)-1),base=Math.floor(count/8),extra=count%8;
-    const keys=['damage','health','armor','capacity','mobility','haste','penetration','scavenging']as const;
+    const keys=simplified?['damage','health','armor','capacity','mobility','haste','scavenging']as const:['damage','health','armor','capacity','mobility','haste','penetration','scavenging']as const;
+    const count=Math.max(0,Math.floor(wave)-1),base=Math.floor(count/keys.length),extra=count%keys.length;
     const result:WaveBonuses={damage:0,health:0,armor:0,capacity:0};
     keys.forEach((key,i)=>{const n=base+(extra>i?1:0);if(i<4||n)result[key]=n;});return result;
   }
   const count=Math.max(0,Math.floor(wave)-1),base=Math.floor(count/4),extra=count%4;
   return {damage:base+(extra>0?1:0),health:base+(extra>1?1:0),armor:base+(extra>2?1:0),capacity:base};
 }
-export function newWaveDraft(wave:number,modern=false):WaveDraftState {
-  return {rule:WAVE_DRAFT_RULE,bonuses:[startingBonuses(wave,modern),startingBonuses(wave,modern)],lastRewardWave:Math.max(0,wave-1)};
+export function newWaveDraft(wave:number,modern=false,simplified=false):WaveDraftState {
+  return {rule:WAVE_DRAFT_RULE,bonuses:[startingBonuses(wave,modern,simplified),startingBonuses(wave,modern,simplified)],lastRewardWave:Math.max(0,wave-1)};
 }
 export function copyWaveDraft(state:WaveDraftState|undefined):WaveDraftState|undefined {
   if(!state)return;
