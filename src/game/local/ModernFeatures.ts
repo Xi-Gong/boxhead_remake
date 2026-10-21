@@ -2,7 +2,7 @@
 import {CMain,World} from '../packages.ts';
 import {netSession} from './Net/NetSession.ts';
 import {simplifiedWorld,SIMPLE_COMBAT_RULE} from './CombatRules.ts';
-export const MODERN_FEATURES=['fragile-armor-v1'] as const;
+export const MODERN_FEATURES=['fragile-armor-v1','empty-weapons-v1'] as const;
 export type ModernFeature=typeof MODERN_FEATURES[number];
 const classic=new WeakMap<object,Set<ModernFeature>>();
 export function setClassicFeatureFixture(main:object,features:readonly ModernFeature[]):void{classic.set(main,new Set(features));}

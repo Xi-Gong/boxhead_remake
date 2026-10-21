@@ -810,4 +810,10 @@ export const DEVIATIONS: Deviation[] = [
       'Local co-op toggles both sheets together; LAN toggles only the local role. Input release guards '+
       'prevent accidental readiness, and simultaneous local pad requests coalesce without network pause state.',
   },
+  {
+    id:'EMPTY_WEAPON_SELECTION',file:'local/WeaponAccess.ts',
+    description:'Optional empty-weapons-v1 allows every unlocked weapon to be selected at zero ammo, '+
+      'keeps it held without firing or automatic pistol fallback, and preserves the original selection '+
+      'code through scoped eligibility wrappers. Legacy peers retain their existing empty-weapon behavior.',
+  },
 ];
