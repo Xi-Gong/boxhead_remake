@@ -44,7 +44,13 @@ export function installCombatScope():void{
   return message.call(this,value,...args);
  };
  const u=World.CUpgrades.prototype as any,init=u.InitLists,level=u.__set__mLevel;
- u.InitLists=function(this:any):any{const result=init.call(this);if(combatConfigured())this.combat={rule:configuredCombatRule()};return result;};
+ u.InitLists=function(this:any):any{
+  const result=init.call(this);if(combatConfigured())this.combat={rule:configuredCombatRule()};
+  // Menu boot may have prepared v3 art before an older LAN peer is selected. Queue its full art
+  // before CWorld.InitCleanUp drains the baker, rather than on the first legacy combat spawn.
+  if(expandedEnemyArtConfigured()){Thing.Creature.CThing_Creature_Zombie.GetCollection();Thing.Creature.CThing_Creature_Devil.GetCollection();}
+  return result;
+ };
  u.__set__mLevel=function(this:any,wave:number):any{
   const activate=this.combat?.pendingWave!==undefined&&wave>=this.combat.pendingWave;
   if(activate)delete this.combat.pendingWave;
