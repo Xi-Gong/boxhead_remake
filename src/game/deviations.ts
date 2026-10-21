@@ -804,4 +804,10 @@ export const DEVIATIONS: Deviation[] = [
       'full armor-crate restoration independent of supply efficiency, a separate thin cyan bar and '+
       'one-time fraction-preserving v2 migration. Legacy negotiated armor semantics remain explicit fixtures.',
   },
+  {
+    id:'DRAFT_STATS_CONTROLS',file:'local/DraftStatsInput.ts, Gamepad.ts, WaveDraftUi.ts',
+    description:'X and the displayed rebound keyboard shortcut inspect attributes only during wave drafts. '+
+      'Local co-op toggles both sheets together; LAN toggles only the local role. Input release guards '+
+      'prevent accidental readiness, and simultaneous local pad requests coalesce without network pause state.',
+  },
 ];

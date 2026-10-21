@@ -4,7 +4,7 @@ import {CMain,CSaveData,CInput} from '../packages.ts';
 import {netSession} from './Net/NetSession.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 type Sheet={open:boolean;release:boolean};
-type View={wave:number;sheets:Sheet[];binding?:number;message:string};
+type View={wave:number;sheets:Sheet[];binding?:number;message:string;batch?:object};
 const views=new WeakMap<object,View>();
 function view(world:any):View{
  const wave=world.mUpgrades?.waveDraft?.round?.wave??-1;let v=views.get(world);
@@ -22,10 +22,13 @@ export function statsKeys():number[]{
 }
 export function statsKeyLabel(index:number):string{const key=statsKeys()[index]!;return key===9?'TAB':String(CInput.mValidKeys?.[key]?.mName??String.fromCharCode(key)).replace(/^'(.)'$/,'$1');}
 export function statsOpen(world:any,index:number):boolean{return view(world).sheets[index]?.open??false;}
-export function toggleStats(world:any,index:number):void{
+export function toggleStats(world:any,index:number,batch?:object):void{
  const round=world.mUpgrades?.waveDraft?.round,s=netSession();
  if(!round||index>=round.offers.length||s&&s.role!==index)return;
- const sheet=view(world).sheets[index]!;sheet.open=!sheet.open;sheet.release=true;view(world).binding=undefined;
+ const v=view(world);if(batch&&v.batch===batch)return;v.batch=batch;
+ const open=!v.sheets[index]!.open;
+ for(const i of s?[index]:round.offers.map((_:unknown,i:number)=>i)){v.sheets[i]!.open=open;v.sheets[i]!.release=true;}
+ v.binding=undefined;
 }
 export function beginStatsBinding(world:any,index:number):void{view(world).binding=index;view(world).message='PRESS A KEY / ESC TO CANCEL';}
 export function statsBindingHint(world:any):string{return view(world).message;}
@@ -53,7 +56,8 @@ export function installDraftStatsInput():void{
    const next=[...keys];next[index]=code;CSaveData.mSharedObject.data.mDraftStatsKeys=next;CMain.mSaveData.SaveData();
    v.binding=undefined;v.message='KEY SAVED';return result;
   }
-  for(let i=0;i<2;i++)if(this['KEY_STATS'+i].IsPressed())toggleStats(world,netSession()?.role??i);
+  const requested=[0,1].filter(i=>this['KEY_STATS'+i].IsPressed());
+  if(requested.length)toggleStats(world,netSession()?.role??requested[0]!);
   return result;
  };
 }

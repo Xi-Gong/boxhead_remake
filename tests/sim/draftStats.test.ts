@@ -10,16 +10,23 @@ import {DRAFT_CONFIRM,encodeDraftSelection} from '../../src/game/local/WaveDraft
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
 import {rewardPreview} from '../../src/game/local/WaveDraftUi.ts';
 
-it('opens sheets independently and prevents fire/navigation while inspecting without changing simulation state',()=>{
+it('opens both local sheets and prevents both players from choosing while inspecting without changing simulation state',()=>{
  const g=createHeadlessGame({mode:'Coop'}),w=g.world();beginWaveDraft(w);const save=capture(w);
- g.keyDown(9);g.keyUp(9);expect(statsOpen(w,0)).toBe(true);expect(statsOpen(w,1)).toBe(false);
+ g.keyDown(9);g.keyUp(9);expect(statsOpen(w,0)).toBe(true);expect(statsOpen(w,1)).toBe(true);
  expect(capture(w)).toEqual(save);
  g.keyDown(KEYS.P1.DOWN);g.keyDown(KEYS.P1.FIRE);g.tick(1);expect(waveDraft(w)!.round!.selected).toEqual([0,0]);
  expect(waveDraft(w)!.round!.confirmed).toEqual([false,false]);
- g.keyDown(KEYS.P2.DOWN);g.tick(1);g.keyUp(KEYS.P2.DOWN);expect(waveDraft(w)!.round!.selected[1]).toBe(1);
+ g.keyDown(KEYS.P2.DOWN);g.tick(1);g.keyUp(KEYS.P2.DOWN);expect(waveDraft(w)!.round!.selected[1]).toBe(0);
  toggleStats(w,0);g.tick(1);expect(waveDraft(w)!.round!.confirmed[0]).toBe(false);
  g.keyUp(KEYS.P1.DOWN);g.keyUp(KEYS.P1.FIRE);g.tick(1);g.keyDown(KEYS.P1.FIRE);g.tick(1);
  expect(waveDraft(w)!.round!.confirmed[0]).toBe(true);g.quit();
+});
+it('never opens in combat and coalesces simultaneous local pad requests without touching pause state',()=>{
+ const g=createHeadlessGame({mode:'Coop'}),w=g.world();try{
+  toggleStats(w,0);g.keyDown(9);g.keyUp(9);expect(statsOpen(w,0)).toBe(false);expect(w.mPaused).toBe(false);
+  beginWaveDraft(w);const batch={};toggleStats(w,0,batch);toggleStats(w,1,batch);expect([statsOpen(w,0),statsOpen(w,1)]).toEqual([true,true]);
+  toggleStats(w,1,{});expect([statsOpen(w,0),statsOpen(w,1)]).toEqual([false,false]);expect(w.mPaused).toBe(false);
+ }finally{g.quit();}
 });
 it('keeps mouse selection distinct from readiness and queues both actions in order',()=>{
  const g=createHeadlessGame({mode:'Coop'}),w=g.world();beginWaveDraft(w);

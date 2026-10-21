@@ -25,7 +25,7 @@ import {toggleStats} from './DraftStatsInput.ts';
 import {netSession} from './Net/NetSession.ts';
 
 /** Standard-mapping button indices used by the mapping. */
-const BTN = { A: 0, LB: 4, RB: 5, LT: 6, RT: 7, START: 9 } as const;
+const BTN = { A: 0, X:2, LB: 4, RB: 5, LT: 6, RT: 7, START: 9 } as const;
 
 /** Virtual cursor speed in logical pixels per poll (d-pad, or a fully deflected stick). */
 const CURSOR_SPEED = 8;
@@ -164,7 +164,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // wants it is picked up by the next poll (want && !is -> _down again); self-healing after Key._clear() too.
   };
 
-  const mapPad = (slot: 0 | 1, p: PadPoll): void => {
+  const mapPad = (slot: 0 | 1, p: PadPoll,batch:object): void => {
     for (const b of p.down) held[slot].add(b);
     for (const b of p.up) held[slot].delete(b);
     // An absent pad must not map at all: with its directions all false it would immediately "release" whatever
@@ -179,8 +179,8 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // override decides which pad that is (swapAssignment).
     const postfix = assign[slot] === 0 || World.CWorld.mGameMode === 'Single' ? '' : '2';
     const h = held[slot]!;
-    if(p.down.has(3)){
-      const world=CMain?._this?.mcWorld;if(world)toggleStats(world,netSession()?.role??(postfix?1:0));
+    if(p.down.has(BTN.X)){
+      const world=CMain?._this?.mcWorld;if(world&&!world.mPaused)toggleStats(world,netSession()?.role??(postfix?1:0),batch);
     }
     const dirs = {
       left: p.stick.left || p.dpad.left,
@@ -304,8 +304,8 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
         overlayDismissed = true;
         dismissAudioOverlay();
       }
-      mapPad(0, p0);
-      mapPad(1, p1);
+      const batch={};mapPad(0, p0,batch);
+      mapPad(1, p1,batch);
       moveCursor(p0);
     },
     status(): GamepadStatus {

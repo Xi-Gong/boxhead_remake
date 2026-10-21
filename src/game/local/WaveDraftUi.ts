@@ -89,7 +89,7 @@ function create(world:any,state:WaveDraftState):DraftView{
    r.readyRule?queueDraftCommand(world,index,DRAFT_CONFIRM,r.wave):queueDraftChoice(world,index,r.selected[index]!,r.wave);};
   players.push(side);
  }
- text(clip,'_Controls',12,365,width-24,17,BODY_FONT,10,INK,false,'center','MOVE: SELECT    FIRE / A: READY    Y: STATS    MOUSE: SELECT THEN READY');
+ text(clip,'_Controls',12,365,width-24,17,BODY_FONT,11,INK,false,'center','');
  const view={clip,title,clock,players,cards,wave:state.round!.wave,width,signature:''};views.set(world,view);return view;
 }
 function statsRows(s:PlayerStats|undefined):[string,string][]{
@@ -106,13 +106,14 @@ function update(world:any,state:WaveDraftState):void{
  view.title.text=round.multiplier===2?'BOSS DEFEATED / DOUBLE REWARD':'WAVE '+round.wave+' COMPLETE';
  view.clock.text=round.readyRule?'TAKE YOUR TIME / CONTINUE WHEN EVERYONE IS READY':`CHOOSE ONE / ${Math.ceil(round.remainingTicks/CMain.mFPS)}s / DEFAULT: FIREPOWER`;
  const stats=session?session.confirmedPlayerStats:capturePlayerStats(world),open=round.offers.map((_,i)=>statsOpen(world,i));
+ view.clip._Controls.text=`MOVE: SELECT   A: READY   X / ${session?statsKeyLabel(session.role):round.offers.map((_,i)=>statsKeyLabel(i)).join(' / ')}: ${open.some(Boolean)?'BACK TO UPGRADES':'VIEW STATS'}`;
  const signature=JSON.stringify([round.selected,round.confirmed,round.offers,state.bonuses,round.multiplier,session?.role,stats,open,statsBindingHint(world)]);
  if(signature===view.signature)return;view.signature=signature;
  for(let i=0;i<round.offers.length;i++){
   const side=view.players[i],local=!session||session.role===i,ready=round.confirmed[i],s=stats?.find(p=>p.index===i),b=state.bonuses[i]!;
   fit(side._Status,`P${i+1}  /  ${ready?'READY':local?'CHOOSE YOUR UPGRADE':'PARTNER IS CHOOSING'}`,14);side._Status.textColor=ready?GREEN:INK;
   fit(side._Bonuses,`DMG +${number(b.damage*8)}%  HP +${number(b.health*(s?.simplified?8:10))}%`,10);
-  setButtonLabel(side._StatsButton,open[i]?'CARDS':`STATS / ${statsKeyLabel(i)}`);side._StatsButton.enabled=local;side._StatsButton._alpha=local?100:55;
+  setButtonLabel(side._StatsButton,open[i]?'BACK / X':`X / ${statsKeyLabel(i)}`);side._StatsButton.enabled=local;side._StatsButton._alpha=local?100:55;
   for(let choice=0;choice<3;choice++){
    const card=view.cards[i]![choice],reward=round.offers[i]![choice]!,selected=round.selected[i]===choice;
    card._visible=!open[i];card.clear();card.lineStyle(selected?2:1,selected?RED:0xcdcdc7,100);
@@ -126,7 +127,7 @@ function update(world:any,state:WaveDraftState):void{
   }
   side._Stats._visible=open[i];const rows=statsRows(s);
   for(let row=0;row<9;row++){fit(side._Stats['_Name'+row],rows[row]?.[0]??'',10);fit(side._Stats['_Value'+row],rows[row]?.[1]??'',11);}
-  setButtonLabel(side._Stats._Bind,`CHANGE KEY: ${statsKeyLabel(i)} / PAD: Y`);
+  setButtonLabel(side._Stats._Bind,`CHANGE KEY: ${statsKeyLabel(i)} / PAD: X`);
   side._Hint.text=open[i]?(statsBindingHint(world)||'SOURCES: LEVEL UPGRADES + WAVE CHOICES'):ready?'YOUR CHOICE IS LOCKED / WAITING FOR PARTNER':'';
   setButtonLabel(side._Ready,ready?'READY / WAITING':`READY / ${REWARD_LABELS[round.offers[i]![round.selected[i]!]!]}`);
   side._Ready.enabled=local&&!ready&&!open[i];side._Ready._alpha=ready?65:local&&!open[i]?100:45;

@@ -9,6 +9,7 @@ import { installGamepad } from '../../src/game/local/Gamepad.ts';
 import { CMain } from '../../src/game/packages.ts';
 import { createHeadlessGame, KEYS } from './harness.ts';
 import {beginWaveDraft,waveDraft} from '../../src/game/local/WaveDraft.ts';
+import {statsOpen} from '../../src/game/local/DraftStatsInput.ts';
 
 interface PadSpec { axes?: number[]; pressed?: number[]; connected?: boolean }
 
@@ -29,6 +30,15 @@ function fakePads() {
 }
 
 describe('gamepad -> game (scope wiring)', () => {
+  it('X opens both local sheets only during drafts and simultaneous pads toggle once',()=>{
+    const g=createHeadlessGame({mode:'Coop'}),w=g.world(),pads=fakePads(),gp=installGamepad({player:g.player,provider:pads.provider});
+    try{
+      pads.set(0,{pressed:[2]});gp.poll(false);expect(statsOpen(w,0)).toBe(false);
+      pads.set(0,{});gp.poll(false);beginWaveDraft(w);
+      pads.set(0,{pressed:[2]});pads.set(1,{pressed:[2]});gp.poll(false);expect([statsOpen(w,0),statsOpen(w,1)]).toEqual([true,true]);
+      pads.set(0,{});pads.set(1,{});gp.poll(false);pads.set(1,{pressed:[2]});gp.poll(false);expect([statsOpen(w,0),statsOpen(w,1)]).toEqual([false,false]);expect(w.mPaused).toBe(false);
+    }finally{gp.dispose();g.quit();}
+  });
   it('each pad chooses and confirms its own draft through the existing key slots',()=>{
     const g=createHeadlessGame({mode:'Coop'}),w=g.world(),pads=fakePads();
     const gp=installGamepad({player:g.player,provider:pads.provider});
