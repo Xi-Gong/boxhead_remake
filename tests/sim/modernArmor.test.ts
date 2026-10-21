@@ -6,6 +6,7 @@ import {applyWaveReward,rewardOffers} from '../../src/game/local/WaveDraft.ts';
 import {syncVitals} from '../../src/game/local/SurvivalRules.ts';
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {capturePlayerStats} from '../../src/game/local/PlayerStats.ts';
+import {NetSession} from '../../src/game/local/Net/NetSession.ts';
 
 it('fills fragile armor completely from zero or residual stock regardless of supply efficiency',()=>{
  const g=createHeadlessGame(),p=g.players()[0];try{
@@ -40,4 +41,12 @@ it('migrates old v3 armor fractions once and rejects unsupported new saves befor
   saved=capture(g.world());expect(applyToWorld(g.world(),saved)).toBe(true);expect(g.players()[0].mArmor).toBe(20);
  }finally{g.quit();}
  const legacy=createHeadlessGame({classicFeatures:['fragile-armor-v1']});try{const before=capture(legacy.world());expect(applyToWorld(legacy.world(),saved)).toBe(false);expect(capture(legacy.world())).toEqual(before);}finally{legacy.quit();}
+});
+it('shows confirmed LAN armor while the predicted player is already damaged',()=>{
+ const g=createHeadlessGame(),p=g.players()[0],w=g.world(),session=new NetSession(0,{send(){}});try{
+  p.mArmor=20;session.confirmedPlayerStats=capturePlayerStats(w);p.mArmor=0;
+  w.mHud.UpdatePlayer(p,{x:320,y:240});const bar=w.mHud.mcPlayers[0]._ArmorBar;
+  expect(bar._visible).toBe(true);expect(bar._armorRatio).toBe(.5);
+  session.confirmedPlayerStats![0].armor=0;w.mHud.UpdatePlayer(p,{x:320,y:240});expect(bar._visible).toBe(false);
+ }finally{g.quit();}
 });
