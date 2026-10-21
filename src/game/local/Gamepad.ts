@@ -192,9 +192,9 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // override decides which pad that is (swapAssignment).
     const postfix = assign[slot] === 0 || World.CWorld.mGameMode === 'Single' ? '' : '2';
     const h = held[slot]!;
-    const world=CMain?._this?.mcWorld,index=netSession()?.role??(postfix?1:0),modern=hasFeature(world,'weapon-bindings-v1');
+    const world=CMain?._this?.mcWorld,session=netSession(),index=session?.role??(postfix?1:0),modern=hasFeature(world,'weapon-bindings-v1');
     const actor=(Object.values(world?.mThing_Collection?.mPlayerThings??{})as any[]).find(player=>player.mPlayerIndex===index);
-    const combat=!!actor&&world.mLoaded&&!world.mPaused&&!world.mUpgrades.waveDraft?.round&&actor.mLife>0;
+    const combat=!!actor&&world.mLoaded&&!world.mPaused&&!world.mUpgrades.waveDraft?.round&&actor.mLife>0&&(!session||session.phase==='playing'&&!session.netPaused&&!session.pauseBarrier.pending);
     if(!modern||!combat)cancelHolds(slot);
     else for(const button of ['A','Y']as const){
       const key=BTN[button];let hold=holds[slot][button];

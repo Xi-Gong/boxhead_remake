@@ -51,7 +51,7 @@ export function installWeaponBindings():void{
   const label=head._WeaponBinding??text(head,'_WeaponBinding',0,0,24,13,BODY_FONT,10,INK,true,'left','');
   label._x=bounds.xMax+3;label._y=bounds.yMin+2;label.text=letters;
   const value=bindingProgress(this.mWorld,p.mPlayerIndex),bar=head._BindingProgress??head.createEmptyMovieClip('_BindingProgress',head.getNextHighestDepth());
-  bar._visible=!!value&&!this.mWorld.mPaused&&!this.mWorld.mUpgrades.waveDraft?.round;
+  bar._visible=!!value&&!this.mWorld.mPaused&&!this.mWorld.mUpgrades.waveDraft?.round&&(!session||session.phase==='playing'&&!session.netPaused&&!session.pauseBarrier.pending);
   if(bar._visible){
    bar._x=bounds.xMin;bar._y=bounds.yMax+8;bar.clear();bar.lineStyle(1,0x333333,100);bar.beginFill(0xf5f5ef,100);
    bar.moveTo(0,0);bar.lineTo(48,0);bar.lineTo(48,4);bar.lineTo(0,4);bar.lineTo(0,0);bar.endFill();

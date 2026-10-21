@@ -2,11 +2,21 @@ import {expect,it} from 'vitest';
 import {createHeadlessGame} from './harness.ts';
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
 import {applyCorrections} from '../../src/game/local/Net/Rollback.ts';
-import {bindingsFor,queueWeaponCommand} from '../../src/game/local/WeaponBindings.ts';
+import {bindingsFor,queueWeaponCommand,bindingProgress,takeWeaponCommands} from '../../src/game/local/WeaponBindings.ts';
+import {installGamepad} from '../../src/game/local/Gamepad.ts';
 import type {GameConfig,LanMessage} from '../../src/game/local/Net/protocol.ts';
 const cfg:GameConfig={difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:0,charP2:1,
  progression:'personal-growth-v1',supplies:'armor-ammo-v1',survival:'survival-v1',loot:'supply-crates-v2',balance:'pve-balance-v1',endless:'endless-pve-v1',variants:'enemy-variants-v1',enchantment:'persistent-enchantment-v1',
  timedWaves:'timed-waves-v1',waveDraft:'wave-draft-v1',draftReady:'draft-ready-v1',tieredGrowth:'tiered-growth-v1',clearWaves:'clearable-waves-v1',combat:'combat-pve-v3',features:['empty-weapons-v1','weapon-bindings-v1']};
+it('cancels a local hold when the network pause barrier owns the freeze rather than world.mPaused',()=>{
+ const g=createHeadlessGame({menuOnly:'Main'}),s=new NetSession(0,{send(){}});let time=0,down=false,pad:any;
+ try{
+  s.startLocalGame({mode:'Coop',roomLink:'ROOM_Single_0001',cfg,seed:17,netcode:'rollback-v2'},g.main());expect(g.waitRunning(3000)).toBe(true);const w=g.world();
+  pad=installGamepad({player:g.player,now:()=>time,provider:()=>[{index:0,connected:true,axes:[0,0],buttons:Array.from({length:17},(_,i)=>({pressed:down&&i===0}))}]});
+  down=true;pad.poll(false);time=400;pad.poll(false);expect(bindingProgress(w,0)?.amount).toBe(.5);
+  s.netPaused=true;expect(w.mPaused).toBe(false);time=1000;pad.poll(false);expect(bindingProgress(w,0)).toBeUndefined();expect(takeWeaponCommands(w,0)).toBeUndefined();
+ }finally{pad?.dispose();g.quit();}
+});
 it('replays a late one-shot binding even when its seven-bit input was predicted correctly, without repeating it',()=>{
  const g=createHeadlessGame({menuOnly:'Main'}),sent:LanMessage[]=[],s=new NetSession(0,{send:m=>sent.push(m)});
  try{
