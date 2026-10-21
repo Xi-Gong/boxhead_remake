@@ -46,7 +46,7 @@ Reports record deaths, timeouts, damage, shield breaks (including zero observed)
 
 ## Final gates and artifact
 
-All three TypeScript configurations and the fresh production build passed. Full Vitest passed **1807**, failed **0**, with **71 existing skips**, 1878 total / 148 passing suites (`full-final.json`). The unchanged skips include opt-in long soak and unavailable original-source fixtures; no skip was added. The pre-stock-fix passing run and earlier failing/interrupted runs remain archived separately.
+All three TypeScript configurations and the fresh production build passed. Full Vitest passed **1807**, failed **0**, with **71 existing skips**, 1878 total / 148 passing suites (`full-final.json`). The final pre-publication rerun on tagged commit `dc02412995cd98398a52b61d477047f846d94d9d` passed the same complete count in `full-tag.json`; `release-readiness.json` also rechecked every required report, the exact artifact bytes and all three EXE copies before creating the annotated tag. The unchanged skips include opt-in long soak and unavailable original-source fixtures; no skip was added. The pre-stock-fix passing run and earlier failing/interrupted runs remain archived separately.
 
 Full browser UI passed **188/188**, audio passed **54/54**, including real nonzero recovered waveform peaks of 0.8395. Reports: `browser-ui-20261021-123412`, `browser-audio-20261021-123412` and their receipt. Historical browser Single/Coop/DeathMatch movement/fire/pause/quit/retry passed; v019 death-crate recovery and v020 passive death/real retry passed. The old wave-25 fixture initially expected level 85, ten weapons and ten ordinary enemies. V3 correctly has level 61, nine weapons, three Bosses and two reinforcements; old assertions remain isolated alongside explicit modern checks. The failed original is retained in `source-gates-20261021-124202/v019-failed-before-v3-fixture`; passing source/native smoke evidence is in that folder and `source-gates-20261021-124652`.
 
@@ -64,6 +64,10 @@ External `electron-builder --win dir` and `--win portable --x64` both followed t
 - EXE SHA256: `405dc84d399cfbb79377e1516ffe3a4262cef054fef691b8f174f735f8e6fe67`.
 - Complete asar SHA256: `c57c860055f819a34d069428fd7199c7223c63363198887f6822323c30d6e5df`.
 
-Testing stays serial and low-resolution, except the explicitly authorized isolated functional LAN pairs and brief native resize checks; no foreground windows, performance benchmark, extreme rendered stress, physical-controller or remote-machine claim. Publication download verification is recorded separately after the release exists.
+Testing stayed serial and low-resolution, except the explicitly authorized isolated functional LAN pairs and brief native resize checks; no foreground windows, performance benchmark, extreme rendered stress, physical-controller or remote-machine claim.
+
+## Publication
+
+The annotated `v0.3.3` tag points to the fully checked commit above. The [GitHub Release](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.3) is published with English notes and [the portable EXE](https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.3/Boxhead.2Play.Rooms-0.3.3-portable.exe). The actual uploaded asset was downloaded again: **101671515 bytes**, PE product/file version **0.3.3**, and SHA256 exactly equal to the accepted EXE and GitHub's asset digest. See [publication.json](publication.json) for the public asset identity, tag commit, hashes and validation counts. This publication receipt changes documentation only; runtime sources and packaged code remain identical.
 
 See the English [release notes](release-notes.md) and Chinese [PARITY record](../../../PARITY.md).

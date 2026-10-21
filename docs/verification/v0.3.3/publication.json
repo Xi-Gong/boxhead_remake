@@ -1,0 +1,38 @@
+{
+  "version": "0.3.3",
+  "releaseUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.3",
+  "publishedAt": "2026-10-21T05:21:44Z",
+  "verifiedAt": "2026-10-21T05:22:41.310Z",
+  "tagCommit": "dc02412995cd98398a52b61d477047f846d94d9d",
+  "annotatedTag": true,
+  "releaseId": 419186597,
+  "asset": {
+    "id": 661446914,
+    "name": "Boxhead.2Play.Rooms-0.3.3-portable.exe",
+    "url": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.3/Boxhead.2Play.Rooms-0.3.3-portable.exe",
+    "bytes": 101671515,
+    "sha256": "405dc84d399cfbb79377e1516ffe3a4262cef054fef691b8f174f735f8e6fe67",
+    "downloadVerified": true
+  },
+  "build": {
+    "commit": "1437fce94679638bce850afb229942f201f5b4f0",
+    "runtimeSourceSha256": "426203a45692016f910544fb05f6734afde3ded439d66c0e71cea171abc97831",
+    "asarSha256": "c57c860055f819a34d069428fd7199c7223c63363198887f6822323c30d6e5df",
+    "renderer": "main-aEZJ6C-F.js",
+    "verifiedBuiltFiles": 70
+  },
+  "validation": {
+    "commit": "dc02412995cd98398a52b61d477047f846d94d9d",
+    "passed": 1807,
+    "failed": 0,
+    "existingSkips": 71,
+    "total": 1878,
+    "ui": 188,
+    "audio": 54,
+    "electron": 46,
+    "nativeGroups": 7,
+    "packagedProtocol": 6,
+    "actualPortable": true,
+    "isolatedFunctionalLan": true
+  }
+}

@@ -24,6 +24,8 @@ All 1,807 tests passed, with 71 existing skips. Browser UI/audio, hidden Electro
 
 Portable SHA256: `405dc84d399cfbb79377e1516ffe3a4262cef054fef691b8f174f735f8e6fe67`.
 
+The published EXE was downloaded again and verified against this hash and version 0.3.3. See the [publication receipt](https://github.com/Xi-Gong/boxhead_remake/blob/main/docs/verification/v0.3.3/publication.json).
+
 See [release verification](https://github.com/Xi-Gong/boxhead_remake/blob/v0.3.3/docs/verification/v0.3.3/README.md) and the Chinese [parity record](https://github.com/Xi-Gong/boxhead_remake/blob/v0.3.3/PARITY.md).
 
 **Full changelog:** https://github.com/Xi-Gong/boxhead_remake/compare/v0.3.2...v0.3.3
