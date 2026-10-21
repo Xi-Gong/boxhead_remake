@@ -17,6 +17,10 @@ export function diminishing(value:number,maximum=2):number{const n=Math.max(0,va
 export function passiveBonuses(b:WaveBonuses):{movement:number;penetration:number;supply:number}{return {
  movement:diminishing(.04*(b.mobility??0),.25),penetration:diminishing(.12*(b.penetration??0),.6),supply:diminishing(.1*(b.scavenging??0),.6)};}
 export function restoredSupply(maximum:number,efficiency:number,fraction=.4):number{return Math.ceil(maximum*fraction*(1+efficiency));}
+/** The new capacity limits refills; earned legacy stock above it remains usable and finite. */
+export function replenishedAmmo(world:any,ammo:number,maximum:number,added:number):number{
+ const next=Math.min(maximum,ammo+added);return simplifiedWorld(world)?Math.max(ammo,next):next;
+}
 export function shotgunFalloff(distance:number,range:number):number{return 1-.55*Math.max(0,Math.min(1,(distance/Math.max(.1,range)-.3)/.7));}
 export function modernWeapon(raw:any,flags:any,stats:{damage:number;capacity:number},bonus:WaveBonuses,classID:string,_fps:number){
  const factor=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;

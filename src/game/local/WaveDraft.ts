@@ -3,7 +3,7 @@ import {CMain,Thing,World} from '../packages.ts';
 import {clearWaveCombat,timedWave,timedWavesConfigured} from './TimedWaves.ts';
 import {netSession} from './Net/NetSession.ts';
 import {infiniteGrowthWeapon,modernWeaponProjection} from './Net/Growth.ts';
-import {combatWorld,simplifiedWorld,passiveBonuses,restoredSupply} from './CombatRules.ts';
+import {combatWorld,simplifiedWorld,passiveBonuses,restoredSupply,replenishedAmmo} from './CombatRules.ts';
 import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {syncVitals} from './SurvivalRules.ts';
@@ -78,7 +78,7 @@ export function applyWaveReward(world:any,index:number,reward:Reward,multiplier:
     for(const entry of p.mWeaponList??[])if(entry.mActive&&entry.mThing)world.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
   }
   else if(reward==='heal'&&p.mLife>0&&!(p.mFlags&Thing.CThing.mFlag_DEAD))p.mLife=Math.min(p.mMaxLife,p.mLife+(combatWorld(world)?restoredSupply(p.mMaxLife,p.mSupplyEfficiency??0,.35*multiplier):p.mMaxLife*.35*multiplier));
-  else if(reward==='ammo')for(const weapon of finiteWeapons(p))weapon.mAmmo=Math.min(weapon.mTotalAmmo,weapon.mAmmo+restoredSupply(weapon.mTotalAmmo,combatWorld(world)?p.mSupplyEfficiency??0:0,.35*multiplier));
+  else if(reward==='ammo')for(const weapon of finiteWeapons(p))weapon.mAmmo=replenishedAmmo(world,weapon.mAmmo,weapon.mTotalAmmo,restoredSupply(weapon.mTotalAmmo,combatWorld(world)?p.mSupplyEfficiency??0:0,.35*multiplier));
   if(reward==='mobility'||reward==='penetration'||reward==='scavenging')syncCombatPlayer(p);
 }
 export function processWaveDraft(world:any):void {

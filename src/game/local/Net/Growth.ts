@@ -7,7 +7,7 @@ import { recordGrowthScore } from './FloatingScores.ts';
 import { syncVitals } from '../SurvivalRules.ts';
 import { endlessXpRequired, experienceBeforeLevel, growthFromExperience } from '../EndlessRules.ts';
 import { draftBonuses,type WaveBonuses } from '../WaveDraftRules.ts';
-import {combatWorld,modernWeapon} from '../CombatRules.ts';
+import {combatWorld,modernWeapon,replenishedAmmo} from '../CombatRules.ts';
 import {combatKillXp} from '../CombatEnemies.ts';
 import {TIERED_GROWTH_RULE,tieredXpRequired,tieredExperienceBeforeLevel,tieredGrowthFromExperience,tieredLevelStats,levelRewardTier} from '../TieredGrowthRules.ts';
 
@@ -127,7 +127,7 @@ function applyPersonal(upgrades: any, thing: any, previous: any): any {
         const tuning=modernWeaponProjection(upgrades.mWorld,index,thing._CLASSID_,bonus)!;
         if(raw.mDamage!==undefined)thing.mDamage=tuning.damage;
         thing.mFireRate=tuning.fireRate;thing.mTotalAmmo=tuning.capacity;thing.mDraftCapacityBonus=0;
-        thing.mAmmo=fresh?tuning.capacity:Math.min(tuning.capacity,beforeAmmo+Math.max(0,tuning.capacity-beforeCapacity));
+        thing.mAmmo=fresh?tuning.capacity:replenishedAmmo(upgrades.mWorld,beforeAmmo,tuning.capacity,Math.max(0,tuning.capacity-beforeCapacity));
         return value;
       }
       if(raw.mDamage!==undefined)thing.mDamage=raw.mDamage*damage*(1+(tiered?stats.damage:.01*excess))*(1+.08*bonus.damage);

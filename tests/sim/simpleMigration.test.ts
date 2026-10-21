@@ -7,6 +7,11 @@ import {armorMaximum} from '../../src/game/local/Supplies.ts';
 import {timedWave,clearWaveCombat} from '../../src/game/local/TimedWaves.ts';
 import {getRandomState} from '../../src/engine/flash/rng.ts';
 import {pos} from './fxkit.ts';
+import {redBoxReward} from '../../src/game/local/SupplyDrops.ts';
+import {applySupplyEffect,refillAmmo} from '../../src/game/local/Supplies.ts';
+import {applyWaveReward} from '../../src/game/local/WaveDraft.ts';
+import {captureCratePayload,applyCratePayload} from '../../src/game/local/WeaponCrate.ts';
+import {replenishedAmmo} from '../../src/game/local/CombatRules.ts';
 it('immediately migrates vitals, piercing choices and placed enchantment exactly once without mutating the old save',()=>{
  const old=createHeadlessGame({classicSimplifiedCombat:true}),w=old.world(),p=old.players()[0];
  Object.assign(w.mUpgrades.waveDraft.bonuses[0],{damage:2,health:1,armor:1,penetration:3});syncVitals(p,'full');p.mLife=110;p.mArmor=110;
@@ -58,4 +63,29 @@ it('rejects a v3 save on v2 before any mutation',()=>{
  const modern=createHeadlessGame(),saved=capture(modern.world());modern.quit();const old=createHeadlessGame({classicSimplifiedCombat:true});try{
   const before=capture(old.world());expect(applyToWorld(old.world(),saved)).toBe(false);expect(capture(old.world())).toEqual(before);
  }finally{old.quit();}
+});
+it('keeps larger legacy magazines through processing, supplies and death-crate recovery while still consuming shots',()=>{
+ const old=createHeadlessGame({classicCombat:true}),w=old.world(),p=old.players()[0];
+ w.mUpgrades.lanGrowth.players[0].level=125;p.NewWeapon('uzi');p.SelectWeapon('uzi');w.mUpgrades.ApplyUpgrade_Weapon(p.mWeapon_Current);
+ const stock=p.mWeapon_Current.mAmmo=p.mWeapon_Current.mTotalAmmo;
+ const saved=capture(w);old.quit();const g=createHeadlessGame();try{
+  expect(applyToWorld(g.world(),saved)).toBe(true);const gun=g.players()[0].mWeapons.uzi.mThing;
+  expect(gun.mAmmo).toBe(stock);expect(gun.mTotalAmmo).toBeLessThan(stock);
+  g.tick(2);expect(gun.mAmmo).toBe(stock);
+  const q=g.players()[0],world=g.world();q.NewWeapon('shotgun');
+  for(const entry of q.mWeaponList)entry.mActive=['pistol','uzi','shotgun'].includes(entry.mNameID);
+  const shotgun=q.mWeapons.shotgun.mThing;
+  // With one full/overfull and one empty gun, either insertion order must put the middle roll on the empty gun.
+  shotgun.mAmmo=0;expect(redBoxReward(q,.5)).toBe(true);expect(shotgun.mAmmo).toBeGreaterThan(0);expect(gun.mAmmo).toBe(stock);
+  for(const roll of [0,.999]){redBoxReward(q,roll);expect(gun.mAmmo).toBe(stock);}
+  shotgun.mAmmo=0;expect(applySupplyEffect(q,'ammo')).toBe(true);expect(shotgun.mAmmo).toBeGreaterThan(0);expect(gun.mAmmo).toBe(stock);
+  shotgun.mAmmo=0;applyWaveReward(world,0,'ammo',2);expect(shotgun.mAmmo).toBeGreaterThan(0);expect(gun.mAmmo).toBe(stock);
+  const payload=captureCratePayload(q)!;gun.mAmmo=1;applyCratePayload(q,payload);expect(gun.mAmmo).toBe(stock);expect(gun.mTotalAmmo).toBeLessThan(stock);
+  q.SelectWeapon('uzi');gun.Fire(q.mPosition.Clone(),q.mAngle.Clone());expect(gun.mAmmo).toBe(stock-1);g.tick(2);expect(gun.mAmmo).toBe(stock-1);
+  refillAmmo(q);expect(gun.mAmmo).toBe(stock-1);
+  const next=capture(world);expect(applyToWorld(world,next)).toBe(true);expect(g.players()[0].mWeapons.uzi.mThing.mAmmo).toBe(stock-1);
+  const finite=g.players()[0].mWeapons.uzi.mThing;finite.mAmmo=999999;const before=finite.mAmmo,key={IsDown:()=>true,IsPressed:()=>true};
+  for(let tick=0;tick<250;tick++)finite.Update(key);expect(before-finite.mAmmo).toBeGreaterThan(60);expect(before-finite.mAmmo).toBeLessThanOrEqual(84);
+  expect(replenishedAmmo({mUpgrades:{combat:{rule:'combat-pve-v2'}}},820,201,50)).toBe(201);
+ }finally{g.quit();}
 });

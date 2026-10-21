@@ -5,7 +5,7 @@ import {CThing_Object_Pickup} from '../Thing/Object/CThing_Object_Pickup.ts';
 import { playerArmorMaximum, survivalEnabled } from './SurvivalRules.ts';
 import { reliableSupplies, syncSupplyWeapon, syncSupplyVitals } from './ReliableSupplies.ts';
 import {canEnchant,enchantHeldWeapon} from './EnchantmentRules.ts';
-import {combatWorld,restoredSupply} from './CombatRules.ts';
+import {combatWorld,restoredSupply,replenishedAmmo} from './CombatRules.ts';
 
 export const SUPPLY_RULE='armor-ammo-v1';
 export const ARMOR_MAX=100;
@@ -21,10 +21,10 @@ export function refillArmor(player:any):void{player.mArmor=armorMaximum(player);
 export function refillAmmo(player:any):void{
   for(const entry of player.mWeaponList??[]){
     if(!entry.mActive||!entry.mThing)continue;
-    const weapon=entry.mThing;
+    const weapon=entry.mThing,ammo=weapon.mAmmo;
     if(reliableSupplies(player.mWorld))syncSupplyWeapon(player,weapon);
     else player.mWorld.mUpgrades.ApplyUpgrade_Weapon(weapon);
-    weapon.mAmmo=weapon.mTotalAmmo;
+    weapon.mAmmo=replenishedAmmo(player.mWorld,ammo,weapon.mTotalAmmo,Math.max(0,weapon.mTotalAmmo-ammo));
   }
 }
 export function supplyCanBenefit(player:any,kind:SupplyKind):boolean{
@@ -46,7 +46,7 @@ export function applySupplyEffect(player:any,kind:SupplyKind):boolean{
     if(kind==='armor')player.mArmor=Math.min(armorMaximum(player),(player.mArmor??0)+restoredSupply(armorMaximum(player),efficiency));
     else if(kind==='medical')player.mLife=Math.min(player.mMaxLife,player.mLife+restoredSupply(player.mMaxLife,efficiency));
     else for(const e of player.mWeaponList??[])if(e.mActive&&e.mThing){
-      const gun=e.mThing;player.mWorld.mUpgrades.ApplyUpgrade_Weapon(gun);gun.mAmmo=Math.min(gun.mTotalAmmo,gun.mAmmo+restoredSupply(gun.mTotalAmmo,efficiency));
+      const gun=e.mThing;player.mWorld.mUpgrades.ApplyUpgrade_Weapon(gun);gun.mAmmo=replenishedAmmo(player.mWorld,gun.mAmmo,gun.mTotalAmmo,restoredSupply(gun.mTotalAmmo,efficiency));
     }
     return true;
   }

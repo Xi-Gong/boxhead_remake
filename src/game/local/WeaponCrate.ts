@@ -10,7 +10,7 @@ import { proto } from '../../engine/runtime.ts';
 import { CSound, DrawPrimitive, Thing, World } from '../packages.ts';
 import { CThing_Object } from '../Thing/Object/CThing_Object.ts';
 import {enchantedAmmo,persistentWeapon,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
-import {combatWorld} from './CombatRules.ts';
+import {combatWorld,replenishedAmmo} from './CombatRules.ts';
 
 /** One restorable weapon (subset of Resume's WeaponState in transport form). */
 export interface CrateWeapon {
@@ -60,7 +60,7 @@ export function applyCratePayload(p: any, payload: CratePayload): void {
     if (!thing) continue;
     const keptEnchantment=persistentWeapon(thing),keptStock=enchantedAmmo(thing);
     thing.mAmmo = Math.max(thing.mAmmo, cw.ammo);
-    if(combatWorld(p.mWorld))thing.mAmmo=Math.min(thing.mAmmo,thing.mTotalAmmo);
+    if(combatWorld(p.mWorld))thing.mAmmo=replenishedAmmo(p.mWorld,thing.mAmmo,thing.mTotalAmmo,0);
     else thing.mTotalAmmo = Math.max(thing.mTotalAmmo, cw.totalAmmo);
     if(cw.enchantedAmmo!==undefined||cw.enchanted||keptEnchantment)restoreEnchantment(thing,{
       enchantedAmmo:keptStock===-1||cw.enchantedAmmo===-1?-1:Math.min(thing.mAmmo,Math.max(keptStock,cw.enchantedAmmo??0)),

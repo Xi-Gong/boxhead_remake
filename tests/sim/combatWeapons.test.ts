@@ -65,7 +65,7 @@ it('migrates old combat at the next wave without progress loss or free ammunitio
  const classic=createHeadlessGame({classicCombat:true}),before=capture(classic.world());expect(applyToWorld(classic.world(),modern)).toBe(false);expect(capture(classic.world())).toEqual(before);classic.quit();
 });
 it('cannot inherit obsolete capacity through supplies or death crates and observes the UZI ceiling in actual weapon updates',()=>{
- const g=createHeadlessGame(),w=g.world(),p=g.players()[0];w.mUpgrades.lanGrowth.players[0].level=500;p.NewWeapon('uzi');
+ const g=createHeadlessGame({classicSimplifiedCombat:true}),w=g.world(),p=g.players()[0];w.mUpgrades.lanGrowth.players[0].level=500;p.NewWeapon('uzi');
  const gun=p.mWeapons.uzi.mThing;w.mUpgrades.ApplyUpgrade_Weapon(gun);gun.mAmmo=7;
  syncSupplyWeapon(p,gun,999999);expect(gun.mTotalAmmo).toBeLessThanOrEqual(300);expect(gun.mAmmo).toBe(7);
  applyCratePayload(p,{weapons:[{nameID:'uzi',ammo:999999,totalAmmo:999999}]});

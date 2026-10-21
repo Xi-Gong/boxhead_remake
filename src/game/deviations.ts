@@ -794,7 +794,8 @@ export const DEVIATIONS: Deviation[] = [
       'with one equal-quarter seeded roll. Separate 160/60 tiered vitals, smaller growth/perk increments, '+
       '15% enchantment with two-target bullets, seven-stat builds, two Boss reinforcements and objectives '+
       'sized to actual map deadlines replace v2 tuning. Old runs migrate immediately and once, preserving '+
-      'vital fractions, earned state and clocks; compact Boss-only bars remain render-owned. '+
+      'vital fractions, earned state and clocks. Legacy ammo above the new refill capacity stays finite '+
+      'through updates, supplies and crate recovery; compact Boss-only bars remain render-owned. '+
       'Explicit v2 fixtures and old peers retain their prior semantics.',
   },
 ];
