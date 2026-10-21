@@ -40,6 +40,7 @@ import {VARIANTS_RULE,captureVariants,restoreVariants,variantsWorld,type Variant
 import {ENCHANTMENT_RULE,persistentEnchantment,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
 import {availableFeatures,hasFeature,type ModernFeature} from './ModernFeatures.ts';
 import {simplifiedVitals} from './CombatRules.ts';
+import type {WeaponBindings} from './WeaponBindings.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -99,6 +100,7 @@ export interface ObjectState {
 
 export interface RunSnapshot {
   features?:ModernFeature[];
+  weaponBindings?:WeaponBindings[];
   combat?:CombatState;
   bossWaves?: typeof BOSS_WAVES_RULE;
   bossEncounters?: typeof BOSS_ENCOUNTERS_RULE;
@@ -272,6 +274,7 @@ export function capture(world: any): RunSnapshot {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
     ...(u.combat?{combat:{...u.combat}}:{}),
     ...(u.features?.length?{features:[...u.features]}:{}),
+    ...(u.weaponBindings?{weaponBindings:u.weaponBindings.map((b:WeaponBindings)=>({...b}))}:{}),
     ...(endlessWorld(world)?{endless:ENDLESS_RULE}:{}),
     ...(timedWave(world)?{timedWave:copyTimedWave(world)}:{}),
     ...(waveDraft(world)?{waveDraft:copyWaveDraft(waveDraft(world))}:{}),
@@ -466,6 +469,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if(snap.growth?.players.some(p=>p.tiered)&&!tieredGrowthConfigured())return false;
   if((snap.timedWave?.clear||snap.timedWave?.clearable)&&!clearWavesConfigured())return false;
   const u = world.mUpgrades;
+  if(hasFeature(world,'weapon-bindings-v1'))u.weaponBindings=snap.weaponBindings?.map(b=>({...b}))??[{},{}];
   const migrate=combatConfigured()&&configuredCombatRule()===SIMPLE_COMBAT_RULE&&snap.combat?.rule!==SIMPLE_COMBAT_RULE;
   if(combatConfigured())u.combat=migrate?{rule:SIMPLE_COMBAT_RULE}:snap.combat?{...snap.combat}:{rule:COMBAT_RULE,pendingWave:snap.wave+1};
   const hud = world.mHud;

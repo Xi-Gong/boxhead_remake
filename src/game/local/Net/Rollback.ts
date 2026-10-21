@@ -188,7 +188,7 @@ function replayTick(session: any, world: any, u: number): void {
   session.applyPlayer(session.role, bits0, u);
   session.applyPlayer(1 - session.role, bits1, u);
   if (session.rollbackV2) {
-    session.tickMeta.set(u, { remoteBits: bits1, predicted: !session.remoteFrames.has(u) });
+    session.tickMeta.set(u, { remoteBits: bits1, predicted: !session.remoteFrames.has(u),remoteWeaponCommands:session.remoteWeaponCommands?.get(u) });
     session.executeWorldStep(world, u);
     return;
   }

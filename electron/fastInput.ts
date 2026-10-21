@@ -65,7 +65,8 @@ export class FastInputPath {
     this.frames.clear(); this.received.clear();
   }
   send(input: Input): void {
-    if (!this.epoch) return;
+    // These one-shot frames must arrive complete over reliable TCP, never as stripped UDP bitmaps.
+    if (!this.epoch || input.weaponCommands?.length) return;
     this.frames.set(input.tick, input.bits);
     const newest = Math.max(...this.frames.keys());
     for (const tick of this.frames.keys()) if (tick < newest - 7) this.frames.delete(tick);

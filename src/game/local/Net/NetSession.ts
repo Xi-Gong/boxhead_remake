@@ -58,6 +58,7 @@ import { settleVitals } from '../SurvivalRules.ts';
 import {capturePlayerStats,type PlayerStats} from '../PlayerStats.ts';
 import {captureEnemyArmor,type EnemyArmor} from '../CombatEnemies.ts';
 import {settleCombatPlayers} from '../Combat.ts';
+import {applyWeaponCommands,takeWeaponCommands,validWeaponCommands,type WeaponCommand} from '../WeaponBindings.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -221,6 +222,8 @@ export class NetSession {
   private virtualTimeMs = 0;
   private readonly localFrames = new Map<number, number>();
   private readonly remoteFrames = new Map<number, number>();
+  private readonly localWeaponCommands=new Map<number,WeaponCommand[]>();
+  private readonly remoteWeaponCommands=new Map<number,WeaponCommand[]>();
   private readonly ourSums = new Map<number, string>();
   private readonly remoteSums = new Map<number, string>();
   private readonly slots: [Record<string, NetSlot>, Record<string, NetSlot>] = [makeSlots(), makeSlots()];
@@ -242,7 +245,7 @@ export class NetSession {
   onNetMessage(msg: LanMessage): void {
     if (msg.t === 'input-gap' && this.rollbackV2 && Number.isSafeInteger(msg.need) && msg.need >= 0) {
       this.trace('input-repair', msg.need);
-      for (const [tick, bits] of this.localFrames) if (tick >= msg.need) this.link.send({ t: 'in', tick, bits });
+      for (const [tick, bits] of this.localFrames) if (tick >= msg.need) this.sendInput(tick,bits);
       return;
     }
     if (msg.t === 'recover') { this.receiveRecovery(msg); return; }
@@ -252,6 +255,12 @@ export class NetSession {
       return;
     }
     if (msg.t === 'in') {
+      if(msg.weaponCommands!==undefined){
+        if(!this.startOpts?.cfg.features?.includes('weapon-bindings-v1')||!validWeaponCommands(msg.weaponCommands))return;
+        this.remoteWeaponCommands.set(msg.tick,msg.weaponCommands);
+        const meta=this.tickMeta.get(msg.tick);
+        if(meta&&JSON.stringify(meta.remoteWeaponCommands)!==JSON.stringify(msg.weaponCommands)&& (this.correctionPending===undefined||msg.tick<this.correctionPending))this.correctionPending=msg.tick;
+      }
       this.remoteFrames.set(msg.tick, msg.bits);
       if (this.rollback) rollbackOnRemoteFrame(this, msg.tick, msg.bits);
       if (msg.sum) {
@@ -377,7 +386,7 @@ export class NetSession {
 
   private finishRecovery(need: number): void {
     this.trace('history-recovered', need);
-    for (const [tick, bits] of this.localFrames) if (tick >= need) this.link.send({ t: 'in', tick, bits });
+    for (const [tick, bits] of this.localFrames) if (tick >= need) this.sendInput(tick,bits);
     this.recoveryNeed = undefined;
     this.phase = 'playing';
     const wasPaused = this.netPaused || this.pauseBarrier.pending;
@@ -431,6 +440,7 @@ export class NetSession {
     // world builds (whichever peer is ready first), so onWorldReady must never clear them again.
     this.localFrames.clear();
     this.remoteFrames.clear();
+    this.localWeaponCommands.clear();this.remoteWeaponCommands.clear();
     // A checkpoint rebuild starts a new input clock. The surviving peer must have the same
     // neutral slots as a restarted process; Renew() alone retains timestamps and pressTick.
     for (const table of this.slots) for (const slot of Object.values(table)) Object.assign(slot, new NetSlot());
@@ -534,8 +544,9 @@ export class NetSession {
     // primes for this game may have arrived during our build.)
     for (let s = 0; s < this.inputDelay; s++) {
       const bits = this.sampleLocalBits();
+      this.sampleWeaponCommands(s);
       this.localFrames.set(s, bits);
-      this.link.send({ t: 'in', tick: s, bits });
+      this.sendInput(s,bits);
     }
     // v0.2.3: the WorldSnap context for the rollback ring (slots captured so NetSlot state round-trips).
     this.snapCtx = makeSnapCtx(world, this.slots);
@@ -588,7 +599,7 @@ export class NetSession {
     if (this.rollback && this.predictionLimit > 0) rollbackPushSlot(this, world);
     this.applyPlayer(this.role, mine, t);
     this.applyPlayer((1 - this.role) as LanRole, remoteBits, t);
-    if (this.rollback) this.tickMeta.set(t, { remoteBits, predicted });
+    if (this.rollback) this.tickMeta.set(t, { remoteBits, predicted,remoteWeaponCommands:this.remoteWeaponCommands.get(t) });
     this.stall(undefined);
     return predicted ? 'predicted' : 'confirmed';
   }
@@ -701,7 +712,7 @@ export class NetSession {
     // latency than v0.1.4's t+D, still D ticks of wire budget for the peer (both peers shift identically).
     const s = this.rollbackV2 ? t - 1 : t - 1 + this.inputDelay;
     const bits = this.rollbackV2 ? this.localFrames.get(s)! : this.sampleLocalBits();
-    if (!this.rollbackV2) this.localFrames.set(s, bits);
+    if (!this.rollbackV2) {this.sampleWeaponCommands(s);this.localFrames.set(s, bits);}
     let sum: LanChecksum | undefined;
     if (t > 0 && t % LAN_CHECKSUM_EVERY === 0) {
       sum = this.checksum(world, t);
@@ -725,14 +736,15 @@ export class NetSession {
       sendNow.push(latest !== undefined ? { ...held, ...JSON.parse(latest) } : held);
     }
     if (sendNow.length) piggy = sendNow.shift();
-    this.link.send({ t: 'in', tick: s, bits, sum: sum ?? piggy });
-    for (const extra of sendNow) this.link.send({ t: 'in', tick: s, bits, sum: extra });
+    this.sendInput(s,bits,sum??piggy);
+    for (const extra of sendNow) this.sendInput(s,bits,extra);
     if (this.mode === 'DeathMatch' && t > 0 && t % DM_CHECKPOINT_EVERY === 0) this.maybeCheckpoint(world, t);
     // Keep a small window of frames buffered (scales with the input delay); rollback needs the window wide
     // enough to REPLAY from a correction (local frames too - the replay drives both players).
     const prune = t - (this.rollback ? ROLLBACK_WINDOW_TICKS + this.inputDelay + 3 : this.inputDelay + 3);
     for (const k of this.localFrames.keys()) if (k < prune) this.localFrames.delete(k);
     for (const k of this.remoteFrames.keys()) if (k < prune) this.remoteFrames.delete(k);
+    for(const map of [this.localWeaponCommands,this.remoteWeaponCommands])for(const k of map.keys())if(k<prune)map.delete(k);
     // TCP input lockstep bounds peer skew by D. Retain two checksum intervals (and the rollback window)
     // for late comparisons, rather than retaining every checksum for the lifetime of a long session.
     const sumPrune = t - Math.max(2 * LAN_CHECKSUM_EVERY, ROLLBACK_WINDOW_TICKS + this.inputDelay + 3);
@@ -815,9 +827,15 @@ export class NetSession {
     if (this.localFrames.has(tick)) return;
     CMain.mInput?.ProcessAllKeys();
     const bits = this.sampleLocalBits();
+    this.sampleWeaponCommands(tick);
     this.responseTrace.record('sample', tick, this.role, bits);
     this.localFrames.set(tick, bits);
-    this.link.send({ t: 'in', tick, bits });
+    this.sendInput(tick,bits);
+  }
+
+  private sampleWeaponCommands(tick:number):void{const commands=takeWeaponCommands(this.world,this.role);if(commands)this.localWeaponCommands.set(tick,commands);}
+  private sendInput(tick:number,bits:number,sum?:LanChecksum):void{
+    const commands=this.localWeaponCommands.get(tick);this.link.send({t:'in',tick,bits,...(sum?{sum}:{}),...(commands?{weaponCommands:commands}:{})});
   }
 
   /** Store our checksum for tick t (meta + legacy map) and compare against a received counterpart. */
@@ -968,6 +986,7 @@ export class NetSession {
     this.world = undefined;
     this.localFrames.clear();
     this.remoteFrames.clear();
+    this.localWeaponCommands.clear();this.remoteWeaponCommands.clear();
     this.ourSums.clear();
     this.remoteSums.clear();
     resetRollback(this);
@@ -994,6 +1013,7 @@ export class NetSession {
   private applyPlayer(role: LanRole, bits: number, tick: number): void {
     const table = this.slots[role];
     for (const name of SLOT_ORDER) table[name].setHeld(unpackBit(bits, name as SlotBitName), tick, this.virtualTimeMs);
+    applyWeaponCommands(this.world,role,(role===this.role?this.localWeaponCommands:this.remoteWeaponCommands).get(tick));
     this.responseTrace.record('apply', tick, role, bits);
   }
 

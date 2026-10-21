@@ -73,27 +73,27 @@ describe('gamepad -> game (scope wiring)', () => {
     expect(g.errors).toEqual([]);
   });
 
-  it('A fires, RB tap cycles weapons, Start pauses', () => {
+  it('B fires, RB tap cycles weapons, Start pauses', () => {
     const g = createHeadlessGame({ mode: 'Single', room: 1, seed: 4, difficulty: 0 });
     const pads = fakePads();
     const gp = installGamepad({ player: g.player, provider: pads.provider });
     const p = g.players()[0]!;
-    // FIRE: A press edge -> the pistol's IsPressed latch fires.
-    pads.set(0, { pressed: [0] });
+    // FIRE: B press edge -> the pistol's IsPressed latch fires.
+    pads.set(0, { pressed: [1] });
     gp.poll(false);
     g.tick(1);
     expect(p.mWeapon_Current.mFire).toBe(true);
     // Weapons: unlock the uzi, then RB press ... release -> NEXT_WEAPON.IsReleased fires.
     p.NewWeapon('uzi');
-    pads.set(0, { pressed: [0, 5] });
+    pads.set(0, { pressed: [1, 5] });
     gp.poll(false);
     g.tick(1);
-    pads.set(0, { pressed: [0] }); // RB released
+    pads.set(0, { pressed: [1] }); // RB released
     gp.poll(false);
     g.tick(1);
     expect(p.mWeapon_Current.mNameID).toBe('uzi');
     // Pause: Start press toggles the pause screen.
-    pads.set(0, { pressed: [0, 9] });
+    pads.set(0, { pressed: [1, 9] });
     gp.poll(false);
     g.tick(2);
     expect(g.world().mPaused).toBe(true);
@@ -106,7 +106,7 @@ describe('gamepad -> game (scope wiring)', () => {
     const pads = fakePads();
     const gp = installGamepad({ player: g.player, provider: pads.provider });
     (CMain as any).mInput.KEY_FIRE.mKeycode = 75; // what a rebinding ends up writing
-    pads.set(0, { pressed: [0] });
+    pads.set(0, { pressed: [1] });
     gp.poll(false);
     expect(Key.isDown(75)).toBe(true);
     expect(Key.isDown(KEYS.P1.FIRE)).toBe(false);

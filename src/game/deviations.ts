@@ -816,4 +816,12 @@ export const DEVIATIONS: Deviation[] = [
       'keeps it held without firing or automatic pistol fallback, and preserves the original selection '+
       'code through scoped eligibility wrappers. Legacy peers retain their existing empty-weapon behavior.',
   },
+  {
+    id:'WEAPON_SHORTCUT_BINDINGS',file:'local/WeaponBindings.ts, Gamepad.ts, Resume.ts; local/Net/NetSession.ts, Rollback.ts; electron/fastInput.ts',
+    description:'Optional weapon-bindings-v1 depends on empty-weapons-v1. Per-run per-player A/Y '+
+      'bindings survive death, waves, v2 saves and rollback. Render-owned 800ms holds enqueue one-shot '+
+      'tick commands; short releases select. Complete command frames use TCP, including repairs and '+
+      'recovery, with corrections even when ordinary input bits match prediction. B/triggers fire; '+
+      'A still confirms drafts/menus. Small key labels and a separate bind/unbind progress bar remain render-owned.',
+  },
 ];

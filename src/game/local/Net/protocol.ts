@@ -186,7 +186,7 @@ export type LanMessage =
   | { t: 'start'; mode: LanMode; roomLink: string; cfg: GameConfig; seed: number; inputDelay?: number; resumeTick?: number; wave?: number; snap?: unknown; rollback?: boolean; netcode?: 'rollback-v2'; epoch?: string }
   // both -> both: this peer's player input bitmap for `tick` (bit order = NetSlot.SLOT_ORDER: UP, DOWN, LEFT,
   // RIGHT, FIRE, NEXT_WEAPON, PREV_WEAPON), checksum piggybacked every LAN_CHECKSUM_EVERY ticks.
-  | { t: 'in'; tick: number; bits: number; sum?: LanChecksum }
+  | { t: 'in'; tick: number; bits: number; sum?: LanChecksum; weaponCommands?: import('../WeaponBindings.ts').WeaponCommand[] }
   // both -> both, echoed back once (`echo` marks the reply; RTT probe + liveness).
   | { t: 'hb'; ts: number; echo?: true; rttMs?: number }
   // both -> both: orderly exit. 'quit' = left the lobby; 'forfeit' = conceded. `via` says why a forfeit happened

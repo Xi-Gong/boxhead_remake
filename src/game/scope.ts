@@ -35,6 +35,7 @@ import { installWaveDraft } from './local/WaveDraft.ts';
 import {installCombatScope,settleCombatPlayers} from './local/Combat.ts';
 import {installModernFeatures} from './local/ModernFeatures.ts';
 import {installWeaponAccess} from './local/WeaponAccess.ts';
+import {installWeaponBindings} from './local/WeaponBindings.ts';
 import {installCombatPacing} from './local/CombatPacing.ts';
 import {installCombatEnemies} from './local/CombatEnemies.ts';
 import {installCombatRoster} from './local/CombatRoster.ts';
@@ -129,6 +130,7 @@ export function applyScope(): void {
   installCombatScope();
   installModernFeatures();
   installWeaponAccess();
+  installWeaponBindings();
   installArmorScope();
   installBalanceScope();
   installEndlessScope();

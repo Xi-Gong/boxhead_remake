@@ -9,7 +9,8 @@
 //   - a pushedByPad set reconciles with the physical keyboard: the pad only releases keys it pushed itself, and
 //     after Key._clear() (window blur / context menu) the next poll re-pushes still-held buttons;
 //   - left stick (radial 40/30 % engage-release + eight even 22.5-degree sectors, v0.1.7) or the d-pad = movement;
-//   - RT/LT or A held = FIRE, RB/LB = next/previous weapon, Start = pause (all through the slot latch semantics,
+//   - RT/LT or B held = FIRE; modern A/Y short-select or long-bind, A confirms drafts/menus;
+//     RB/LB = next/previous weapon, Start = pause (all through the slot latch semantics,
 //     exactly like the keyboard keys they impersonate);
 //   - menus / pause screen: pad 0's stick or d-pad moves a virtual cursor (player.mouseMove in stage-logical
 //     coordinates, so renderScale does not matter), A presses / releases the mouse; the physical mouse always wins
@@ -23,9 +24,11 @@ import { Key, Mouse } from '../../engine/flash/input.ts';
 import { CMain, World } from '../packages.ts';
 import {toggleStats} from './DraftStatsInput.ts';
 import {netSession} from './Net/NetSession.ts';
+import {hasFeature} from './ModernFeatures.ts';
+import {bindingsFor,queueWeaponCommand,setBindingProgress,type WeaponButton} from './WeaponBindings.ts';
 
 /** Standard-mapping button indices used by the mapping. */
-const BTN = { A: 0, X:2, LB: 4, RB: 5, LT: 6, RT: 7, START: 9 } as const;
+const BTN = { A: 0, B:1, X:2, Y:3, LB: 4, RB: 5, LT: 6, RT: 7, START: 9 } as const;
 
 /** Virtual cursor speed in logical pixels per poll (d-pad, or a fully deflected stick). */
 const CURSOR_SPEED = 8;
@@ -47,6 +50,8 @@ export interface GamepadOptions {
   container?: HTMLElement;
   /** Pad snapshots for tests (default: navigator.getGamepads, absent in Node). */
   provider?: PadProvider;
+  /** Render/input clock only. Hold completion becomes a deterministic queued tick command. */
+  now?:()=>number;
 }
 
 /** One pad as the input badge sees it. */
@@ -88,6 +93,10 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   const watchers: [GamepadWatcher, GamepadWatcher] = [new GamepadWatcher(provider, 0), new GamepadWatcher(provider, 1)];
   /** Accumulated button holds per pad slot (the engine reports edges; holds are what the game keys need). */
   const held: [Set<number>, Set<number>] = [new Set(), new Set()];
+  type Hold={world:any;index:number;weapon:string;started:number;fired:boolean};
+  const holds:[Partial<Record<WeaponButton,Hold>>,Partial<Record<WeaponButton,Hold>>]=[{},{}];
+  const now=opts.now??(()=>performance.now());
+  const cancelHolds=(slot:0|1):void=>{for(const value of Object.values(holds[slot]))if(value)setBindingProgress(value.world,value.index,undefined);holds[slot]={};};
   const pushedByPad = new Set<number>();
   // DYNAMIC_VIEWPORT: the cursor lives in STAGE space (engine mouse coords); menus are centred on the grown stage,
   // so the roam range is the live stage, not the authored 640x480 (identity when there is no presenter).
@@ -137,6 +146,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   };
 
   const releaseAll = (): void => {
+    cancelHolds(0);cancelHolds(1);
     for (const vk of [...pushedByPad]) {
       if (Key.isDown(vk)) Key._up(vk);
       pushedByPad.delete(vk);
@@ -147,6 +157,8 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     }
     domClick = false;
   };
+  const onBlur=():void=>releaseAll();
+  if(typeof window!=='undefined')window.addEventListener('blur',onBlur);
 
   /** Reconcile one wanted key state with Key, never fighting the physical keyboard. */
   const setKey = (slotLatch: { mKeycode: number } | undefined, want: boolean): void => {
@@ -170,6 +182,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // An absent pad must not map at all: with its directions all false it would immediately "release" whatever
     // the other pad pushed (they can share slots - pad 1 also drives player 1 in Single player).
     if (!p.present) {
+      cancelHolds(slot);
       held[slot].clear();
       return;
     }
@@ -179,6 +192,24 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // override decides which pad that is (swapAssignment).
     const postfix = assign[slot] === 0 || World.CWorld.mGameMode === 'Single' ? '' : '2';
     const h = held[slot]!;
+    const world=CMain?._this?.mcWorld,index=netSession()?.role??(postfix?1:0),modern=hasFeature(world,'weapon-bindings-v1');
+    const actor=(Object.values(world?.mThing_Collection?.mPlayerThings??{})as any[]).find(player=>player.mPlayerIndex===index);
+    const combat=!!actor&&world.mLoaded&&!world.mPaused&&!world.mUpgrades.waveDraft?.round&&actor.mLife>0;
+    if(!modern||!combat)cancelHolds(slot);
+    else for(const button of ['A','Y']as const){
+      const key=BTN[button];let hold=holds[slot][button];
+      if(p.down.has(key))hold=holds[slot][button]={world,index,weapon:actor.mWeapon_Current.mNameID,started:now(),fired:false};
+      if(!hold)continue;
+      if(hold.world!==world||hold.index!==index||hold.weapon!==actor.mWeapon_Current.mNameID){setBindingProgress(hold.world,hold.index,undefined);delete holds[slot][button];continue;}
+      if(h.has(key)&&!hold.fired){
+        const amount=Math.min(1,(now()-hold.started)/800);setBindingProgress(world,index,{button,amount,unbind:bindingsFor(world,index)[button]===hold.weapon});
+        if(amount>=1){queueWeaponCommand(world,index,{action:'bind',button,weapon:hold.weapon});hold.fired=true;setBindingProgress(world,index,undefined);}
+      }
+      if(p.up.has(key)){
+        if(!hold.fired)queueWeaponCommand(world,index,{action:'select',button});
+        delete holds[slot][button];setBindingProgress(world,index,undefined);
+      }
+    }
     if(p.down.has(BTN.X)){
       const world=CMain?._this?.mcWorld;if(world&&!world.mPaused)toggleStats(world,netSession()?.role??(postfix?1:0),batch);
     }
@@ -192,7 +223,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     setKey(input['KEY_RIGHT' + postfix], dirs.right);
     setKey(input['KEY_UP' + postfix], dirs.up);
     setKey(input['KEY_DOWN' + postfix], dirs.down);
-    setKey(input['KEY_FIRE' + postfix], h.has(BTN.RT) || h.has(BTN.LT) || h.has(BTN.A));
+    setKey(input['KEY_FIRE' + postfix], h.has(BTN.RT) || h.has(BTN.LT) || h.has(BTN.B) || h.has(BTN.A)&&(!modern||!!world?.mUpgrades.waveDraft?.round));
     setKey(input['KEY_NEXT_WEAPON' + postfix], h.has(BTN.RB));
     setKey(input['KEY_PREV_WEAPON' + postfix], h.has(BTN.LB));
     setKey(input.KEY_PAUSE, h.has(BTN.START));
@@ -328,6 +359,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     dispose(): void {
       releaseAll();
       if (typeof window !== 'undefined') window.removeEventListener('keydown', onKeydown, true);
+      if (typeof window !== 'undefined') window.removeEventListener('blur',onBlur);
       if (cursorEl) {
         cursorEl.remove();
         cursorEl = undefined;

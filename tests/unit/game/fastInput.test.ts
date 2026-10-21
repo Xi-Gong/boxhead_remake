@@ -22,6 +22,8 @@ it('redundant UDP delivers, deduplicates and rejects stale game epochs without T
     await until(() => received[1]!.length === 1);
     await new Promise(resolve => setTimeout(resolve, 100));
     expect(received[1]).toEqual([{ t: 'in', tick: 0, bits: 8 }]);
+    a.send({t:'in',tick:7,bits:0,weaponCommands:[{action:'bind',button:'A',weapon:'pistol'}]});
+    expect((a as any).frames.has(7)).toBe(false);
     b.begin('second');
     a.send({ t: 'in', tick: 1, bits: 16 });
     await until(() => b.stats.rejected > 0);
