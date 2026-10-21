@@ -21,7 +21,7 @@ export async function verifyV034Candidate(g,out){
   assert.deepEqual(report.cards.map(c=>c.benefit),['+8%','+6%','+10%']);assert.match(report.cards[1].preview,/40.*42/);assert.match(report.cards[2].preview,/120.*131/);assert(report.cards[0].x<report.cards[1].x&&report.cards[1].x<report.cards[2].x);
   await g.shot(`${out}/cards.png`,false);await g.page.keyboard.press('Tab');assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Stats._visible'));
   report.stats=await g.expr('Array.from({length:9},(_,i)=>[m.mcWorld._WaveDraftHud._Player0._Stats["_Name"+i].text,m.mcWorld._WaveDraftHud._Player0._Stats["_Value"+i].text])');
-  assert.equal(report.stats[7][0],'HEAL / AMMO');assert.equal(report.stats[8][1],'97 / 120');assert.match(report.stats[4][1],/\[A\]/);await g.shot(`${out}/stats.png`,false);
+  assert.equal(report.stats[7][0],'HEAL / AMMO');assert.equal(report.stats[8][1],'97 / 120');assert.match(report.stats[4][1],/\[A\]/);assert.match(await g.expr('m.mcWorld._WaveDraftHud._Player0._Stats._Sources.text'),/A: UZI \/ Y: --/);await g.shot(`${out}/stats.png`,false);
   await g.page.keyboard.press('Tab');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));
   assert.equal(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mMaxLife'),173);
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.shot(`${out}/pause.png`,false);

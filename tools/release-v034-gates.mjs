@@ -4,9 +4,11 @@ import {mkdirSync,readFileSync,writeFileSync,createWriteStream} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {resolve,join} from 'node:path';
 import {extractFile} from '@electron/asar';
+import {readdirSync} from 'node:fs';
 const out=resolve(process.env.BOXHEAD_QA_GATE_OUT??'generated/reports/v034/release-gates');mkdirSync(out,{recursive:true});
 const version=JSON.parse(readFileSync('package.json','utf8')).version,archive=process.env.BOXHEAD_QA_STAGED_ASAR;if(!archive)throw new Error('Set the freshly staged asar');
 if(JSON.parse(extractFile(archive,'package.json')).version!==version)throw new Error('Stale package version');
+for(const file of readdirSync('dist/bundle').filter(name=>name.endsWith('.js'))){if(!extractFile(archive,'dist/bundle/'+file).equals(readFileSync('dist/bundle/'+file)))throw new Error('Stale packaged renderer '+file);}
 const identity={version,asarSha256:createHash('sha256').update(readFileSync(archive)).digest('hex')},file=join(out,'report.json');
 let report={...identity,ok:false,scope:'Serial hidden low-resolution functional acceptance, with isolated saves/ports; no performance benchmark or extreme stress',cases:[]};
 try{const previous=JSON.parse(readFileSync(file,'utf8'));if(previous.asarSha256===identity.asarSha256)report=previous;}catch{}

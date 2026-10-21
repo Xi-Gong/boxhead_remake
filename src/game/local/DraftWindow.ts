@@ -117,9 +117,10 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
   }
   side._Stats._visible=opened;const values=rows(s);
   for(let row=0;row<9;row++){label(side._Stats['_Name'+row],values[row]?.[0]??'',12);label(side._Stats['_Value'+row],values[row]?.[1]??'',indices.length===2?12:15);side._Stats['_Value'+row].textColor=row===1?RED:row===2?BLUE:row===8?PURPLE:INK;}
-  if(side._Stats._Sources)side._Stats._Sources.text=`BUILD: DMG ${b.damage} / HP ${b.health} / SHIELD ${b.armor}\nENCHANT ENDURANCE: ${b.endurance??0}`;
+  const shortcuts=`A: ${s?.bindings?.A?.toUpperCase()??'--'} / Y: ${s?.bindings?.Y?.toUpperCase()??'--'}`;
+  if(side._Stats._Sources)side._Stats._Sources.text=`${shortcuts}\nBUILD: DMG ${b.damage} / HP ${b.health} / SHIELD ${b.armor}`;
   setButtonLabel(side._Stats._Bind,`CHANGE KEY: ${statsKeyLabel(index)} / PAD: X`);
-  side._Hint.text=opened?(statsBindingHint(world)||`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}`):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?'EVERY BENEFIT IS DOUBLED':'SELECT A CARD, THEN READY';
+  side._Hint.text=opened?(statsBindingHint(world)||(indices.length===2?`${shortcuts} / END ${b.endurance??0}`:`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}`)):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?'EVERY BENEFIT IS DOUBLED':'SELECT A CARD, THEN READY';
   side._Hint.textColor=ready&&!opened?GREEN:MUTED;
   side._Ready._visible=!opened;setButtonLabel(side._Ready,ready?'READY! / WAITING':`READY / ${REWARD_LABELS[round.offers[index]![round.selected[index]!]!]}`);side._Ready.enabled=!ready;side._Ready._alpha=ready?70:100;
  }
