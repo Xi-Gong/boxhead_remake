@@ -8,6 +8,7 @@ import {tieredGrowthConfigured} from './TieredGrowth.ts';
 import {clearWavesConfigured} from './ClearWaves.ts';
 import {COMBAT_RULE,SIMPLE_COMBAT_RULE,combatWorld,simplifiedWorld,shotgunFalloff,passiveBonuses,type CombatRule} from './CombatRules.ts';
 import {draftBonuses} from './WaveDraftRules.ts';
+import {availableFeatures} from './ModernFeatures.ts';
 const classic=new WeakSet<object>();
 const classicSimplified=new WeakSet<object>();
 export function setClassicCombatFixture(main:object):void{classic.add(main);}
@@ -48,7 +49,7 @@ export function installCombatScope():void{
   const result=init.call(this);if(combatConfigured())this.combat={rule:configuredCombatRule()};
   // Menu boot may have prepared v3 art before an older LAN peer is selected. Queue its full art
   // before CWorld.InitCleanUp drains the baker, rather than on the first legacy combat spawn.
-  if(expandedEnemyArtConfigured()){Thing.Creature.CThing_Creature_Zombie.GetCollection();Thing.Creature.CThing_Creature_Devil.GetCollection();}
+  if(expandedEnemyArtConfigured()||!availableFeatures().includes('native-bosses-v1')){Thing.Creature.CThing_Creature_Zombie.GetCollection();Thing.Creature.CThing_Creature_Devil.GetCollection();}
   return result;
  };
  u.__set__mLevel=function(this:any,wave:number):any{
