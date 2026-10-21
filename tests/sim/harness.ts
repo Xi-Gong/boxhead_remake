@@ -48,6 +48,7 @@ import {setClassicVariantArtFixture} from '../../src/game/local/VariantArt.ts';
 import {setClassicTieredGrowthFixture} from '../../src/game/local/TieredGrowth.ts';
 import {setClassicClearWavesFixture} from '../../src/game/local/ClearWaves.ts';
 import {setClassicCombatFixture,setClassicSimplifiedCombatFixture} from '../../src/game/local/Combat.ts';
+import {setClassicFeatureFixture} from '../../src/game/local/ModernFeatures.ts';
 import { CMain, Screen, Thing, World } from '../../src/game/packages.ts';
 
 export type GameMode = 'Single' | 'Coop' | 'DeathMatch';
@@ -98,6 +99,7 @@ export interface HeadlessGameOptions {
   classicDraftReady?: boolean;
   classicCombat?: boolean;
   classicSimplifiedCombat?: boolean;
+  classicFeatures?: import('../../src/game/local/ModernFeatures.ts').ModernFeature[];
   classicBossWaves?: boolean;
   classicBossEncounters?: boolean;
   classicWeaponArt?: boolean;
@@ -464,6 +466,7 @@ export function createHeadlessGame(opts: HeadlessGameOptions = {}): HeadlessGame
   if(opts.classicDraftReady)setClassicDraftReadyFixture(m);
   if(opts.classicCombat)setClassicCombatFixture(m);
   if(opts.classicSimplifiedCombat)setClassicSimplifiedCombatFixture(m);
+  if(opts.classicFeatures)setClassicFeatureFixture(m,opts.classicFeatures);
   if(opts.classicBossWaves)setClassicBossWavesFixture(m);
   if(opts.classicBossEncounters)setClassicBossEncountersFixture(m);
   if(opts.classicWeaponArt)setClassicWeaponArtFixture(m);

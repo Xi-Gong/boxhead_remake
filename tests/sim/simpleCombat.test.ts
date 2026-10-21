@@ -73,7 +73,7 @@ it('keeps the negotiated v2 roster and enemy armor in the explicit previous-rule
 });
 it('separates health and armor at every growth boundary, with exact derived reward previews',()=>{
  expect([1,10,30,50].map(simplifiedVitals)).toEqual([{health:160,armor:60},{health:178,armor:69},{health:238,armor:109},{health:318,armor:169}]);
- const g=createHeadlessGame(),w=g.world(),p=g.players()[0];try{
+ const g=createHeadlessGame({classicFeatures:['fragile-armor-v1']}),w=g.world(),p=g.players()[0];try{
   expect([p.mMaxLife,armorMaximum(p)]).toEqual([160,60]);p.mLife=80;p.mArmor=7;
   const stats=capturePlayerStats(w)[0]!;applyWaveReward(w,0,'health',1);applyWaveReward(w,0,'armor',1);
   expect([playerMaximum(p),armorMaximum(p)]).toEqual([173,64]);expect([p.mLife,p.mArmor]).toEqual([93,7]);
@@ -83,7 +83,7 @@ it('separates health and armor at every growth boundary, with exact derived rewa
  }finally{g.quit();}
 });
 it('breaks the thin shield on the second 50-damage attack with normal overflow',()=>{
- const g=createHeadlessGame(),p=g.players()[0];try{
+ const g=createHeadlessGame({classicFeatures:['fragile-armor-v1']}),p=g.players()[0];try{
   noSpawn(g);placePlayer(g,6.5,8.5);p.mInvincible=0;refillArmor(p);
   const foe={mPosition:p.mPosition.Add(new Thing.Math.CThing_Position(1,0,0)),mAngle:p.mAngle};
   for(let n=0;n<2;n++){p.mAffectors=[new Thing.Affect.CThing_Affect_ZombieAttack(foe,50)];p.ProcessAffects();}

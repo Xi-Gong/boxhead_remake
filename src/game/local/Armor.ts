@@ -12,6 +12,7 @@ import {simplifiedWorld} from './CombatRules.ts';
 import { installSupplyDrops } from './SupplyDrops.ts';
 import { REFILL_RULE, setReliableSupplies } from './ReliableSupplies.ts';
 import {dropPriestSupplies} from './VariantLoot.ts';
+import {hasFeature} from './ModernFeatures.ts';
 
 const bars=new WeakMap<object,any>();
 const fills=new WeakMap<object,any>();
@@ -71,6 +72,22 @@ export function installArmorScope():void{
     if(!suppliesEnabled(this.mWorld))return result;
     const head=this.mcPlayers[p.mPlayerIndex];if(!head)return result;
     const maximum=armorMaximum(p),amount=armorValue(p.mArmor,maximum);let bar=bars.get(head);
+    if(hasFeature(this.mWorld,'fragile-armor-v1')){
+      if(!bar){bar=head.createEmptyMovieClip('_ArmorBar',head.getNextHighestDepth());bars.set(head,bar);}
+      head.mcLife._visible=true;bar._visible=amount>0;
+      if(amount>0){
+        const bounds=head.mcLife.getBounds(head),width=Math.max(16,bounds.xMax-bounds.xMin);
+        bar._x=bounds.xMin;bar._y=bounds.yMax+2;
+        const ratio=amount/maximum;
+        if(bar._armorRatio!==ratio||bar._armorWidth!==width){
+          bar.clear();bar.lineStyle(1,0x182c36,100);bar.beginFill(0x233640,100);
+          bar.moveTo(0,0);bar.lineTo(width,0);bar.lineTo(width,3);bar.lineTo(0,3);bar.lineTo(0,0);bar.endFill();
+          bar.lineStyle();bar.beginFill(0x36adeb,100);bar.moveTo(1,1);bar.lineTo(1+(width-2)*ratio,1);bar.lineTo(1+(width-2)*ratio,2);bar.lineTo(1,2);bar.lineTo(1,1);bar.endFill();
+          bar._armorRatio=ratio;bar._armorWidth=width;
+        }
+      }
+      return result;
+    }
     if(amount>0&&!bar){
       bar=head.mcLife.duplicateMovieClip('_ArmorBar',head.getNextHighestDepth());
       bars.set(head,bar);

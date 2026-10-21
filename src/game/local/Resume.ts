@@ -38,6 +38,8 @@ import {clearWavesConfigured,reconcileSavedClearWave} from './ClearWaves.ts';
 import { copyWaveDraft, newWaveDraft, type WaveDraftState } from './WaveDraftRules.ts';
 import {VARIANTS_RULE,captureVariants,restoreVariants,variantsWorld,type VariantSave} from './EnemyVariants.ts';
 import {ENCHANTMENT_RULE,persistentEnchantment,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
+import {availableFeatures,hasFeature,type ModernFeature} from './ModernFeatures.ts';
+import {simplifiedVitals} from './CombatRules.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -96,6 +98,7 @@ export interface ObjectState {
 }
 
 export interface RunSnapshot {
+  features?:ModernFeature[];
   combat?:CombatState;
   bossWaves?: typeof BOSS_WAVES_RULE;
   bossEncounters?: typeof BOSS_ENCOUNTERS_RULE;
@@ -268,6 +271,7 @@ export function capture(world: any): RunSnapshot {
   return {
     ...(u.lanGrowth ? { growth: copyGrowth(u.lanGrowth) } : {}),
     ...(u.combat?{combat:{...u.combat}}:{}),
+    ...(u.features?.length?{features:[...u.features]}:{}),
     ...(endlessWorld(world)?{endless:ENDLESS_RULE}:{}),
     ...(timedWave(world)?{timedWave:copyTimedWave(world)}:{}),
     ...(waveDraft(world)?{waveDraft:copyWaveDraft(waveDraft(world))}:{}),
@@ -446,6 +450,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if (snap?.version !== RESUME_VERSION) return false;
   if (snap.roomLibLink !== world.mWorldLibLink || snap.gameMode !== World.CWorld.mGameMode) return false;
   if (!Number.isSafeInteger(snap.wave) || snap.wave < 1) return false;
+  if(snap.features?.some(f=>!availableFeatures().includes(f)))return false;
   // Never reinterpret an endless checkpoint using an older negotiated simulation.
   if ((snap.endless === ENDLESS_RULE || snap.growth?.players.some(p => p.endless)) && !endlessWorld(world)) return false;
   if(snap.variants?.rule===VARIANTS_RULE&&!variantsWorld(world))return false;
@@ -530,6 +535,13 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     settleVitals(world, true);
     settleCombatPlayers(world);
     if(migrate)finishSimplifiedRestore(world,snap);
+    if(hasFeature(world,'fragile-armor-v1')&&!snap.features?.includes('fragile-armor-v1')&&snap.combat?.rule===SIMPLE_COMBAT_RULE){
+      for(const p of Object.values(world.mThing_Collection.mPlayerThings)as any[]){
+        const saved=snap.players.find(s=>s.index===p.mPlayerIndex);if(saved?.armor===undefined)continue;
+        const previous=simplifiedVitals(snap.growth?.players[p.mPlayerIndex]?.level??1).armor*(1+.06*(snap.waveDraft?.bonuses[p.mPlayerIndex]?.armor??0));
+        p.mArmor=Math.round(Math.max(0,Math.min(1,saved.armor/Math.round(previous)))*armorMaximum(p));
+      }
+    }
     setRandomState(snap.rngState);
     world.mTick = snap.tick;
   } finally {

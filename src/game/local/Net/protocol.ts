@@ -113,6 +113,7 @@ export interface GameConfig {
   waveDraft?: 'wave-draft-v1';
   draftReady?: 'draft-ready-v1';
   combat?: 'combat-pve-v2'|'combat-pve-v3';
+  features?: import('../ModernFeatures.ts').ModernFeature[];
   bossWaves?: 'boss-waves-v1';
   bossEncounters?: 'boss-encounters-v1';
   tieredGrowth?: 'tiered-growth-v1';

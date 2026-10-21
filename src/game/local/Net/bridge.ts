@@ -17,6 +17,7 @@ import { NetSession } from './NetSession.ts';
 import { computeInputDelay } from './protocol.ts';
 import { roomSettingsFromSave, savedSwitch } from './RoomSettings.ts';
 import type { GameConfig, LanMessage, SetupSelection } from './protocol.ts';
+import {MODERN_FEATURES,type ModernFeature} from '../ModernFeatures.ts';
 
 /** The Presenter surface the bridge needs (main.ts hands the real platform Presenter over). */
 export interface PresenterLike {
@@ -78,6 +79,7 @@ class LanBridge {
   private peerClearWaves = false;
   private peerVariants = false;
   private peerEnchantment = false;
+  private peerFeatures:ModernFeature[]=[];
   private supportsEndless():boolean{return this.peerEndless&&this.peerGrowth&&this.peerSupplies&&this.peerSurvival&&this.peerLoot&&this.peerBalance;}
   private waveMaximum():number{return this.supportsEndless()?maxUnlockedWave():Math.min(100,maxUnlockedWave());}
   timedWavesAvailable():boolean{return this.supportsEndless()&&this.peerTimedWaves;}
@@ -95,7 +97,8 @@ class LanBridge {
       ||c?.bossWaves&&!this.bossWavesAvailable()
       ||c?.bossEncounters&&(!this.bossWavesAvailable()||!this.peerBossEncounters)
       ||c?.tieredGrowth&&(!this.supportsEndless()||!this.peerTieredGrowth)
-      ||c?.clearWaves&&(!this.timedWavesAvailable()||!this.peerClearWaves));
+      ||c?.clearWaves&&(!this.timedWavesAvailable()||!this.peerClearWaves)
+      ||c?.features?.some(f=>!this.peerFeatures.includes(f)));
   }
   session: NetSession | null = null;
   sid: string | undefined;
@@ -321,6 +324,7 @@ class LanBridge {
       ...(sel.mode==='Coop'&&this.timedWavesAvailable()&&this.peerWaveDraft?{waveDraft:'wave-draft-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.timedWavesAvailable()&&this.peerWaveDraft&&this.peerDraftReady?{draftReady:'draft-ready-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.combatAvailable()?{combat:this.peerSimpleCombat?'combat-pve-v3' as const:'combat-pve-v2' as const}:{}),
+      ...(sel.mode==='Coop'&&this.combatAvailable()&&this.peerSimpleCombat?{features:[...this.peerFeatures]}:{}),
       ...(sel.mode==='Coop'&&this.bossWavesAvailable()?{bossWaves:'boss-waves-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.bossWavesAvailable()&&this.peerBossEncounters?{bossEncounters:'boss-encounters-v1' as const}:{}),
       ...(sel.mode==='Coop'&&this.supportsEndless()&&this.peerTieredGrowth?{tieredGrowth:'tiered-growth-v1' as const}:{}),
@@ -423,6 +427,7 @@ class LanBridge {
       this.peerDraftReady = Array.isArray(msg.features) && msg.features.includes('draft-ready-v1');
       this.peerCombat = Array.isArray(msg.features) && msg.features.includes('combat-pve-v2');
       this.peerSimpleCombat = Array.isArray(msg.features) && msg.features.includes('combat-pve-v3');
+      this.peerFeatures=MODERN_FEATURES.filter(f=>Array.isArray(msg.features)&&msg.features.includes(f));
       this.peerBossWaves = Array.isArray(msg.features) && msg.features.includes('boss-waves-v1');
       this.peerBossEncounters = Array.isArray(msg.features) && msg.features.includes('boss-encounters-v1');
       this.peerTieredGrowth = Array.isArray(msg.features) && msg.features.includes('tiered-growth-v1');

@@ -33,6 +33,7 @@ import { installTimedWaves } from './local/TimedWaves.ts';
 import { installTimedWaveUi } from './local/TimedWaveUi.ts';
 import { installWaveDraft } from './local/WaveDraft.ts';
 import {installCombatScope,settleCombatPlayers} from './local/Combat.ts';
+import {installModernFeatures} from './local/ModernFeatures.ts';
 import {installCombatPacing} from './local/CombatPacing.ts';
 import {installCombatEnemies} from './local/CombatEnemies.ts';
 import {installCombatRoster} from './local/CombatRoster.ts';
@@ -125,6 +126,7 @@ export function applyScope(): void {
   installTimedWaves();
   installTimedWaveUi();
   installCombatScope();
+  installModernFeatures();
   installArmorScope();
   installBalanceScope();
   installEndlessScope();

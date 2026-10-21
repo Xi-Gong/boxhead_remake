@@ -2,6 +2,7 @@
 import { draftBonuses,type WaveBonuses } from './WaveDraftRules.ts';
 import {simplifiedWorld,simplifiedVitals,vitalityStep} from './CombatRules.ts';
 import {TIERED_GROWTH_RULE,tieredLevelStats} from './TieredGrowthRules.ts';
+import {hasFeature} from './ModernFeatures.ts';
 export const SURVIVAL_RULE = 'survival-v1';
 const worlds = new WeakSet<object>();
 export function setSurvivalEnabled(world: object, enabled: boolean): void {
@@ -16,7 +17,10 @@ function playerBaseMaximum(player: any,kind:'health'|'armor'): number {
   return 200 + 4 * (Math.max(1, growth?.endless?level:Math.min(125,level)) - 1);
 }
 export function playerMaximum(player:any,bonus:Readonly<WaveBonuses>=draftBonuses(player.mWorld,player.mPlayerIndex)):number {return Math.round(playerBaseMaximum(player,'health')*(1+vitalityStep(player.mWorld,'health')*bonus.health));}
-export function playerArmorMaximum(player:any,bonus:Readonly<WaveBonuses>=draftBonuses(player.mWorld,player.mPlayerIndex)):number {return Math.round(playerBaseMaximum(player,'armor')*(1+vitalityStep(player.mWorld,'armor')*bonus.armor));}
+export function playerArmorMaximum(player:any,bonus:Readonly<WaveBonuses>=draftBonuses(player.mWorld,player.mPlayerIndex)):number {
+ if(hasFeature(player.mWorld,'fragile-armor-v1'))return Math.min(Math.floor(playerBaseMaximum(player,'health')*.25*(1+.06*bonus.armor)),Math.floor(playerMaximum(player,bonus)*.4));
+ return Math.round(playerBaseMaximum(player,'armor')*(1+vitalityStep(player.mWorld,'armor')*bonus.armor));
+}
 export function syncVitals(player: any, mode: 'full' | 'restore' | 'level'): void {
   if (!survivalEnabled(player.mWorld)) return;
   const max = playerMaximum(player), previous = player.mMaxLife ?? 200;

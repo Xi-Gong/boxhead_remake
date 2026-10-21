@@ -6,7 +6,7 @@ import {infiniteGrowthWeapon,modernWeaponProjection} from './Net/Growth.ts';
 import {combatWorld,simplifiedWorld,passiveBonuses,restoredSupply,replenishedAmmo} from './CombatRules.ts';
 import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
-import {syncVitals} from './SurvivalRules.ts';
+import {syncVitals,playerArmorMaximum} from './SurvivalRules.ts';
 import {takeDraftChoice,draftSampleBits} from './WaveDraftInput.ts';
 import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,DRAFT_CONFIRM,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
 const classic=new WeakSet<object>();
@@ -39,7 +39,7 @@ export function rewardOffers(p:any):Reward[] {
       return next&&(key==='capacity'?next.capacity>gun.mTotalAmmo:next.fireRate<gun.mFireRate);
     });
     const offense:Reward[]=simplifiedWorld(w)?['damage']:['damage','penetration'];if(canWeapon('haste'))offense.push('haste');
-    const defense:Reward[]=['health','armor'];if(alive&&p.mLife<p.mMaxLife)defense.push('heal');
+    const defense:Reward[]=['health'];if(playerArmorMaximum(p,{...b,armor:b.armor+1})>playerArmorMaximum(p,b))defense.push('armor');if(alive&&p.mLife<p.mMaxLife)defense.push('heal');
     const utility:Reward[]=['scavenging'];
     if(passiveBonuses({...b,mobility:(b.mobility??0)+1}).movement-passiveBonuses(b).movement>1e-6)utility.push('mobility');
     if(canWeapon('capacity'))utility.push('capacity');if(finiteWeapons(p).some(gun=>gun.mAmmo<gun.mTotalAmmo))utility.push('ammo');

@@ -798,4 +798,10 @@ export const DEVIATIONS: Deviation[] = [
       'through updates, supplies and crate recovery; compact Boss-only bars remain render-owned. '+
       'Explicit v2 fixtures and old peers retain their prior semantics.',
   },
+  {
+    id:'FRAGILE_ARMOR',file:'local/ModernFeatures.ts, SurvivalRules.ts, Supplies.ts, Armor.ts, Resume.ts',
+    description:'Optional fragile-armor-v1 uses 25% base health armor with a 40% final-health ceiling, '+
+      'full armor-crate restoration independent of supply efficiency, a separate thin cyan bar and '+
+      'one-time fraction-preserving v2 migration. Legacy negotiated armor semantics remain explicit fixtures.',
+  },
 ];

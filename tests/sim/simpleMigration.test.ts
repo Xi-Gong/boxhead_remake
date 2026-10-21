@@ -20,7 +20,7 @@ it('immediately migrates vitals, piercing choices and placed enchantment exactly
  const mine:any=new Thing.Object.CThing_Object_Mine(pos(7.5,8.5),p.mAngle,p,135);mine.mEnchanted=true;w.mThing_Collection.AddThing(mine);mine.Process_Init();
  w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers[0]=['penetration','health','armor'];
  const saved=capture(w),original=structuredClone(saved);old.quit();
- const g=createHeadlessGame(),world=g.world();try{
+ const g=createHeadlessGame({classicFeatures:['fragile-armor-v1']}),world=g.world();try{
   expect(applyToWorld(world,saved)).toBe(true);expect(saved).toEqual(original);const q=g.players()[0],b=world.mUpgrades.waveDraft.bonuses[0];
   expect(world.mUpgrades.combat).toEqual({rule:'combat-pve-v3'});expect([q.mMaxLife,q.mLife,armorMaximum(q),q.mArmor]).toEqual([173,87,64,32]);
   expect([b.damage,b.penetration]).toEqual([5,undefined]);expect(world.mUpgrades.waveDraft.round.offers[0]).toEqual(['damage','health','armor']);

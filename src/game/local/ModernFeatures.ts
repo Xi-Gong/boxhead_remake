@@ -1,0 +1,17 @@
+// Optional v0.3.4 rules. Each capability keeps older negotiated simulations unchanged.
+import {CMain,World} from '../packages.ts';
+import {netSession} from './Net/NetSession.ts';
+import {simplifiedWorld,SIMPLE_COMBAT_RULE} from './CombatRules.ts';
+export const MODERN_FEATURES=['fragile-armor-v1'] as const;
+export type ModernFeature=typeof MODERN_FEATURES[number];
+const classic=new WeakMap<object,Set<ModernFeature>>();
+export function setClassicFeatureFixture(main:object,features:readonly ModernFeature[]):void{classic.set(main,new Set(features));}
+export function availableFeatures():ModernFeature[]{
+ const session=netSession();
+ return MODERN_FEATURES.filter(f=>!classic.get(CMain._this)?.has(f)&&(!session||session.startOpts?.cfg.features?.includes(f)));
+}
+export function hasFeature(world:any,feature:ModernFeature):boolean{return simplifiedWorld(world)&&!!world.mUpgrades.features?.includes(feature);}
+export function installModernFeatures():void{
+ const p=World.CUpgrades.prototype as any,init=p.InitLists;
+ p.InitLists=function(this:any):any{const result=init.call(this);if(this.combat?.rule===SIMPLE_COMBAT_RULE)this.features=availableFeatures();return result;};
+}
