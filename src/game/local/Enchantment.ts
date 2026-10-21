@@ -125,15 +125,22 @@ export function installEnchantmentScope():void{
   ]));frame={...original,sBMD:bitmap};frames.set(original,frame);}
   clip.bmObject=frame;try{return drawExplosion.call(this);}finally{clip.bmObject=original;}
  };
- const hud=World.CHud.prototype as any,update=hud.UpdatePlayer,colors=new WeakMap<object,number>();
+ const hud=World.CHud.prototype as any,update=hud.UpdatePlayer,colors=new WeakMap<object,number>(),ammoLayouts=new WeakMap<object,{y:number;raise:number}>();
  hud.UpdatePlayer=function(this:any,p:any,...args:any[]):any{
+  const ownHead=this.mcPlayers[p.mPlayerIndex];
+  if(ownHead&&durabilityEnabled(this.mWorld)){
+   const ammo=ownHead.mcAmmo;let layout=ammoLayouts.get(ammo);
+   if(!layout){const box=ammo.getBounds(ownHead),life=ownHead.mcLife.getBounds(ownHead);layout={y:ammo._y,raise:Math.max(0,Math.ceil(box.yMax+8-life.yMin))};ammoLayouts.set(ammo,layout);}
+   // Reserve a real row between weapon text and the unchanged authored health bar.
+   ammo._y=layout.y-layout.raise;
+  }
   const result=update.call(this,p,...args),field=this.mcPlayers[p.mPlayerIndex]?.mcAmmo.tfAmount;
   const session=netSession(),stats=session?.confirmedPlayerStats?.find(s=>s.index===p.mPlayerIndex);
   if(field){if(!colors.has(field))colors.set(field,field.textColor);field.textColor=(session?stats?.enchanted:enchantedWeapon(p.mWeapon_Current))?ENCHANT_COLOR:colors.get(field);}
   const head=this.mcPlayers[p.mPlayerIndex];if(head&&durabilityEnabled(this.mWorld)){
    const value=session?stats?.enchantDurability??0:enchantedAmmo(p.mWeapon_Current),maximum=session?stats?.enchantMaximum??1:durabilityMaximum(p.mWeapon_Current);
    const bar=head._EnchantBar??head.createEmptyMovieClip('_EnchantBar',head.getNextHighestDepth());bar._visible=value>0;
-   if(value>0){const bounds=head.mcAmmo.getBounds(head);bar._x=bounds.xMin;bar._y=bounds.yMax+2;const ratio=value/Math.max(1,maximum);
+   if(value>0){const bounds=head.mcAmmo.getBounds(head),life=head.mcLife.getBounds(head);bar._x=(life.xMin+life.xMax-48)/2;bar._y=bounds.yMax+2;const ratio=value/Math.max(1,maximum);
     if(bar._ratio!==ratio){bar.clear();bar.lineStyle(1,0x37283f,100);bar.beginFill(0x3c2c47,100);bar.moveTo(0,0);bar.lineTo(48,0);bar.lineTo(48,3);bar.lineTo(0,3);bar.lineTo(0,0);bar.endFill();
      bar.lineStyle();bar.beginFill(ENCHANT_COLOR,100);bar.moveTo(1,1);bar.lineTo(1+46*ratio,1);bar.lineTo(1+46*ratio,2);bar.lineTo(1,2);bar.lineTo(1,1);bar.endFill();bar._ratio=ratio;}
    }

@@ -58,10 +58,10 @@ export function installWeaponBindings():void{
   const value=bindingProgress(this.mWorld,p.mPlayerIndex),bar=head._BindingProgress??head.createEmptyMovieClip('_BindingProgress',head.getNextHighestDepth());
   bar._visible=!!value&&!this.mWorld.mPaused&&!this.mWorld.mUpgrades.waveDraft?.round&&(!session||session.phase==='playing'&&!session.netPaused&&!session.pauseBarrier.pending);
   if(bar._visible){
-   bar._x=bounds.xMin;bar._y=bounds.yMax+8;bar.clear();bar.lineStyle(1,0x333333,100);bar.beginFill(0xf5f5ef,100);
+   bar._x=(bounds.xMin+bounds.xMax-48)/2;bar._y=bounds.yMin-7;bar.clear();bar.lineStyle(1,0x333333,100);bar.beginFill(0xf5f5ef,100);
    bar.moveTo(0,0);bar.lineTo(48,0);bar.lineTo(48,4);bar.lineTo(0,4);bar.lineTo(0,0);bar.endFill();
    bar.lineStyle();bar.beginFill(value!.unbind?0xef1304:0x267144,100);bar.moveTo(1,1);bar.lineTo(1+46*value!.amount,1);bar.lineTo(1+46*value!.amount,3);bar.lineTo(1,3);bar.lineTo(1,1);bar.endFill();
-   const hint=bar._Hint??text(bar,'_Hint',0,5,90,13,BODY_FONT,10,INK,true,'left','');hint.text=`${value!.button} ${value!.unbind?'UNBIND':'BIND'}`;
+   let hint=bar._Hint;if(!hint){hint=text(bar,'_Hint',0,-16,90,13,BODY_FONT,10,INK,true,'left','');hint.filters=glow();}hint.text=`${value!.button} ${value!.unbind?'UNBIND':'BIND'}`;
   }
   return result;
  };
