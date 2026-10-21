@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
-const out='generated/reports/v032/draft-stats-'+Date.now();mkdirSync(out,{recursive:true});
+const out='generated/reports/v034/draft-stats-'+Date.now();mkdirSync(out,{recursive:true});
 const report={ok:false,shots:[],geometry:[],method:'Single headless Chrome, real keyboard/mouse, injected pad mapping, direct screenshots'};
 const browser=await launch();let g;
 const sheet=i=>`m.mcWorld._WaveDraftHud._Player${i}._Stats._visible`;
@@ -21,16 +21,19 @@ try{
  }
  await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card2');assert(await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.selected[0]===2'));
  assert.deepEqual(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.confirmed'),[false,false]);
- await g.page.keyboard.press('Tab');assert(await g.waitExpr(sheet(0)));assert(!(await g.expr(sheet(1))));
+ await g.page.keyboard.press('Tab');assert(await g.waitExpr(sheet(0)));assert(await g.expr(sheet(1)));
  await g.page.keyboard.down('Slash');await g.page.waitForTimeout(120);assert.deepEqual(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.confirmed'),[false,false]);
- await g.page.keyboard.press('KeyS');assert(await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.selected[1]===1'));
+ await g.page.keyboard.press('KeyS');assert.equal(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.selected[1]'),0);
  await g.shot(out+'/p1-stats.png',false);report.shots.push('p1-stats.png');
  await g.page.keyboard.press('Tab');assert(await g.waitExpr('!'+sheet(0)));await g.page.keyboard.up('Slash');
  await g.page.keyboard.press('KeyR');assert(await g.waitExpr(sheet(1)));
  await g.clickClip('m.mcWorld._WaveDraftHud._Player1._Stats._Bind');
  await g.page.keyboard.press('KeyS');assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player1._Hint.text.includes("KEY IN USE")'));
  await g.page.keyboard.press('KeyT');assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player1._Stats._Bind._Contents._Label.text.includes("T /")'));
+ await g.page.keyboard.press('KeyT');assert(await g.waitExpr('!'+sheet(1)));
+ await g.clickClip('m.mcWorld._WaveDraftHud._Player1._Card1');assert(await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.selected[1]===1'));
  await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');assert(await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]'));
+ await g.page.keyboard.press('KeyT');assert(await g.waitExpr(sheet(0)+'&&'+sheet(1)));
  for(const viewport of [{width:640,height:480},{width:960,height:540},{width:480,height:720}]){
   await g.page.setViewportSize(viewport);await g.page.waitForTimeout(250);
   const b=await g.centreOf('m.mcWorld._WaveDraftHud'),s=await g.stageInfo();
@@ -46,9 +49,9 @@ try{
  assert.deepEqual(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.selected'),[2,1]);assert.deepEqual(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.confirmed'),[true,false]);
  assert((await g.expr('m.mcWorld._WaveDraftHud._Player1._StatsButton._Contents._Label.text')).includes('T'));
  const pad=async(i,on)=>{await g.eval(([i,on])=>{window.qaStatsPad.buttons[i]={pressed:on,value:+on};},[i,on]);await g.page.waitForTimeout(120);};
- await pad(3,true);await pad(3,false);assert(await g.waitExpr(sheet(1)));
+ await pad(2,true);await pad(2,false);assert(await g.waitExpr(sheet(1)));
  await pad(0,true);assert.deepEqual(await g.expr('m.mcWorld.mUpgrades.waveDraft.round.confirmed'),[true,false]);
- await pad(3,true);await pad(3,false);assert(await g.waitExpr('!'+sheet(1)));
+ await pad(2,true);await pad(2,false);assert(await g.waitExpr('!'+sheet(1)));
  assert.equal(await g.expr('m.mcWorld.mUpgrades.mLevelIndex'),1);await pad(0,false);await pad(0,true);await pad(0,false);
  assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));
  const png=PNG.sync.read(readFileSync(out+'/cards.png'));let light=0,red=0;

@@ -842,4 +842,12 @@ export const DEVIATIONS: Deviation[] = [
       'with per-slot first-attack offsets and unchanged projectile speed/range. Old members migrate once '+
       'with health fractions, slots and clocks; native zombie Boss identity now serializes explicitly.',
   },
+  {
+    id:'PAPER_DRAFT_WINDOW',file:'local/DraftWindow.ts, DraftUiArt.ts, WaveDraftUi.ts',
+    description:'The complete 610x400 draft/stat window uses original character bitmap portraits, warm '+
+      'paper, heavy ink, hard shadows, large semantic icons and benefits, exact projections and a short '+
+      'render-only focus transition. Single/LAN show three horizontal personal cards; local co-op shows '+
+      'two vertical columns. Nine readable stat rows expose shield, bindings and enchantment durability '+
+      'with confirmed LAN metadata. Both mouse buttons and actual rebound keyboard/X prompts stay live.',
+  },
 ];
