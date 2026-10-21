@@ -13,14 +13,15 @@ const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-rend
 const OFFSCREEN = ['-32000', '0'];
 
 const app = await electron.launch({
-  executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
+  executablePath: process.env.BOXHEAD_QA_EXE ?? join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
   cwd: ROOT,
   timeout: 60000,
-  args: [...NO_THROTTLE, '--boxhead-multi', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
+  args: [...NO_THROTTLE, '--boxhead-multi', '--boxhead-hidden', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
   env: { ...process.env, BOXHEAD_USER_DATA: join(ROOT, 'generated/reports/qa/net-typing') },
 });
   await isolateLanPorts(app);
   const page = await app.firstWindow();
+  await page.setViewportSize({ width: 640, height: 480 });
 try {
   const waitFor = async (fn, arg = null, timeout = 30000) => {
     try { await page.waitForFunction(fn, arg, { timeout, polling: 100 }); return true; } catch { return false; }

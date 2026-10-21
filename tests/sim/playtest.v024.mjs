@@ -30,7 +30,7 @@ const shot = async (name, page) => { const p = join(OUT, `v024_${name}.png`); aw
 
 async function launchApp(dirName) {
   const app = await electron.launch({
-    executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
+    executablePath: process.env.BOXHEAD_QA_EXE ?? join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
     cwd: ROOT,
     timeout: 60000,
     args: [...NO_THROTTLE, '--boxhead-multi', lanWindowFlag],

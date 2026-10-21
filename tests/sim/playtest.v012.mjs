@@ -15,22 +15,22 @@ rmSync(join(OUT, 'v012-portable'), { recursive: true, force: true }); // a fresh
 
 const NO_THROTTLE = ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
-const OFFSCREEN = ['-32000', '0'];
+const OFFSCREEN = [-32000, 0];
 
-const report = { ok: false, steps: [], errors: [], shots: [] };
+const report = { ok: false, method: 'Prepared save-flow fixture: original boot-time infinite-life switch, real keys/clicks; not balance evidence.', steps: [], errors: [], shots: [] };
 const step = (s) => { report.steps.push(s); console.log(s); };
 const shot = async (name) => { const p = join(OUT, `v012_${name}.png`); await page.screenshot({ path: p }); report.shots.push(p); step(`shot ${p}`); };
 
 const app = await electron.launch({
-  executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
+  executablePath: process.env.BOXHEAD_QA_EXE ?? join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'),
   cwd: ROOT,
   timeout: 60000,
-  args: [...NO_THROTTLE, `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
+  args: [...NO_THROTTLE, '--boxhead-hidden', `--window-position=${OFFSCREEN[0]},${OFFSCREEN[1]}`],
   env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, 'v012-portable') },
 });
 const page = await app.firstWindow();
-// Force the window off-screen even when the position flag was not honoured (activation may still have happened,
-// but nothing is visible and the occlusion flags keep the loop running).
+await page.setViewportSize({ width: 640, height: 480 });
+// Keep the already transparent/non-focusable window off-screen; occlusion flags keep the loop running.
 const bounds = await app.evaluate(({ BrowserWindow }, [x, y]) => {
   const w = BrowserWindow.getAllWindows()[0];
   const before = w.getBounds();
@@ -97,6 +97,10 @@ try {
   await shot('01_main');
   // A fresh portable save dir: no CONTINUE yet.
   if (await main().then((m) => !!m.mcScreen.mcContinue)) throw new Error('CONTINUE visible without a stored run');
+
+  // This regression verifies SAVE/CONTINUE, independently of the evolving combat balance. Select the original
+  // affect-mask fixture before player initialization; input-only survival/early-clear play is tested separately.
+  await page.evaluate(() => window.__game.__setInfiniteLife(true));
 
   // Start Single on the first room.
   const single = await centreOf('m.mcScreen.mcSinglePlay');

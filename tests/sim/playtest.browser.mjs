@@ -34,12 +34,12 @@ const browser = ELECTRON ? undefined : await chromium.launch({ channel: 'chrome'
 const report = { url: PACKAGED ? 'packaged release/win-unpacked app://game/index.html' : ELECTRON ? 'electron app://game/index.html (dist)' : URL, modes: {} };
 async function openPage() {
   if (!ELECTRON) {
-    const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
+    const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
     return { page, close: () => page.close(), minimized: async () => false };
   }
   const noThrottle = ['--boxhead-hidden', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion'];
   const app = PACKAGED ? await _electron.launch({
-    executablePath: join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'), cwd: ROOT, timeout: 60000,
+    executablePath: process.env.BOXHEAD_QA_EXE ?? join(ROOT, 'release/win-unpacked/Boxhead 2Play Rooms.exe'), cwd: ROOT, timeout: 60000,
     args: noThrottle,
     env: { ...process.env, BOXHEAD_USER_DATA: join(OUT, 'packaged-portable') },
   }) : await _electron.launch({
@@ -51,6 +51,7 @@ async function openPage() {
     env: { ...process.env, BOXHEAD_DIST_DIR: join(ROOT, 'dist'), BOXHEAD_USER_DATA: join(OUT, 'electron-portable') },
   });
   const page = await app.firstWindow();
+  await page.setViewportSize({ width: 640, height: 480 });
   // a minimized window gets no requestAnimationFrame (the game loop stalls): such a run is inconclusive, not a failure
   const minimized = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isMinimized() ?? false).catch(() => false);
   return { page, close: () => app.close(), minimized };
