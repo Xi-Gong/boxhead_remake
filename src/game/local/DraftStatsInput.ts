@@ -28,7 +28,7 @@ export function toggleStats(world:any,index:number,batch?:object):void{
  const v=view(world);if(batch&&v.batch===batch)return;v.batch=batch;
  const open=!v.sheets[index]!.open;
  for(const i of s?[index]:round.offers.map((_:unknown,i:number)=>i)){v.sheets[i]!.open=open;v.sheets[i]!.release=true;}
- v.binding=undefined;
+ v.binding=undefined;v.message='';
 }
 export function beginStatsBinding(world:any,index:number):void{view(world).binding=index;view(world).message='PRESS A KEY / ESC TO CANCEL';}
 export function statsBindingHint(world:any):string{return view(world).message;}

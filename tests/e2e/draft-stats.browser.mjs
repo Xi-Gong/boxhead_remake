@@ -38,6 +38,7 @@ try{
   await g.page.setViewportSize(viewport);await g.page.waitForTimeout(250);
   const b=await g.centreOf('m.mcWorld._WaveDraftHud'),s=await g.stageInfo();
   assert(b.x-b.w/2>=0&&b.x+b.w/2<=s.w&&b.y-b.h/2>=0&&b.y+b.h/2<=s.h);
+  for(let index=0;index<2;index++)assert.match(await g.expr(`m.mcWorld._WaveDraftHud._Player${index}._Hint.text`),/A: -- \/ Y: -- \/ END 0/);
   const name=`stats-${viewport.width}x${viewport.height}.png`;await g.shot(out+'/'+name,false);report.shots.push(name);report.geometry.push({viewport,bounds:b,stage:s});
  }
  await g.page.setViewportSize({width:640,height:480});await g.page.waitForTimeout(200);
