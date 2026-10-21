@@ -272,7 +272,8 @@ try {
           const players=Object.values(this.mThing_Collection.mPlayerThings),p=players.find(p=>p.mPlayerIndex===0);p.NewWeapon('uzi');p.SelectWeapon('uzi');p.mWeapon_Current.mAmmo=7;
           const stocks=players.map(p=>({player:p,ammo:p.mWeapon_Current.mAmmo}));
           const crate=this.mThing_Collection.AddThing(new pkg.Thing.Object.CThing_Object_SupplyCrate(p.mPosition.Clone(),'enchant','s'+this.mUpgrades.supplyState.nextId++));crate.Process_Init();
-          const received=stocks.find(s=>s.player.mWeapon_Current.mEnchantedAmmo===s.ammo||s.player.mWeapon_Current.mEnchantedAmmo===-1);
+          const durable=this.mUpgrades.features?.includes('enchant-durability-v1');
+          const received=stocks.find(s=>durable?s.player.mWeapon_Current.mEnchantDurability>0:s.player.mWeapon_Current.mEnchantedAmmo===s.ammo||s.player.mWeapon_Current.mEnchantedAmmo===-1);
           if(!received||received.player.mWeapon_Current.mAmmo!==received.ammo)throw new Error('purple crate did not enchant the eligible picker held stock');
           const picker=received.player;picker.mWeapon_Current.Fire(picker.mPosition.Clone(),picker.mAngle.Clone());
           this.mMap.mDecal.Draw_ScorchMark(picker.mPosition);
@@ -299,8 +300,8 @@ try {
     if(report.audio.some(a=>a.state!=='running'||a.decoded!==31||a.failed.length))throw new Error('functional audio gate failed');
     await shot('confirmed_paused',H.page);step('functional confirmed gameplay, ordered sound/decal identities and enchanted shots agree');
     if(process.env.BOXHEAD_QA_RELEASE_GATES==='1'){
-      if(['v032','v033'].includes(process.env.BOXHEAD_QA_RELEASE_SCENARIO)){
-        const {verifyV032Lan}=await import('../e2e/v032-lan.mjs');await verifyV032Lan(H,C,report,OUT,process.env.BOXHEAD_QA_RELEASE_SCENARIO==='v033');
+      if(['v032','v033','v034'].includes(process.env.BOXHEAD_QA_RELEASE_SCENARIO)){
+        const {verifyV032Lan}=await import('../e2e/v032-lan.mjs');await verifyV032Lan(H,C,report,OUT,process.env.BOXHEAD_QA_RELEASE_SCENARIO!=='v032',process.env.BOXHEAD_QA_RELEASE_SCENARIO==='v034');
       }else{const {verifyV031Lan}=await import('../e2e/v031-lan.mjs');await verifyV031Lan(H,C,report,OUT);}
     }
   }else{
