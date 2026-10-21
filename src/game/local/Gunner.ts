@@ -1,7 +1,7 @@
 import {flash} from '../../engine/runtime.ts';
 import {getRandomState} from '../../engine/flash/rng.ts';
 import {CMain,CSound,Thing,World} from '../packages.ts';
-import {combatWorld} from './CombatRules.ts';
+import {combatWorld,simplifiedWorld} from './CombatRules.ts';
 import {gunnerCollection,installGunnerArt,ENEMY_GUNS} from './GunnerArt.ts';
 import {livingWavePlayers} from './TimedWaves.ts';
 import {variantSight} from './EnemyVariants.ts';
@@ -53,5 +53,5 @@ export function installGunner():void{
   if(this.mCombatPhase==='burst'){fire(this);if(--this.mCombatShots<=0)this.mCombatPhase='recovery';this.mCombatTicks=ticks(this.mCombatShots?.12:1.2);return;}
   this.mCombatCooldown=this.mWorld.mTick+ticks(1.8);this.SetState('State_GotoPlayer');
  };
- const map=World.Map.CMap.prototype as any,draw=map.Draw;map.Draw=function(this:any,...args:any[]):any{if(combatWorld(this.mWorld))drawAim(this.mWorld);return draw.apply(this,args);};
+ const map=World.Map.CMap.prototype as any,draw=map.Draw;map.Draw=function(this:any,...args:any[]):any{if(combatWorld(this.mWorld)&&!simplifiedWorld(this.mWorld))drawAim(this.mWorld);return draw.apply(this,args);};
 }

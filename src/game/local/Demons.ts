@@ -1,6 +1,6 @@
 import {flash} from '../../engine/runtime.ts';
 import {CMain,Thing,World} from '../packages.ts';
-import {combatWorld} from './CombatRules.ts';
+import {combatWorld,simplifiedWorld} from './CombatRules.ts';
 import {demonCollection,installDemonArt} from './DemonArt.ts';
 import {livingWavePlayers,timedWave,bossMembers} from './TimedWaves.ts';
 import {variantSight} from './EnemyVariants.ts';
@@ -73,5 +73,5 @@ export function installDemons():void{
    shoot(this);if(this.mCombatChain>0){this.mCombatChain--;warning(this,.7);}else recover(this,this.mBossKind?1.3:.9);return;
   }finish(this);
  };
- const map=World.Map.CMap.prototype as any,draw=map.Draw;map.Draw=function(this:any,...args:any[]):any{if(combatWorld(this.mWorld))drawWarnings(this.mWorld);return draw.apply(this,args);};
+ const map=World.Map.CMap.prototype as any,draw=map.Draw;map.Draw=function(this:any,...args:any[]):any{if(combatWorld(this.mWorld)&&!simplifiedWorld(this.mWorld))drawWarnings(this.mWorld);return draw.apply(this,args);};
 }

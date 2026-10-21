@@ -96,9 +96,10 @@ export function installEnchantmentScope():void{
  explosion.AffectThing=function(this:any,t:any):any{
   if(!this.mAffector?.mEnchanted)return damage.call(this,t);
   if(!enchantSight(t.mWorld,this.mAffector.mPosition,t.mPosition))return 0;
+  if(simplifiedWorld(t.mWorld))return damage.call(this,t);
   const d=t.mPosition.Distance2D(this.mAffector.mPosition)/this.mRange,before=this.mDamage;
   // An enchanted blast retains at least 75% of its boosted damage throughout its normal radius.
-  if(!simplifiedWorld(t.mWorld)&&d>.75&&d<=1)this.mDamage*=1.5;
+  if(d>.75&&d<=1)this.mDamage*=1.5;
   try{return damage.call(this,t);}finally{this.mDamage=before;}
  };
  for(const ctor of [Thing.Shot.CThing_Shot_Bullet,Thing.Shot.CThing_Shot_Railgun]){

@@ -65,5 +65,5 @@ export function installCombatRoster():void{
    }this.mCombatPhase='recovery';this.mCombatTicks=ticks(1.2);return;
   }this.mCombatCooldown=this.mWorld.mTick+ticks(3);this.SetState('State_GotoPlayer');
  };
- const map=World.Map.CMap.prototype as any,draw=map.Draw;map.Draw=function(this:any,...args:any[]):any{if(combatWorld(this.mWorld))drawCombatWarnings(this.mWorld);return draw.apply(this,args);};
+ const map=World.Map.CMap.prototype as any,draw=map.Draw;map.Draw=function(this:any,...args:any[]):any{if(combatWorld(this.mWorld)&&!simplifiedWorld(this.mWorld))drawCombatWarnings(this.mWorld);return draw.apply(this,args);};
 }
