@@ -4,7 +4,7 @@ import {_root} from '../../engine/runtime.ts';
 import {difficultyIndex,balancedWave} from './BalanceRules.ts';
 import {combatWaveBudget} from './ClearWaveRules.ts';
 import {waveSeconds} from './TimedWaveRules.ts';
-import {combatWorld,combatState} from './CombatRules.ts';
+import {combatWorld,combatState,simplifiedWorld,reinforcementLimit} from './CombatRules.ts';
 import {netSession} from './Net/NetSession.ts';
 import {variantSight} from './EnemyVariants.ts';
 export interface MapPacing {area:number;entranceDistance:number;seconds:number}
@@ -26,7 +26,8 @@ export function mapPacing(world:any):MapPacing{
  const value={area,entranceDistance,seconds};if(area&&lengths.length)profiles.set(world,value);return value;
 }
 export function modernBudget(world:any,wave:number,difficulty:number,devils:boolean,players:number):{zombies:number;devils:number}{
- const size=world.mMap.mSize;return combatWaveBudget(wave,waveSeconds(size.x,size.y),difficulty,devils,players);
+ const size=world.mMap.mSize,seconds=simplifiedWorld(world)?mapPacing(world).seconds:waveSeconds(size.x,size.y);
+ return combatWaveBudget(wave,seconds,difficulty,devils,players);
 }
 export function installCombatPacing():void{
  const u=World.CUpgrades.prototype as any,level=u.__set__mLevel;
@@ -38,7 +39,7 @@ export function installCombatPacing():void{
    state.mapPacing={...profile};
    state.entranceCursor=0;
    const tuning=balancedWave(wave,d),limit=Math.floor(.4*Math.min(tuning.Zombie_Count,_root._quality==='LOW'?40:60));
-   upgrades.Level.Zombie_Count=state.boss?1+(state.boss.members??[state.boss]).filter((m:any)=>m.kind==='charger').length:Math.max(1,limit);
+   upgrades.Level.Zombie_Count=state.boss?reinforcementLimit(world)+(state.boss.members??[state.boss]).filter((m:any)=>m.kind==='charger').length:Math.max(1,limit);
    if(state.clear)Object.assign(state.clear,modernBudget(world,wave,d,cfg?.devils??!!CMain.mSaveData.__get__mDevilsActive(),World.CWorld.mGameMode==='Single'?1:2));
   }
  }
