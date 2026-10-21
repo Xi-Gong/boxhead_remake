@@ -17,7 +17,8 @@ import {lanWindowFlag,placeLanWindow,typeLanAddress} from '../e2e/lan-user-input
 import { startMetrics } from '../e2e/perf-metrics.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const OUT = join(ROOT, 'generated/reports/qa');
+const FUNCTIONAL=process.env.BOXHEAD_QA_FUNCTIONAL_ONLY==='1';
+const OUT = resolve(ROOT,process.env.BOXHEAD_QA_OUT??'generated/reports/qa');
 mkdirSync(OUT, { recursive: true });
 // Fresh save dirs every run (a leftover stored run would grow a CONTINUE item on the menu).
 for (const d of ['net-host', 'net-client']) {
@@ -211,7 +212,7 @@ try {
   }
 
   // ---- lockstep play: 12 s of keys on both machines --------------------------------------
-  const steadyHost = await startMetrics(H.page),steadyClient = await startMetrics(C.page);
+  const steadyHost = FUNCTIONAL?null:await startMetrics(H.page),steadyClient = FUNCTIONAL?null:await startMetrics(C.page);
   const t0 = Date.now();
   let toggle = false;
   while (Date.now() - t0 < 12000) {
@@ -229,8 +230,7 @@ try {
   await C.page.keyboard.up('Space');
   const wi1 = await h.worldInfo();
   const wc1 = await c.worldInfo();
-  await Promise.all([steadyHost.freeze(),steadyClient.freeze()]);
-  report.performance = { steady:{host:await steadyHost(),client:await steadyClient()} };
+  if(!FUNCTIONAL){await Promise.all([steadyHost.freeze(),steadyClient.freeze()]);report.performance = { steady:{host:await steadyHost(),client:await steadyClient()} };}
   step(`after play: host=${JSON.stringify(wi1)} client=${JSON.stringify(wc1)}`);
   if (wi1.tick <= wi0.tick) {
     await lanState('host', H.page);
@@ -265,7 +265,7 @@ try {
   step(`forced checkpoint at wave ${wi2.level}, host tick ${wi2.tick} (client keeps wave 1 until the resume)`);
 
   // ---- kill the client: the host must freeze with a TICKING countdown ----------------------
-  const reconnectHost = await startMetrics(H.page);
+  const reconnectHost = FUNCTIONAL?null:await startMetrics(H.page);
   step('killing the client process');
   await C.app.close();
   // Boot the replacement client IN THE BACKGROUND right away: the reconnect window is 30 s and the packaged exe
@@ -343,7 +343,7 @@ try {
   if (wi4.score !== wc4.score) throw new Error(`post-resume score mismatch ${wi4.score} vs ${wc4.score}`);
   if (wi4.score !== wc4.score) throw new Error(`post-resume score mismatch ${wi4.score} vs ${wc4.score}`);
   step(`post-resume lockstep ok: host tick ${wi4.tick} = client tick ${wc4.tick}, score ${wi4.score}`);
-  report.performance.reconnect = { host:await reconnectHost() };
+  if(!FUNCTIONAL)report.performance.reconnect = { host:await reconnectHost() };
 
   // ---- concede: host pause + QUIT ends the run on both peers (regular end screens) --------
   await H.page.keyboard.press('KeyP');
