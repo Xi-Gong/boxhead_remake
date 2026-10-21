@@ -43,7 +43,7 @@ export const INSTRUCTIONS = {
     ['DEATH MATCH', 'Split screen, player against player. The first to reach the number of frags set in OPTIONS (5, 10, 20 or 50) wins.'],
   ],
   weaponsTitle: 'WEAPONS',
-  weaponsNote: '(unlocked at personal level; legacy: multiplier)',
+  weaponsNote: '(unlocked weapons stay selectable at zero ammo)',
   weapons: [
     ['1', 'Pistol', ''],
     ['2', 'UZI', 'x5'],
@@ -58,7 +58,7 @@ export const INSTRUCTIONS = {
   ],
   // v0.1.2 additions (GAMEPAD_INPUT / SAVE_QUIT_RESUME / WAVE_CHECKPOINT_RETRY). v0.2.5: each line shortened to
   // fit ONE 560 px row at 11 px (the old wrapped lines ran into the input-badge strip / off the 480 bottom).
-  gamepad: 'GAMEPAD: stick or d-pad moves - RT or A fires - RB / LB change weapon - START pauses - stick + A navigate menus',
+  gamepad: 'PAD: stick moves - B/LT/RT fire - LB/RB cycle - A/Y hold to bind, tap to select - X stats between waves - A menus',
   saving: 'SAVE & QUIT (pause) parks the run - CONTINUE (menu) resumes it - after death RETRY restarts the current wave',
   // v0.1.3 addition (LAN_MULTIPLAYER); v0.1.4: room + ready + host-driven setup flow.
   lan: 'LAN (exe only): CREATE ROOM or join by list / IP - player 2 readies up, the host picks mode, characters and level',
