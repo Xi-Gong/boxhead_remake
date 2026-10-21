@@ -39,7 +39,7 @@ export function installCombatPacing():void{
    state.mapPacing={...profile};
    state.entranceCursor=0;
    const tuning=balancedWave(wave,d),limit=Math.floor(.4*Math.min(tuning.Zombie_Count,_root._quality==='LOW'?40:60));
-   upgrades.Level.Zombie_Count=state.boss?reinforcementLimit(world)+(state.boss.members??[state.boss]).filter((m:any)=>m.kind==='charger').length:Math.max(1,limit);
+   upgrades.Level.Zombie_Count=state.boss?reinforcementLimit(world)+(state.boss.members??[state.boss]).filter((m:any)=>m.kind==='charger'||m.kind==='zombie').length:Math.max(1,limit);
    if(state.clear)Object.assign(state.clear,modernBudget(world,wave,d,cfg?.devils??!!CMain.mSaveData.__get__mDevilsActive(),World.CWorld.mGameMode==='Single'?1:2));
   }
  }

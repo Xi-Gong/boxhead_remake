@@ -833,4 +833,13 @@ export const DEVIATIONS: Deviation[] = [
       'death crates merge stock by maximum and empty enchanted payloads create no ammunition. A slim purple '+
       'confirmed-state HUD meter remains render-only; historical persistent/finite rules stay intact.',
   },
+  {
+    id:'NATIVE_BOSS_ROSTER',file:'local/BossWaves.ts, EnemyVariants.ts, CombatEnemies.ts, CombatMigration.ts, VariantArt.ts',
+    description:'Optional native-bosses-v1 removes all charger generation, warnings, skills and the extra '+
+      '50-percent crate draw from modern simulation, while retaining explicit old-peer fixtures. Bosses '+
+      'are native fireball devils or non-charging zombies when devils are disabled, retaining 1-3 members '+
+      'and two ordinary adds. Devil Boss movement/attack/damage scale independently by 1.15/1.15/1.10, '+
+      'with per-slot first-attack offsets and unchanged projectile speed/range. Old members migrate once '+
+      'with health fractions, slots and clocks; native zombie Boss identity now serializes explicitly.',
+  },
 ];

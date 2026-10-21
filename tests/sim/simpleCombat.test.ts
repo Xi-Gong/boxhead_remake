@@ -18,7 +18,7 @@ import {getRandomState,setRandomState} from '../../src/engine/flash/rng.ts';
 import {random} from '../../src/engine/runtime.ts';
 
 it('retains only native zombies, chargers and devils across successful high-wave ordinal slots',()=>{
- const g=createHeadlessGame(),w=g.world();try{
+ const g=createHeadlessGame({classicFeatures:['native-bosses-v1']}),w=g.world();try{
   w.mUpgrades.__set__mLevel(36);w.Spawn_ValidPosition=()=>({mPosition:g.players()[0].mPosition.Clone()});
   Object.assign(timedWave(w)!.clear!,{zombies:1000,devils:1000});
   for(const family of ['Zombie','Devil'])for(let n=0;n<100;n++){

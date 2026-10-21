@@ -11,7 +11,7 @@ export function remainingEnemies(world: any): EnemyCounts {
   const boss=world.mUpgrades.timedWave.boss,members=boss?.members??(boss?[boss]:[]);
   const chargers=members.filter((m:any)=>{
     const e=world.mThing_Collection?.mThings[m.id];
-    return m.kind==='charger'&&e?.Process&&e.mLife>0&&!e.lanKillLogged;
+    return (m.kind==='charger'||m.kind==='zombie')&&e?.Process&&e.mLife>0&&!e.lanKillLogged;
   }).length;
   return {zombies:Math.max(0,count(level?.mZombieCount)-chargers),devils:count(level?.mDevilCount)+chargers};
 }

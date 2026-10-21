@@ -10,6 +10,15 @@ import {difficultyIndex} from './BalanceRules.ts';
 import {netSession} from './Net/NetSession.ts';
 import {timedWave,bossMembers} from './TimedWaves.ts';
 import {ENCHANT_DAMAGE,SIMPLE_ENCHANT_DAMAGE} from './EnchantmentRules.ts';
+import {hasFeature} from './ModernFeatures.ts';
+
+export function prepareNativeBossRestore(world:any):void{
+ if(!hasFeature(world,'native-bosses-v1'))return;
+ const boss=timedWave(world)?.boss;if(!boss)return;
+ const kind=(netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive())?'devil':'zombie';
+ boss.kind=kind;for(const member of bossMembers(boss))member.kind=kind;
+ for(const warning of timedWave(world)!.warnings)if(warning.role==='boss')warning.family=kind==='devil'?'Devil':'Zombie';
+}
 
 function previousArmorMaximum(snap:RunSnapshot,index:number):number{
  if(snap.survival!==SURVIVAL_RULE)return ARMOR_MAX;

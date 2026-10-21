@@ -49,7 +49,7 @@ it('reconnects converted Boss members and restores their captured fraction under
  const old=createHeadlessGame({classicSimplifiedCombat:true}),w=old.world();clearWaveCombat(w);w.mUpgrades.__set__mLevel(20);
  for(let i=0;i<2;i++){w.mUpgrades.ProcessTimedSpawns();old.tick(1);}
  for(const e of old.things().filter(e=>e.mBossKind)){e.mLife=e.mMaxLife*.3;e.mEnemyArmor=99;}
- const saved=capture(w);old.quit();const g=createHeadlessGame(),world=g.world();try{
+ const saved=capture(w);old.quit();const g=createHeadlessGame({classicFeatures:['native-bosses-v1']}),world=g.world();try{
   expect(applyToWorld(world,saved)).toBe(true);const b=timedWave(world)!.boss!;expect(b.members!.map(m=>m.kind)).toEqual(['devil','charger']);
   for(const m of b.members!){const e=world.mThing_Collection.mThings[m.id!];expect(e.mBossKind).toBe(m.kind);expect(e.mLife/e.mMaxLife).toBeCloseTo(.3);expect(e.mEnemyArmor).toBeUndefined();expect(m.maximum).toBe(e.mMaxLife);}
   const next=capture(world);expect(applyToWorld(world,next)).toBe(true);expect(timedWave(world)!.boss!.members!.map(m=>m.kind)).toEqual(['devil','charger']);

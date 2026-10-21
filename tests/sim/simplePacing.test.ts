@@ -17,7 +17,7 @@ it('uses actual deadlines and reachable original entrances for every map and dif
  }
 });
 it('allows two ordinary Boss reinforcements independently of the charger Boss slot',()=>{
- const g=createHeadlessGame(),w=g.world();try{
+ const g=createHeadlessGame({classicFeatures:['native-bosses-v1']}),w=g.world();try{
   clearWaveCombat(w);w.mUpgrades.__set__mLevel(5);const boss=timedWave(w)!.boss!;
   w.mUpgrades.ProcessTimedSpawns();g.tick(1);expect(boss.members![0].id).toBeTruthy();
   for(let n=0;n<5;n++){boss.reinforcementTicks=1;w.mUpgrades.ProcessTimedSpawns();g.tick(1);}

@@ -20,7 +20,7 @@ export function bossHealthLayout(world: any, boss: BossMemberState | undefined) 
   // Do not pin labels to screen edges for enemies outside this camera's visible playfield.
   if (position.x < 0 || position.x > screen.x || top > screen.y ||
       top + frame.sBMD.height < 0 || left + frame.sBMD.width < 0 || left > screen.x) return;
-  const simple=simplifiedWorld(world),width=simple?boss.kind==='charger'?44:40:WIDTH,height=simple?5:HEIGHT,gap=simple?4:GAP;
+  const simple=simplifiedWorld(world),width=simple?boss.kind==='charger'||boss.kind==='zombie'?44:40:WIDTH,height=simple?5:HEIGHT,gap=simple?4:GAP;
   const x = Math.round(Math.max(2, Math.min(screen.x - width - 2, position.x - width / 2)));
   const y = Math.round(Math.max(2, top - height - gap));
   const life = Math.min(boss.maximum, boss.life);
@@ -54,7 +54,7 @@ function paintBar(layer:any,layout:NonNullable<ReturnType<typeof bossHealthLayou
     if(w<=0)return;
     layer.beginFill(color, alpha); capsule(layer,x,y,w,h); layer.endFill();
   };
-  const accent = boss.kind === 'charger' ? 0xd5c89a : boss.kind==='butcher'?0xd99a88:boss.kind==='hunter'?0x9cd4cf:0xffae64;
+  const accent = boss.kind === 'charger'||boss.kind==='zombie' ? 0xd5c89a : boss.kind==='butcher'?0xd99a88:boss.kind==='hunter'?0x9cd4cf:0xffae64;
   pill(0,0,width,height,0x171a18,94);
   pill(1,1,width-2,height-2,0x534844);
   pill(1,1,Math.max(1,(width-2)*layout.fraction),height-2,accent);

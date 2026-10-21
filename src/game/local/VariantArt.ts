@@ -1,3 +1,4 @@
+import {availableFeatures} from './ModernFeatures.ts';
 // ENEMY_VARIANTS: derive independent XSI geometry/materials, then use the original loading-time baker.
 import {CMain,DrawPrimitive,Thing} from '../packages.ts';
 import type {EnemyVariant} from './EnemyVariants.ts';
@@ -236,6 +237,6 @@ export function variantCollection(kind:EnemyVariant,boss=false):any{return prepa
 export function classicVariantCollection(kind:EnemyVariant):any{return prepare(kind,false,true);}
 export function installVariantArt():void{
  for(const [ctor,kind]of [[Thing.Creature.CThing_Creature_Zombie,'charger'],[Thing.Creature.CThing_Creature_Devil,'priest']]as const){
-  const get=ctor.GetCollection;ctor.GetCollection=function():any{const base=get.call(this);if(kind!=='priest'||expandedEnemyArtConfigured()){variantCollection(kind);variantCollection(kind,true);}return base;};
+  const get=ctor.GetCollection;ctor.GetCollection=function():any{const base=get.call(this);if(expandedEnemyArtConfigured()||kind==='charger'&&!availableFeatures().includes('native-bosses-v1')){variantCollection(kind);variantCollection(kind,true);}return base;};
  }
 }

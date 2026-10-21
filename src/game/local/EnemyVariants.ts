@@ -6,6 +6,7 @@ import {netSession} from './Net/NetSession.ts';
 import {installVariantArt,variantCollection} from './VariantArt.ts';
 import {combatFamily,type CombatKind} from './CombatRosterRules.ts';
 import {simplifiedWorld} from './CombatRules.ts';
+import {hasFeature} from './ModernFeatures.ts';
 export const VARIANTS_RULE='enemy-variants-v1';
 export type EnemyVariant='charger'|'priest';
 export function variantsWorld(world:any):boolean{return endlessWorld(world)&&(!netSession()||netSession()?.startOpts?.cfg.variants===VARIANTS_RULE);}
@@ -30,32 +31,32 @@ export function variantSight(w:any,a:any,b:any):boolean{
 }
 export interface EmberZone {id:number;caster:string;target:number;mPosition:any;mAngle:any;damage:number;born:number;warning:number;duration:number;interval:number;lastPulse:number}
 export function emberZones(w:any):EmberZone[]{return w.mUpgrades.enemyVariantState?.zones??[];}
-const skillFields=['mLife','mMaxLife','mVariantCooldown','mVariantPhase','mVariantTicks','mChargeX','mChargeY','mChargeDistance','mBossKind','mBossChargesRemaining','mEnemyArmor','mEnemyArmorMaximum','mCombatKind','mCombatCooldown','mCombatPhase','mCombatTicks','mCombatAimX','mCombatAimY','mCombatAimRange','mCombatShots','mGunnerSkin','mGunnerWeapon','mCombatChain','mCombatWarnTotal'] as const;
+const skillFields=['mLife','mMaxLife','mVariantCooldown','mVariantPhase','mVariantTicks','mChargeX','mChargeY','mChargeDistance','mBossKind','mBossChargesRemaining','mEnemyArmor','mEnemyArmorMaximum','mCombatKind','mCombatCooldown','mCombatPhase','mCombatTicks','mCombatAimX','mCombatAimY','mCombatAimRange','mCombatShots','mGunnerSkin','mGunnerWeapon','mCombatChain','mCombatWarnTotal','mNativeBossAttackAt'] as const;
 export interface VariantSave {
  rule:typeof VARIANTS_RULE;wave:number;zombie:number;devil:number;nextZone:number;
  zones:(Omit<EmberZone,'mPosition'|'mAngle'>&{x:number;y:number;angle:number})[];
- enemies:{id:string;kind:EnemyVariant|CombatKind|'devil';x:number;y:number;angle:number;state:string;frame:number;damageSound?:string;deathSound?:string;fields:Record<string,number|string|undefined>}[];
+ enemies:{id:string;kind:EnemyVariant|CombatKind|'devil'|'zombie';x:number;y:number;angle:number;state:string;frame:number;damageSound?:string;deathSound?:string;fields:Record<string,number|string|undefined>}[];
 }
 export function captureVariants(w:any):VariantSave|undefined{
  if(!variantsWorld(w))return;
  const s=w.mUpgrades.enemyVariantState;
  return {rule:VARIANTS_RULE,wave:s.wave,zombie:s.zombie,devil:s.devil,nextZone:s.nextZone,
   zones:s.zones.map(({mPosition:p,mAngle:a,...rest}:EmberZone)=>({...rest,x:p.mX,y:p.mY,angle:a.__get__mAngle()})),
-  enemies:things(w).filter(e=>(e.mBossKind||e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mCombatKind??e.mEnemyVariant??'devil',x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.filter(k=>Object.hasOwn(e,k)).map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
+  enemies:things(w).filter(e=>(e.mBossKind||e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mCombatKind??e.mEnemyVariant??(e._CLASSID_==='CThing_Creature_Zombie'?'zombie':'devil'),x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.filter(k=>Object.hasOwn(e,k)).map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
 }
 export function restoreVariants(w:any,s:VariantSave|undefined,migrate=false):void{
  if(!variantsWorld(w)||s?.rule!==VARIANTS_RULE)return;
  for(const e of things(w))if((e.mBossKind||e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process){e.ClearCollideCell();e.Delete();}
  const identities=new Map<string,string>();
  for(const saved of s.enemies){
-  const fields={...saved.fields},retired=migrate&&saved.kind!=='charger';
-  if(migrate){
-   for(const key of Object.keys(fields))if(key==='mLife'||key==='mMaxLife'||key.startsWith('mEnemyArmor')||retired&&(key.startsWith('mCombat')||key.startsWith('mGunner')||key.startsWith('mVariant')))delete fields[key];
-   if(fields.mBossKind)fields.mBossKind=fields.mBossKind==='charger'?'charger':'devil';
+  const native=hasFeature(w,'native-bosses-v1'),fields={...saved.fields},retired=migrate&&saved.kind!=='charger'||native&&saved.kind!=='devil'&&saved.kind!=='zombie';
+  if(migrate||retired){
+   for(const key of Object.keys(fields))if(key==='mLife'||key==='mMaxLife'||key.startsWith('mEnemyArmor')||retired&&(key.startsWith('mCombat')||key.startsWith('mGunner')||key.startsWith('mVariant')||key.startsWith('mCharge')||key==='mBossChargesRemaining'))delete fields[key];
+   if(fields.mBossKind)fields.mBossKind=native?(netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive())?'devil':'zombie':fields.mBossKind==='charger'?'charger':'devil';
   }
-  const family=combatFamily(saved.kind),ctor=family==='Zombie'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil;
+  const family=native&&fields.mBossKind?combatFamily(String(fields.mBossKind)):combatFamily(saved.kind),ctor=family==='Zombie'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil;
   const e:any=new ctor(position(saved.x,saved.y),new Thing.Math.CThing_Angle(saved.angle));
-  if(fields.mCombatKind)e.mCombatKind=fields.mCombatKind;else if(!retired&&saved.kind!=='devil')e.mEnemyVariant=saved.kind;
+  if(fields.mCombatKind)e.mCombatKind=fields.mCombatKind;else if(!retired&&saved.kind!=='devil'&&saved.kind!=='zombie')e.mEnemyVariant=saved.kind;
   if(fields.mGunnerSkin!==undefined){e.mGunnerSkin=fields.mGunnerSkin;e.mGunnerWeapon=fields.mGunnerWeapon;}
   if(fields.mBossKind)e.mBossKind=fields.mBossKind;
   if(typeof fields.mBossSlot==='number')e.mBossSlot=fields.mBossSlot;
@@ -63,9 +64,9 @@ export function restoreVariants(w:any,s:VariantSave|undefined,migrate=false):voi
   e.ClearCollideCell();e.Move(position(saved.x,saved.y));e.SetCollideDirection(e.mPosition,World.Map.CMap_Cell.mCollide_Creature);e.mFlags|=Thing.CThing.mFlag_Collidable;
   e.Affect_Setup(Thing.Affect.CThing_Affect.mAffect_Bullet|Thing.Affect.CThing_Affect.mAffect_Explosion|Thing.Affect.CThing_Affect.mAffect_FireBall);
   e.mBaseStateID='State_GotoPlayer';e.SetState(!retired&&['State_VariantCharge','State_VariantCast','State_CombatSmash','State_CombatAim','State_CombatCleave','State_CombatHunt'].includes(saved.state)?saved.state:'State_GotoPlayer');Object.assign(e,fields);
-  if(migrate)e.mLife=Math.max(1,Math.min(e.mMaxLife,e.mMaxLife*Number(saved.fields.mLife)/Math.max(1,Number(saved.fields.mMaxLife))));
-  e.mXSI_Animation.SetAnimation_FORCED(e.mStateID==='State_CombatAim'?'stand':['State_CombatCleave','State_CombatHunt'].includes(e.mStateID)?e.mCombatPhase==='warning'?'attack':'stand':e.mStateID==='State_CombatSmash'?'attack':e.mStateID==='State_VariantCast'?'cast':e.mStateID==='State_VariantCharge'?(e.mVariantPhase==='warning'?'warning':e.mVariantPhase==='charge'?'charge':'recovery'):'walk',saved.frame??0);
-  if(saved.damageSound)e.mSound.Damage=CSound.mSamples[saved.damageSound];if(saved.deathSound)e.mSound.Death=CSound.mSamples[saved.deathSound];
+  if(migrate||retired)e.mLife=Math.max(1,Math.min(e.mMaxLife,e.mMaxLife*Number(saved.fields.mLife)/Math.max(1,Number(saved.fields.mMaxLife))));
+  e.mXSI_Animation.SetAnimation_FORCED(e.mStateID==='State_CombatAim'?'stand':['State_CombatCleave','State_CombatHunt'].includes(e.mStateID)?e.mCombatPhase==='warning'?'attack':'stand':e.mStateID==='State_CombatSmash'?'attack':e.mStateID==='State_VariantCast'?'cast':e.mStateID==='State_VariantCharge'?(e.mVariantPhase==='warning'?'warning':e.mVariantPhase==='charge'?'charge':'recovery'):'walk',retired?0:saved.frame??0);
+  if(!retired&&saved.damageSound)e.mSound.Damage=CSound.mSamples[saved.damageSound];if(!retired&&saved.deathSound)e.mSound.Death=CSound.mSamples[saved.deathSound];
   if(family==='Zombie')w.mUpgrades.Level.mZombieCount++;else w.mUpgrades.Level.mDevilCount++;
   identities.set(saved.id,e.sUniqueID);
  }
@@ -157,7 +158,7 @@ export function installEnemyVariantsScope():void{
  const world=World.CWorld.prototype as any,upgrades=World.CUpgrades.prototype as any,collection=Thing.CThing_Collection.prototype as any;
  const level=upgrades.__set__mLevel;upgrades.__set__mLevel=function(this:any,n:any):any{const result=level.call(this,n);if(variantsWorld(this.mWorld))this.enemyVariantState={wave:n,zombie:0,devil:0,nextZone:1,zones:[]};return result;};
  const spawnScopes=new WeakMap<object,EnemyVariant>();
- for(const [name,kind]of [['Spawn_Zombie','charger'],['Spawn_Devil','priest']]as const){const spawn=world[name];world[name]=function(this:any):any{if(!variantsWorld(this))return spawn.call(this);spawnScopes.set(this.mThing_Collection,kind);try{return spawn.call(this);}finally{spawnScopes.delete(this.mThing_Collection);}};}
+ for(const [name,kind]of [['Spawn_Zombie','charger'],['Spawn_Devil','priest']]as const){const spawn=world[name];world[name]=function(this:any):any{if(!variantsWorld(this)||hasFeature(this,'native-bosses-v1'))return spawn.call(this);spawnScopes.set(this.mThing_Collection,kind);try{return spawn.call(this);}finally{spawnScopes.delete(this.mThing_Collection);}};}
  const add=collection.AddThing;collection.AddThing=function(this:any,t:any):any{
   const kind=spawnScopes.get(this),state=this.mWorld.mUpgrades.enemyVariantState;
   if(kind&&t._CLASSID_===(kind==='charger'?'CThing_Creature_Zombie':'CThing_Creature_Devil')){
@@ -165,8 +166,8 @@ export function installEnemyVariantsScope():void{
    if(!(kind==='priest'&&simplifiedWorld(this.mWorld))&&variantOrdinal(kind,state.wave,ordinal)&&things(this.mWorld).filter(e=>e.mEnemyVariant===kind&&e.Process&&!e.lanKillLogged&&!(e.mFlags&Thing.CThing.mFlag_DEAD)).length<(kind==='charger'?4:1))t.mEnemyVariant=kind;
   }return add.call(this,t);
  };
- const process=collection.Process;collection.Process=function(this:any):any{if(variantsWorld(this.mWorld))processEmberZones(this.mWorld);return process.call(this);};
- const map=World.Map.CMap.prototype as any,draw=map.Draw;map.Draw=function(this:any,...args:any[]):any{if(variantsWorld(this.mWorld))drawZones(this.mWorld);return draw.apply(this,args);};
+ const process=collection.Process;collection.Process=function(this:any):any{if(variantsWorld(this.mWorld)&&!hasFeature(this.mWorld,'native-bosses-v1'))processEmberZones(this.mWorld);return process.call(this);};
+ const map=World.Map.CMap.prototype as any,draw=map.Draw;map.Draw=function(this:any,...args:any[]):any{if(variantsWorld(this.mWorld)&&!hasFeature(this.mWorld,'native-bosses-v1'))drawZones(this.mWorld);return draw.apply(this,args);};
  const creature=Thing.Creature.CThing_Creature.prototype as any,setState=creature.SetState;
  creature.SetState=function(this:any,state:any):any{
   if(this.mEnemyVariant&&this.mStateID==='State_VariantCharge'&&state!=='State_VariantCharge'){this.mVariantCooldown=this.mWorld.mTick+ticks(6);this.mVariantPhase='';}
@@ -198,7 +199,7 @@ export function installEnemyVariantsScope():void{
  creature.State_VariantCast_Init=function(this:any):void{this.mBaseStateID='State_GotoPlayer';this.mVariantTicks=ticks(.9);this.mXSI_Animation.SetAnimation('cast');};
  creature.State_VariantCast=function(this:any):void{skillPose(this,ticks(.9));if(--this.mVariantTicks<=0)this.SetState('State_GotoPlayer');};
  const kill=world.LogKill;world.LogKill=function(this:any,victim:any):any{
-  if(!variantsWorld(this)||!victim?.mEnemyVariant)return kill.call(this,victim);
+  if(!variantsWorld(this)||hasFeature(this,'native-bosses-v1')||!victim?.mEnemyVariant)return kill.call(this,victim);
   if(victim.mVariantDropLogged)return;victim.mVariantDropLogged=true;
   this.mUpgrades.enemyVariantState.zones=emberZones(this).filter(z=>z.caster!==victim.sUniqueID||this.mTick-z.born>=z.warning);
   if(victim.mEnemyVariant!=='charger')return kill.call(this,victim);

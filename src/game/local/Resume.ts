@@ -42,6 +42,7 @@ import {availableFeatures,hasFeature,type ModernFeature} from './ModernFeatures.
 import {simplifiedVitals} from './CombatRules.ts';
 import type {WeaponBindings} from './WeaponBindings.ts';
 import {durabilityEnabled,type EnchantmentState} from './EnchantmentRules.ts';
+import {prepareNativeBossRestore} from './CombatMigration.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -520,6 +521,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     u.Level.mPlayerCount = c.playerCount;
     if(snap.timedWave)u.timedWave=cloneTimedWave(snap.timedWave);
     if(migrate)prepareSimplifiedRestore(world);
+    if(!snap.features?.includes('native-bosses-v1'))prepareNativeBossRestore(world);
     for (const s of snap.players) applyPlayer(world, s);
     restoreVariants(world,snap.variants,migrate);
     reconnectSavedBoss(world);
