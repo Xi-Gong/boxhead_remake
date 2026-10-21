@@ -31,7 +31,7 @@ try{
  await g.page.keyboard.press('KeyS');assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player1._Hint.text.includes("KEY IN USE")'));
  await g.page.keyboard.press('KeyT');assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player1._Stats._Bind._Contents._Label.text.includes("T /")'));
  await g.page.keyboard.press('KeyT');assert(await g.waitExpr('!'+sheet(1)));
- await g.clickClip('m.mcWorld._WaveDraftHud._Player1._Card1');assert(await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.selected[1]===1'));
+ await g.clickClip('m.mcWorld._WaveDraftHud._Player1._Card1');if(!await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.selected[1]===1',1500)){report.retriedCardClick=true;await g.clickClip('m.mcWorld._WaveDraftHud._Player1._Card1');assert(await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.selected[1]===1'));}
  await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');assert(await g.waitExpr('m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]'));
  await g.page.keyboard.press('KeyT');assert(await g.waitExpr(sheet(0)+'&&'+sheet(1)));
  for(const viewport of [{width:640,height:480},{width:960,height:540},{width:480,height:720}]){
@@ -59,5 +59,5 @@ try{
  for(let y=80;y<455;y++)for(let x=18;x<620;x++){const n=(y*png.width+x)*4,r=png.data[n],g=png.data[n+1],b=png.data[n+2];if(r>210&&g>210&&b>205)light++;if(r>160&&g<100&&b<100)red++;}
  assert(light>100000&&red>200);report.pixels={light,red};
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
-}finally{await g?.close();await browser.close();writeFileSync(out+'/report.json',JSON.stringify(report,null,2));}
+}catch(error){report.error=String(error);if(g){report.failureState=await g.expr('({state:g.state(),selected:m.mcWorld?.mUpgrades?.waveDraft?.round?.selected,confirmed:m.mcWorld?.mUpgrades?.waveDraft?.round?.confirmed})').catch(String);await g.shot(out+'/failed.png',false).catch(()=>{});}throw error;}finally{await g?.close();await browser.close();writeFileSync(out+'/report.json',JSON.stringify(report,null,2));}
 console.log('DRAFT STATS PASSED '+out);

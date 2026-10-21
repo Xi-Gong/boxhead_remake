@@ -4,8 +4,8 @@ import {mkdirSync,rmSync,writeFileSync,readFileSync} from 'node:fs';
 import {resolve,join,relative} from 'node:path';
 import {_electron} from 'playwright-core';
 import {Game,toMainMenu} from './lib.mjs';
-const version=JSON.parse(readFileSync('package.json','utf8')).version;
-const root=process.cwd(),out=resolve(`generated/reports/v${version.replaceAll('.','')}`),data=join(out,'save-compatibility');
+const version=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
+const root=process.cwd(),out=resolve(process.env.BOXHEAD_QA_OUT??`generated/reports/v${version.replaceAll('.','')}`),data=join(out,'save-compatibility');
 assert.ok(relative(out,data) && !relative(out,data).startsWith('..'));
 rmSync(data,{recursive:true,force:true});mkdirSync(data,{recursive:true});
 const flags=['--boxhead-multi','--boxhead-hidden','--window-position=-32000,0','--disable-features=CalculateNativeWinOcclusion','--disable-backgrounding-occluded-windows','--disable-renderer-backgrounding','--disable-background-timer-throttling'];
@@ -17,7 +17,7 @@ async function open(exe,version){
   assert.ok(await g.waitExpr('g.ready',120000));await toMainMenu(g);return {app,g};
  }catch(e){await app.close();throw e;}
 }
-let old,current,stored;
+let old,current,stored,restored,roundtrip,error,ok=false;
 try{
  old=await open('generated/reports/v026/baseline/win-unpacked/Boxhead 2Play Rooms.exe','0.2.5');
  const g=old.g;await g.clickClip('m.mcScreen.mcSinglePlay');assert.ok(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
@@ -36,12 +36,28 @@ try{
  await current.g.page.evaluate(()=>{
   const proto=window.__game.pkg.World.CWorld.prototype,init=proto.InitFinished;
   proto.InitFinished=function(...args){init.apply(this,args);const p=Object.values(this.mThing_Collection.mPlayerThings)[0];
-   window.__restoredSave={room:this.mWorldLibLink,score:this.mHud.nTotalScore,life:p.mLife,uzi:p.mWeapons.uzi.mThing.mAmmo};};
+   window.__restoredSave={room:this.mWorldLibLink,score:this.mHud.nTotalScore,life:p.mLife,maximum:p.mMaxLife,uzi:p.mWeapons.uzi.mThing.mAmmo,combat:this.mUpgrades.combat,growth:this.mUpgrades.lanGrowth,features:this.mUpgrades.features};};
  });
  await current.g.clickClip('m.mcScreen.mcContinue');assert.ok(await current.g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
- const restored=await current.g.page.evaluate(()=>window.__restoredSave);
- assert.equal(restored.room,stored.mResumeData.roomLibLink);assert.equal(restored.score,1234);assert.equal(restored.life,137);assert.equal(restored.uzi,17);
+ restored=await current.g.page.evaluate(()=>window.__restoredSave);
+ assert.equal(restored.room,stored.mResumeData.roomLibLink);assert.equal(restored.score,1234);assert.equal(restored.uzi,17);
+ if(restored.combat?.rule==='combat-pve-v3'){
+  const before=stored.mResumeData.players.find(p=>p.index===0);
+  assert.equal(before.life,137);assert.equal(before.maxLife,200);assert.equal(restored.growth.players[0].level,5);assert.equal(restored.maximum,168);
+  assert.equal(restored.life,Math.round(before.life/before.maxLife*restored.maximum));assert.equal(restored.life,115);
+  await current.g.page.keyboard.press('KeyP');assert(await current.g.waitExpr('m.mcWorld.mPaused'));
+  await current.g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert(await current.g.waitScreen('State_Main','Screen_Main'));
+  const second=await current.g.page.evaluate(()=>JSON.parse(localStorage.getItem('SO:BXHD_2PLAY_6')).mResumeData);
+  assert.equal(second.combat.rule,'combat-pve-v3');assert(second.features.includes('fragile-armor-v1'));
+  await current.g.eval(()=>{delete window.__restoredSave;});await current.g.clickClip('m.mcScreen.mcContinue');assert(await current.g.waitExpr('m.mcWorld?.mLoaded&&g.state()==="State_RunWorld"'));
+  const again=await current.g.page.evaluate(()=>window.__restoredSave),savedPlayer=second.players.find(p=>p.index===0);
+  assert.equal(again.life,savedPlayer.life);assert.equal(again.maximum,savedPlayer.maxLife);assert.equal(again.uzi,17);assert.equal(again.score,1234);
+  roundtrip={savedLife:savedPlayer.life,savedMaximum:savedPlayer.maxLife,again};
+ }else assert.equal(restored.life,137); // Retained legacy absolute-health assertion, exercised on v0.3.2.
  assert.deepEqual(await current.g.scriptErrors(),[]);
- writeFileSync(join(out,'save-compatibility.json'),JSON.stringify({from:'0.2.5',to:version,storedVersion:stored.mResumeData.version,maxWave:7,fireKey:70,restored,ok:true},null,2));
+ ok=true;
  console.log('PASS: actual v0.2.5 save, progress, rebinding, health and ammo continue in',version);
-}finally{await old?.app.close().catch(()=>{});await current?.app.close().catch(()=>{});}
+}catch(cause){error=String(cause);throw cause;}finally{
+ await old?.app.close().catch(()=>{});await current?.app.close().catch(()=>{});
+ writeFileSync(join(out,'save-compatibility.json'),JSON.stringify({from:'0.2.5',to:version,storedVersion:stored?.mResumeData?.version,maxWave:7,fireKey:70,stored:stored?.mResumeData,restored,roundtrip,ok,error},null,2));
+}

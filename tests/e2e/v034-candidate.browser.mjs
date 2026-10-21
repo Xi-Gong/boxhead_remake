@@ -9,12 +9,25 @@ export async function verifyV034Candidate(g,out){
  try{
   report.initial=await g.expr(`(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];p.NewWeapon('uzi');p.SelectWeapon('uzi');p.mArmor=20;p.mWeapon_Current.mAmmo=0;p.mWeapon_Current.mEnchantDurability=97;p.mWeapon_Current.mEnchantMaximum=120;return {rule:w.mUpgrades.combat.rule,features:w.mUpgrades.features,health:p.mMaxLife};})()`);
   assert.equal(report.initial.rule,'combat-pve-v3');assert.equal(report.initial.health,160);assert(report.initial.features.includes('native-bosses-v1'));
+  assert(await g.waitExpr('(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];if(p.mInvincible&&p.mInvincible%2)return false;window.qaHoldPhotoProcess=w.Process;w.Process=()=>{};w.Draw();return true;})()'));await g.page.waitForTimeout(150);
   await g.eval(()=>{window.qaReleasePad={index:0,connected:true,id:'QA standard mapping',mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};navigator.getGamepads=()=>[window.qaReleasePad];window.qaReleasePad.buttons[0]={pressed:true,value:1};});
-  await g.page.waitForTimeout(450);assert(await g.expr('m.mcWorld.mHud.mcPlayers[0]._BindingProgress?._visible'));await g.shot(`${out}/binding-progress.png`,false);
+  await g.page.waitForTimeout(450);assert(await g.expr('m.mcWorld.mHud.mcPlayers[0]._BindingProgress?._visible'));
+  report.meterBounds=await g.expr('(()=>{const h=m.mcWorld.mHud.mcPlayers[0];return [h.mcAmmo,h.mcLife,h._ArmorBar,h._EnchantBar,h._BindingProgress].map(c=>c.getBounds(h));})()');
+  for(let i=0;i<report.meterBounds.length;i++)for(let j=i+1;j<report.meterBounds.length;j++){const a=report.meterBounds[i],b=report.meterBounds[j];assert(!(Math.min(a.xMax,b.xMax)>Math.max(a.xMin,b.xMin)&&Math.min(a.yMax,b.yMax)>Math.max(a.yMin,b.yMin)),`overlapping HUD rows ${i}/${j}`);}
+  await g.shot(`${out}/binding-progress.png`,false);
+  await g.expr('(m.mcWorld.Process=window.qaHoldPhotoProcess,delete window.qaHoldPhotoProcess,true)');
   assert(await g.waitExpr('m.mcWorld.mUpgrades.weaponBindings[0].A==="uzi"'));await g.eval(()=>window.qaReleasePad.buttons[0]={pressed:false,value:0});await g.page.waitForTimeout(150);
   report.hud=await g.expr(`(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0],h=w.mHud.mcPlayers[0],a=h._ArmorBar.getBounds(h),e=h._EnchantBar.getBounds(h);return {ammo:p.mWeapon_Current.mAmmo,durability:p.mWeapon_Current.mEnchantDurability,binding:h._WeaponBinding.text,bindingX:h._WeaponBinding._x,ammoFieldEdge:h.mcAmmo.getBounds(h).xMax,bindingFilters:h._WeaponBinding.filters.length,armorHeight:a.yMax-a.yMin,enchantHeight:e.yMax-e.yMin,enchantWidth:e.xMax-e.xMin};})()`);
   assert.equal(report.hud.ammo,0);assert.equal(report.hud.durability,97);assert.equal(report.hud.binding,'A');assert(report.hud.bindingX<report.hud.ammoFieldEdge);assert(report.hud.bindingFilters>0);assert(report.hud.armorHeight<=4&&report.hud.enchantHeight<=4);assert.equal(report.hud.enchantWidth,49);
+  // Hold an ordinary visible spawn-protection frame for the photograph, then restore simulation.
+  assert(await g.waitExpr('(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];if(p.mInvincible&&p.mInvincible%2)return false;window.qaCandidateProcess=w.Process;w.Process=()=>{};w.Draw();return true;})()'));
+  await g.page.waitForTimeout(150);assert(await g.expr('m.mcWorld.mHud.mcPlayers[0]._visible'));
+  const bindingBounds=await g.expr('m.mcWorld.mHud.mcPlayers[0]._WeaponBinding.getBounds(m._parent)');
   await g.shot(`${out}/gameplay.png`,false);
+  const combatPng=PNG.sync.read(readFileSync(`${out}/gameplay.png`));let glyphPixels=0;
+  for(let y=Math.ceil(bindingBounds.yMin);y<bindingBounds.yMax;y++)for(let x=Math.ceil(bindingBounds.xMin);x<Math.min(bindingBounds.xMax,bindingBounds.xMin+12);x++){const n=(y*combatPng.width+x)*4;if(combatPng.data[n]<100&&combatPng.data[n+1]<100&&combatPng.data[n+2]<100)glyphPixels++;}
+  assert(glyphPixels>4);report.hudGlyphPixels=glyphPixels;
+  await g.expr('(m.mcWorld.Process=window.qaCandidateProcess,delete window.qaCandidateProcess,true)');
   await g.expr(`(()=>{const w=m.mcWorld;w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers=[['health','armor','endurance']];})()`);
   assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._Player0?._Card0?._Benefit.text==="+8%"'));await g.page.waitForTimeout(700);
   report.cards=await g.expr('Array.from({length:3},(_,i)=>{const c=m.mcWorld._WaveDraftHud._Player0["_Card"+i];return {benefit:c._Benefit.text,preview:c._Preview.text,x:c._x,y:c._y,width:c._cardWidth};})');
