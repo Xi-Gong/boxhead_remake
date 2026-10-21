@@ -1,0 +1,48 @@
+{
+  "version": "0.3.4",
+  "releaseUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.4",
+  "publishedAt": "2026-10-21T15:48:34Z",
+  "verifiedAt": "2026-10-21T15:50:18.992Z",
+  "tagCommit": "8f48ee926c1634e496a6513c417ecfa9c237d5d2",
+  "annotatedTag": true,
+  "releaseId": 419750645,
+  "isDraft": false,
+  "isPrerelease": false,
+  "asset": {
+    "id": 662996537,
+    "name": "Boxhead.2Play.Rooms-0.3.4-portable.exe",
+    "url": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.4/Boxhead.2Play.Rooms-0.3.4-portable.exe",
+    "bytes": 101677036,
+    "sha256": "8b11275b17e8159cc9940b19c9310c11b5dd2448e6dfcf91fdeaca0a92b399dc",
+    "githubDigest": "sha256:8b11275b17e8159cc9940b19c9310c11b5dd2448e6dfcf91fdeaca0a92b399dc",
+    "downloadVerified": true,
+    "embeddedPEVersion": "0.3.4",
+    "embeddedPackageVersion": "0.3.4",
+    "downloadedPortableGameplaySaveAudio": true
+  },
+  "checksums": {
+    "id": 662996542,
+    "name": "SHA256SUMS.txt",
+    "url": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.4/SHA256SUMS.txt",
+    "downloadVerified": true
+  },
+  "build": {
+    "source": "6aeadf30d208eb0058496aa823d19bee3aa87f83",
+    "runtimeSourceSHA256": "e39d25ae66367cddb41fc9dd04cf01b5e3b012b5e8e5dcfe5893c8ef0c11e5e7",
+    "asarSHA256": "cc6a72f7b8cdf1def4c3ac1575acaac3af438fa5ad4b6f3c12120b3f08ffe39a",
+    "renderer": "dist/bundle/main-D4wQZS34.js",
+    "verifiedBuiltFiles": 70
+  },
+  "validation": {
+    "fullBaselinePassed": 1830,
+    "fullBaselineFailed": 0,
+    "notExecuted": 75,
+    "baselineGroups": 25,
+    "finalRenderDeltaGroups": 5,
+    "focusedChecks": 22,
+    "finalGeometryChecks": 6,
+    "actualDownloadedPortable": true,
+    "isolatedFunctionalLan": true,
+    "readmeImages": 8
+  }
+}
