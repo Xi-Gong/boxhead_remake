@@ -4,6 +4,7 @@ import { capsule } from './UiStyle.ts';
 import {simplifiedWorld} from './CombatRules.ts';
 
 const WIDTH = 64, HEIGHT = 7, GAP = 5;
+const paints=new WeakMap<object,{width:number;height:number;fraction:number;kind:BossMemberState['kind']}>();
 
 /** Uses the rendered frame's crown/shoulder bounds without updating animation or simulation state. */
 export function bossHealthLayout(world: any, boss: BossMemberState | undefined) {
@@ -45,6 +46,9 @@ export function drawBossHealth(world: any, boss: BossWaveState | undefined, visi
 function paintBar(layer:any,layout:NonNullable<ReturnType<typeof bossHealthLayout>>,boss:BossMemberState):void{
   layer._x = layout.x; layer._y = layout.y;
   const {width,height}=layout;
+  const previous=paints.get(layer);
+  // Camera/animation movement changes placement, not the bar's paths. Clip-owned cache is render-only.
+  if(previous&&previous.width===width&&previous.height===height&&previous.fraction===layout.fraction&&previous.kind===boss.kind)return;
   layer.clear();
   const pill = (x: number, y: number, w: number, h: number, color: number, alpha = 100): void => {
     if(w<=0)return;
@@ -55,4 +59,5 @@ function paintBar(layer:any,layout:NonNullable<ReturnType<typeof bossHealthLayou
   pill(1,1,width-2,height-2,0x534844);
   pill(1,1,Math.max(1,(width-2)*layout.fraction),height-2,accent);
   pill(2,1,Math.max(0,(width-2)*layout.fraction-2),1,0xffecd0,65);
+  paints.set(layer,{width,height,fraction:layout.fraction,kind:boss.kind});
 }
