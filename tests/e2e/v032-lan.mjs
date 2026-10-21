@@ -92,6 +92,11 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
  await both('m.mcWorld.mUpgrades.waveDraft.round?.confirmed[0]');
  await H.page.waitForTimeout(14000);await both('m.mcWorld.mUpgrades.mLevelIndex===15&&m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]&&!m.mcWorld.mUpgrades.waveDraft.round.confirmed[1]');
  const draft=(await states())[0];result.draft=draft;assert.equal(draft.round.readyRule,'draft-ready-v1');result.waitedWithoutDefaultMs=14000;step('client up/down on both keyboard sets, independent stats and a 14-second one-ready wait pass');
+ if(native){
+  await C.page.keyboard.press('KeyR');assert(await games[1].waitExpr('m.mcWorld._WaveDraftHud._Player1._Stats._visible&&m.mcWorld._WaveDraftHud._Clock.text.includes("PARTNER READY")'));
+  assert(await games[0].expr('!m.mcWorld._WaveDraftHud._Player0._Stats._visible'));
+  await games[1].shot(join(out,'v034-client-ready-stats.png'),false);await C.page.keyboard.press('KeyR');
+ }
  await games[1].clickClip('m.mcWorld._WaveDraftHud._Player1._Card0');
  await games[1].clickClip('m.mcWorld._WaveDraftHud._Player1._Ready');
  await both('m.mcWorld.mUpgrades.mLevelIndex===16&&m.mcWorld.mUpgrades.timedWave.phase==="combat"');
