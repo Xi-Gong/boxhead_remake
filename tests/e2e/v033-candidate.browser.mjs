@@ -31,12 +31,15 @@ try{
    const C=member.kind==='charger'?P.Thing.Creature.CThing_Creature_Zombie:P.Thing.Creature.CThing_Creature_Devil;
    const e=new C(new P.Thing.Math.CThing_Position(8.5+i*3,11.5,0));e.mBossKind=member.kind;e.mBossSlot=i;if(member.kind==='charger')e.mEnemyVariant='charger';
    w.mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');e.mLife=member.life=e.mMaxLife*[1,.5,.1][i];member.maximum=e.mMaxLife;
+   // Prepared constructors bypass CWorld.Spawn, which normally owns the live family counters.
+   w.mUpgrades.Level[member.kind==='charger'?'mZombieCount':'mDevilCount']++;
    return e;
   });
   w.Draw();w.mPaused=true;
   return enemies.map((e,i)=>{const b=w._BossHealthHud['_Boss'+i],bounds=b.getBounds(b),a=e.mXSI_Animation,o=a.mAnimationObject,f=o.mDirections[o.mLookup256[e.mAngle.__get__mAngle256()&255]].mFrames[a.mCurrentFrameID&16777215];
    return {kind:e.mBossKind,x:b._x,y:b._y,width:bounds.xMax-bounds.xMin,height:bounds.yMax-bounds.yMin,headTop:w.GetScreenPosition(e.mPosition).y+f.mDisp.y,armor:e.mEnemyArmor??0,fraction:e.mLife/e.mMaxLife,visible:b._visible};});
  });
+ report.bossCount=await g.expr('m.mcWorld._LanGrowthHud._Wave._Devils.text');assert.equal(report.bossCount,'3');
  for(const b of report.bosses){assert(b.visible);assert.equal(b.width,b.kind==='charger'?44:40);assert.equal(b.height,5);assert.equal(b.armor,0);assert(b.y+b.height+3<=b.headTop);assert(b.x>=0&&b.x+b.width<=640);}
  await g.shot(`${out}/bosses.png`,false);const png=PNG.sync.read(readFileSync(`${out}/bosses.png`));
  for(const b of report.bosses){const rgb=b.kind==='charger'?[213,200,154]:[255,174,100];let pixels=0;
