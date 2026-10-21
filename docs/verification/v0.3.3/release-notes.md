@@ -1,6 +1,6 @@
-# v0.3.3 — Fewer enemies, sharper fights
+# 🧟 v0.3.3 — Fewer enemies, sharper fights
 
-## Highlights
+## ✨ Highlights
 
 - Simplified PvE roster: original zombies, Bone Chargers and original fireball devils. Every fifth wave retains 1–3 charger/devil Bosses, with two ordinary reinforcements at a time.
 - Enemy armor is gone. Bosses use compact, body-sized health bars; player bars keep their original appearance.
@@ -10,7 +10,7 @@
 - Seven permanent build stats replace ineffective armor piercing. Existing piercing points and pending cards become firepower.
 - Ordinary clear objectives and starting-wave experience now use the actual map deadline. Finite clears, doubled early Boss rewards and timed survival remain available.
 
-## Saves and compatibility
+## 📦 Saves and compatibility
 
 Existing runs migrate immediately while preserving earned progression, inventory, remaining vital fractions and clocks. Retired enemies convert by family; saved enchantment damage converts once. The v2 save container is retained. LAN negotiates `combat-pve-v3`; older peers keep their supported rules, and death match retains its rules.
 
@@ -18,7 +18,7 @@ The final review also fixed legacy ammunition being truncated on the first live 
 
 The candidate code review removed retired warning scans and unused previews, and repaired legacy enemy-art loading after negotiation. No performance benchmark result is claimed.
 
-## Validation
+## ✅ Validation
 
 All 1,807 tests passed, with 71 existing skips. Browser UI/audio, hidden Electron/native, actual portable EXE and isolated functional LAN gates passed. Scripted real keyboard play demonstrated ordinary and Boss early clears on all four difficulties, with three Nightmare boot seeds; deaths and timeouts remain in the records. These results are not human win rates.
 
