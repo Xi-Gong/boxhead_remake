@@ -2,18 +2,11 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {PNG} from 'pngjs';
+import {pathToFileURL} from 'node:url';
 import {launch,openGame,toMainMenu} from './lib.mjs';
-const out=process.env.CANDIDATE_OUT??`generated/reports/v033/ui-${Date.now()}`;
-mkdirSync(out,{recursive:true});const report={ok:false,method:'One headless 640x480 production browser, prepared draft fixture and real clicks/keys'};
-const browser=await launch();let g;
+export async function verifyV033Candidate(g,out){
+mkdirSync(out,{recursive:true});const report={ok:false,method:'One isolated 640x480 renderer, prepared draft/Boss fixtures and real clicks/keys'};
 try{
- g=await openGame(browser);await toMainMenu(g);await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));console.log('v033: level selection ready');
- await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons._Button');
- if(!await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded',5000)){
-  if(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld',1000))await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons._Button');
-  if(!await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded',30000))throw new Error('world did not load: '+JSON.stringify(await g.expr('({state:g.state(),screen:m.mcScreen?.nState,link:m.mWorldLibLink,loaded:m.mcWorld?.mLoaded,worldName:m.mcWorld?._name,worldKeys:Object.keys(m).filter(k=>/world/i.test(k)),children:Array.from({length:12},(_,i)=>{const c=m.getInstanceAtDepth(i);return c?{depth:i,name:c._name,cls:c._CLASSID_}:null;})})')));
- }
- await g.page.waitForTimeout(700);
  report.initial=await g.expr('(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];p.NewWeapon("uzi");p.SelectWeapon("uzi");p.mWeapon_Current.mPersistentEnchantment=true;p.mWeapon_Current.mEnchantedAmmo=p.mWeapon_Current.mAmmo;return {rule:w.mUpgrades.combat.rule,health:p.mMaxLife};})()');
  assert.equal(report.initial.rule,'combat-pve-v3');assert.equal(report.initial.health,160);
  await g.expr('(()=>{const w=m.mcWorld;w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers=[["health","armor","damage"]];})()');
@@ -52,5 +45,18 @@ try{
  }
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
 }catch(error){report.error=String(error);if(g){report.scriptErrors=await g.scriptErrors();report.browserLog=g.log;await g.shot(`${out}/failed.png`,false);}throw error;}
-finally{await g?.close();await browser.close();writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
-console.log('V033 CANDIDATE UI PASSED '+out);
+finally{writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
+return report;
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+ const out=process.env.CANDIDATE_OUT??`generated/reports/v033/ui-${Date.now()}`,browser=await launch();let g;
+ try{
+  g=await openGame(browser);await toMainMenu(g);await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
+  await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons._Button');
+  if(!await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded',5000)){
+   if(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld',1000))await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons._Button');
+   assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));
+  }
+  await g.page.waitForTimeout(700);await verifyV033Candidate(g,out);console.log('V033 CANDIDATE UI PASSED '+out);
+ }finally{await g?.close();await browser.close();}
+}

@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 import {join} from 'node:path';
 import {Game} from './lib.mjs';
 
-export async function verifyV032Lan(H,C,report,out){
+export async function verifyV032Lan(H,C,report,out,simple=false){
  const peers=[H,C],games=peers.map(p=>new Game(p.page,p.page.context(),report.errors));
- const result=report.v032={checks:[]};
+ const label=simple?'v033':'v032',result=report[label]={checks:[]};
  const step=s=>{result.checks.push(s);console.log(s);};
  const both=async(code)=>{for(const g of games)assert(await g.waitExpr(code,20000),code);};
  const states=()=>Promise.all(games.map(g=>g.expr(`(()=>{const w=m.mcWorld,u=w.mUpgrades,t=u.timedWave;return {tick:w.mTick,wave:u.mLevelIndex,time:t.remainingTicks,total:t.totalTicks,phase:t.phase,boss:t.boss,bonuses:u.waveDraft.bonuses.map(b=>({...b})),armor:Object.values(w.mThing_Collection.mThings).filter(e=>e.mBossKind&&e.mLife>0).map(e=>({id:e.sUniqueID,armor:e.mEnemyArmor})),round:u.waveDraft.round,devils:Number(w._LanGrowthHud._Wave._Devils.text),nativeDevils:u.Level.mDevilCount,growth:u.lanGrowth.players,checkpoint:g.lan().checkpoint};})()`)));
@@ -30,7 +30,7 @@ export async function verifyV032Lan(H,C,report,out){
  await schedule(`w.mUpgrades.AdvanceTimedWave();w.mUpgrades.__set__mLevel(15);`);
  await both('m.mcWorld.mUpgrades.mLevelIndex===15&&m.mcWorld.mUpgrades.timedWave.boss.members.length===2&&m.mcWorld.mUpgrades.timedWave.boss.members.every(b=>b.id)');
  result.capabilities=await games[0].expr(`({timed:m.mcWorld.mUpgrades.timedWave.rule,clear:m.mcWorld.mUpgrades.timedWave.clearable,draft:m.mcWorld.mUpgrades.waveDraft.rule,tiered:m.mcWorld.mUpgrades.lanGrowth.players[0].tiered,variants:!!m.mcWorld.mUpgrades.enemyVariantState,members:m.mcWorld.mUpgrades.timedWave.boss.members.length,combat:m.mcWorld.mUpgrades.combat.rule,ready:m.mcWorld.mUpgrades.waveDraft.readyRule})`);
- assert.equal(result.capabilities.timed,'timed-waves-v1');assert.equal(result.capabilities.tiered,'tiered-growth-v1');assert.equal(result.capabilities.members,2);assert(result.capabilities.variants);assert.equal(result.capabilities.combat,'combat-pve-v2');
+ assert.equal(result.capabilities.timed,'timed-waves-v1');assert.equal(result.capabilities.tiered,'tiered-growth-v1');assert.equal(result.capabilities.members,2);assert(result.capabilities.variants);assert.equal(result.capabilities.combat,simple?'combat-pve-v3':'combat-pve-v2');
  // Place both models within view on reachable floor, then inspect each overhead bar on the running renderer.
  await schedule(`const p=Object.values(w.mThing_Collection.mPlayerThings).find(p=>p.mPlayerIndex===0);let i=0;for(const e of Object.values(w.mThing_Collection.mThings))if(e.mBossKind&&e.mLife>0){e.Move(new P.Thing.Math.CThing_Position(p.mPosition.mX+(i++?2:-2),p.mPosition.mY+2,0));}`);
  await H.page.waitForTimeout(2800);
@@ -38,19 +38,20 @@ export async function verifyV032Lan(H,C,report,out){
   const bars=await g.expr(`(()=>{const w=m.mcWorld,layer=w._BossHealthHud;return {top:!!w._BossWaveHud,devils:w._LanGrowthHud._Wave._Devils.text,clock:w._LanGrowthHud._Wave._Clock.text,bars:[0,1].map(i=>{const b=layer['_Boss'+i],r=b?.getBounds(m._parent);return {visible:b?._visible,number:b?._Health?.text,width:r?r.xMax-r.xMin:0,height:r?r.yMax-r.yMin:0};})};})()`);
   assert.equal(bars.devils,'2');assert.match(bars.clock,/^\d+:\d{2}$/);assert(!bars.top);
   assert(bars.bars.every(b=>b.visible&&b.number===undefined&&b.width<=70&&b.height<=12));
-  (result.bars??=[]).push(bars);await g.shot(join(out,`v032-two-bosses-${i}.png`),false);
+  if(simple)assert(bars.bars.every((b,i)=>b.width===[44,40][i]&&b.height===5));
+  (result.bars??=[]).push(bars);await g.shot(join(out,`${label}-two-bosses-${i}.png`),false);
  }
  for(let i=0;i<4;i++){
   const key=i%2?'ArrowLeft':'ArrowRight';await H.page.keyboard.down(key);await C.page.keyboard.down(i%2?'KeyD':'KeyA');
   await H.page.waitForTimeout(180);await H.page.keyboard.up(key);await C.page.keyboard.up(i%2?'KeyD':'KeyA');
  }
- result.twoBosses=await pause();assert(result.twoBosses.every(s=>s.wave===15&&s.boss.members.length===2&&s.boss.members[0].kind==='butcher'&&s.devils===2&&s.armor.every(e=>e.armor>0)));
+ result.twoBosses=await pause();assert(result.twoBosses.every(s=>s.wave===15&&s.boss.members.length===2&&s.boss.members[0].kind===(simple?'charger':'butcher')&&s.devils===2&&s.armor.every(e=>simple?e.armor===undefined:e.armor>0)));
  result.rollback=await Promise.all(games.map(g=>g.expr('g.lan().rollback')));
  assert(result.rollback.some(r=>r.predictions>0&&r.corrections>0),'delayed changing inputs must exercise rollback');
  for(const r of result.rollback){assert(r.maxDepth<=r.predictionLimit);assert(r.replayedTicks<=r.corrections*r.predictionLimit);}
  step('multiple Bosses: negotiated rules, two compact overhead bars, DEVIL count and delayed rollback agree');
  await resume();
- await schedule(`const b=w.mUpgrades.timedWave.boss;const e=w.mThing_Collection.mThings[b.members[0].id];e.mLife=0;e.lanFatalSlot=0;e.CheckForDead();const other=w.mThing_Collection.mThings[b.members[1].id];other.mLife=other.mMaxLife/2;other.mEnemyArmor/=2;`);
+ await schedule(`const b=w.mUpgrades.timedWave.boss;const e=w.mThing_Collection.mThings[b.members[0].id];e.mLife=0;e.lanFatalSlot=0;e.CheckForDead();const other=w.mThing_Collection.mThings[b.members[1].id];other.mLife=other.mMaxLife/2;${simple?'':'other.mEnemyArmor/=2;'}`);
  await both('m.mcWorld.mUpgrades.timedWave.boss.members.filter(b=>b.defeated).length===1');
  await both('m.mcWorld._LanGrowthHud._Wave._Devils.text==="1"&&!m.mcWorld._BossHealthHud._Boss0._visible');
  await games[0].shot(join(out,'v032-partial-defeat.png'),false);
