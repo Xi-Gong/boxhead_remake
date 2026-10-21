@@ -20,7 +20,7 @@ const step = (s) => { report.steps.push(s); console.log(s); };
 const fail = (s) => { report.errors.push(s); console.error('FAIL: ' + s); };
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
+const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
 page.on('pageerror', (e) => fail('pageerror: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error') fail('console: ' + m.text().slice(0, 300)); });
 
@@ -85,10 +85,11 @@ if (!(await waitRunning())) fail('wave-25 room did not start');
 const startState = await page.evaluate(() => {
   const w = window.__game.main().mcWorld;
   const first = Object.values(w.mThing_Collection.mPlayerThings)[0];
-  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, score: w.mHud.nTotalScore, growth: w.mUpgrades.lanGrowth?.players[0] };
+  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, rule: w.mUpgrades.combat?.rule, score: w.mHud.nTotalScore, growth: w.mUpgrades.lanGrowth?.players[0] };
 });
 if (startState.level !== 25) fail(`run did not start at level 25: ${startState.level}`);
-if (!classicGrowth && (startState.growth?.level !== 85 || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
+const simplified = startState.rule === 'combat-pve-v3';
+if (!classicGrowth && (startState.growth?.level !== (simplified ? 61 : 85) || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
 step(`wave-25 run started: ${JSON.stringify(startState)}`);
 
 // ---- REAL passive death: hands off the keyboard, wave 25's zombies do the rest -----------------------
@@ -141,7 +142,7 @@ if (retryState.score !== 0) fail(`retry score ${retryState.score}, wanted 0 (fre
 // deterministically by tests/sim/startWave.test.ts T1.
 if (retryState.zombies > 10) fail(`retry started mid-wave (zombies ${retryState.zombies}), wanted a fresh wave start`);
 if (!classicGrowth && JSON.stringify(retryState.growth) !== JSON.stringify(startState.growth)) fail('retry did not restore personal growth: '+JSON.stringify(retryState.growth));
-const wantWeapons = classicGrowth ? 'pistol,uzi,shotgun,barrel,grenade,fakewall' : 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack,railgun';
+const wantWeapons = classicGrowth ? 'pistol,uzi,shotgun,barrel,grenade,fakewall' : simplified ? 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack' : 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack,railgun';
 if (retryState.weapons.join(',') !== wantWeapons) fail(`retry loadout wrong (${retryState.weapons.join(',')}), wanted ${wantWeapons}`);
 step(`RETRY at the failed wave verified: ${JSON.stringify(retryState)}`);
 await page.waitForTimeout(1500);

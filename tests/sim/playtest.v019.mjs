@@ -21,7 +21,7 @@ const step = (s) => { report.steps.push(s); console.log(s); };
 const fail = (s) => { report.errors.push(s); console.error('FAIL: ' + s); };
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
+const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
 page.on('pageerror', (e) => fail('pageerror: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error') fail('console: ' + m.text().slice(0, 300)); });
 
@@ -99,11 +99,13 @@ const startState = await page.evaluate(() => {
   const w = window.__game.main().mcWorld;
   const p = w.mThing_Collection.mPlayerThings;
   const first = Object.values(p)[0];
-  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, growth: w.mUpgrades.lanGrowth?.players[0], weapons: first.mWeaponList.filter((x) => x.mActive).map((x) => x.mNameID) };
+  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, rule: w.mUpgrades.combat?.rule, growth: w.mUpgrades.lanGrowth?.players[0], weapons: first.mWeaponList.filter((x) => x.mActive).map((x) => x.mNameID) };
 });
 if (startState.level !== 25 || startState.mult !== 36) fail(`wave-25 start wrong: level ${startState.level} mult ${startState.mult}`);
-if (!classicGrowth && (startState.growth?.level !== 85 || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
-const wantWeapons = classicGrowth ? 'pistol,uzi,shotgun,barrel,grenade,fakewall' : 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack,railgun';
+const simplified = startState.rule === 'combat-pve-v3';
+// The v3 earned-wave reference uses the actual map deadline; retain the old 85-level oracle.
+if (!classicGrowth && (startState.growth?.level !== (simplified ? 61 : 85) || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
+const wantWeapons = classicGrowth ? 'pistol,uzi,shotgun,barrel,grenade,fakewall' : simplified ? 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack' : 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack,railgun';
 if (startState.weapons.join(',') !== wantWeapons) fail(`wave-25 loadout wrong (${startState.weapons.join(',')}), wanted ${wantWeapons}`);
 step(`wave-25 run verified: level ${startState.level} mult ${startState.mult} weapons ${startState.weapons.join(',')}`);
 // v0.2.8 Beginner pacing is intentionally slower. Preserve the ten-enemy field assertion,
@@ -113,10 +115,14 @@ const zombieState = await page.evaluate(() => {
   const w = window.__game.main().mcWorld;
   const counts = w.mThing_Collection.mThingCounters;
   const p = Object.values(w.mThing_Collection.mPlayerThings)[0];
-  return { zombies: counts.CThing_Creature_Zombie ?? 0, tick: w.mTick, level: w.mUpgrades.mLevelIndex, px: p.mPosition.mX, py: p.mPosition.mY, life: p.mLife };
+  const members = w.mUpgrades.timedWave?.boss?.members;
+  const ordinary = Object.values(w.mThing_Collection.mThings).filter(e => e._CLASSID_ === 'CThing_Creature_Zombie' && !e.mBossKind && e.Process && e.mLife > 0 && !(e.mFlags & window.__game.pkg.Thing.CThing.mFlag_DEAD)).length;
+  return { zombies: counts.CThing_Creature_Zombie ?? 0, ordinary, bosses: members?.length, arrived: members?.filter(m => m.id).length, tick: w.mTick, level: w.mUpgrades.mLevelIndex, px: p.mPosition.mX, py: p.mPosition.mY, life: p.mLife };
 });
 step(`wave-25 field after 6.2 s: ${JSON.stringify(zombieState)}`);
-if (zombieState.zombies < 10) fail(`wave-25 spawned only ${zombieState.zombies} zombies in 6.2 s`);
+if (zombieState.bosses) {
+  if (zombieState.bosses !== 3 || zombieState.arrived !== 3 || zombieState.ordinary !== (simplified ? 2 : 1)) fail('wave-25 Boss arrival/reinforcement count wrong: '+JSON.stringify(zombieState));
+} else if (zombieState.zombies < 10) fail(`wave-25 spawned only ${zombieState.zombies} zombies in 6.2 s`);
 // Draw the horde on camera for the README shot: a few seconds of real movement + fire (the real keyboard path).
 for (const key of ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp']) {
   await page.keyboard.down(key);
