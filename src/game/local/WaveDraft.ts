@@ -8,6 +8,7 @@ import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {syncVitals,playerArmorMaximum} from './SurvivalRules.ts';
 import {takeDraftChoice,draftSampleBits} from './WaveDraftInput.ts';
+import {durabilityEnabled,durabilityMaximum,syncDurability} from './EnchantmentRules.ts';
 import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,DRAFT_CONFIRM,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
 const classic=new WeakSet<object>();
 const classicReady=new WeakSet<object>();
@@ -21,7 +22,7 @@ export function waveDraftConfigured():boolean {
 }
 export function waveDraft(world:any):WaveDraftState|undefined{return world?.mUpgrades?.waveDraft;}
 export function initializeWaveDraft(world:any):void {
-  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world),simplifiedWorld(world));
+  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world));
 }
 function player(world:any,index:number):any {
   return (Object.values(world.mThing_Collection.mPlayerThings) as any[]).find(p=>p.mPlayerIndex===index);
@@ -41,6 +42,7 @@ export function rewardOffers(p:any):Reward[] {
     const offense:Reward[]=simplifiedWorld(w)?['damage']:['damage','penetration'];if(canWeapon('haste'))offense.push('haste');
     const defense:Reward[]=['health'];if(playerArmorMaximum(p,{...b,armor:b.armor+1})>playerArmorMaximum(p,b))defense.push('armor');if(alive&&p.mLife<p.mMaxLife)defense.push('heal');
     const utility:Reward[]=['scavenging'];
+    if(durabilityEnabled(w)&&weapons.some((gun:any)=>durabilityMaximum(gun,{...b,endurance:(b.endurance??0)+1})>durabilityMaximum(gun,b)))utility.push('endurance');
     if(passiveBonuses({...b,mobility:(b.mobility??0)+1}).movement-passiveBonuses(b).movement>1e-6)utility.push('mobility');
     if(canWeapon('capacity'))utility.push('capacity');if(finiteWeapons(p).some(gun=>gun.mAmmo<gun.mTotalAmmo))utility.push('ammo');
     return [offense,defense,utility].map(pool=>pool[random(pool.length)]!);
@@ -74,6 +76,7 @@ export function applyWaveReward(world:any,index:number,reward:Reward,multiplier:
   if(reward!=='heal'&&reward!=='ammo')state.bonuses[index]![reward]=(state.bonuses[index]![reward]??0)+multiplier;
   if(!p)return;
   if(reward==='health')syncVitals(p,'level');
+  else if(reward==='endurance'){for(const entry of p.mWeaponList??[])if(entry.mActive&&entry.mThing)syncDurability(entry.mThing);}
   else if(reward==='damage'||reward==='capacity'||reward==='haste'){
     for(const entry of p.mWeaponList??[])if(entry.mActive&&entry.mThing)world.mUpgrades.ApplyUpgrade_Weapon(entry.mThing);
   }

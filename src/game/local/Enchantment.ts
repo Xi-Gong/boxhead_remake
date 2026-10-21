@@ -1,7 +1,8 @@
 // ENEMY_VARIANTS: source ports remain unchanged. All authoritative state lives on snapshot-owned things.
 import {DrawPrimitive,Thing,World} from '../packages.ts';
 import {flash} from '../../engine/runtime.ts';
-import {ENCHANT_COLOR,enchantmentDamage,enchantedAmmo,enchantedWeapon,persistentWeapon} from './EnchantmentRules.ts';
+import {ENCHANT_COLOR,enchantmentDamage,enchantedAmmo,enchantedWeapon,persistentWeapon,durabilityEnabled,durabilityMaximum,syncDurability,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
+import {netSession} from './Net/NetSession.ts';
 import {simplifiedWorld} from './CombatRules.ts';
 import {variantsWorld} from './EnemyVariants.ts';
 interface Emission {weapon?:any;things:any[]}
@@ -19,6 +20,8 @@ export function enchantSight(world:any,a:any,b:any):boolean{
  }return true;
 }
 export function installEnchantmentScope():void{
+ const upgrades=World.CUpgrades.prototype as any,upgrade=upgrades.ApplyUpgrade_Weapon;
+ upgrades.ApplyUpgrade_Weapon=function(this:any,weapon:any):any{const result=upgrade.call(this,weapon);syncDurability(weapon);return result;};
  const collection=Thing.CThing_Collection.prototype as any,add=collection.AddThing;
  collection.AddThing=function(this:any,t:any):any{
   const context=emission.get(this);
@@ -41,19 +44,24 @@ export function installEnchantmentScope():void{
  const weapon=Thing.Weapon.CThing_Weapon.prototype as any,decrement=weapon.DecrementAmmo,empty=weapon.EmptyWeapon;
  weapon.DecrementAmmo=function(this:any):any{
   const count=enchantedAmmo(this),result=decrement.call(this);
+  if(durabilityEnabled(this.mWorld)){if(count>0)this.mEnchantDurability=count-1;return result;}
   if(count>0)this.mEnchantedAmmo=count-1;
   if(this.mAmmo<=0)delete this.mPersistentEnchantment;
   return result;
  };
- weapon.EmptyWeapon=function(this:any):any{const result=empty.call(this);if(this.mAmmo<=0){delete this.mEnchantedAmmo;delete this.mPersistentEnchantment;}return result;};
+ weapon.EmptyWeapon=function(this:any):any{const result=empty.call(this);if(!durabilityEnabled(this.mWorld)&&this.mAmmo<=0){delete this.mEnchantedAmmo;delete this.mPersistentEnchantment;}return result;};
  // A red reward/upgrade replaces the thing, but a nonempty enchanted weapon keeps its identity.
  // Legacy peers still transfer only the recorded stock.
  const player=Thing.Creature.CThing_Creature_Player.prototype as any,addWeapon=player.AddWeapon;
  player.AddWeapon=function(this:any,name:any,...args:any[]):any{
-  const old=this.mWeapons?.[name]?.mThing,count=enchantedAmmo(old),persistent=persistentWeapon(old),result=addWeapon.call(this,name,...args),w=this.mWeapons?.[name]?.mThing;
+  const old=this.mWeapons?.[name]?.mThing,state=captureEnchantment(old),count=enchantedAmmo(old),persistent=persistentWeapon(old),result=addWeapon.call(this,name,...args),w=this.mWeapons?.[name]?.mThing;
+  if(w&&old&&durabilityEnabled(this.mWorld)){restoreEnchantment(w,state);return result;}
   if(w&&count!==0)w.mEnchantedAmmo=count;
   if(w&&persistent)w.mPersistentEnchantment=true;
   return result;
+ };
+ const reset=player.ResetWeapons;player.ResetWeapons=function(this:any):any{
+  const result=reset.call(this);if(durabilityEnabled(this.mWorld))for(const e of this.mWeaponList??[])if(e.mThing&&e.mNameID!=='pistol'){e.mThing.mEnchantDurability=0;e.mThing.mEnchantMaximum=durabilityMaximum(e.mThing);}return result;
  };
  // Children already inherit the scaled parent damage. Propagate identity without scaling it again.
  const sources:[any,string[]][]=[
@@ -120,7 +128,16 @@ export function installEnchantmentScope():void{
  const hud=World.CHud.prototype as any,update=hud.UpdatePlayer,colors=new WeakMap<object,number>();
  hud.UpdatePlayer=function(this:any,p:any,...args:any[]):any{
   const result=update.call(this,p,...args),field=this.mcPlayers[p.mPlayerIndex]?.mcAmmo.tfAmount;
-  if(field){if(!colors.has(field))colors.set(field,field.textColor);field.textColor=enchantedWeapon(p.mWeapon_Current)?ENCHANT_COLOR:colors.get(field);}
+  const session=netSession(),stats=session?.confirmedPlayerStats?.find(s=>s.index===p.mPlayerIndex);
+  if(field){if(!colors.has(field))colors.set(field,field.textColor);field.textColor=(session?stats?.enchanted:enchantedWeapon(p.mWeapon_Current))?ENCHANT_COLOR:colors.get(field);}
+  const head=this.mcPlayers[p.mPlayerIndex];if(head&&durabilityEnabled(this.mWorld)){
+   const value=session?stats?.enchantDurability??0:enchantedAmmo(p.mWeapon_Current),maximum=session?stats?.enchantMaximum??1:durabilityMaximum(p.mWeapon_Current);
+   const bar=head._EnchantBar??head.createEmptyMovieClip('_EnchantBar',head.getNextHighestDepth());bar._visible=value>0;
+   if(value>0){const bounds=head.mcAmmo.getBounds(head);bar._x=bounds.xMin;bar._y=bounds.yMax+2;const ratio=value/Math.max(1,maximum);
+    if(bar._ratio!==ratio){bar.clear();bar.lineStyle(1,0x37283f,100);bar.beginFill(0x3c2c47,100);bar.moveTo(0,0);bar.lineTo(48,0);bar.lineTo(48,3);bar.lineTo(0,3);bar.lineTo(0,0);bar.endFill();
+     bar.lineStyle();bar.beginFill(ENCHANT_COLOR,100);bar.moveTo(1,1);bar.lineTo(1+46*ratio,1);bar.lineTo(1+46*ratio,2);bar.lineTo(1,2);bar.lineTo(1,1);bar.endFill();bar._ratio=ratio;}
+   }
+  }
   return result;
  };
 }

@@ -824,4 +824,13 @@ export const DEVIATIONS: Deviation[] = [
       'recovery, with corrections even when ordinary input bits match prediction. B/triggers fire; '+
       'A still confirms drafts/menus. Small key labels and a separate bind/unbind progress bar remain render-owned.',
   },
+  {
+    id:'ENCHANT_DURABILITY',file:'local/EnchantmentRules.ts, Enchantment.ts, WaveDraftRules.ts, WaveDraft.ts, WeaponCrate.ts, PlayerStats.ts, Resume.ts',
+    description:'Optional enchant-durability-v1 replaces ammunition-linked enchantment with per-weapon '+
+      'successful-emission budgets. Empty ammo retains durability, purple crates refill it, growth adds '+
+      'only active capacity deltas, and an endurance draft stat joins fresh eight-stat builds. Final volleys '+
+      'and placed children retain emission identity. Optional v2 fields migrate old enchantment once; '+
+      'death crates merge stock by maximum and empty enchanted payloads create no ammunition. A slim purple '+
+      'confirmed-state HUD meter remains render-only; historical persistent/finite rules stay intact.',
+  },
 ];

@@ -41,13 +41,14 @@ import {ENCHANTMENT_RULE,persistentEnchantment,captureEnchantment,restoreEnchant
 import {availableFeatures,hasFeature,type ModernFeature} from './ModernFeatures.ts';
 import {simplifiedVitals} from './CombatRules.ts';
 import type {WeaponBindings} from './WeaponBindings.ts';
+import {durabilityEnabled,type EnchantmentState} from './EnchantmentRules.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
 export const RESUME_VERSION = 2;
 export const SAVE_MEMBER = 'mResumeData';
 
-export interface WeaponState {
+export interface WeaponState extends EnchantmentState {
   active: boolean;
   /** Undefined while the weapon was never picked up (no mThing). */
   ammo?: number;
@@ -483,7 +484,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     // every crossed wave's upgrade table entries and resets the live spawn counters.
     if(endlessWorld(world))u.__set__mLevel(snap.wave);
     else while (u.mLevelIndex < snap.wave) u.__set__mLevel(u.mLevelIndex + 1);
-    if(waveDraft(world))u.waveDraft=copyWaveDraft(snap.waveDraft)??newWaveDraft(snap.wave,combatWorld(world),simplifiedWorld(world));
+    if(waveDraft(world))u.waveDraft=copyWaveDraft(snap.waveDraft)??newWaveDraft(snap.wave,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world));
     if(u.waveDraft?.round&&draftReadyConfigured()){
       u.waveDraft.round.readyRule='draft-ready-v1';u.waveDraft.round.remainingTicks=0;
     }

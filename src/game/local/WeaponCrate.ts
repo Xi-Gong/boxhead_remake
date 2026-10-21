@@ -9,11 +9,11 @@
 import { proto } from '../../engine/runtime.ts';
 import { CSound, DrawPrimitive, Thing, World } from '../packages.ts';
 import { CThing_Object } from '../Thing/Object/CThing_Object.ts';
-import {enchantedAmmo,persistentWeapon,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
+import {enchantedAmmo,persistentWeapon,captureEnchantment,restoreEnchantment,durabilityEnabled,type EnchantmentState} from './EnchantmentRules.ts';
 import {combatWorld,replenishedAmmo} from './CombatRules.ts';
 
 /** One restorable weapon (subset of Resume's WeaponState in transport form). */
-export interface CrateWeapon {
+export interface CrateWeapon extends EnchantmentState {
   nameID: string;
   ammo: number;
   totalAmmo: number;
@@ -35,7 +35,7 @@ export function captureCratePayload(p: any): CratePayload | null {
   const weapons: CrateWeapon[] = [];
   for (const entry of p?.mWeaponList ?? []) {
     if (!entry?.mActive || !entry.mThing || entry.mNameID === 'pistol') continue; // pistol has infinite ammo
-    if (!(entry.mThing.mAmmo > 0)) continue; // empty slots are not restorable payload
+    if (!(entry.mThing.mAmmo > 0)&&!(durabilityEnabled(p.mWorld)&&enchantedAmmo(entry.mThing)>0)) continue;
     weapons.push({ nameID: entry.mNameID, ammo: entry.mThing.mAmmo, totalAmmo: entry.mThing.mTotalAmmo,
       ...captureEnchantment(entry.mThing) });
   }
@@ -55,9 +55,15 @@ export function applyCratePayload(p: any, payload: CratePayload): void {
   for (const cw of payload.weapons) {
     const entry = p.mWeapons?.[cw.nameID];
     if (!entry) continue;
-    if (!entry.mActive) p.NewWeapon(cw.nameID);
+    const fresh=!entry.mActive;if (fresh) p.NewWeapon(cw.nameID);
     const thing = entry.mThing;
     if (!thing) continue;
+    if(durabilityEnabled(p.mWorld)){
+      const kept=captureEnchantment(thing);if(fresh&&cw.ammo===0)thing.mAmmo=0;
+      thing.mAmmo=Math.max(thing.mAmmo,cw.ammo);
+      const incoming=cw.enchantDurability!==undefined?cw.enchantDurability:cw.enchanted?Infinity:cw.enchantedAmmo===-1?Infinity:cw.enchantedAmmo??0;
+      restoreEnchantment(thing,{enchantDurability:Math.max(kept.enchantDurability??0,incoming)});continue;
+    }
     const keptEnchantment=persistentWeapon(thing),keptStock=enchantedAmmo(thing);
     thing.mAmmo = Math.max(thing.mAmmo, cw.ammo);
     if(combatWorld(p.mWorld))thing.mAmmo=replenishedAmmo(p.mWorld,thing.mAmmo,thing.mTotalAmmo,0);
