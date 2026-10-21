@@ -2,7 +2,7 @@
 import {Thing,World} from '../packages.ts';
 import {hasFeature} from './ModernFeatures.ts';
 import {netSession} from './Net/NetSession.ts';
-import {BODY_FONT,INK,text} from './UiStyle.ts';
+import {BODY_FONT,INK,text,glow} from './UiStyle.ts';
 export type WeaponButton='A'|'Y';
 export type WeaponBindings=Partial<Record<WeaponButton,string>>;
 export type WeaponCommand={action:'select';button:WeaponButton}|{action:'bind';button:WeaponButton;weapon:string};
@@ -48,8 +48,13 @@ export function installWeaponBindings():void{
   const bounds=head.mcAmmo.getBounds(head),session=netSession(),confirmed=session?.confirmedPlayerStats?.find(s=>s.index===p.mPlayerIndex);
   const bindings=session?confirmed?.bindings??{}:bindingsFor(this.mWorld,p.mPlayerIndex),weapon=session?confirmed?.weaponId:p.mWeapon_Current?.mNameID;
   const letters=(['A','Y']as const).filter(key=>bindings[key]===weapon).join(' / ');
-  const label=head._WeaponBinding??text(head,'_WeaponBinding',0,0,24,13,BODY_FONT,10,INK,true,'left','');
-  label._x=bounds.xMax+3;label._y=bounds.yMin+2;label.text=letters;
+  let label=head._WeaponBinding;
+  if(!label){label=text(head,'_WeaponBinding',0,0,24,13,BODY_FONT,10,INK,true,'left','');label.filters=glow();}
+  // The authored ammo field is much wider than its visible centered text. Follow the glyph edge,
+  // not that empty field, so small shortcut letters stay beside the weapon and clear of map props.
+  const field=head.mcAmmo.tfAmount,box=field.getBounds(head),width=field.textWidth*(box.xMax-box.xMin)/Math.max(1,field._width),align=field.getTextFormat().align;
+  label._x=(align==='center'?(box.xMin+box.xMax+width)/2:align==='right'?box.xMax:box.xMin+width)+4;
+  label._y=bounds.yMin+2;label.text=letters;
   const value=bindingProgress(this.mWorld,p.mPlayerIndex),bar=head._BindingProgress??head.createEmptyMovieClip('_BindingProgress',head.getNextHighestDepth());
   bar._visible=!!value&&!this.mWorld.mPaused&&!this.mWorld.mUpgrades.waveDraft?.round&&(!session||session.phase==='playing'&&!session.netPaused&&!session.pauseBarrier.pending);
   if(bar._visible){
