@@ -4,7 +4,7 @@ import {_root} from '../../engine/runtime.ts';
 import {difficultyIndex,balancedWave} from './BalanceRules.ts';
 import {combatWaveBudget} from './ClearWaveRules.ts';
 import {waveSeconds} from './TimedWaveRules.ts';
-import {combatWorld} from './CombatRules.ts';
+import {combatWorld,combatState} from './CombatRules.ts';
 import {netSession} from './Net/NetSession.ts';
 import {variantSight} from './EnemyVariants.ts';
 export interface MapPacing {area:number;entranceDistance:number;seconds:number}
@@ -32,7 +32,7 @@ export function installCombatPacing():void{
  const u=World.CUpgrades.prototype as any,level=u.__set__mLevel;
  function tune(upgrades:any,wave:number):void{
   const world=upgrades.mWorld;
-  if(upgrades.combat?.rule==='combat-pve-v2'&&upgrades.combat.pendingWave===undefined&&upgrades.timedWave){
+  if(combatState(upgrades.combat)&&upgrades.timedWave){
    const state=upgrades.timedWave,cfg=netSession()?.startOpts?.cfg,d=difficultyIndex(cfg?.difficulty??CMain.mSaveData.__get__mDifficulty());
    const profile=mapPacing(world),seconds=profile.seconds+(state.boss?30:0);state.totalTicks=state.remainingTicks=seconds*CMain.mFPS;
    state.mapPacing={...profile};

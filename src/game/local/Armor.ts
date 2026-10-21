@@ -7,7 +7,8 @@ import {SUPPLY_RULE,armorValue,armorMaximum,CThing_Object_SupplyCrate,devilSuppl
 import { SURVIVAL_RULE, setSurvivalEnabled, syncVitals, survivalEnabled } from './SurvivalRules.ts';
 import { localGrowthEnabled } from './LocalGrowth.ts';
 import { installShieldResilience, protectEnemyHit } from './ShieldResilience.ts';
-import { LOOT_RULE, SUPPLY_KINDS, modernLoot, setModernLoot, supplyIdentity } from './LootRules.ts';
+import { LOOT_RULE, SUPPLY_KINDS, simpleDevilSupply, modernLoot, setModernLoot, supplyIdentity } from './LootRules.ts';
+import {simplifiedWorld} from './CombatRules.ts';
 import { installSupplyDrops } from './SupplyDrops.ts';
 import { REFILL_RULE, setReliableSupplies } from './ReliableSupplies.ts';
 import {dropPriestSupplies} from './VariantLoot.ts';
@@ -34,7 +35,7 @@ export function installArmorScope():void{
     const create=this._CreatePickup,own=Object.getOwnPropertyDescriptor(this,'_CreatePickup');
     this._CreatePickup=function(this:any,position:any):void{
       if(modernLoot(this)&&victim.mEnemyVariant==='priest'){dropPriestSupplies(this,position);return;}
-      const modern=modernLoot(this),kind=modern?SUPPLY_KINDS[random(3)]:devilSupply(random(100));
+      const modern=modernLoot(this),kind=simplifiedWorld(this)?simpleDevilSupply(random(100)):modern?SUPPLY_KINDS[random(3)]:devilSupply(random(100));
       if(!kind){create.call(this,position);return;}
       const at=crateDropPosition(this,position);
       if(at)this.mThing_Collection.AddThing(new CThing_Object_SupplyCrate(at,kind,modern?supplyIdentity(this,'s'):undefined));

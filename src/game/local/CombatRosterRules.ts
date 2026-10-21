@@ -1,5 +1,5 @@
 export type CombatKind='runner'|'brute'|'gunner'|'butcher'|'hunter';
-export type BossKind='charger'|'priest'|'butcher'|'hunter';
+export type BossKind='charger'|'priest'|'butcher'|'hunter'|'devil';
 export function combatFamily(kind:string):'Zombie'|'Devil'{return ['charger','runner','brute','gunner'].includes(kind)?'Zombie':'Devil';}
 export function combatOrdinal(wave:number,ordinal:number,family:'Zombie'|'Devil'):CombatKind|undefined{
  const slot=ordinal*37%100;

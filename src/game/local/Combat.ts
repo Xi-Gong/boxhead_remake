@@ -6,13 +6,16 @@ import {timedWavesConfigured} from './TimedWaves.ts';
 import {draftReadyConfigured} from './WaveDraft.ts';
 import {tieredGrowthConfigured} from './TieredGrowth.ts';
 import {clearWavesConfigured} from './ClearWaves.ts';
-import {COMBAT_RULE,combatWorld,shotgunFalloff,passiveBonuses} from './CombatRules.ts';
+import {COMBAT_RULE,SIMPLE_COMBAT_RULE,combatWorld,simplifiedWorld,shotgunFalloff,passiveBonuses,type CombatRule} from './CombatRules.ts';
 import {draftBonuses} from './WaveDraftRules.ts';
 const classic=new WeakSet<object>();
+const classicSimplified=new WeakSet<object>();
 export function setClassicCombatFixture(main:object):void{classic.add(main);}
+export function setClassicSimplifiedCombatFixture(main:object):void{classicSimplified.add(main);}
+export function configuredCombatRule():CombatRule{return netSession()?.startOpts?.cfg.combat??(classicSimplified.has(CMain._this)?COMBAT_RULE:SIMPLE_COMBAT_RULE);}
 export function combatConfigured():boolean{
  const s=netSession();return !classic.has(CMain._this)&&endlessConfigured()&&timedWavesConfigured()&&draftReadyConfigured()&&tieredGrowthConfigured()&&clearWavesConfigured()
-  &&(!s||s.startOpts?.cfg.combat===COMBAT_RULE&&s.startOpts.cfg.variants==='enemy-variants-v1');
+  &&(!s||(s.startOpts?.cfg.combat===COMBAT_RULE||s.startOpts?.cfg.combat===SIMPLE_COMBAT_RULE)&&s.startOpts.cfg.variants==='enemy-variants-v1');
 }
 export function syncCombatPlayer(p:any):void{
  if(!combatWorld(p.mWorld))return;
@@ -39,7 +42,7 @@ export function installCombatScope():void{
   return message.call(this,value,...args);
  };
  const u=World.CUpgrades.prototype as any,init=u.InitLists,level=u.__set__mLevel;
- u.InitLists=function(this:any):any{const result=init.call(this);if(combatConfigured())this.combat={rule:COMBAT_RULE};return result;};
+ u.InitLists=function(this:any):any{const result=init.call(this);if(combatConfigured())this.combat={rule:configuredCombatRule()};return result;};
  u.__set__mLevel=function(this:any,wave:number):any{
   const activate=this.combat?.pendingWave!==undefined&&wave>=this.combat.pendingWave;
   if(activate)delete this.combat.pendingWave;
@@ -81,7 +84,7 @@ export function installCombatScope():void{
  for(const ctor of [Thing.Affect.CThing_Affect,Thing.Affect.CThing_Affect_Bullet,Thing.Affect.CThing_Affect_Explosion,Thing.Affect.CThing_Affect_FireBall,Thing.Affect.CThing_Affect_ZombieAttack,Thing.Affect.CThing_Affect_DevilAttack]){
   const p=ctor.prototype as any,fn=p.AffectThing;p.AffectThing=function(this:any,victim:any):any{
    const before=victim.mLife,result=fn.call(this,victim);
-   if(combatWorld(victim.mWorld)&&before>0&&(victim.mEnemyArmor??0)>0&&typeof result==='number'&&result>0){
+   if(combatWorld(victim.mWorld)&&!simplifiedWorld(victim.mWorld)&&before>0&&(victim.mEnemyArmor??0)>0&&typeof result==='number'&&result>0){
     const pen=Math.max(0,Math.min(.6,this.mAffector?.mCombatPenetration??0)),absorbed=Math.min(victim.mEnemyArmor,result*(1-pen));
     victim.mEnemyArmor-=absorbed;victim.mLife=before-(result-absorbed);
    }return result;

@@ -4,11 +4,12 @@ import { CMain, CSound, Thing, World } from '../packages.ts';
 import { modernLoot, supplyIdentity, SUPPLY_KINDS, type SupplyState } from './LootRules.ts';
 import { applySupplyEffect, livingPicker } from './Supplies.ts';
 import { reliableSupplies, syncSupplyWeapon } from './ReliableSupplies.ts';
-import {combatWorld,restoredSupply} from './CombatRules.ts';
+import {combatWorld,simplifiedWorld,restoredSupply} from './CombatRules.ts';
 
 /** One roll partitions the reward, then the remaining 70% preserves the original weapon pool's order/weights. */
 export function redBoxReward(player: any, roll: number): boolean {
-  if (roll < .3) {
+  const simple=simplifiedWorld(player.mWorld);
+  if (!simple&&roll < .3) {
     const kind = SUPPLY_KINDS[roll < .1 ? 0 : roll < .2 ? 1 : 2]!;
     const granted = applySupplyEffect(player,kind);
     if (granted) player.mWorld.mHud.AddMessage_Info(`P${player.mPlayerIndex+1}: ${kind==='armor'?'Armor':kind==='ammo'?(combatWorld(player.mWorld)?'Ammo':'All ammo'):'Health'} ${combatWorld(player.mWorld)?'replenished':'full'}!`);
@@ -22,7 +23,7 @@ export function redBoxReward(player: any, roll: number): boolean {
     total += (1 - entry.mThing.mAmmo / entry.mThing.mTotalAmmo) * .75 + .25;
     pool.push({ name: entry.mNameID, end: total });
   }
-  const selected = (roll - .3) / .7 * total;
+  const selected = (simple?roll:(roll - .3) / .7) * total;
   const reward = pool.find(item => selected < item.end);
   if (!reward) return false;
   if(combatWorld(player.mWorld)){

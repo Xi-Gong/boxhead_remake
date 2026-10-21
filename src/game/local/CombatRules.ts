@@ -1,8 +1,12 @@
 // Versioned modern PvE tuning. Pure arithmetic; no mutable caches or random draws.
 import type {WaveBonuses} from './WaveDraftRules.ts';
 export const COMBAT_RULE='combat-pve-v2';
-export interface CombatState {rule:typeof COMBAT_RULE;pendingWave?:number}
-export function combatWorld(world:any):boolean{return world?.mUpgrades?.combat?.rule===COMBAT_RULE&&world.mUpgrades.combat.pendingWave===undefined;}
+export const SIMPLE_COMBAT_RULE='combat-pve-v3';
+export type CombatRule=typeof COMBAT_RULE|typeof SIMPLE_COMBAT_RULE;
+export interface CombatState {rule:CombatRule;pendingWave?:number}
+export function combatState(state:CombatState|undefined):boolean{return !!state&&(state.rule===COMBAT_RULE||state.rule===SIMPLE_COMBAT_RULE)&&state.pendingWave===undefined;}
+export function combatWorld(world:any):boolean{return combatState(world?.mUpgrades?.combat);}
+export function simplifiedWorld(world:any):boolean{return world?.mUpgrades?.combat?.rule===SIMPLE_COMBAT_RULE&&world.mUpgrades.combat.pendingWave===undefined;}
 export function diminishing(value:number,maximum=2):number{const n=Math.max(0,value);return maximum*n/(maximum+n);}
 export function passiveBonuses(b:WaveBonuses):{movement:number;penetration:number;supply:number}{return {
  movement:diminishing(.04*(b.mobility??0),.25),penetration:diminishing(.12*(b.penetration??0),.6),supply:diminishing(.1*(b.scavenging??0),.6)};}

@@ -1,6 +1,6 @@
 import {flash} from '../../engine/runtime.ts';
 import {CMain,Thing,World} from '../packages.ts';
-import {combatWorld} from './CombatRules.ts';
+import {combatWorld,simplifiedWorld} from './CombatRules.ts';
 import {combatOrdinal,type CombatKind} from './CombatRosterRules.ts';
 import {combatCollection,installCombatRosterArt} from './CombatRosterArt.ts';
 import {livingWavePlayers} from './TimedWaves.ts';
@@ -29,7 +29,7 @@ export function installCombatRoster():void{
  const collection=Thing.CThing_Collection.prototype as any,add=collection.AddThing;
  collection.AddThing=function(this:any,e:any):any{
   const result=add.call(this,e),w=this.mWorld,s=w.mUpgrades.enemyVariantState;
-  if(combatWorld(w)&&!e.mBossKind&&!e.mEnemyVariant&&!e.mCombatKind&&['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(e._CLASSID_)&&s){
+  if(combatWorld(w)&&!simplifiedWorld(w)&&!e.mBossKind&&!e.mEnemyVariant&&!e.mCombatKind&&['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(e._CLASSID_)&&s){
    const family=e._CLASSID_==='CThing_Creature_Zombie'?'Zombie':'Devil',ordinal=family==='Zombie'?s.zombie:s.devil;
    const kind=ordinal>0?combatOrdinal(w.mUpgrades.mLevelIndex,ordinal,family):undefined;
    if(kind&&(Object.values(this.mThings)as any[]).filter(t=>t.mCombatKind===kind&&t.Process&&t.mLife>0&&!t.lanKillLogged).length<(family==='Devil'?1:2))e.mCombatKind=kind;

@@ -112,7 +112,7 @@ export interface GameConfig {
   timedWaves?: 'timed-waves-v1';
   waveDraft?: 'wave-draft-v1';
   draftReady?: 'draft-ready-v1';
-  combat?: 'combat-pve-v2';
+  combat?: 'combat-pve-v2'|'combat-pve-v3';
   bossWaves?: 'boss-waves-v1';
   bossEncounters?: 'boss-encounters-v1';
   tieredGrowth?: 'tiered-growth-v1';

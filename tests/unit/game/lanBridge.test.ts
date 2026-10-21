@@ -7,6 +7,15 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([false,true])('negotiates v3 only for a capable peer (%s), and refuses incompatible reconnects',simple=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
+  const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  const features=['combat-pve-v2','draft-ready-v1','tiered-growth-v1','clearable-waves-v1','enemy-variants-v1','wave-draft-v1','timed-waves-v1','endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1',...(simple?['combat-pve-v3']:[])];
+  try{lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});b.phase='setup';b.startGame(false);
+   const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.combat).toBe(simple?'combat-pve-v3':'combat-pve-v2');
+   b.session={startOpts:{cfg:{...start.cfg,combat:'combat-pve-v3'}}} as any;expect((b as any).peerSupportsRun()).toBe(simple);
+  }finally{launch.mockRestore();CMain.mSaveData=previous;b.session=null;}
+ });
  it.each([undefined,'combat-pve-v2','draft-ready-v1','tiered-growth-v1','clearable-waves-v1','enemy-variants-v1'])('negotiates modern combat only with its complete dependencies (missing %s)',missing=>{
   const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});

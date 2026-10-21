@@ -5,6 +5,7 @@ import {endlessWorld} from './Endless.ts';
 import {netSession} from './Net/NetSession.ts';
 import {installVariantArt,variantCollection} from './VariantArt.ts';
 import {combatFamily,type CombatKind} from './CombatRosterRules.ts';
+import {simplifiedWorld} from './CombatRules.ts';
 export const VARIANTS_RULE='enemy-variants-v1';
 export type EnemyVariant='charger'|'priest';
 export function variantsWorld(world:any):boolean{return endlessWorld(world)&&(!netSession()||netSession()?.startOpts?.cfg.variants===VARIANTS_RULE);}
@@ -40,11 +41,11 @@ export function captureVariants(w:any):VariantSave|undefined{
  const s=w.mUpgrades.enemyVariantState;
  return {rule:VARIANTS_RULE,wave:s.wave,zombie:s.zombie,devil:s.devil,nextZone:s.nextZone,
   zones:s.zones.map(({mPosition:p,mAngle:a,...rest}:EmberZone)=>({...rest,x:p.mX,y:p.mY,angle:a.__get__mAngle()})),
-  enemies:things(w).filter(e=>(e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mCombatKind??e.mEnemyVariant??'devil',x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.filter(k=>Object.hasOwn(e,k)).map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
+  enemies:things(w).filter(e=>(e.mBossKind||e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mCombatKind??e.mEnemyVariant??'devil',x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.filter(k=>Object.hasOwn(e,k)).map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
 }
 export function restoreVariants(w:any,s:VariantSave|undefined):void{
  if(!variantsWorld(w)||s?.rule!==VARIANTS_RULE)return;
- for(const e of things(w))if((e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process){e.ClearCollideCell();e.Delete();}
+ for(const e of things(w))if((e.mBossKind||e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process){e.ClearCollideCell();e.Delete();}
  const identities=new Map<string,string>();
  for(const saved of s.enemies){
   const family=combatFamily(saved.kind),ctor=family==='Zombie'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil;
@@ -155,7 +156,7 @@ export function installEnemyVariantsScope():void{
   const kind=spawnScopes.get(this),state=this.mWorld.mUpgrades.enemyVariantState;
   if(kind&&t._CLASSID_===(kind==='charger'?'CThing_Creature_Zombie':'CThing_Creature_Devil')){
    const ordinal=kind==='charger'?++state.zombie:++state.devil;
-   if(variantOrdinal(kind,state.wave,ordinal)&&things(this.mWorld).filter(e=>e.mEnemyVariant===kind&&e.Process&&!e.lanKillLogged&&!(e.mFlags&Thing.CThing.mFlag_DEAD)).length<(kind==='charger'?4:1))t.mEnemyVariant=kind;
+   if(!(kind==='priest'&&simplifiedWorld(this.mWorld))&&variantOrdinal(kind,state.wave,ordinal)&&things(this.mWorld).filter(e=>e.mEnemyVariant===kind&&e.Process&&!e.lanKillLogged&&!(e.mFlags&Thing.CThing.mFlag_DEAD)).length<(kind==='charger'?4:1))t.mEnemyVariant=kind;
   }return add.call(this,t);
  };
  const process=collection.Process;collection.Process=function(this:any):any{if(variantsWorld(this.mWorld))processEmberZones(this.mWorld);return process.call(this);};

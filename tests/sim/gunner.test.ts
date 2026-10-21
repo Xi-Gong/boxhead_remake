@@ -9,7 +9,7 @@ import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,restoreWorldSnap,makeSnapCtx} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 import {getRandomState} from '../../src/engine/flash/rng.ts';
-function boot(){const g=createHeadlessGame();noSpawn(g);placePlayer(g,10.5,8.5,0);return g;}
+function boot(){const g=createHeadlessGame({classicSimplifiedCombat:true});noSpawn(g);placePlayer(g,10.5,8.5,0);return g;}
 function enemy(g:any,gun='pistol'):any{const e:any=new Thing.Creature.CThing_Creature_Zombie(pos(6.5,8.5));e.mCombatKind='gunner';e.mGunnerSkin=2;e.mGunnerWeapon=gun;g.world().mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');return e;}
 const bullets=(g:any)=>g.things().filter((t:any)=>t._CLASSID_==='CThing_Shot_EnemyBullet'&&t.Process);
 it('selects all four player identities and three permitted guns without advancing the global random state',()=>{

@@ -9,7 +9,7 @@ import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,restoreWorldSnap,makeSnapCtx} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 import {getRandomState} from '../../src/engine/flash/rng.ts';
-function boot(){const g=createHeadlessGame();noSpawn(g);placePlayer(g,9.5,8.5,0);return g;}
+function boot(){const g=createHeadlessGame({classicSimplifiedCombat:true});noSpawn(g);placePlayer(g,9.5,8.5,0);return g;}
 function enemy(g:any,kind:'runner'|'brute',x=7.5,y=8.5):any{const e:any=new Thing.Creature.CThing_Creature_Zombie(pos(x,y));e.mCombatKind=kind;g.world().mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');return e;}
 it('introduces runner at three and brute at six without extra subtype RNG, replacing original quotas',()=>{
  expect(combatOrdinal(2,3,'Zombie')).toBeUndefined();expect(combatOrdinal(3,3,'Zombie')).toBe('runner');

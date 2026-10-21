@@ -786,4 +786,11 @@ export const DEVIATIONS: Deviation[] = [
       'identities retain player palette/gear cues and original gun anchors. Prior derived art remains an '+
       'explicit legacy oracle; new geometry and all actions are checked separately.',
   },
+  {
+    id:'SIMPLIFIED_PVE',file:'local/CombatRules.ts, Combat.ts, EnemyVariants.ts, BossWaves.ts, Armor.ts, SupplyDrops.ts; local/Net/bridge.ts',
+    description:'Negotiated combat-pve-v3 retains native zombies, chargers and native fireball devils only, '+
+      'including charger/native-devil Bosses. Enemies have no armor. Red rewards use the existing weapon '+
+      'pool exclusively; every devil drops exactly one permanent medical/armor/enchantment/ammo crate '+
+      'with one equal-quarter seeded roll. Explicit v2 fixtures and old peers retain their prior semantics.',
+  },
 ];

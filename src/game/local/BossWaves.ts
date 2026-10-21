@@ -2,7 +2,7 @@
 import {CMain,CSound,Thing,World} from '../packages.ts';
 import {netSession} from './Net/NetSession.ts';
 import {worldEnemyGrowth} from './Endless.ts';
-import {combatWorld} from './CombatRules.ts';
+import {combatWorld,combatState,simplifiedWorld,SIMPLE_COMBAT_RULE} from './CombatRules.ts';
 import type {BossKind} from './CombatRosterRules.ts';
 import {variantsWorld,variantSight,emberZones} from './EnemyVariants.ts';
 import {attemptTimedSpawn,bossMembers,livingWavePlayers,reachableSpawnCells,roomForTimedSpawn,timedSpawnRole,timedWave,timedWavesConfigured,type BossWaveState} from './TimedWaves.ts';
@@ -20,7 +20,8 @@ export function setClassicBossWavesFixture(main:object):void{classic.add(main);}
 export function bossWavesConfigured():boolean{
   const s=netSession();return timedWavesConfigured()&&(s?s.startOpts?.cfg.bossWaves===BOSS_WAVES_RULE&&s.startOpts.cfg.variants==='enemy-variants-v1':!classic.has(CMain._this));
 }
-export function bossKind(wave:number,devils=true,modern=false):BossKind|undefined{
+export function bossKind(wave:number,devils=true,modern=false,simplified=false):BossKind|undefined{
+  if(simplified)return wave%5?undefined:devils&&Math.floor(wave/5)%2===0?'devil':'charger';
   if(modern&&devils&&wave%5===0)return (['charger','priest','butcher','hunter']as const)[(Math.floor(wave/5)-1)%4];
   return wave%5?undefined:devils&&Math.floor(wave/5)%2===0?'priest':'charger';
 }
@@ -74,12 +75,12 @@ export function installBossWaves():void{
   upgrades.__set__mLevel=function(this:any,wave:number):any{
     const value=level.call(this,wave),state=this.timedWave;
     if(bossWavesConfigured()&&variantsWorld(this.mWorld)&&state){
-      const devils=netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive(),modern=this.combat?.rule==='combat-pve-v2'&&this.combat.pendingWave===undefined;
-      const kind=bossKind(wave,devils,modern);
+      const devils=netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive(),modern=combatState(this.combat),simple=modern&&this.combat.rule===SIMPLE_COMBAT_RULE;
+      const kind=bossKind(wave,devils,modern,simple);
       if(kind){
         state.totalTicks+=ticks(60);state.remainingTicks=state.totalTicks;
         state.boss={kind,defeated:false,life:0,maximum:0,reinforcementTicks:ticks(2)};
-        const available:BossKind[]=!devils?['charger']:modern?wave>=20?['charger','priest','butcher','hunter']:wave>=15?['charger','priest','butcher']:['charger','priest']:['charger','priest'];
+        const available:BossKind[]=!devils?['charger']:simple?['charger','devil']:modern?wave>=20?['charger','priest','butcher','hunter']:wave>=15?['charger','priest','butcher']:['charger','priest']:['charger','priest'];
         if(bossEncountersConfigured())state.boss.members=Array.from({length:bossCount(wave)},(_,i)=>({
           kind:modern?available[(available.indexOf(kind)+i)%available.length]!:i%2===0?kind:kind==='charger'&&devils?'priest':'charger',
           defeated:false,life:0,maximum:0}));
@@ -117,6 +118,7 @@ export function installBossWaves():void{
         if(member){
           enemy.mBossKind=member.kind;
           if(member.kind==='butcher'||member.kind==='hunter'){delete enemy.mEnemyVariant;enemy.mCombatKind=member.kind;}
+          else if(member.kind==='devil')delete enemy.mEnemyVariant;
           else enemy.mEnemyVariant=member.kind;
           member.id=enemy.sUniqueID;if(boss.members)enemy.mBossSlot=index;
         }

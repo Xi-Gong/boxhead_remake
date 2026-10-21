@@ -10,7 +10,7 @@ import {timedWave,clearWaveCombat} from '../../src/game/local/TimedWaves.ts';
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {captureWorldSnap,restoreWorldSnap,makeSnapCtx} from '../../src/game/local/Net/WorldSnap.ts';
 import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
-function boot(){const g=createHeadlessGame();noSpawn(g);placePlayer(g,10.5,8.5,0);return g;}
+function boot(){const g=createHeadlessGame({classicSimplifiedCombat:true});noSpawn(g);placePlayer(g,10.5,8.5,0);return g;}
 function enemy(g:any,kind:'butcher'|'hunter',boss=false):any{const e:any=new Thing.Creature.CThing_Creature_Devil(pos(kind==='butcher'?8.5:6.5,8.5));e.mCombatKind=kind;if(boss)e.mBossKind=kind;g.world().mThing_Collection.AddThing(e);e.Process_Init();e.Affect_Setup(Thing.Affect.CThing_Affect.mAffect_Bullet|Thing.Affect.CThing_Affect.mAffect_Explosion|Thing.Affect.CThing_Affect.mAffect_FireBall);e.SetState('State_GotoPlayer');return e;}
 it('introduces both ordinary devils at twelve/eighteen and four Boss families at their intended waves',()=>{
  expect(combatOrdinal(11,3,'Devil')).toBeUndefined();expect(combatOrdinal(12,3,'Devil')).toBe('butcher');expect(combatOrdinal(17,1,'Devil')).toBeUndefined();expect(combatOrdinal(18,1,'Devil')).toBe('hunter');
@@ -30,7 +30,7 @@ it.each([false,true])('hunter Boss=%s locks its fan, leaves gaps, and warns agai
 });
 it('preserves new Boss members and depleted armor/skill chains across saves and exact rollback',()=>{
  for(const wave of [15,20,35]){
-  const g=createHeadlessGame({room:18}),w=g.world();clearWaveCombat(w);w.mUpgrades.__set__mLevel(wave);
+  const g=createHeadlessGame({classicSimplifiedCombat:true,room:18}),w=g.world();clearWaveCombat(w);w.mUpgrades.__set__mLevel(wave);
   for(let i=0;i<bossCount(wave);i++){w.mUpgrades.ProcessTimedSpawns();for(const e of g.things().filter(t=>t.mBossKind&&t.Process===t.Process_Init))e.Process_Init();}
   const bosses=g.things().filter(t=>t.mBossKind).sort((a,b)=>a.mBossSlot-b.mBossSlot);expect(bosses).toHaveLength(bossCount(wave));expect(bosses[0]!.mCombatKind).toBe(wave===20?'hunter':'butcher');
   const e=bosses[0]!;e.mEnemyArmor=99;e.mCombatAimX=1;e.mCombatAimY=0;e.SetState(e.mCombatKind==='hunter'?'State_CombatHunt':'State_CombatCleave');e.mCombatTicks=7;
@@ -58,7 +58,7 @@ it('retains the previous ordinary/Boss art oracle with original feet and timing'
  }g.quit();
 });
 it('does not add new combat fields when restoring an old-capability variant',()=>{
- const g=createHeadlessGame({classicCombat:true}),w=g.world(),e:any=new Thing.Creature.CThing_Creature_Devil(g.players()[0].mPosition.Clone());e.mEnemyVariant='priest';w.mThing_Collection.AddThing(e);e.Process_Init();
+ const g=createHeadlessGame({classicSimplifiedCombat:true,classicCombat:true}),w=g.world(),e:any=new Thing.Creature.CThing_Creature_Devil(g.players()[0].mPosition.Clone());e.mEnemyVariant='priest';w.mThing_Collection.AddThing(e);e.Process_Init();
  const saved=capture(w);expect(Object.hasOwn(saved.variants!.enemies[0]!.fields,'mCombatKind')).toBe(false);expect(applyToWorld(w,saved)).toBe(true);
  const restored=g.things().find(t=>t.Process&&t.mEnemyVariant==='priest')!;expect(Object.hasOwn(restored,'mEnemyArmor')).toBe(false);expect(Object.hasOwn(restored,'mCombatKind')).toBe(false);g.quit();
 });

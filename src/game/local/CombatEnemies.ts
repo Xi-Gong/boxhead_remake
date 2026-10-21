@@ -1,12 +1,12 @@
 import {flash} from '../../engine/runtime.ts';
 import {Thing,World} from '../packages.ts';
-import {combatWorld} from './CombatRules.ts';
+import {combatWorld,simplifiedWorld} from './CombatRules.ts';
 import {timedWave,bossMembers} from './TimedWaves.ts';
 import {netSession} from './Net/NetSession.ts';
 import {capsule} from './UiStyle.ts';
 export interface EnemyArmor {id:string;armor:number;maximum:number;boss:boolean}
 export function captureEnemyArmor(world:any):EnemyArmor[]{
- if(!combatWorld(world))return [];
+ if(!combatWorld(world)||simplifiedWorld(world))return [];
  return (Object.values(world.mThing_Collection?.mThings??{})as any[]).filter(e=>e.Process&&e.mLife>0&&e.mEnemyArmor>0&&!e.lanKillLogged)
   .map(e=>({id:e.sUniqueID,armor:e.mEnemyArmor,maximum:e.mEnemyArmorMaximum,boss:!!e.mBossKind}));
 }
@@ -18,7 +18,7 @@ export function combatKillXp(enemy:any):number{
 }
 const layers=new WeakMap<object,any>();
 function drawArmor(world:any):void{
- if(!combatWorld(world)||timedWave(world)?.phase!=='combat')return;
+ if(!combatWorld(world)||simplifiedWorld(world)||timedWave(world)?.phase!=='combat')return;
  const session=netSession(),values=session?session.confirmedEnemyArmor:captureEnemyArmor(world);if(!values?.length)return;
  let mc=layers.get(world);if(!mc){mc=world.createEmptyMovieClip('_EnemyArmorArt',world.getNextHighestDepth());mc._visible=false;layers.set(world,mc);}
  for(const v of values){
@@ -40,7 +40,7 @@ export function installCombatEnemies():void{
    this.mLife=this.mMaxLife=this.mMaxLife*(this.mBossKind?2:devil?2:2.5);
    this.mSpeed*=this.mEnemyVariant?1.1:devil?1.12:1.2;
    this.mSpeed=Math.max(this.mSpeed,devil ? .08 : this.mEnemyVariant ? .075 : .06);
-   if(devil||this.mBossKind)this.mEnemyArmor=this.mEnemyArmorMaximum=Math.ceil(this.mMaxLife*(this.mBossKind?.4:.3));
+   if(!simplifiedWorld(this.mWorld)&&(devil||this.mBossKind))this.mEnemyArmor=this.mEnemyArmorMaximum=Math.ceil(this.mMaxLife*(this.mBossKind?.4:.3));
    const boss=timedWave(this.mWorld)?.boss,member=boss&&bossMembers(boss).find(m=>m.id===this.sUniqueID);
    if(member){member.life=this.mLife;member.maximum=this.mMaxLife;}
    return result;
