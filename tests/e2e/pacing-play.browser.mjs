@@ -15,7 +15,7 @@ const out=`generated/reports/${version}/pacing/${tag}-${style}-w${wave}-r${room}
 mkdirSync(out,{recursive:true});const report={ok:false,style,wave,room,tag,samples:[],inputOnly:true,realTime:true};
 const controllerSource=readFileSync(new URL(import.meta.url));writeFileSync(`${out}/controller.mjs`,controllerSource);report.controllerSourceSha256=createHash('sha256').update(controllerSource).digest('hex');
 report.coop=coop;report.controller=coverFire?7:6;report.difficulty=difficulty;report.evadeDistance=evadeDistance;report.coverFire=coverFire;report.inputs=[];
-if(modernPlay){report.controller=17;report.limitations='Automated controller reads positions, visible charge phases/projectiles, authored muzzle anchors, actual weapon range and stats, then sends real keys; this is not a human win-rate estimate. Grenade arcs are not modeled; rockets require clearance for their damage-dependent explosion radius. Owned guns are first selected with real keys so lazy upgrades are reflected in their stats.';}
+if(modernPlay){report.controller=18;report.limitations='Automated controller reads positions, visible charge phases/projectiles, authored muzzle anchors, actual weapon range and stats, then sends real keys; this is not a human win-rate estimate. Grenade arcs are not modeled; rockets require clearance for their damage-dependent explosion radius. Owned guns are first selected with real keys so lazy upgrades are reflected in their stats. Healthy players briefly return fire against nearby ordinary pursuers.';}
 report.seed=seed;report.detail=detail;
 report.orbit=orbit;
 report.events=[];
@@ -94,7 +94,8 @@ try{
    const line=e=>{const distance=Math.hypot(e.x-s.x,e.y-s.y);for(let r=.3;r<distance-.4;r+=.2)if(!grid[Math.floor(s.y+(e.y-s.y)*r/distance)]?.[Math.floor(s.x+(e.x-s.x)*r/distance)])return false;return true;};
    const distance=s.enemies[0]?Math.hypot(s.enemies[0].x-s.x,s.enemies[0].y-s.y):Infinity;
    const fireRange=modernPlay?(s.weapons[s.weapon]?.range??Infinity):7.5;
-   const target=modernPlay?(distance>2.5?s.enemies.find(e=>(e.boss||e.kind==='CThing_Creature_Devil')&&Math.hypot(e.x-s.x,e.y-s.y)<fireRange&&line(e)):undefined)??s.enemies.find(e=>e.id===focusId&&line(e)&&Math.hypot(e.x-s.x,e.y-s.y)<fireRange+.5)??s.enemies.find(line):s.enemies.find(line);
+   const pressureFire=modernPlay&&style==='active'&&s.enemies.length<=6&&distance<2.5&&s.life>s.maxLife*.3&&s.enemies[0]?.kind==='CThing_Creature_Zombie'&&line(s.enemies[0])&&(!s.boss||s.boss.members?.filter(b=>!b.defeated).length<=1)&&n%10<6;
+   const target=pressureFire?s.enemies[0]:modernPlay?(distance>2.5?s.enemies.find(e=>(e.boss||e.kind==='CThing_Creature_Devil')&&Math.hypot(e.x-s.x,e.y-s.y)<fireRange&&line(e)):undefined)??s.enemies.find(e=>e.id===focusId&&line(e)&&Math.hypot(e.x-s.x,e.y-s.y)<fireRange+.5)??s.enemies.find(line):s.enemies.find(line);
    focusId=target?.id;
    const aimDistance=modernPlay&&target?Math.hypot(target.x-s.x,target.y-s.y):distance;
    const blastRadius=gun=>2+Math.max(0,(gun?.damage??0)*(gun?.enchanted?1.15:1)-100)*.005;
@@ -111,7 +112,7 @@ try{
    const aligned=target&&aimDistance<fireRange&&shoot===s.dir;
    if(modernPlay){const devilDistance=Math.min(Infinity,...s.enemies.filter(e=>e.kind==='CThing_Creature_Devil').map(e=>Math.hypot(e.x-s.x,e.y-s.y))),safeDistance=s.enemies.length>5?Math.max(2.2,evadeDistance):evadeDistance;
     if(distance<safeDistance||devilDistance<4.5)retreating=true;else if(distance>safeDistance+.45&&devilDistance>5)retreating=false;}
-   const evade=style==='survive'||distance<evadeDistance||previous.stuck>5||modernPlay&&retreating;
+   const evade=(style==='survive'||distance<evadeDistance||previous.stuck>5||modernPlay&&retreating)&&!pressureFire;
    let supply;
    if(modernPlay){
     const finite=['uzi','shotgun','rocket','railgun','grenade'].map(k=>s.weapons[k]).filter(g=>g?.active&&g.capacity>0&&g.capacity<999999),stock=finite.reduce((v,g)=>v+g.ammo,0),capacity=finite.reduce((v,g)=>v+g.capacity,0),mainGun=finite.slice().sort((a,b)=>b.damage/b.rate-a.damage/a.rate)[0],ammoNeed=Math.max(capacity?1-stock/capacity:0,mainGun?1-mainGun.ammo/mainGun.capacity:0);
