@@ -274,7 +274,9 @@ async function productionRun(exe?: string): Promise<void> {
   await app.close();
 }
 
-const packagedExe = path.join(root, 'release/win-unpacked/Boxhead 2Play Rooms.exe');
+const packagedExe = process.env.BOXHEAD_QA_EXE
+  ? path.resolve(process.env.BOXHEAD_QA_EXE)
+  : path.join(root, 'release/win-unpacked/Boxhead 2Play Rooms.exe');
 mkdirSync(outDir, { recursive: true });
 if (process.argv.includes('--packaged-only')) {
   // After `npm run dist:dir`: probe the packaged app (asar + app:// + userData redirect) only.
