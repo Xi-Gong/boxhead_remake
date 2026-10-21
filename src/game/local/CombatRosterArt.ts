@@ -3,6 +3,7 @@ import {DrawPrimitive,Thing} from '../packages.ts';
 import {copy,bounds,polygon,solid} from './VariantArt.ts';
 import type {CombatKind} from './CombatRosterRules.ts';
 import {freshMeshMaterials,freshEnemyModels} from './EnemyMesh.ts';
+import {expandedEnemyArtConfigured} from './Combat.ts';
 const caches=new WeakMap<object,Record<string,any>>();
 function edit(model:any,name:string,kind:CombatKind,angle:number):void{
  if(!model.Shape_vList?.length||name.startsWith('Foot')||name.startsWith('GunPosition'))return;
@@ -62,5 +63,5 @@ export function combatCollection(kind:CombatKind,legacy=false):any{
 }
 export function installCombatRosterArt():void{
  const ctor=Thing.Creature.CThing_Creature_Zombie,get=ctor.GetCollection;
- ctor.GetCollection=function():any{const base=get.call(this);combatCollection('runner');combatCollection('brute');return base;};
+ ctor.GetCollection=function():any{const base=get.call(this);if(expandedEnemyArtConfigured()){combatCollection('runner');combatCollection('brute');}return base;};
 }

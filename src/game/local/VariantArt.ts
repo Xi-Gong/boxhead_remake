@@ -1,6 +1,7 @@
 // ENEMY_VARIANTS: derive independent XSI geometry/materials, then use the original loading-time baker.
 import {CMain,DrawPrimitive,Thing} from '../packages.ts';
 import type {EnemyVariant} from './EnemyVariants.ts';
+import {expandedEnemyArtConfigured} from './Combat.ts';
 const caches=new WeakMap<object,Record<string,any>>(),classic=new WeakSet<object>();
 export function setClassicVariantArtFixture(main:object):void{classic.add(main);}
 export function copy(v:any):any{if(Array.isArray(v))return v.map(copy);if(v&&typeof v==='object'){const o:any={};for(const k of Object.keys(v))if(k!=='mcBMD'&&k!=='sBMD')o[k]=copy(v[k]);return o;}return v;}
@@ -235,6 +236,6 @@ export function variantCollection(kind:EnemyVariant,boss=false):any{return prepa
 export function classicVariantCollection(kind:EnemyVariant):any{return prepare(kind,false,true);}
 export function installVariantArt():void{
  for(const [ctor,kind]of [[Thing.Creature.CThing_Creature_Zombie,'charger'],[Thing.Creature.CThing_Creature_Devil,'priest']]as const){
-  const get=ctor.GetCollection;ctor.GetCollection=function():any{const base=get.call(this);variantCollection(kind);variantCollection(kind,true);return base;};
+  const get=ctor.GetCollection;ctor.GetCollection=function():any{const base=get.call(this);if(kind!=='priest'||expandedEnemyArtConfigured()){variantCollection(kind);variantCollection(kind,true);}return base;};
  }
 }

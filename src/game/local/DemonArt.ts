@@ -1,6 +1,7 @@
 import {DrawPrimitive,Thing} from '../packages.ts';
 import {copy,bounds,polygon,solid,horn} from './VariantArt.ts';
 import {freshMeshMaterials,freshEnemyModels} from './EnemyMesh.ts';
+import {expandedEnemyArtConfigured} from './Combat.ts';
 export type DemonKind='butcher'|'hunter';
 const caches=new WeakMap<object,Map<string,any>>();
 function edit(model:any,name:string,kind:DemonKind,boss:boolean,angle:number,up:number[]):void{
@@ -67,4 +68,4 @@ export function demonCollection(kind:DemonKind,boss=false,legacy=false):any{
   }));DI.mAnimationSets[derived.mID]=derived;S.SS_APPLY(style);c.AddItem(X.CDrawPrimitive_XSI_Animation.Load(derived.mID,action));
  }}finally{if(saved)S.SS_APPLY(saved);}return c;
 }
-export function installDemonArt():void{const ctor=Thing.Creature.CThing_Creature_Devil,get=ctor.GetCollection;ctor.GetCollection=function():any{const base=get.call(this);for(const kind of ['butcher','hunter']as const){demonCollection(kind);demonCollection(kind,true);}return base;};}
+export function installDemonArt():void{const ctor=Thing.Creature.CThing_Creature_Devil,get=ctor.GetCollection;ctor.GetCollection=function():any{const base=get.call(this);if(expandedEnemyArtConfigured())for(const kind of ['butcher','hunter']as const){demonCollection(kind);demonCollection(kind,true);}return base;};}

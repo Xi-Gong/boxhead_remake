@@ -2,6 +2,7 @@ import {DrawPrimitive,Thing} from '../packages.ts';
 import {copy,polygon} from './VariantArt.ts';
 import {derivedWeaponSet,palette,GUN_LINKS} from './WeaponArt.ts';
 import {freshMeshMaterials,freshEnemyModels} from './EnemyMesh.ts';
+import {expandedEnemyArtConfigured} from './Combat.ts';
 export type EnemyGun='pistol'|'uzi'|'shotgun';
 export const ENEMY_GUNS:readonly EnemyGun[]=['pistol','uzi','shotgun'];
 const caches=new WeakMap<object,Map<string,any>>();
@@ -44,5 +45,5 @@ export function gunnerCollection(skin:number,gun:EnemyGun):any{
 }
 export function installGunnerArt():void{
  const ctor=Thing.Creature.CThing_Creature_Zombie,get=ctor.GetCollection;
- ctor.GetCollection=function():any{const base=get.call(this);for(let skin=0;skin<4;skin++)for(const gun of ENEMY_GUNS)gunnerCollection(skin,gun);return base;};
+ ctor.GetCollection=function():any{const base=get.call(this);if(expandedEnemyArtConfigured())for(let skin=0;skin<4;skin++)for(const gun of ENEMY_GUNS)gunnerCollection(skin,gun);return base;};
 }

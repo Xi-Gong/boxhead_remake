@@ -13,6 +13,8 @@ const classicSimplified=new WeakSet<object>();
 export function setClassicCombatFixture(main:object):void{classic.add(main);}
 export function setClassicSimplifiedCombatFixture(main:object):void{classicSimplified.add(main);}
 export function configuredCombatRule():CombatRule{return netSession()?.startOpts?.cfg.combat??(classicSimplified.has(CMain._this)?COMBAT_RULE:SIMPLE_COMBAT_RULE);}
+/** Retired meshes remain available to explicit fixtures and old negotiated runs. */
+export function expandedEnemyArtConfigured():boolean{return !combatConfigured()||configuredCombatRule()!==SIMPLE_COMBAT_RULE;}
 export function combatConfigured():boolean{
  const s=netSession();return !classic.has(CMain._this)&&endlessConfigured()&&timedWavesConfigured()&&draftReadyConfigured()&&tieredGrowthConfigured()&&clearWavesConfigured()
   &&(!s||(s.startOpts?.cfg.combat===COMBAT_RULE||s.startOpts?.cfg.combat===SIMPLE_COMBAT_RULE)&&s.startOpts.cfg.variants==='enemy-variants-v1');
