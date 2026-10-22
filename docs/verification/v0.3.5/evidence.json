@@ -1,0 +1,851 @@
+{
+  "version": "0.3.5",
+  "accepted": true,
+  "verifiedAt": "2026-10-22T02:37:18.381Z",
+  "artifact": {
+    "ok": true,
+    "status": "candidate-not-published",
+    "sourceCommit": "69c05cb08962417bc27244d8db5c06baff7863dc",
+    "version": "0.3.5",
+    "exe": "C:\\Users\\royxg\\boxhead-build\\v035\\Boxhead 2Play Rooms-0.3.5-portable.exe",
+    "archive": "C:\\Users\\royxg\\boxhead-build\\v035\\win-unpacked\\resources\\app.asar",
+    "exeBytes": 101679002,
+    "exeSHA256": "3dd3f2166e9cd2ae7883e50de84cf7f1f3ec548ac656c7d5b7bee8ca1b47b080",
+    "asarSHA256": "56c9e8d2b73192a4a274b90799066b5ec187cd1c1247a81cae15e4e95a26cd2c",
+    "renderer": "dist/bundle/main-DfsZwiT5.js",
+    "verifiedFiles": [
+      "dist/assets/bitmaps/199.png",
+      "dist/assets/bitmaps/234.png",
+      "dist/assets/bitmaps/237.png",
+      "dist/assets/bitmaps/240.png",
+      "dist/assets/bitmaps/247.png",
+      "dist/assets/bitmaps/409.jpg",
+      "dist/assets/bitmaps/427.png",
+      "dist/assets/bitmaps/431.png",
+      "dist/assets/bitmaps/435.jpg",
+      "dist/assets/bitmaps/439.png",
+      "dist/assets/bitmaps/443.png",
+      "dist/assets/bitmaps/447.jpg",
+      "dist/assets/bitmaps/451.jpg",
+      "dist/assets/bitmaps/455.jpg",
+      "dist/assets/bitmaps/460.png",
+      "dist/assets/bitmaps/464.jpg",
+      "dist/assets/bitmaps/468.jpg",
+      "dist/assets/bitmaps/472.png",
+      "dist/assets/bitmaps/476.png",
+      "dist/assets/bitmaps/480.png",
+      "dist/assets/bitmaps/484.png",
+      "dist/assets/bitmaps/488.png",
+      "dist/assets/bitmaps/492.jpg",
+      "dist/assets/bitmaps/506.png",
+      "dist/assets/bitmaps/511.png",
+      "dist/assets/bitmaps/514.png",
+      "dist/assets/bitmaps/517.png",
+      "dist/assets/bitmaps/6.png",
+      "dist/assets/bitmaps/8.png",
+      "dist/assets/library.json",
+      "dist/assets/manifest.json",
+      "dist/assets/sounds/174.mp3",
+      "dist/assets/sounds/175.mp3",
+      "dist/assets/sounds/184.mp3",
+      "dist/assets/sounds/192.mp3",
+      "dist/assets/sounds/193.mp3",
+      "dist/assets/sounds/539.mp3",
+      "dist/assets/sounds/540.mp3",
+      "dist/assets/sounds/541.mp3",
+      "dist/assets/sounds/542.mp3",
+      "dist/assets/sounds/543.mp3",
+      "dist/assets/sounds/544.mp3",
+      "dist/assets/sounds/545.mp3",
+      "dist/assets/sounds/546.mp3",
+      "dist/assets/sounds/547.mp3",
+      "dist/assets/sounds/548.mp3",
+      "dist/assets/sounds/549.mp3",
+      "dist/assets/sounds/550.mp3",
+      "dist/assets/sounds/551.mp3",
+      "dist/assets/sounds/552.mp3",
+      "dist/assets/sounds/553.mp3",
+      "dist/assets/sounds/554.mp3",
+      "dist/assets/sounds/555.mp3",
+      "dist/assets/sounds/556.mp3",
+      "dist/assets/sounds/557.mp3",
+      "dist/assets/sounds/558.mp3",
+      "dist/assets/sounds/559.mp3",
+      "dist/assets/sounds/560.mp3",
+      "dist/assets/sounds/561.mp3",
+      "dist/assets/sounds/562.mp3",
+      "dist/assets/sounds/563.mp3",
+      "dist/assets/sounds/564.mp3",
+      "dist/assets/xsi.json",
+      "dist/bundle/Player-o3pII7gY.js",
+      "dist/bundle/gallery-CmDtL4W7.js",
+      "dist/bundle/main-DfsZwiT5.js",
+      "dist/gallery.html",
+      "dist/index.html",
+      "dist-electron/main.cjs",
+      "dist-electron/preload.cjs"
+    ],
+    "runtimeInputsSHA256": "42e18076cd94c5e82cf90987744280f63f2223bcbaf927de670a0a33e679c5df",
+    "inputCount": 426
+  },
+  "acceptance": {
+    "runtimeSource": "8ef5502",
+    "gates": [
+      {
+        "name": "ui",
+        "code": 0,
+        "started": "2026-10-22T01:50:17.058Z",
+        "finished": "2026-10-22T01:55:43.968Z"
+      },
+      {
+        "name": "audio",
+        "code": 0,
+        "started": "2026-10-22T01:55:43.970Z",
+        "finished": "2026-10-22T01:57:29.669Z"
+      },
+      {
+        "name": "draft-stats",
+        "code": 0,
+        "started": "2026-10-22T01:57:29.670Z",
+        "finished": "2026-10-22T01:57:55.256Z"
+      },
+      {
+        "name": "candidate",
+        "code": 0,
+        "started": "2026-10-22T01:57:55.257Z",
+        "finished": "2026-10-22T01:58:19.733Z"
+      },
+      {
+        "name": "native-balance",
+        "code": 0,
+        "started": "2026-10-22T01:58:19.733Z",
+        "finished": "2026-10-22T02:02:17.386Z"
+      },
+      {
+        "name": "browser",
+        "code": 0,
+        "started": "2026-10-22T02:02:17.387Z",
+        "finished": "2026-10-22T02:04:52.169Z"
+      },
+      {
+        "name": "electron-play",
+        "code": 0,
+        "started": "2026-10-22T02:04:52.170Z",
+        "finished": "2026-10-22T02:07:17.629Z"
+      },
+      {
+        "name": "packaged-play",
+        "code": 0,
+        "started": "2026-10-22T02:07:17.629Z",
+        "finished": "2026-10-22T02:09:46.315Z"
+      },
+      {
+        "name": "v012",
+        "code": 0,
+        "started": "2026-10-22T02:09:46.315Z",
+        "finished": "2026-10-22T02:10:32.087Z"
+      },
+      {
+        "name": "v019",
+        "code": 0,
+        "started": "2026-10-22T02:10:32.088Z",
+        "finished": "2026-10-22T02:11:14.287Z"
+      },
+      {
+        "name": "v020",
+        "code": 0,
+        "started": "2026-10-22T02:11:14.287Z",
+        "finished": "2026-10-22T02:11:54.339Z"
+      },
+      {
+        "name": "v023",
+        "code": 0,
+        "started": "2026-10-22T02:11:54.339Z",
+        "finished": "2026-10-22T02:12:31.394Z"
+      },
+      {
+        "name": "v024",
+        "code": 0,
+        "started": "2026-10-22T02:12:31.394Z",
+        "finished": "2026-10-22T02:13:45.688Z"
+      },
+      {
+        "name": "typing",
+        "code": 0,
+        "started": "2026-10-22T02:13:45.688Z",
+        "finished": "2026-10-22T02:14:10.287Z"
+      },
+      {
+        "name": "lanui",
+        "code": 0,
+        "started": "2026-10-22T02:14:10.287Z",
+        "finished": "2026-10-22T02:14:35.376Z"
+      },
+      {
+        "name": "netretry",
+        "code": 0,
+        "started": "2026-10-22T02:14:35.376Z",
+        "finished": "2026-10-22T02:15:15.347Z"
+      },
+      {
+        "name": "net",
+        "code": 0,
+        "started": "2026-10-22T02:15:15.348Z",
+        "finished": "2026-10-22T02:17:02.611Z"
+      },
+      {
+        "name": "lan-functional-30",
+        "code": 0,
+        "started": "2026-10-22T02:17:02.611Z",
+        "finished": "2026-10-22T02:18:19.073Z"
+      },
+      {
+        "name": "lan-functional-60",
+        "code": 0,
+        "started": "2026-10-22T02:18:19.074Z",
+        "finished": "2026-10-22T02:18:49.318Z"
+      },
+      {
+        "name": "lan-functional-100",
+        "code": 0,
+        "started": "2026-10-22T02:18:49.318Z",
+        "finished": "2026-10-22T02:19:19.243Z"
+      },
+      {
+        "name": "electron-smoke",
+        "code": 0,
+        "started": "2026-10-22T02:19:19.244Z",
+        "finished": "2026-10-22T02:19:35.375Z"
+      },
+      {
+        "name": "packaged-smoke",
+        "code": 0,
+        "started": "2026-10-22T02:19:35.375Z",
+        "finished": "2026-10-22T02:19:38.234Z"
+      },
+      {
+        "name": "native",
+        "code": 0,
+        "started": "2026-10-22T02:19:38.235Z",
+        "finished": "2026-10-22T02:20:20.967Z"
+      },
+      {
+        "name": "old-save",
+        "code": 0,
+        "started": "2026-10-22T02:20:20.967Z",
+        "finished": "2026-10-22T02:20:58.995Z"
+      },
+      {
+        "name": "portable",
+        "code": 0,
+        "started": "2026-10-22T02:20:58.995Z",
+        "finished": "2026-10-22T02:21:32.483Z"
+      }
+    ],
+    "fullTests": {
+      "passed": 1874,
+      "failed": 0,
+      "notExecuted": 75,
+      "total": 1949
+    },
+    "extras": {
+      "layout": {
+        "ok": true,
+        "method": "One headless Chrome; real menu/dropdown mouse and keys; injected positional pads, not physical hardware",
+        "badges": [
+          {
+            "size": {
+              "width": 640,
+              "height": 480
+            },
+            "box": {
+              "x": 141.828125,
+              "y": 455,
+              "width": 116,
+              "height": 21
+            }
+          },
+          {
+            "size": {
+              "width": 960,
+              "height": 540
+            },
+            "box": {
+              "x": 141.828125,
+              "y": 515,
+              "width": 116,
+              "height": 21
+            }
+          },
+          {
+            "size": {
+              "width": 480,
+              "height": 720
+            },
+            "box": {
+              "x": 141.828125,
+              "y": 695,
+              "width": 116,
+              "height": 21
+            }
+          }
+        ],
+        "controls": [
+          {
+            "size": {
+              "width": 640,
+              "height": 480
+            },
+            "pads": 1,
+            "prompt": {
+              "source": "header",
+              "text": "MOVE: SELECT   A: READY   X / TAB: BACK TO UPGRADES",
+              "bounds": {
+                "xMin": 29,
+                "xMax": 611,
+                "yMin": 102,
+                "yMax": 120
+              },
+              "width": 582,
+              "textWidth": 280.3125
+            },
+            "client": {
+              "left": 29,
+              "top": 102,
+              "right": 611,
+              "bottom": 120
+            },
+            "boxes": [
+              {
+                "x": 141.828125,
+                "y": 455,
+                "width": 116,
+                "height": 21
+              }
+            ]
+          },
+          {
+            "size": {
+              "width": 640,
+              "height": 480
+            },
+            "pads": 2,
+            "prompt": {
+              "source": "header",
+              "text": "MOVE: SELECT   A: READY   X / TAB: BACK TO UPGRADES",
+              "bounds": {
+                "xMin": 29,
+                "xMax": 611,
+                "yMin": 102,
+                "yMax": 120
+              },
+              "width": 582,
+              "textWidth": 280.3125
+            },
+            "client": {
+              "left": 29,
+              "top": 102,
+              "right": 611,
+              "bottom": 120
+            },
+            "boxes": [
+              {
+                "x": 141.828125,
+                "y": 455,
+                "width": 116,
+                "height": 21
+              },
+              {
+                "x": 329.875,
+                "y": 455,
+                "width": 116,
+                "height": 21
+              }
+            ]
+          },
+          {
+            "size": {
+              "width": 960,
+              "height": 540
+            },
+            "pads": 1,
+            "prompt": {
+              "source": "header",
+              "text": "MOVE: SELECT   A: READY   X / TAB: BACK TO UPGRADES",
+              "bounds": {
+                "xMin": 135.5,
+                "xMax": 717.5,
+                "yMin": 102,
+                "yMax": 120
+              },
+              "width": 582,
+              "textWidth": 280.3125
+            },
+            "client": {
+              "left": 152.49706916764362,
+              "top": 114.75,
+              "right": 807.5029308323564,
+              "bottom": 135
+            },
+            "boxes": [
+              {
+                "x": 141.828125,
+                "y": 515,
+                "width": 116,
+                "height": 21
+              }
+            ]
+          },
+          {
+            "size": {
+              "width": 960,
+              "height": 540
+            },
+            "pads": 2,
+            "prompt": {
+              "source": "header",
+              "text": "MOVE: SELECT   A: READY   X / TAB: BACK TO UPGRADES",
+              "bounds": {
+                "xMin": 135.5,
+                "xMax": 717.5,
+                "yMin": 102,
+                "yMax": 120
+              },
+              "width": 582,
+              "textWidth": 280.3125
+            },
+            "client": {
+              "left": 152.49706916764362,
+              "top": 114.75,
+              "right": 807.5029308323564,
+              "bottom": 135
+            },
+            "boxes": [
+              {
+                "x": 141.828125,
+                "y": 515,
+                "width": 116,
+                "height": 21
+              },
+              {
+                "x": 329.875,
+                "y": 515,
+                "width": 116,
+                "height": 21
+              }
+            ]
+          },
+          {
+            "size": {
+              "width": 480,
+              "height": 720
+            },
+            "pads": 1,
+            "prompt": {
+              "source": "header",
+              "text": "MOVE: SELECT   A: READY   X / TAB: BACK TO UPGRADES",
+              "bounds": {
+                "xMin": 29,
+                "xMax": 611,
+                "yMin": 318,
+                "yMax": 336
+              },
+              "width": 582,
+              "textWidth": 280.3125
+            },
+            "client": {
+              "left": 21.75,
+              "top": 238.5,
+              "right": 458.25,
+              "bottom": 251.99999999999997
+            },
+            "boxes": [
+              {
+                "x": 141.828125,
+                "y": 695,
+                "width": 116,
+                "height": 21
+              }
+            ]
+          },
+          {
+            "size": {
+              "width": 480,
+              "height": 720
+            },
+            "pads": 2,
+            "prompt": {
+              "source": "header",
+              "text": "MOVE: SELECT   A: READY   X / TAB: BACK TO UPGRADES",
+              "bounds": {
+                "xMin": 29,
+                "xMax": 611,
+                "yMin": 318,
+                "yMax": 336
+              },
+              "width": 582,
+              "textWidth": 280.3125
+            },
+            "client": {
+              "left": 21.75,
+              "top": 238.5,
+              "right": 458.25,
+              "bottom": 251.99999999999997
+            },
+            "boxes": [
+              {
+                "x": 141.828125,
+                "y": 695,
+                "width": 116,
+                "height": 21
+              },
+              {
+                "x": 329.875,
+                "y": 695,
+                "width": 116,
+                "height": 21
+              }
+            ]
+          }
+        ],
+        "beforeClose": {
+          "state": "State_RunWorld",
+          "round": {
+            "wave": 1,
+            "remainingTicks": 0,
+            "multiplier": 1,
+            "readyRule": "draft-ready-v1",
+            "offers": [
+              [
+                "damage",
+                "armor",
+                "endurance"
+              ]
+            ],
+            "selected": [
+              0
+            ],
+            "confirmed": [
+              false
+            ],
+            "armed": [
+              true
+            ],
+            "previousBits": [
+              0
+            ]
+          },
+          "stats": true
+        },
+        "afterClose": {
+          "state": "State_RunWorld",
+          "round": {
+            "wave": 1,
+            "remainingTicks": 0,
+            "multiplier": 1,
+            "readyRule": "draft-ready-v1",
+            "offers": [
+              [
+                "damage",
+                "armor",
+                "endurance"
+              ]
+            ],
+            "selected": [
+              0
+            ],
+            "confirmed": [
+              false
+            ],
+            "armed": [
+              true
+            ],
+            "previousBits": [
+              0
+            ]
+          },
+          "stats": false
+        }
+      },
+      "spacing": {
+        "ok": true,
+        "cases": [
+          {
+            "name": "pistol",
+            "ammo": 999999,
+            "key": "A",
+            "bounds": {
+              "ammo": {
+                "xMin": 273.4,
+                "xMax": 366.6,
+                "yMin": 154.95,
+                "yMax": 173.25
+              },
+              "letter": {
+                "xMin": 336.05,
+                "xMax": 360.05,
+                "yMin": 156.95,
+                "yMax": 169.95
+              }
+            },
+            "last": 335,
+            "first": 339,
+            "gap": 3
+          },
+          {
+            "name": "uzi",
+            "ammo": 0,
+            "key": "Y",
+            "bounds": {
+              "ammo": {
+                "xMin": 273.4,
+                "xMax": 366.6,
+                "yMin": 154.95,
+                "yMax": 173.25
+              },
+              "letter": {
+                "xMin": 335.2,
+                "xMax": 359.2,
+                "yMin": 156.95,
+                "yMax": 169.95
+              }
+            },
+            "last": 334,
+            "first": 338,
+            "gap": 3
+          },
+          {
+            "name": "shotgun",
+            "ammo": 30,
+            "key": "A",
+            "bounds": {
+              "ammo": {
+                "xMin": 273.4,
+                "xMax": 366.6,
+                "yMin": 154.95,
+                "yMax": 173.25
+              },
+              "letter": {
+                "xMin": 351.85,
+                "xMax": 375.85,
+                "yMin": 156.95,
+                "yMax": 169.95
+              }
+            },
+            "last": 350,
+            "first": 354,
+            "gap": 3
+          },
+          {
+            "name": "railgun",
+            "ammo": 999999,
+            "key": "Y",
+            "bounds": {
+              "ammo": {
+                "xMin": 273.4,
+                "xMax": 366.6,
+                "yMin": 154.95,
+                "yMax": 173.25
+              },
+              "letter": {
+                "xMin": 341.2,
+                "xMax": 365.2,
+                "yMin": 156.95,
+                "yMax": 169.95
+              }
+            },
+            "last": 340,
+            "first": 344,
+            "gap": 3
+          }
+        ],
+        "method": "Visible glyph pixel gaps in the actual Canvas2D render; prepared inventory, one 640x480 game"
+      },
+      "empty": {
+        "ok": true,
+        "method": "Actual Nintendo-position pad samples and real numeric-key selection; prepared one-round UZI in one hidden game",
+        "beeps": 2,
+        "audio": {
+          "state": "running",
+          "decoded": 31,
+          "total": 31,
+          "failed": [],
+          "voices": 1,
+          "recoveries": 0,
+          "muted": false
+        }
+      },
+      "power": {
+        "ok": true,
+        "method": "Headless production Chrome, three viewports, real card/READY/stats clicks",
+        "cases": [
+          {
+            "viewport": {
+              "width": 640,
+              "height": 480
+            },
+            "bounds": {
+              "xMin": 14,
+              "xMax": 629.5,
+              "yMin": 63,
+              "yMax": 469.5
+            },
+            "stage": {
+              "x": 640,
+              "y": 480
+            },
+            "benefit": "+17.7%",
+            "preview": "BONUS  +15.0%  >  +17.7%",
+            "font": 12,
+            "stats": {
+              "name": "ENCHANT +17.7%",
+              "hint": "SOURCES: LEVEL + CHOICES / ENDURANCE 0 / POWER 2"
+            }
+          },
+          {
+            "viewport": {
+              "width": 960,
+              "height": 540
+            },
+            "bounds": {
+              "xMin": 120.5,
+              "xMax": 736,
+              "yMin": 63,
+              "yMax": 469.5
+            },
+            "stage": {
+              "x": 853,
+              "y": 480
+            },
+            "benefit": "+17.7%",
+            "preview": "BONUS  +15.0%  >  +17.7%",
+            "font": 12,
+            "stats": {
+              "name": "ENCHANT +17.7%",
+              "hint": "SOURCES: LEVEL + CHOICES / ENDURANCE 0 / POWER 2"
+            }
+          },
+          {
+            "viewport": {
+              "width": 480,
+              "height": 720
+            },
+            "bounds": {
+              "xMin": 14,
+              "xMax": 629.5,
+              "yMin": 279,
+              "yMax": 685.5
+            },
+            "stage": {
+              "x": 640,
+              "y": 960
+            },
+            "benefit": "+17.7%",
+            "preview": "BONUS  +15.0%  >  +17.7%",
+            "font": 12,
+            "stats": {
+              "name": "ENCHANT +17.7%",
+              "hint": "SOURCES: LEVEL + CHOICES / ENDURANCE 0 / POWER 2"
+            }
+          }
+        ]
+      },
+      "portable-layout": {
+        "ok": true,
+        "method": "Two actual hidden portable launches with the same isolated profile; explicit DOM focus and real End/Tab keys on a closed dropdown, with an injected generic XInput identity. Persistence/mapping evidence, not physical hardware.",
+        "launches": [
+          {
+            "attempt": 1,
+            "archive": "C:\\Users\\royxg\\AppData\\Local\\Temp\\3L1tGSUVQs20mSumGAiaUYfBwCX\\resources\\app.asar",
+            "asarSHA256": "56c9e8d2b73192a4a274b90799066b5ec187cd1c1247a81cae15e4e95a26cd2c",
+            "before": "auto",
+            "after": "nintendo"
+          },
+          {
+            "attempt": 2,
+            "archive": "C:\\Users\\royxg\\AppData\\Local\\Temp\\3L1tGSUVQs20mSumGAiaUYfBwCX\\resources\\app.asar",
+            "asarSHA256": "56c9e8d2b73192a4a274b90799066b5ec187cd1c1247a81cae15e4e95a26cd2c",
+            "before": "nintendo",
+            "after": "nintendo"
+          }
+        ]
+      }
+    },
+    "portable": {
+      "version": "0.3.5",
+      "exe": "C:/Users/royxg/GitHub/boxhead_remake/release/Boxhead 2Play Rooms-0.3.5-portable.exe",
+      "executable": "C:\\Users\\royxg\\AppData\\Local\\Temp\\3L1tGSUVQs20mSumGAiaUYfBwCX\\Boxhead 2Play Rooms.exe",
+      "archive": "C:\\Users\\royxg\\AppData\\Local\\Temp\\3L1tGSUVQs20mSumGAiaUYfBwCX\\resources\\app.asar",
+      "extractedAsarSha256": "56c9e8d2b73192a4a274b90799066b5ec187cd1c1247a81cae15e4e95a26cd2c",
+      "verifiedRuntimeFiles": [
+        "dist-electron/main.cjs",
+        "dist-electron/preload.cjs",
+        "dist/bundle/gallery-CmDtL4W7.js",
+        "dist/bundle/main-DfsZwiT5.js",
+        "dist/bundle/Player-o3pII7gY.js"
+      ],
+      "viewport": {
+        "width": 640,
+        "height": 480,
+        "dpr": 1
+      },
+      "ok": true
+    },
+    "balance": {
+      "nativeSamples": 12,
+      "normalSelectedWaveComparisons": 16,
+      "enemyCurves": "retained",
+      "maximumExtraMultiplier": "45% vs initial 15%; finite durability remains"
+    },
+    "readme": {
+      "images": [
+        {
+          "name": "menu.png",
+          "sha256": "144a85a21e3b657b489712ca968a8b48954ea4bb01181e3f4af8a37fd8c2915c"
+        },
+        {
+          "name": "gameplay.png",
+          "sha256": "66bd760323ecb37e35cc3618ddabbfcc3e2b5ed8c0bd9465744ba7293578036b"
+        },
+        {
+          "name": "upgrade-cards.png",
+          "sha256": "8ab2feca4ab13722d91a0a1a8a06484a30d497492d51ba9909c51e823b9bbb04"
+        },
+        {
+          "name": "controller-layout.png",
+          "sha256": "c46b5a1afea666cc261ef8cb2c6537400c1aee7bcaa5ec6260a2483d2ee9cbab"
+        },
+        {
+          "name": "boss.png",
+          "sha256": "b7717422a97bf595ee5cabe221046f0f85aa7bbd2d760036a40dcfdee128eb24"
+        },
+        {
+          "name": "coop-crate.png",
+          "sha256": "a7f4e91886aedab2e181e45d8a7d2a43c3ceb908cee46b1e20e3d7b6a4af3122"
+        },
+        {
+          "name": "devil-supplies.png",
+          "sha256": "ec0b6f1c38baebcd9eadb1c8c0246075a0ace9ad2568905ece3cb2f9005de071"
+        },
+        {
+          "name": "coop-stats.png",
+          "sha256": "4b33c43dbc1108e51fb89f749fa598c78b7d18ea0a6b960b3b24b97181190a8d"
+        },
+        {
+          "name": "lan-growth.png",
+          "sha256": "acaf706bf695216520cc54c1262c34f0e7e341015e84621134032f7d5e344764"
+        }
+      ],
+      "method": "Current production build, one headless 640x480 context at a time, real menu clicks, normal-value prepared UI scenes",
+      "controller": "Injected SN30 identity and real dropdown selection illustrate layout; not physical-hardware evidence. Normal selected-wave-3 growth retained.",
+      "lan": "Actual packaged TCP peers, normal wave-3 menu selection and earned starting build; real mouse/keys; shared-tick end-of-wave staging; no stat/inventory rewrites or infinite-life switch"
+    },
+    "method": "Serial hidden low-resolution functional checks; direct screenshot review plus pixel/geometry/real-click checks. Injected pads validate mappings only; no performance benchmark, extreme explosion stress, physical-controller or remote-machine claim."
+  },
+  "rawEvidence": {
+    "files": 538,
+    "bytes": 32727429,
+    "manifestSHA256": "3b6301b17c1c641e14c5e2618ee265ab5ddc135cf1b22de881f96dacee5f1b91",
+    "localArchive": "C:/Users/royxg/boxhead-exe-archive/v0.3.5-verification"
+  }
+}
