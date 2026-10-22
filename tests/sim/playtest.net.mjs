@@ -86,6 +86,7 @@ function helpers(page) {
       room: w.mWorldLibLink, level: w.mUpgrades.mLevelIndex, tick: w.mTick, score: w.mHud.nTotalScore,
       px: players[0]?.mPosition.mX, py: players[0]?.mPosition.mY,
       c2x: players[1]?.mPosition.mX, c2y: players[1]?.mPosition.mY,
+      players: players.map(p => ({ life: p.mLife, maximum: p.mMaxLife, flags: p.mFlags, state: p.mStateID })),
     };
   });
   /** The reconnect countdown overlay text (the DOM now also carries the ping + input badge - match by content,
@@ -131,6 +132,11 @@ try {
   const h = helpers(H.page);
   if (!(await h.waitFor(() => window.__game?.ready, null, 120000))) throw new Error('host boot failed');
   if (!(await h.waitScreen('State_Main', 'Screen_Main', 60000))) throw new Error(`host: no main menu (${await h.state()})`);
+  // Transport/recovery fixture, not a survival sample. Both peers use the original cheat
+  // switch, including the replacement process: an already dying actor must not terminate
+  // the world while the test is asserting checkpoint liveness.
+  await H.page.evaluate(() => window.__game.__setInfiniteLife(true));
+  report.survivalIsolation = 'Original infinite-life switch on every owned peer; not balance evidence';
   await H.page.waitForTimeout(300);
   await shot('01_host_main', H.page);
   await h.click(...LAN_BTN);
@@ -146,6 +152,7 @@ try {
   const c = helpers(C.page);
   if (!(await c.waitFor(() => window.__game?.ready, null, 120000))) throw new Error('client boot failed');
   if (!(await c.waitScreen('State_Main', 'Screen_Main', 60000))) throw new Error(`client: no main menu (${await c.state()})`);
+  await C.page.evaluate(() => window.__game.__setInfiniteLife(true));
   await c.click(...LAN_BTN);
   if (!(await c.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error(`client: no lobby (${await c.state()})`);
   await typeLanAddress(C.page,'127.0.0.1');
@@ -232,6 +239,7 @@ try {
   const wc1 = await c.worldInfo();
   if(!FUNCTIONAL){await Promise.all([steadyHost.freeze(),steadyClient.freeze()]);report.performance = { steady:{host:await steadyHost(),client:await steadyClient()} };}
   step(`after play: host=${JSON.stringify(wi1)} client=${JSON.stringify(wc1)}`);
+  if ([wi1, wc1].some(w => w.players.some(p => p.life <= 0))) throw new Error('transport fixture lost a player before checkpoint');
   if (wi1.tick <= wi0.tick) {
     await lanState('host', H.page);
     await lanState('client', C.page);
@@ -293,6 +301,7 @@ try {
   const c2 = helpers(C2.page);
   if (!(await c2.waitFor(() => window.__game?.ready, null, 120000))) throw new Error('client relaunch failed');
   if (!(await c2.waitScreen('State_Main', 'Screen_Main', 60000))) throw new Error('client relaunch: no main menu');
+  await C2.page.evaluate(() => window.__game.__setInfiniteLife(true));
   await c2.click(...LAN_BTN);
   if (!(await c2.waitScreen('State_LanLobby', 'Screen_LanLobby', 20000))) throw new Error('client relaunch: no lobby');
   await typeLanAddress(C2.page,'127.0.0.1');
@@ -306,6 +315,7 @@ try {
   const wi3 = await h.worldInfo();
   const wc3 = await c2.worldInfo();
   step(`resumed: host=${JSON.stringify(wi3)} client=${JSON.stringify(wc3)}`);
+  if ([wi3, wc3].some(w => w.players.some(p => p.life <= 0))) throw new Error('transport fixture restored a dead player');
   if (wi3.level !== wi2.level || wc3.level !== wi2.level) throw new Error(`resume lost the wave: ${wi3.level}/${wc3.level} vs ${wi2.level}`);
   if (wi3.score !== wc3.score) throw new Error(`resume score mismatch ${wi3.score} vs ${wc3.score}`);
   // v0.1.7 bugfix pin: the resume `start` must carry the input delay (a dropped field reset the restarted client
