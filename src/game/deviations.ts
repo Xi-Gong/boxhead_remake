@@ -801,7 +801,7 @@ export const DEVIATIONS: Deviation[] = [
   {
     id:'FRAGILE_ARMOR',file:'local/ModernFeatures.ts, SurvivalRules.ts, Supplies.ts, Armor.ts, Resume.ts',
     description:'Optional fragile-armor-v1 uses 25% base health armor with a 40% final-health ceiling, '+
-      'full armor-crate restoration independent of supply efficiency, a separate thin cyan bar and '+
+      'full armor-crate restoration independent of supply efficiency, blue armor over authored health and '+
       'one-time fraction-preserving v2 migration. Legacy negotiated armor semantics remain explicit fixtures.',
   },
   {
