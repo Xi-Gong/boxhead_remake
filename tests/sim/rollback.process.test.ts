@@ -4,6 +4,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const scenarios = [
+  {name:'exact wave 1 on Nightmare with difficulty growth and recovery',difficultyWaves:true,difficulty:3,wave:1,rtt:60,jitter:10,reconnect:true,total:180},
+  {name:'exact wave 7 on Expert with difficulty growth and recovery',difficultyWaves:true,difficulty:2,wave:7,rtt:60,jitter:10,reconnect:true,total:180},
   {name:'enemy variants skills and drops under correction and recovery',variants:true,endless:true,loot:true,survival:true,balance:true,supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:240},
   {name:'endless high-wave growth and supplies under correction and recovery',endless:true,loot:true,survival:true,balance:true,supplies:true,growth:true,wave:1000,rtt:100,jitter:20,reconnect:true,total:240},
   {name:'permanent supplies and timed red deliveries under correction and recovery',loot:true,survival:true,balance:true,supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:680},

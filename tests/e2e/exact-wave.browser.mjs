@@ -1,0 +1,25 @@
+// Real menu/options/wave input, shared with actual portable smoke. Prepared unlock only permits typing wave 7.
+import assert from 'node:assert/strict';
+import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
+import {pathToFileURL} from 'node:url';
+import {PNG} from 'pngjs';
+import {launch,openGame,toMainMenu} from './lib.mjs';
+export async function verifyExactWaveCase(g,out,{mode='Single',difficulty=3,wave=1}={}){
+ mkdirSync(out,{recursive:true});await g.expr(`P.CSaveData.mSharedObject.data.mMaxWaveReached=${Math.max(35,wave)}`);
+ await g.clickClip(mode==='Single'?'m.mcScreen.mcSinglePlay':'m.mcScreen.mcCoopPlay');assert(await g.waitScreen('State_SelectWorld_'+mode,'Screen_SelectWorld'));
+ await g.clickClip('m.mcScreen._Game_Options');assert(await g.expr('m.mcScreen.mcWindow_Options._visible'));
+ await g.clickClip('m.mcScreen.mcWindow_Options.'+['_Level_Beginner','_Level_Intermediate','_Level_Expert','_Level_Nightmare'][difficulty]);assert.equal(await g.expr('P.CMain.mSaveData.mDifficulty'),difficulty);
+ await g.page.waitForTimeout(150);await g.shot(out+'/difficulty.png',false);await g.clickClip('m.mcScreen.mcWindow_Options._Button_Close');assert(await g.expr('!m.mcScreen.mcWindow_Options._visible'));
+ const field=g.page.getByRole('textbox',{name:'Start wave'});await field.click();await g.page.keyboard.press('Control+A');await g.page.keyboard.type(String(wave));await g.page.keyboard.press('Enter');await g.page.keyboard.press('Tab');assert.equal(await g.expr('m.mcScreen.mcStartWave.mcValue.text'),String(wave));
+ await g.page.waitForTimeout(150);await g.shot(out+'/selection.png',false);await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');if(!await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded',5000)){await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));}
+ await g.page.waitForTimeout(700);assert(await g.waitExpr('(()=>{const w=m.mcWorld;if(Object.values(w.mThing_Collection.mPlayerThings).some(p=>p.mInvincible&&p.mInvincible%2))return false;window.qaExactProcess=w.Process;w.Process=()=>{};w.Draw();return true;})()'));await g.page.waitForTimeout(150);const state=await g.expr('(()=>{const w=m.mcWorld;return {wave:w.mUpgrades.mLevelIndex,display:w._LanGrowthHud._Wave._Number.text,bounds:w._LanGrowthHud._Wave._Number.getBounds(m._parent),features:w.mUpgrades.features,players:w.mUpgrades.lanGrowth.players,health:Object.values(w.mThing_Collection.mPlayerThings).map(p=>p.mMaxLife),weapons:Object.values(w.mThing_Collection.mPlayerThings).map(p=>p.mWeaponList.filter(e=>e.mActive).map(e=>e.mNameID))};})()');
+ assert.equal(state.wave,wave);assert.equal(state.display,String(wave));assert(state.features.includes('difficulty-waves-v1'));
+ if(wave===1){assert(state.players.every(p=>p.level===1));assert(state.health.every(h=>h===160));assert(state.weapons.every(v=>JSON.stringify(v)==='["pistol"]'));}
+ const file=out+'/game.png';await g.shot(file,false);const png=PNG.sync.read(readFileSync(file)),a=await g.stageToPage(state.bounds.xMin,state.bounds.yMin),b=await g.stageToPage(state.bounds.xMax,state.bounds.yMax);assert(a[0]>=0&&a[1]>=0&&b[0]<=png.width&&b[1]<=png.height);let ink=0;for(let y=Math.floor(a[1]);y<Math.ceil(b[1]);y++)for(let x=Math.floor(a[0]);x<Math.ceil(b[0]);x++){const n=(y*png.width+x)*4;if(png.data[n]<90&&png.data[n+1]<90&&png.data[n+2]<90)ink++;}assert(ink>4,'actual wave glyph ink');
+ await g.expr('(m.mcWorld.Process=window.qaExactProcess,delete window.qaExactProcess,true)');await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert(await g.waitScreen('State_Main','Screen_Main'));await g.clickClip('m.mcScreen.mcContinue');assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));assert.equal(await g.expr('m.mcWorld.mUpgrades.mLevelIndex'),wave);
+ await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert(await g.waitScreen('State_Main','Screen_Main'));
+ assert.deepEqual(await g.scriptErrors(),[]);const report={ok:true,mode,difficulty,selected:wave,...state,waveInkPixels:ink,realOptionsTypingAndSaveContinue:true};writeFileSync(out+'/report.json',JSON.stringify(report,null,2));return report;
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const browser=await launch();let g;try{
+ const out=process.env.BOXHEAD_QA_OUT??'generated/reports/v035-exact-wave/ui';for(const [width,height,mode,difficulty,wave]of [[640,480,'Single',3,1],[960,540,'Coop',2,7],[480,720,'Single',3,1]]){await g?.close();g=await openGame(browser,{viewport:{width,height}});await toMainMenu(g);await verifyExactWaveCase(g,`${out}/${width}x${height}`,{mode,difficulty,wave});}console.log('EXACT WAVE REAL MENU CHECKS PASSED');
+}finally{await g?.close();await browser.close();}}

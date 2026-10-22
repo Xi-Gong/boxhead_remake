@@ -31,6 +31,7 @@ const ALL_RESPONSE = process.env.BOXHEAD_ALL_RESPONSE === '1';
 const HIDDEN = process.env.BOXHEAD_QA_HIDDEN === '1';
 const FUNCTIONAL=process.env.BOXHEAD_QA_FUNCTIONAL_ONLY==='1';
 const README_LAN=process.env.BOXHEAD_QA_README_LAN==='1';
+const EXACT_WAVE=process.env.BOXHEAD_QA_EXACT_WAVE==='1';
 const SUPPLY_STRESS = Number(process.env.BOXHEAD_NET_SUPPLY_STRESS ?? 0);
 const EXPLOSIONS = Number(process.env.BOXHEAD_NET_EXPLOSIONS ?? 0);
 // User-approved practical acceptance: keep the ordinary one-tick-plus-frame target, allow a bounded
@@ -195,6 +196,11 @@ try {
     await h.click(596,399);await h.click(596,399);
     if(!await c.waitFor(()=>window.__game.lan().sel.wave===3,null,10000))throw new Error('normal README starting wave did not mirror');
   }
+  if(EXACT_WAVE){
+    if(!FUNCTIONAL||!MODERN)throw new Error('exact-wave checks require the hidden functional rollback path');
+    for(let i=0;i<4&&await H.page.evaluate(()=>window.__game.lan().sel.difficulty)!==3;i++)await h.click(320,399);
+    if(!await c.waitFor(()=>window.__game.lan().sel.difficulty===3&&window.__game.lan().sel.wave===1,null,10000))throw new Error('Nightmare / selected Wave 1 did not synchronize');
+  }
   if(ALL_RESPONSE){
     await H.page.evaluate(()=>{const s=window.__game.main().mcScreen.mcSubScreen.mcLevel_Selection;s.bLeft.onRelease.call(s.bLeft);});
     if(!await c.waitFor(()=>window.__game.lan().sel.levelIdx===17,null,10000))throw new Error('large response map did not synchronize');
@@ -217,6 +223,11 @@ try {
   if(HIDDEN&& (report.environment.width!==(FUNCTIONAL?640:960)||report.environment.height!==(FUNCTIONAL?480:720)))throw new Error('unexpected fixed rendering size');
   if(HIDDEN&&['dpr','width','height','canvas'].some(k=>JSON.stringify(report.environment[k])!==JSON.stringify(report.clientEnvironment[k])))throw new Error('peer rendering geometry differs');
   const lanC0 = await c.lan();
+  if(EXACT_WAVE){
+    report.exactWave=await Promise.all([H,C].map(peer=>peer.page.evaluate(()=>{const w=window.__game.main().mcWorld;return {wave:w.mUpgrades.mLevelIndex,features:w.mUpgrades.features,levels:w.mUpgrades.lanGrowth.players.map(p=>p.level)};})));
+    if(report.exactWave.some(s=>s.wave!==1||!s.features.includes('difficulty-waves-v1')))throw new Error('packaged Nightmare peers ignored selected Wave 1');
+    if(JSON.stringify(report.exactWave[0])!==JSON.stringify(report.exactWave[1]))throw new Error('packaged exact-wave initialization differs');
+  }
   if ((MODERN ? lanH0.inputDelay !== 0 : lanH0.inputDelay < 1) || lanH0.inputDelay !== lanC0.inputDelay) throw new Error(`rollback inputDelay not agreed: ${lanH0.inputDelay}/${lanC0.inputDelay}`);
   if (MODERN && [lanH0,lanC0].some(s=>s.netcode!=='rollback-v2')) throw new Error('modern mode was not negotiated');
   if (!lanH0.rollback || !lanC0.rollback) throw new Error(`rollback not enabled: host=${JSON.stringify(lanH0.rollback)} client=${JSON.stringify(lanC0.rollback)}`);

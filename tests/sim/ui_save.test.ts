@@ -149,7 +149,8 @@ describe('every save key survives a restart', () => {
     for (const p of [1, 2] as const) for (const a of ACTIONS) expect(saved[`mPlayer${p}_Key${a}`], `P${p} ${a}`).toBe(NEW_KEYS[p][a]);
 
     // ---------------------------------------------------------------- session 2 ("restart")
-    g = boot('Coop');
+    // Retain the historical Nightmare wave-35/x50 assertions below in their explicit legacy lane.
+    g = createHeadlessGame({mode:'Coop',seed:3,menuOnly:'Select',classicFeatures:['difficulty-waves-v1']});
     s = g.main().mcScreen;
     const sd: any = CMain.mSaveData;
     expect([sd.mDifficulty, sd.mGameSpeed, sd.mDevilsActive, sd.mCollisionsActive, sd.mDamageActive, sd.mGameAmount]).toEqual([3, 2, 0, 0, 0, 3]);

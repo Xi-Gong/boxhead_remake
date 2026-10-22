@@ -10,8 +10,8 @@ import { getTable } from '../../src/game/local/Highscores.ts';
 const release = (mc: any): void => { mc.onRelease.call(mc); };
 
 /** A game parked on the level selection of `mode` (quit from a running room -> EXIT on the debrief). */
-function atSelection(mode: 'Single' | 'Coop' | 'DeathMatch' = 'Single') {
-  const g = createHeadlessGame({ mode, room: 1, seed: 1 });
+function atSelection(mode: 'Single' | 'Coop' | 'DeathMatch' = 'Single',classicDifficulty=false) {
+  const g = createHeadlessGame({ mode, room: 1, seed: 1,classicFeatures:classicDifficulty?['difficulty-waves-v1']:undefined });
   g.quit();
   if (mode !== 'DeathMatch') {
     expect(g.waitScreen('State_Debrief', 'Screen_Debrief')).toBe(true);
@@ -47,7 +47,7 @@ describe('level selection screen', () => {
   });
 
   it('options window buttons write the save; RESET restores the defaults; the next room uses them', () => {
-    const g = atSelection('Single');
+    const g = atSelection('Single',true); // Explicit original Expert -> wave 20 contract below.
     const s = g.main().mcScreen;
     const win = s.mcWindow_Options;
     const sd = CMain.mSaveData;

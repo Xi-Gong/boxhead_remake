@@ -15,6 +15,7 @@ import {verifyV033Candidate} from './v033-candidate.browser.mjs';
 import {verifyV034Candidate} from './v034-candidate.browser.mjs';
 import {verifyEmptyFeedback} from './empty-feedback.browser.mjs';
 import {verifyNameSpacing} from './name-spacing.browser.mjs';
+import {verifyExactWaveCase} from './exact-wave.browser.mjs';
 
 const expected=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
 const root=process.cwd(),out=resolve(process.env.BOXHEAD_QA_OUT??`generated/reports/v${expected.replaceAll('.','')}/portable`);
@@ -48,6 +49,7 @@ try{
  const extractedAsarSha256=createHash('sha256').update(readFileSync(archive)).digest('hex');
  const verifiedRuntimeFiles=[];
  if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
+  if(process.env.BOXHEAD_QA_EXACT_WAVE==='1')await verifyExactWaveCase(g,join(out,'exact-wave'));
   assert.equal(extractedAsarSha256,createHash('sha256').update(readFileSync(process.env.BOXHEAD_QA_STAGED_ASAR??'release/win-unpacked/resources/app.asar')).digest('hex'),'complete portable asar matches the validated unpacked build');
   for(const file of [join('dist-electron','main.cjs'),join('dist-electron','preload.cjs'),...readdirSync('dist/bundle').filter(n=>n.endsWith('.js')).map(n=>join('dist','bundle',n))]){
    assert.ok(asar.extractFile(archive,file).equals(readFileSync(file)),'portable contains current built code: '+file);

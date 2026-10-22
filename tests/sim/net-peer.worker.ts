@@ -8,16 +8,19 @@ import { Thing } from '../../src/game/packages.ts';
 import { explosionBurst } from './explosionFixture.ts';
 import {CThing_Object_SupplyCrate,armorValue,armorMaximum} from '../../src/game/local/Supplies.ts';
 import { supplyIdentity, SUPPLY_KINDS } from '../../src/game/local/LootRules.ts';
+import {MODERN_FEATURES} from '../../src/game/local/ModernFeatures.ts';
 
 const role = Number(process.argv[2]) as 0 | 1;
 const options = JSON.parse(process.argv[3] ?? '{}');
+const modern=options.difficultyWaves?{progression:'personal-growth-v1' as const,supplies:'armor-ammo-v1' as const,balance:'pve-balance-v1' as const,survival:'survival-v1' as const,loot:'supply-crates-v2' as const,endless:'endless-pve-v1' as const,variants:'enemy-variants-v1' as const,enchantment:'persistent-enchantment-v1' as const,timedWaves:'timed-waves-v1' as const,waveDraft:'wave-draft-v1' as const,draftReady:'draft-ready-v1' as const,tieredGrowth:'tiered-growth-v1' as const,clearWaves:'clearable-waves-v1' as const,combat:'combat-pve-v3' as const,features:[...MODERN_FEATURES]}:{};
 const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: true } });
 let sent: unknown[] = [];
 const session = new NetSession(role, { send: message => sent.push(message) });
 session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, wave:options.wave, netcode: 'rollback-v2',
-  cfg: { ...(options.variants?{variants:'enemy-variants-v1' as const}:{}),...(options.endless?{endless:'endless-pve-v1' as const,refill:'reliable-supplies-v1' as const}:{}),...(options.loot?{loot:'supply-crates-v2' as const}:{}),...(options.survival?{survival:'survival-v1' as const}:{}),...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
+  cfg: { ...modern, ...(options.variants?{variants:'enemy-variants-v1' as const}:{}),...(options.endless?{endless:'endless-pve-v1' as const,refill:'reliable-supplies-v1' as const}:{}),...(options.loot?{loot:'supply-crates-v2' as const}:{}),...(options.survival?{survival:'survival-v1' as const}:{}),...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
     gameAmount: 3, detail: options.detail ?? true, charP1: 0, charP2: 0 } }, game.main());
 if (!game.waitRunning(3000)) throw new Error('boot failed');
+if(options.difficultyWaves&&(game.world().mUpgrades.mLevelIndex!==options.wave||!game.world().mUpgrades.features?.includes('difficulty-waves-v1')))throw new Error('exact wave/difficulty capability was not applied');
 if (options.weapons||options.supplies) for (const player of game.players()) for (const name of Object.keys(player.mWeapons)) player.NewWeapon(name);
 process.send?.({ ready: true, sent });
 sent = [];

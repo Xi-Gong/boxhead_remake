@@ -169,6 +169,8 @@ describe('input bindings in the world', () => {
   it('Coop: Space is player 2 fire, digits select nothing, Q/E cycle player 2 weapons', () => {
     const g = createHeadlessGame({ mode: 'Coop', room: 1, seed: 2, difficulty: 1 });
     const [p1, p2] = g.players();
+    // This is a controls fixture: modern difficulty no longer grants the old wave-10 UZI head start.
+    p2.NewWeapon('uzi');
     const shooters = (): number[] => thingList(g.world()).filter((t) => t._CLASSID_ === 'CThing_Shot_Bullet').map((t) => t.mParent.mPlayerIndex);
     g.keyDown(KEYS.SPACE); g.tick(1); g.keyUp(KEYS.SPACE);
     expect(shooters()).toEqual([1]);
