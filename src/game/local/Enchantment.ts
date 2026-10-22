@@ -126,22 +126,23 @@ export function installEnchantmentScope():void{
   ]));frame={...original,sBMD:bitmap};frames.set(original,frame);}
   clip.bmObject=frame;try{return drawExplosion.call(this);}finally{clip.bmObject=original;}
  };
- const hud=World.CHud.prototype as any,update=hud.UpdatePlayer,colors=new WeakMap<object,number>(),ammoLayouts=new WeakMap<object,{y:number;raise:number}>();
+ const hud=World.CHud.prototype as any,update=hud.UpdatePlayer,colors=new WeakMap<object,number>(),ammoLayouts=new WeakMap<object,number>();
  hud.UpdatePlayer=function(this:any,p:any,...args:any[]):any{
-  const ownHead=this.mcPlayers[p.mPlayerIndex];
+  const session=netSession(),stats=session?.confirmedPlayerStats?.find(s=>s.index===p.mPlayerIndex),ownHead=this.mcPlayers[p.mPlayerIndex];
+  const value=session?stats?.enchantDurability??0:enchantedAmmo(p.mWeapon_Current);
   if(ownHead&&durabilityEnabled(this.mWorld)){
-   const ammo=ownHead.mcAmmo;let layout=ammoLayouts.get(ammo);
-   if(!layout){const box=ammo.getBounds(ownHead),life=ownHead.mcLife.getBounds(ownHead);layout={y:ammo._y,raise:Math.max(0,Math.ceil(box.yMax+8-life.yMin))};ammoLayouts.set(ammo,layout);}
-   // Reserve a real row between weapon text and the unchanged authored health bar.
-   ammo._y=layout.y-layout.raise;
+   const ammo=ownHead.mcAmmo;if(!ammoLayouts.has(ammo))ammoLayouts.set(ammo,ammo._y);
+   // Set the name before inner binding/progress wrappers read its position.
+   // Without a visible strip, keep the exact authored name-to-health spacing.
+   ammo._y=ammoLayouts.get(ammo);
+   if(value>0){const bounds=ammo.getBounds(ownHead),life=ownHead.mcLife.getBounds(ownHead),height=Math.min(3.5,(life.yMax-life.yMin)/2);ammo._y-=Math.max(0,bounds.yMax+.5-(life.yMin-height-1));}
   }
   const result=update.call(this,p,...args),field=this.mcPlayers[p.mPlayerIndex]?.mcAmmo.tfAmount;
-  const session=netSession(),stats=session?.confirmedPlayerStats?.find(s=>s.index===p.mPlayerIndex);
   if(field){if(!colors.has(field))colors.set(field,field.textColor);field.textColor=(session?stats?.enchanted:enchantedWeapon(p.mWeapon_Current))?ENCHANT_COLOR:colors.get(field);}
   const head=this.mcPlayers[p.mPlayerIndex];if(head&&durabilityEnabled(this.mWorld)){
-   const value=session?stats?.enchantDurability??0:enchantedAmmo(p.mWeapon_Current),maximum=session?stats?.enchantMaximum??1:durabilityMaximum(p.mWeapon_Current);
+   const maximum=session?stats?.enchantMaximum??1:durabilityMaximum(p.mWeapon_Current);
    const bar=head._EnchantBar??head.createEmptyMovieClip('_EnchantBar',head.getNextHighestDepth());bar._visible=value>0;
-   if(value>0){const bounds=head.mcAmmo.getBounds(head),life=head.mcLife.getBounds(head),width=Math.min(30,life.xMax-life.xMin),height=Math.min(3.5,(life.yMax-life.yMin)/2);bar._x=(life.xMin+life.xMax-width)/2;bar._y=bounds.yMax+2;const ratio=value/Math.max(1,maximum),paint=`${width},${height},${ratio}`;
+   if(value>0){const life=head.mcLife.getBounds(head),width=Math.min(30,life.xMax-life.xMin),height=Math.min(3.5,(life.yMax-life.yMin)/2);bar._x=(life.xMin+life.xMax-width)/2;bar._y=life.yMin-height-1;const ratio=value/Math.max(1,maximum),paint=`${width},${height},${ratio}`;
     if(bar._paint!==paint){raisedMeter(bar,width,height,ratio,ENCHANT_COLOR,0xf2dfff,0x754498);bar._paint=paint;}
    }
   }

@@ -15,5 +15,17 @@ it.each([160,79,3].flatMap(life=>[0,20].map(armor=>({life,armor}))))('keeps ammo
   expect(boxes.enchant.xMax-boxes.enchant.xMin).toBeLessThanOrEqual(boxes.life.xMax-boxes.life.xMin);
   expect(boxes.enchant.yMax-boxes.enchant.yMin).toBeLessThanOrEqual((boxes.life.yMax-boxes.life.yMin)/2);
   expect(boxes.enchant.xMax-boxes.enchant.xMin).toBe(30);expect(boxes.enchant.yMax-boxes.enchant.yMin).toBe(3.5);
+  expect(boxes.enchant.yMin-boxes.ammo.yMax).toBeCloseTo(.5);expect(boxes.life.yMin-boxes.enchant.yMax).toBeCloseTo(1);
+ }finally{g.quit();}
+});
+it('restores the authored gun-name position without durability and never accumulates offsets',()=>{
+ let originalY:number;const classic=createHeadlessGame({classicFeatures:['enchant-durability-v1']});try{originalY=classic.world().mHud.mcPlayers[0].mcAmmo._y;}finally{classic.quit();}
+ const g=createHeadlessGame(),w=g.world(),p=g.players()[0],h=w.mHud.mcPlayers[0];try{
+  const update=()=>w.mHud.UpdatePlayer(p,{x:320,y:240});update();expect(h.mcAmmo._y).toBe(originalY!);expect(h._EnchantBar._visible).toBe(false);
+  p.NewWeapon('uzi');p.SelectWeapon('uzi');expect(enchantHeldWeapon(p)).toBe(true);update();const raisedY=h.mcAmmo._y;expect(raisedY).toBeLessThan(originalY!);
+  for(let i=0;i<3;i++){update();expect(h.mcAmmo._y).toBe(raisedY);}
+  p.SelectWeapon('pistol');update();expect(h.mcAmmo._y).toBe(originalY!);expect(h._EnchantBar._visible).toBe(false);
+  p.SelectWeapon('uzi');update();expect(h.mcAmmo._y).toBe(raisedY);
+  p.mWeapon_Current.mEnchantDurability=0;update();expect(h.mcAmmo._y).toBe(originalY!);expect(h._EnchantBar._visible).toBe(false);
  }finally{g.quit();}
 });

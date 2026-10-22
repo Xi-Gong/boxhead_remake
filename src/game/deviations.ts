@@ -869,7 +869,8 @@ export const DEVIATIONS: Deviation[] = [
     id:'RAISED_COMPACT_METERS',file:'local/HudMeter.ts, BossHealthUi.ts, Enchantment.ts',
     description:'Modern native Boss strips use 36px width and match authored player HP height. '+
       'Enchantment uses 30x3.5 capped at half HP height and no wider than HP. '+
-      'All ink, highlights and dark lower edges stay inside bounds; historic Boss fixtures retain their strips.',
+      'Names retain the authored position without durability; active strips use compact half-pixel text '+
+      'and one-pixel health gaps. All ink, highlights and dark lower edges stay inside bounds; historic Boss fixtures retain their strips.',
   },
   {
     id:'PERSONAL_ENCHANT_POWER',file:'local/EnchantmentRules.ts, Enchantment.ts, WaveDraft.ts, PlayerStats.ts, Net/bridge.ts',
