@@ -20,8 +20,10 @@ export function newClearWave(wave:number,seconds:number,difficulty:number,devils
 }
 export function combatWaveBudget(wave:number,legacySeconds:number,difficulty:number,devils:boolean,players:number,horde=false):{zombies:number;devils:number}{
  const b=clearWaveBudget(wave,legacySeconds,difficulty,devils,players);
- return {zombies:Math.max(1,Math.floor(b.zombies*(horde?.46:.4))),devils:b.devils?Math.max(1,Math.floor(b.devils*.4)):0};
+ return {zombies:Math.max(1,Math.floor(b.zombies*(horde?.14+.32*hordeRamp(wave):.4))),devils:b.devils?Math.max(1,Math.floor(b.devils*.4)):0};
 }
+/** Sparse opening waves; the larger horde budget arrives gradually at wave 25. */
+export function hordeRamp(wave:number):number{return Math.min(1,Math.max(0,(Math.floor(wave)-1)/24));}
 export function clearWaveKeys(family:'Zombie'|'Devil'):{total:'zombies'|'devils';emitted:'emittedZombies'|'emittedDevils';killed:'killedZombies'|'killedDevils'}{
   return family==='Zombie'?{total:'zombies',emitted:'emittedZombies',killed:'killedZombies'}:{total:'devils',emitted:'emittedDevils',killed:'killedDevils'};
 }

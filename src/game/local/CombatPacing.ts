@@ -2,7 +2,7 @@
 import {CMain,Thing,World} from '../packages.ts';
 import {_root} from '../../engine/runtime.ts';
 import {difficultyIndex,balancedWave} from './BalanceRules.ts';
-import {combatWaveBudget} from './ClearWaveRules.ts';
+import {combatWaveBudget,hordeRamp} from './ClearWaveRules.ts';
 import {waveSeconds} from './TimedWaveRules.ts';
 import {combatWorld,combatState,simplifiedWorld,reinforcementLimit} from './CombatRules.ts';
 import {netSession} from './Net/NetSession.ts';
@@ -39,7 +39,7 @@ export function installCombatPacing():void{
    const profile=mapPacing(world),seconds=profile.seconds+(state.boss?30:0);state.totalTicks=state.remainingTicks=seconds*CMain.mFPS;
    state.mapPacing={...profile};
    state.entranceCursor=0;
-   const tuning=balancedWave(wave,d),limit=Math.floor((hasFeature(world,'horde-balance-v1')?.46:.4)*Math.min(tuning.Zombie_Count,_root._quality==='LOW'?40:60));
+   const tuning=balancedWave(wave,d),limit=Math.floor((hasFeature(world,'horde-balance-v1')?.25+.21*hordeRamp(wave):.4)*Math.min(tuning.Zombie_Count,_root._quality==='LOW'?40:60));
    upgrades.Level.Zombie_Count=state.boss?reinforcementLimit(world)+(state.boss.members??[state.boss]).filter((m:any)=>m.kind==='charger'||m.kind==='zombie').length:Math.max(1,limit);
    if(state.clear)Object.assign(state.clear,modernBudget(world,wave,d,cfg?.devils??!!CMain.mSaveData.__get__mDevilsActive(),World.CWorld.mGameMode==='Single'?1:2));
   }

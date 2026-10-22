@@ -4,9 +4,20 @@ import {Thing} from '../../src/game/packages.ts';
 import {clearWaveCombat,timedWave,bossMembers} from '../../src/game/local/TimedWaves.ts';
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {refillAmmo} from '../../src/game/local/Supplies.ts';
-import {noSpawn} from './fxkit.ts';
+import {noSpawn,placePlayer,addZombie} from './fxkit.ts';
 
-it.each([0,1,2,3]as const)('difficulty %s trades individual health for modestly larger groups without changing damage or movement',difficulty=>{
+it.each([0,1,2,3]as const)('difficulty %s opens with two-hit pistol zombies and a small finite group',difficulty=>{
+ for(const mode of ['Single','Coop']as const){const g=createHeadlessGame({difficulty,mode}),w=g.world();try{
+  noSpawn(g);const p=placePlayer(g,10.5,8.5),e=addZombie(g,12.5,8.5);e.Process_Init();
+  const gun=p.mWeapon_Current,fire=vi.spyOn(gun,'Fire');expect(gun.mDamage).toBe(26);
+  expect(e.mMaxLife).toBeGreaterThan(gun.mDamage);expect(e.mMaxLife).toBeLessThanOrEqual(2*gun.mDamage);
+  expect(w.mUpgrades.Level.Zombie_Count).toBe(2);expect(timedWave(w)!.clear!.zombies).toBeLessThanOrEqual(mode==='Single'?20:26);
+  g.keyDown(KEYS.P1.FIRE);g.tick(2);expect(e.mLife).toBeGreaterThan(0);expect(e.mLife).toBeLessThan(e.mMaxLife);
+  g.tick(gun.mFireRate);g.keyUp(KEYS.P1.FIRE);expect(fire).toHaveBeenCalledTimes(2);expect(e.mLife).toBeLessThanOrEqual(0);
+ }finally{g.quit();}}
+});
+
+it.each([0,1,2,3]as const)('difficulty %s starts sparse and fragile, then grows larger groups without changing damage or movement',difficulty=>{
  const samples:any[][]=[];
  for(const modern of [false,true]){
   const g=createHeadlessGame({difficulty,classicFeatures:modern?[]:['horde-balance-v1']});try{
@@ -20,7 +31,9 @@ it.each([0,1,2,3]as const)('difficulty %s trades individual health for modestly 
  }
  for(let n=0;n<4;n++){const [old,current]=[samples[0]![n],samples[1]![n]];
   expect(current.health).toBeLessThanOrEqual(old.health*.45);expect(current.health).toBeGreaterThan(0);
-  expect(current.damage).toBe(old.damage);expect(current.speed).toBe(old.speed);expect(current.count).toBeGreaterThan(old.count);expect(current.count).toBeLessThanOrEqual(Math.ceil(old.count*1.25));
+  expect(current.damage).toBe(old.damage);expect(current.speed).toBe(old.speed);
+  if(n<2)expect(current.count).toBeLessThan(old.count);else expect(current.count).toBeGreaterThan(old.count);
+  expect(current.count).toBeLessThanOrEqual(Math.ceil(old.count*1.25));
  }
 });
 it('gives every finite weapon more base stock than its original authored capacity and preserves surplus on upgrade, refill and restore',()=>{

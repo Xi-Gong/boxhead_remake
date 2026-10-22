@@ -12,5 +12,5 @@ export function difficultyEnemy(wave:number,difficulty:number,horde=false):{heal
 /** Gentle first waves, then a continuous thirty-wave ramp; no step at an arbitrary wave. */
 export function hordeHealth(wave:number,devil:boolean,boss:boolean):number{
  const ramp=Math.min(1,Math.max(0,(wave-(boss?5:1))/30));
- return boss?.45+.35*ramp:(devil?.85:.7)+.4*ramp;
+ return boss?.45+.35*ramp:devil?.85+.4*ramp:.38+.72*ramp;
 }
