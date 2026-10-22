@@ -1,8 +1,8 @@
 // WAVE_DRAFT: snapshot-owned rewards; derived percentages never mutate a cached weapon definition.
 export const WAVE_DRAFT_RULE='wave-draft-v1';
 export const DRAFT_READY_RULE='draft-ready-v1';
-export type Reward='damage'|'health'|'armor'|'capacity'|'heal'|'ammo'|'haste'|'mobility'|'penetration'|'scavenging'|'endurance'|'enchantPower';
-export interface WaveBonuses {damage:number;health:number;armor:number;capacity:number;haste?:number;mobility?:number;penetration?:number;scavenging?:number;endurance?:number;enchantPower?:number}
+export type Reward='damage'|'health'|'armor'|'capacity'|'heal'|'ammo'|'haste'|'mobility'|'penetration'|'scavenging'|'endurance'|'enchantPower'|'dodge';
+export interface WaveBonuses {damage:number;health:number;armor:number;capacity:number;haste?:number;mobility?:number;penetration?:number;scavenging?:number;endurance?:number;enchantPower?:number;dodge?:number}
 export interface DraftRound {
   readyRule?:typeof DRAFT_READY_RULE;
   wave:number;remainingTicks:number;multiplier:number;
@@ -10,13 +10,13 @@ export interface DraftRound {
 }
 export interface WaveDraftState {rule:typeof WAVE_DRAFT_RULE;bonuses:[WaveBonuses,WaveBonuses];lastRewardWave:number;round?:DraftRound}
 export const REWARDS:readonly Reward[]=['damage','health','armor','capacity','heal','ammo'];
-export const REWARD_LABELS:Record<Reward,string>={damage:'FIREPOWER',health:'VITALITY',armor:'SHIELD',capacity:'MAGAZINE',heal:'FIRST AID',ammo:'RESUPPLY',haste:'QUICK HANDS',mobility:'FOOTWORK',penetration:'ARMOR PIERCING',scavenging:'SCAVENGER',endurance:'ENCHANT ENDURANCE',enchantPower:'ENCHANT POWER'};
-export const REWARD_DETAILS:Record<Reward,string>={damage:'Weapon damage +8%',health:'Max health +10%',armor:'Max shield +10%',capacity:'Ammo capacity +15%',heal:'Recover 35% max health',ammo:'Recover 35% ammo per weapon',haste:'Fire rate +6% (diminishing)',mobility:'Move speed +4% (diminishing)',penetration:'Piercing +12% (diminishing)',scavenging:'Supply effect +10% (diminishing)',endurance:'Enchant endurance +10% (diminishing)',enchantPower:'Stronger enchanted attacks (diminishing)'};
+export const REWARD_LABELS:Record<Reward,string>={damage:'FIREPOWER',health:'VITALITY',armor:'SHIELD',capacity:'MAGAZINE',heal:'FIRST AID',ammo:'RESUPPLY',haste:'QUICK HANDS',mobility:'FOOTWORK',penetration:'ARMOR PIERCING',scavenging:'SCAVENGER',endurance:'ENCHANT ENDURANCE',enchantPower:'ENCHANT POWER',dodge:'DODGE'};
+export const REWARD_DETAILS:Record<Reward,string>={damage:'Weapon damage +8%',health:'Max health +10%',armor:'Max shield +10%',capacity:'Ammo capacity +15%',heal:'Recover 35% max health',ammo:'Recover 35% ammo per weapon',haste:'Fire rate +6% (diminishing)',mobility:'Move speed +4% (diminishing)',penetration:'Piercing +12% (diminishing)',scavenging:'Supply effect +10% (diminishing)',endurance:'Enchant endurance +10% (diminishing)',enchantPower:'Stronger enchanted attacks (diminishing)',dodge:'Dodge chance +3% (max 50%)'};
 const zero:Readonly<WaveBonuses>={damage:0,health:0,armor:0,capacity:0};
 export function draftBonuses(world:any,index:number):Readonly<WaveBonuses> {return world?.mUpgrades?.waveDraft?.bonuses[index]??zero;}
-export function startingBonuses(wave:number,modern=false,simplified=false,endurance=false,power=false):WaveBonuses {
+export function startingBonuses(wave:number,modern=false,simplified=false,endurance=false,power=false,dodge=false):WaveBonuses {
   if(modern){
-    const keys:readonly (keyof WaveBonuses)[]=simplified?['damage','health','armor','capacity','mobility','haste','scavenging',...(endurance?['endurance' as const]:[]),...(power?['enchantPower' as const]:[])]:['damage','health','armor','capacity','mobility','haste','penetration','scavenging'];
+    const keys:readonly (keyof WaveBonuses)[]=simplified?['damage','health','armor','capacity','mobility','haste','scavenging',...(endurance?['endurance' as const]:[]),...(power?['enchantPower' as const]:[]),...(dodge?['dodge' as const]:[])]:['damage','health','armor','capacity','mobility','haste','penetration','scavenging'];
     const count=Math.max(0,Math.floor(wave)-1),base=Math.floor(count/keys.length),extra=count%keys.length;
     const result:WaveBonuses={damage:0,health:0,armor:0,capacity:0};
     keys.forEach((key,i)=>{const n=base+(extra>i?1:0);if(i<4||n)result[key]=n;});return result;
@@ -24,8 +24,8 @@ export function startingBonuses(wave:number,modern=false,simplified=false,endura
   const count=Math.max(0,Math.floor(wave)-1),base=Math.floor(count/4),extra=count%4;
   return {damage:base+(extra>0?1:0),health:base+(extra>1?1:0),armor:base+(extra>2?1:0),capacity:base};
 }
-export function newWaveDraft(wave:number,modern=false,simplified=false,endurance=false,power=false):WaveDraftState {
-  return {rule:WAVE_DRAFT_RULE,bonuses:[startingBonuses(wave,modern,simplified,endurance,power),startingBonuses(wave,modern,simplified,endurance,power)],lastRewardWave:Math.max(0,wave-1)};
+export function newWaveDraft(wave:number,modern=false,simplified=false,endurance=false,power=false,dodge=false):WaveDraftState {
+  return {rule:WAVE_DRAFT_RULE,bonuses:[startingBonuses(wave,modern,simplified,endurance,power,dodge),startingBonuses(wave,modern,simplified,endurance,power,dodge)],lastRewardWave:Math.max(0,wave-1)};
 }
 export function copyWaveDraft(state:WaveDraftState|undefined):WaveDraftState|undefined {
   if(!state)return;

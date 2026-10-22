@@ -912,4 +912,13 @@ export const DEVIATIONS: Deviation[] = [
       'Reference player XP includes the larger objective; enemy damage growth retains its prior reference. '+
       'Older negotiated peers keep every original health, count, ammo and cadence rule.',
   },
+  {
+    id:'PERCENT_BUILD_AND_DODGE',file:'local/PercentStats.ts, Dodge.ts, WaveDraft.ts, PlayerStats.ts, DraftWindow.ts, Resume.ts',
+    description:'Optional percent-stats-v1 adds percentage points across level and draft sources with '+
+      'explicit per-stat caps and exact single/double UI previews. Old allocation containers remain '+
+      'compatible; new selected-wave builds include dodge. Seeded dodge caps at 50%, consumes one draw '+
+      'per eligible hit only, and removes the complete hit before armor/reaction/fatal ownership. '+
+      'Store allocations in the existing snapshot graph; capture percentages as confirmed LAN metadata. '+
+      'Old v2 conversion never heals, refills ammunition or revives depleted enchantment.',
+  },
 ];

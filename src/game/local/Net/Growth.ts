@@ -11,6 +11,7 @@ import {combatWorld,modernWeapon,replenishedAmmo} from '../CombatRules.ts';
 import {combatKillXp} from '../CombatEnemies.ts';
 import {TIERED_GROWTH_RULE,tieredXpRequired,tieredExperienceBeforeLevel,tieredGrowthFromExperience,tieredLevelStats,levelRewardTier} from '../TieredGrowthRules.ts';
 import {hasFeature} from '../ModernFeatures.ts';
+import {percentStats} from '../PercentStats.ts';
 
 export const GROWTH_RULE = 'personal-growth-v1';
 export const MAX_LEVEL = 125;
@@ -95,7 +96,7 @@ function findPlayer(world: any, index: number): any {
 export function modernWeaponProjection(world:any,index:number,classID:string,bonus:WaveBonuses):ReturnType<typeof modernWeapon>|undefined{
  const u=world.mUpgrades,p=growthOf(world)?.players[index],raw=u[classID]?.mOriginalStats;if(!p||!raw)return;
  const stats=p.tiered===TIERED_GROWTH_RULE?tieredLevelStats(p.level):{damage:.01*Math.max(0,p.level-MAX_LEVEL),capacity:.005*Math.max(0,p.level-MAX_LEVEL)};
- return modernWeapon(raw,atLevel(u,Math.min(MAX_LEVEL,p.level))[classID],stats,bonus,classID,CMain.mFPS,hasFeature(world,'horde-balance-v1'));
+ return modernWeapon(raw,atLevel(u,Math.min(MAX_LEVEL,p.level))[classID],stats,bonus,classID,CMain.mFPS,hasFeature(world,'horde-balance-v1'),percentStats(world));
 }
 function applyPersonal(upgrades: any, thing: any, previous: any): any {
   const state = growthOf(upgrades.mWorld);

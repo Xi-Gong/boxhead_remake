@@ -4,11 +4,13 @@ import {waveDraft} from './WaveDraft.ts';
 import {installDraftStatsInput} from './DraftStatsInput.ts';
 import {renderDraftWindow,hideDraftWindow} from './DraftWindow.ts';
 import type {PlayerStats} from './PlayerStats.ts';
+import {PERCENT_STATS,percentText,type PercentStat} from './PercentStats.ts';
 import {compactStat,type Reward} from './WaveDraftRules.ts';
 const number=(n:number)=>compactStat(n);
 const ammo=(n:number,infinite=false)=>infinite?'INF':number(n);
 export function rewardPreview(stats:PlayerStats|undefined,reward:Reward,m:number):string{
  if(!stats)return 'Current stats will appear when confirmed';
+ if(stats.percentages&&reward in PERCENT_STATS){const k=reward as PercentStat;return `${PERCENT_STATS[k].label}  +${percentText(stats.percentages[k])} > +${percentText(stats.percentagePreviews?.[k]?.[m-1]??stats.percentages[k])}`;}
  const b=stats.bonuses;
  if(reward==='damage')return `DAMAGE  ${number(stats.damage)}  >  ${number(stats.previews?.damage[m-1]??stats.damage/(1+.08*b.damage)*(1+.08*(b.damage+m)))}`;
  if(reward==='health')return `MAX HP  ${number(stats.maximum)}  >  ${number(stats.previews?.health?.[m-1]??stats.maximum/(1+.1*b.health)*(1+.1*(b.health+m)))}`;

@@ -43,6 +43,7 @@ import {simplifiedVitals} from './CombatRules.ts';
 import type {WeaponBindings} from './WeaponBindings.ts';
 import {durabilityEnabled,enchantPowerEnabled,type EnchantmentState} from './EnchantmentRules.ts';
 import {prepareNativeBossRestore} from './CombatMigration.ts';
+import {percentStats} from './PercentStats.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -485,7 +486,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     // every crossed wave's upgrade table entries and resets the live spawn counters.
     if(endlessWorld(world))u.__set__mLevel(snap.wave);
     else while (u.mLevelIndex < snap.wave) u.__set__mLevel(u.mLevelIndex + 1);
-    if(waveDraft(world))u.waveDraft=copyWaveDraft(snap.waveDraft)??newWaveDraft(snap.wave,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world),enchantPowerEnabled(world));
+    if(waveDraft(world))u.waveDraft=copyWaveDraft(snap.waveDraft)??newWaveDraft(snap.wave,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world),enchantPowerEnabled(world),percentStats(world));
     if(u.waveDraft?.round&&draftReadyConfigured()){
       u.waveDraft.round.readyRule='draft-ready-v1';u.waveDraft.round.remainingTicks=0;
     }
@@ -541,6 +542,20 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     }
     settleVitals(world, true);
     settleCombatPlayers(world);
+    if(percentStats(world)&&!snap.features?.includes('percent-stats-v1')){
+      for(const p of Object.values(world.mThing_Collection.mPlayerThings)as any[]){
+        const old=snap.players.find(s=>s.index===p.mPlayerIndex);if(!old)continue;
+        // Preserve the lower absolute/fractional health on conversion; never heal or refill stock.
+        p.mLife=old.life>0?Math.min(old.life,p.mMaxLife,Math.max(1,Math.round(old.life/Math.max(1,old.maxLife)*p.mMaxLife))):old.life;
+        const b=snap.waveDraft?.bonuses[p.mPlayerIndex],v=simplifiedVitals(snap.growth?.players[p.mPlayerIndex]?.level??1);
+        const oldArmor=snap.features?.includes('fragile-armor-v1')?Math.min(Math.floor(v.health*.25*(1+.06*(b?.armor??0))),Math.floor(old.maxLife*.4)):Math.round(v.armor*(1+.06*(b?.armor??0)));
+        p.mArmor=Math.min(p.mArmor??0,armorMaximum(p),Math.round((old.armor??0)/Math.max(1,oldArmor)*armorMaximum(p)));
+        for(const [name,saved]of Object.entries(old.weapons)){
+          const gun=p.mWeapons[name]?.mThing;if(!gun||saved.enchantDurability===undefined)continue;
+          gun.mEnchantDurability=Math.min(gun.mEnchantDurability??0,saved.enchantDurability);
+        }
+      }
+    }
     if(migrate)finishSimplifiedRestore(world,snap);
     if(hasFeature(world,'fragile-armor-v1')&&!snap.features?.includes('fragile-armor-v1')&&snap.combat?.rule===SIMPLE_COMBAT_RULE){
       for(const p of Object.values(world.mThing_Collection.mPlayerThings)as any[]){

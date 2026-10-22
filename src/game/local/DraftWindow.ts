@@ -7,6 +7,7 @@ import {waveDraft} from './WaveDraft.ts';
 import {queueDraftChoice,queueDraftCommand} from './WaveDraftInput.ts';
 import {statsOpen,toggleStats,statsKeyLabel,beginStatsBinding,statsBindingHint} from './DraftStatsInput.ts';
 import {capturePlayerStats,type PlayerStats} from './PlayerStats.ts';
+import {PERCENT_STATS,percentText,type PercentStat} from './PercentStats.ts';
 import {DRAFT_CONFIRM,encodeDraftSelection,REWARD_LABELS,compactStat,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
 type Preview=(stats:PlayerStats|undefined,reward:Reward,multiplier:number)=>string;
 interface View {clip:any;backdrop:any;players:any[];cards:any[][];wave:number;indices:number[];key:string;signature:string;size:string}
@@ -27,7 +28,7 @@ function create(world:any,state:WaveDraftState,indices:number[]):View{
  paper.lineStyle(2,INK,100);paper.moveTo(15,60);paper.lineTo(WIDTH-15,60);
  text(clip,'_Title',14,8,WIDTH-28,29,MENU_FONT,23,RED,false,'center','');
  text(clip,'_Clock',14,38,WIDTH-28,18,BODY_FONT,12,MUTED,true,'center','');
- const players:any[]=[],cards:any[][]=[],dual=indices.length===2,column=dual?280:574;
+ const players:any[]=[],cards:any[][]=[],dual=indices.length===2,column=dual?280:574,modern=!!(netSession()?.confirmedPlayerStats??capturePlayerStats(world))?.some(s=>s.percentages);
  for(const [position,index]of indices.entries()){
   const side=clip.createEmptyMovieClip('_Player'+index,clip.getNextHighestDepth());side._x=18+position*(column+14);side._y=70;
   const actor=(Object.values(world.mThing_Collection.mPlayerThings)as any[]).find(p=>p.mPlayerIndex===index);portrait(side,actor);
@@ -47,16 +48,16 @@ function create(world:any,state:WaveDraftState,indices:number[]):View{
    text(card,'_Preview',12,dual?48:177,width-24,dual?16:29,BODY_FONT,12,INK,true,'left','',!dual);
    card.createEmptyMovieClip('_SelectedMark',card.getNextHighestDepth());cards[index]!.push(card);
   }
-  const sheet=side.createEmptyMovieClip('_Stats',side.getNextHighestDepth());sheet._y=48;frame(sheet,column,210,CREAM,INK,1.5);
+  const sheet=side.createEmptyMovieClip('_Stats',side.getNextHighestDepth());sheet._y=48;frame(sheet,column,modern?232:210,CREAM,INK,1.5);
   const ys=[9,31,49,67,100,118,136,168,187];
-  for(let row=0;row<9;row++){
-   const right=!dual&&row>=4,left=!dual&&!right,cellWidth=dual?column:277,x=right?column-277:0,y=dual?ys[row]!:11+(left?row:row-4)*36;
+  for(let row=0;row<(modern?12:9);row++){
+   const half=modern?6:4,right=!dual&&row>=half,left=!dual&&!right,cellWidth=dual?column:277,x=right?column-277:0,y=modern?(dual?7+row*18:9+(left?row:row-half)*33):dual?(ys[row]??220):11+(left?row:row-4)*36;
    const nameWidth=dual?105:120;
    text(sheet,'_Name'+row,x+10,y, nameWidth,17,BODY_FONT,12,MUTED,true,'left','');
    text(sheet,'_Value'+row,x+nameWidth+10,y,cellWidth-nameWidth-20,19,BODY_FONT,dual?12:15,INK,true,'right','');
   }
-  if(!dual){text(sheet,'_Sources',12,164,265,38,BODY_FONT,12,MUTED,false,'left','',true);sheet.lineStyle(1,0xc6c1b3,100);sheet.moveTo(287,10);sheet.lineTo(287,200);}
-  else{sheet.lineStyle(1,0xd3cdbf,100);for(const y of [92,161]){sheet.moveTo(10,y);sheet.lineTo(column-10,y);}}
+  if(!dual){text(sheet,'_Sources',12,modern?210:164,265,modern?18:38,BODY_FONT,12,MUTED,false,'left','',true);sheet.lineStyle(1,0xc6c1b3,100);sheet.moveTo(287,10);sheet.lineTo(287,200);}
+  else if(!modern){sheet.lineStyle(1,0xd3cdbf,100);for(const y of [92,161]){sheet.moveTo(10,y);sheet.lineTo(column-10,y);}}
   const bind=actionButton(sheet,'_Bind',column/2,248,column,30,'',12);bind.onRelease=()=>beginStatsBinding(world,index);
   text(side,'_Hint',0,262,column,17,BODY_FONT,12,MUTED,false,'center','');
   const ready=actionButton(side,'_Ready',column/2,296,column,30,'READY',13);
@@ -70,6 +71,14 @@ function create(world:any,state:WaveDraftState,indices:number[]):View{
 function rows(s:PlayerStats|undefined):[string,string][]{
  if(!s)return [['SYNCING','PLEASE WAIT']];
  const number=compactStat,ammo=(n:number)=>s.infinite?'INF':number(n),keys=(['A','Y']as const).filter(k=>s.bindings?.[k]===s.weaponId).join('/');
+ if(s.percentages){const p=s.percentages,bonus=(key:PercentStat)=>'+'+percentText(p[key]),limit=(key:PercentStat)=>bonus(key)+' / '+PERCENT_STATS[key].cap+'%';
+  return [['LEVEL / XP',`${number(s.level)} / ${number(s.xp)} / ${number(s.required)}`],
+   ['HEALTH',`${number(s.life)}/${number(s.maximum)} (${bonus('health')})`],['SHIELD',`${number(s.armor)}/${number(s.armorMaximum)} (${bonus('armor')})`],
+   ['DAMAGE',`${bonus('damage')} / ${number(s.damage)}`],['FIRE RATE',`${bonus('haste')} / ${s.rate.toFixed(1)}/s`],
+   ['MOVEMENT',limit('mobility')],['AMMUNITION',`${ammo(s.ammo)}/${ammo(s.capacity)} (${bonus('capacity')})`],
+   ['SUPPLY',limit('scavenging')],['DODGE',limit('dodge')],['ENCHANT DMG',limit('enchantPower')],
+   ['ENCHANT SHOTS',`${number(s.enchantDurability??0)}/${number(s.enchantMaximum??0)} (${bonus('endurance')})`],['WEAPON',s.weapon+(keys?` [${keys}]`:'')]];
+ }
  return [['LEVEL / XP',`${number(s.level)} / ${number(s.xp)} / ${number(s.required)}`],['HEALTH',`${number(s.life)} / ${number(s.maximum)}`],
   ['SHIELD',`${number(s.armor)} / ${number(s.armorMaximum)}`],['MOVEMENT',`${Math.round(s.speed/.16*100)}%`],['WEAPON',s.weapon+(keys?` [${keys}]`:'')],
   ['DMG / RATE',`${number(s.damage)} / ${s.rate.toFixed(1)}/s`],['AMMUNITION',`${ammo(s.ammo)} / ${ammo(s.capacity)}`],
@@ -77,9 +86,10 @@ function rows(s:PlayerStats|undefined):[string,string][]{
   [s.enchantMaximum!==undefined?`ENCHANT +${s.enchantDamage?((s.enchantDamage-1)*100).toFixed(1):15}%`:'ENCHANTMENT',s.enchantMaximum!==undefined?`${number(s.enchantDurability??0)} / ${number(s.enchantMaximum)}`:s.enchanted?`ACTIVE +${s.simplified?15:35}%`:'NONE']];
 }
 function benefit(reward:Reward,s:PlayerStats|undefined,m:number):[string,string]{
- if(reward==='enchantPower'){const next=s?.previews?.enchantPower?.[m-1]??s?.enchantDamage??1.15;return [`+${((next-1)*100).toFixed(1)}%`,'total enchanted bonus'];}
- const percent:Record<Reward,number>={damage:8,health:s?.simplified?8:10,armor:s?.simplified?6:10,capacity:s?.previews?8:15,heal:35,ammo:35,haste:6,mobility:4,penetration:12,scavenging:10,endurance:10,enchantPower:0};
- const description:Record<Reward,string>={damage:'weapon damage',health:'max health',armor:'max shield',capacity:'ammo capacity',heal:'restore health',ammo:'restore ammo',haste:'fire-rate growth',mobility:'movement growth',penetration:'armor piercing',scavenging:'healing & ammo',endurance:'enchant endurance',enchantPower:'enchanted damage'};
+ if(reward==='enchantPower'&&!s?.percentages){const next=s?.previews?.enchantPower?.[m-1]??s?.enchantDamage??1.15;return [`+${((next-1)*100).toFixed(1)}%`,'total enchanted bonus'];}
+ if(s?.percentages&&reward in PERCENT_STATS){const k=reward as PercentStat,before=s.percentages[k],after=s.percentagePreviews?.[k]?.[m-1]??before;return ['+'+percentText(Math.max(0,after-before)),k==='armor'?'max 40% of HP':`max ${PERCENT_STATS[k].cap}%`];}
+ const percent:Record<Reward,number>={damage:8,health:s?.simplified?8:10,armor:s?.simplified?6:10,capacity:s?.previews?8:15,heal:35,ammo:35,haste:6,mobility:4,penetration:12,scavenging:10,endurance:10,enchantPower:0,dodge:3};
+ const description:Record<Reward,string>={damage:'weapon damage',health:'max health',armor:'max shield',capacity:'ammo capacity',heal:'restore health',ammo:'restore ammo',haste:'fire-rate growth',mobility:'movement growth',penetration:'armor piercing',scavenging:'healing & ammo',endurance:'enchant endurance',enchantPower:'enchanted damage',dodge:'dodge chance'};
  return [`+${percent[reward]*m}%`,description[reward]];
 }
 function animate(view:View):void{
@@ -119,11 +129,11 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
    card._alpha=ready?80:100;card.onRelease=!ready?()=>round.readyRule?queueDraftCommand(world,index,encodeDraftSelection(choice),round.wave):queueDraftChoice(world,index,choice,round.wave):undefined;card.useHandCursor=!!card.onRelease;
   }
   side._Stats._visible=opened;const values=rows(s);
-  for(let row=0;row<9;row++){label(side._Stats['_Name'+row],values[row]?.[0]??'',12);label(side._Stats['_Value'+row],values[row]?.[1]??'',indices.length===2?12:15);side._Stats['_Value'+row].textColor=row===1?RED:row===2?BLUE:row===8?PURPLE:INK;}
+  for(let row=0;row<values.length;row++){label(side._Stats['_Name'+row],values[row]?.[0]??'',12);label(side._Stats['_Value'+row],values[row]?.[1]??'',indices.length===2?12:15);side._Stats['_Value'+row].textColor=row===1?RED:row===2?BLUE:row===8?PURPLE:INK;}
   const shortcuts=`A: ${s?.bindings?.A?.toUpperCase()??'--'} / Y: ${s?.bindings?.Y?.toUpperCase()??'--'}`;
-  if(side._Stats._Sources)side._Stats._Sources.text=`${shortcuts}\nBUILD: DMG ${b.damage} / HP ${b.health} / SHIELD ${b.armor}`;
+  if(side._Stats._Sources)side._Stats._Sources.text=s?.percentages?'ADDITIVE % / LEVEL + CHOICES':`${shortcuts}\nBUILD: DMG ${b.damage} / HP ${b.health} / SHIELD ${b.armor}`;
   setButtonLabel(side._Stats._Bind,`CHANGE KEY: ${statsKeyLabel(index)} / PAD: X`);
-  side._Hint.text=opened?(statsBindingHint(world)||(indices.length===2?`${shortcuts} / END ${b.endurance??0}${s?.enchantDamage?` / PWR ${b.enchantPower??0}`:''}`:`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}${s?.enchantDamage?` / POWER ${b.enchantPower??0}`:''}`)):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?'EVERY BENEFIT IS DOUBLED':'SELECT A CARD, THEN READY';
+  side._Hint.text=opened?(statsBindingHint(world)||(s?.percentages?shortcuts:'' )||(indices.length===2?`${shortcuts} / END ${b.endurance??0}${s?.enchantDamage?` / PWR ${b.enchantPower??0}`:''}`:`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}${s?.enchantDamage?` / POWER ${b.enchantPower??0}`:''}`)):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?'EVERY BENEFIT IS DOUBLED':'SELECT A CARD, THEN READY';
   side._Hint.textColor=ready&&!opened?GREEN:MUTED;
   side._Ready._visible=!opened;setButtonLabel(side._Ready,ready?'READY! / WAITING':`READY / ${REWARD_LABELS[round.offers[index]![round.selected[index]!]!]}`);side._Ready.enabled=!ready;side._Ready._alpha=ready?70:100;
  }

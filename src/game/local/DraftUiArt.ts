@@ -29,6 +29,8 @@ export function drawIcon(c:any,reward:Reward):void{
  }else if(reward==='damage'||reward==='penetration'){
   c.beginFill(reward==='damage'?0xe47348:0x88a4a4,100);for(let n=0;n<=16;n++){const a=n*Math.PI/8,x=14+7*Math.cos(a),y=14+7*Math.sin(a);n?c.lineTo(x,y):c.moveTo(x,y);}c.endFill();
   for(const [x,y,dx,dy]of [[14,3,0,7],[14,18,0,7],[3,14,7,0],[18,14,7,0]]){c.moveTo(x,y);c.lineTo(x!+dx!,y!+dy!);}
+ }else if(reward==='dodge'){
+  c.lineStyle(2.5,0x2b7044,100);c.moveTo(5,10);c.lineTo(12,5);c.lineTo(17,9);c.lineTo(12,18);c.lineTo(20,23);c.moveTo(3,19);c.lineTo(8,19);c.moveTo(19,4);c.lineTo(24,4);
  }else if(reward==='haste'){
   c.beginFill(0xf1d171,100);for(let n=0;n<=16;n++){const a=n*Math.PI/8,x=14+9*Math.cos(a),y=15+9*Math.sin(a);n?c.lineTo(x,y):c.moveTo(x,y);}c.endFill();c.moveTo(11,3);c.lineTo(17,3);c.moveTo(14,8);c.lineTo(14,15);c.lineTo(20,17);
  }else if(reward==='mobility'){

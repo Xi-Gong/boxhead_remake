@@ -6,6 +6,7 @@ import {CMain,Thing} from '../packages.ts';
 import {simplifiedWorld} from './CombatRules.ts';
 import {hasFeature} from './ModernFeatures.ts';
 import {draftBonuses,type WaveBonuses} from './WaveDraftRules.ts';
+import {percentStats,statPercent} from './PercentStats.ts';
 export const ENCHANT_COLOR=0xce8fff;
 export const ENCHANT_DAMAGE=1.35;
 export const SIMPLE_ENCHANT_DAMAGE=1.15;
@@ -13,7 +14,9 @@ export function enchantPowerEnabled(world:any):boolean{return hasFeature(world,'
 /** Growth affects the enchantment's extra damage, never the ordinary weapon or already emitted attacks. */
 export function enchantmentDamage(world:any,index=0,bonus:Readonly<WaveBonuses>=draftBonuses(world,index)):number{
  if(!enchantPowerEnabled(world))return simplifiedWorld(world)?SIMPLE_ENCHANT_DAMAGE:ENCHANT_DAMAGE;
- const level=world?.mUpgrades?.lanGrowth?.players[index]?.level??1,x=.01*Math.max(0,level-1)+.10*(bonus.enchantPower??0);
+ const level=world?.mUpgrades?.lanGrowth?.players[index]?.level??1;
+ if(percentStats(world))return 1+statPercent('enchantPower',bonus,.15+.0015*Math.max(0,level-1));
+ const x=.01*Math.max(0,level-1)+.10*(bonus.enchantPower??0);
  return 1+.15*(1+2*x/(2+x));
 }
 export const ENCHANTMENT_RULE='persistent-enchantment-v1';
@@ -27,6 +30,7 @@ export function durabilityEnabled(world:any):boolean{return hasFeature(world,'en
 const budgets:Record<string,number>={pistol:60,uzi:120,shotgun:30,railgun:30,rocket:24,grenade:24,barrel:12,mine:12,chargepack:12};
 export function durabilityMaximum(weapon:any,bonus:Readonly<WaveBonuses>=draftBonuses(weapon?.mWorld,weapon?.mParent?.mPlayerIndex??0)):number{
  const base=budgets[weapon?.mNameID]??0,level=weapon?.mWorld?.mUpgrades?.lanGrowth?.players[weapon?.mParent?.mPlayerIndex??0]?.level??1;
+ if(percentStats(weapon?.mWorld))return Math.floor(base*(1+statPercent('endurance',bonus,.01*Math.max(0,level-1))));
  const x=.01*Math.max(0,level-1)+.10*(bonus.endurance??0);return Math.floor(base*(1+2*x/(2+x)));
 }
 export function syncDurability(weapon:any):void{

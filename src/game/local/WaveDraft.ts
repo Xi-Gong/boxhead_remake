@@ -6,7 +6,8 @@ import {infiniteGrowthWeapon,modernWeaponProjection} from './Net/Growth.ts';
 import {combatWorld,simplifiedWorld,passiveBonuses,restoredSupply,replenishedAmmo} from './CombatRules.ts';
 import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
-import {syncVitals,playerArmorMaximum} from './SurvivalRules.ts';
+import {percentStats,statPercent} from './PercentStats.ts';
+import {syncVitals,playerMaximum,playerArmorMaximum} from './SurvivalRules.ts';
 import {takeDraftChoice,draftSampleBits} from './WaveDraftInput.ts';
 import {durabilityEnabled,durabilityMaximum,syncDurability,enchantPowerEnabled,enchantmentDamage} from './EnchantmentRules.ts';
 import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,DRAFT_CONFIRM,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
@@ -22,7 +23,7 @@ export function waveDraftConfigured():boolean {
 }
 export function waveDraft(world:any):WaveDraftState|undefined{return world?.mUpgrades?.waveDraft;}
 export function initializeWaveDraft(world:any):void {
-  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world),enchantPowerEnabled(world));
+  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world),enchantPowerEnabled(world),percentStats(world));
 }
 function player(world:any,index:number):any {
   return (Object.values(world.mThing_Collection.mPlayerThings) as any[]).find(p=>p.mPlayerIndex===index);
@@ -37,21 +38,24 @@ export function rewardOffers(p:any):Reward[] {
     const canWeapon=(key:'haste'|'capacity')=>weapons.some((gun:any)=>{
       if(key==='capacity'&&infiniteGrowthWeapon(gun))return false;
       const next=modernWeaponProjection(w,p.mPlayerIndex,gun._CLASSID_,{...b,[key]:(b[key]??0)+1});
-      return next&&(key==='capacity'?next.capacity>gun.mTotalAmmo:next.fireRate<gun.mFireRate);
+      const current=modernWeaponProjection(w,p.mPlayerIndex,gun._CLASSID_,b);
+      return next&&current&&(key==='capacity'?next.capacity>current.capacity:percentStats(w)?next.hasteBonus>current.hasteBonus:next.fireRate<current.fireRate);
     });
-    const offense:Reward[]=simplifiedWorld(w)?['damage']:['damage','penetration'];if(canWeapon('haste'))offense.push('haste');
+    const offense:Reward[]=simplifiedWorld(w)?(percentStats(w)&&!canDamage(p,b)?[]:['damage']):['damage','penetration'];if(canWeapon('haste'))offense.push('haste');
     if(enchantPowerEnabled(w)&&enchantmentDamage(w,p.mPlayerIndex,{...b,enchantPower:(b.enchantPower??0)+1})-enchantmentDamage(w,p.mPlayerIndex,b)>1e-6)offense.push('enchantPower');
-    const defense:Reward[]=['health'];if(playerArmorMaximum(p,{...b,armor:b.armor+1})>playerArmorMaximum(p,b))defense.push('armor');if(alive&&p.mLife<p.mMaxLife)defense.push('heal');
-    const utility:Reward[]=['scavenging'];
+    const defense:Reward[]=percentStats(w)&&playerMaximumAt(p,b,'health')<=p.mMaxLife?[]:['health'];if(percentStats(w)&&statPercent('dodge',b)<.5)defense.push('dodge');if(playerArmorMaximum(p,{...b,armor:b.armor+1})>playerArmorMaximum(p,b))defense.push('armor');if(alive&&p.mLife<p.mMaxLife)defense.push('heal');
+    const utility:Reward[]=percentStats(w)&&statPercent('scavenging',b)>=.6?[]:['scavenging'];
     if(durabilityEnabled(w)&&weapons.some((gun:any)=>durabilityMaximum(gun,{...b,endurance:(b.endurance??0)+1})>durabilityMaximum(gun,b)))utility.push('endurance');
-    if(passiveBonuses({...b,mobility:(b.mobility??0)+1}).movement-passiveBonuses(b).movement>1e-6)utility.push('mobility');
+    if(passiveBonuses({...b,mobility:(b.mobility??0)+1},percentStats(w)).movement-passiveBonuses(b,percentStats(w)).movement>1e-6)utility.push('mobility');
     if(canWeapon('capacity'))utility.push('capacity');if(finiteWeapons(p).some(gun=>gun.mAmmo<gun.mTotalAmmo))utility.push('ammo');
-    return [offense,defense,utility].map(pool=>pool[random(pool.length)]!);
+    return [offense,defense,utility].map(pool=>{const choices=pool.length?pool:['heal','ammo'] as Reward[];return choices[random(choices.length)]!;});
   }
   const pool=REWARDS.filter(r=>r!=='damage'&&(r!=='heal'||alive&&p.mLife<p.mMaxLife)
     &&(r!=='ammo'||finiteWeapons(p).some(w=>w.mAmmo<w.mTotalAmmo)));
   return ['damage',pool.splice(random(pool.length),1)[0]!,pool.splice(random(pool.length),1)[0]!];
 }
+function canDamage(p:any,b:any):boolean{return (p.mWeaponList??[]).some((e:any)=>e.mActive&&e.mThing&&modernWeaponProjection(p.mWorld,p.mPlayerIndex,e.mThing._CLASSID_,{...b,damage:b.damage+1})!.damage>modernWeaponProjection(p.mWorld,p.mPlayerIndex,e.mThing._CLASSID_,b)!.damage);}
+function playerMaximumAt(p:any,b:any,key:'health'):number{return playerMaximum(p,{...b,[key]:b[key]+1});}
 function heldBits(p:any,playerIndex=0,consumeTap=false):number {
   let pressed=0;
   const bits=SLOT_ORDER.reduce((bits,name,index)=>{

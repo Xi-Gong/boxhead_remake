@@ -9,6 +9,7 @@ import {clearWavesConfigured} from './ClearWaves.ts';
 import {COMBAT_RULE,SIMPLE_COMBAT_RULE,combatWorld,simplifiedWorld,shotgunFalloff,passiveBonuses,type CombatRule} from './CombatRules.ts';
 import {draftBonuses} from './WaveDraftRules.ts';
 import {availableFeatures} from './ModernFeatures.ts';
+import {percentStats} from './PercentStats.ts';
 const classic=new WeakSet<object>();
 const classicSimplified=new WeakSet<object>();
 export function setClassicCombatFixture(main:object):void{classic.add(main);}
@@ -22,7 +23,7 @@ export function combatConfigured():boolean{
 }
 export function syncCombatPlayer(p:any):void{
  if(!combatWorld(p.mWorld))return;
- const b=passiveBonuses(draftBonuses(p.mWorld,p.mPlayerIndex)),raw=p.mWorld.mUpgrades.CThing_Creature_Player?.mOriginalStats;
+ const b=passiveBonuses(draftBonuses(p.mWorld,p.mPlayerIndex),percentStats(p.mWorld)),raw=p.mWorld.mUpgrades.CThing_Creature_Player?.mOriginalStats;
  p.mSpeed=(raw?.mSpeed??.16)*(1+b.movement);p.mArmorPenetration=simplifiedWorld(p.mWorld)?0:b.penetration;p.mSupplyEfficiency=b.supply;
 }
 export function settleCombatPlayers(world:any):void{for(const p of Object.values(world.mThing_Collection?.mPlayerThings??{})as any[])syncCombatPlayer(p);}
@@ -41,6 +42,7 @@ function mark(t:any,c:Emission):void{
 export function installCombatScope():void{
  const hud=World.CHud.prototype as any,message=hud.AddMessage_Info;
  hud.AddMessage_Info=function(this:any,value:any,...args:any[]):any{
+  if(percentStats(this.mWorld)&&typeof value==='string')value=value.replace(/Double Damage/g,'Damage +100%').replace(/Quad Damage/g,'Damage +300%').replace(/Fatal Damage/g,'Damage +900%');
   if(combatWorld(this.mWorld)&&typeof value==='string')value=value.replace(/Double Ammo/g,'Capacity +50%').replace(/Quad Ammo/g,'Capacity +100%').replace(/Infinite Ammo/g,'Capacity +125%').replace(/Rapid Fire/g,'Controlled Fire +30%');
   return message.call(this,value,...args);
  };

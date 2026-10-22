@@ -11,7 +11,7 @@ import {captureWorldSnap,restoreWorldSnap,makeSnapCtx} from '../../src/game/loca
 import {getRandomState} from '../../src/engine/flash/rng.ts';
 
 it('grows per owner with bounded diminishing returns, exact single/double previews and no ordinary damage mutation',()=>{
- const g=createHeadlessGame({mode:'Coop'}),w=g.world(),[p,q]=g.players();try{
+ const g=createHeadlessGame({mode:'Coop',classicFeatures:['percent-stats-v1']}),w=g.world(),[p,q]=g.players();try{
   expect(enchantmentDamage(w)).toBeCloseTo(1.15);w.mUpgrades.lanGrowth.players[1].level=30;
   expect(enchantmentDamage(w,1)).toBeCloseTo(1+.15*(1+2*.29/2.29));expect(enchantmentDamage(w,0)).toBeCloseTo(1.15);
   const stats=capturePlayerStats(w)[1]!,damage=q.mWeapon_Current.mDamage,preview=stats.previews!.enchantPower![1]!;

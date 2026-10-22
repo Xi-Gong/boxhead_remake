@@ -13,11 +13,13 @@ import { installSupplyDrops } from './SupplyDrops.ts';
 import { REFILL_RULE, setReliableSupplies } from './ReliableSupplies.ts';
 import {dropPriestSupplies} from './VariantLoot.ts';
 import {hasFeature} from './ModernFeatures.ts';
+import {installDodge} from './Dodge.ts';
 
 const bars=new WeakMap<object,any>();
 const fills=new WeakMap<object,any>();
 export function installArmorScope():void{
   installShieldResilience();
+  installDodge();
   installSupplyDrops();
   const world=World.CWorld.prototype as any,ready=world.InitFinished,logKill=world.LogKill;
   world.InitFinished=function(this:any):any{

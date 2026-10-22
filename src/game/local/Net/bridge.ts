@@ -437,6 +437,7 @@ class LanBridge {
       this.peerEnchantment = Array.isArray(msg.features) && msg.features.includes('persistent-enchantment-v1');
       if(!this.peerEnchantment)this.peerFeatures=this.peerFeatures.filter(f=>f!=='enchant-durability-v1');
       if(!this.peerFeatures.includes('enchant-durability-v1'))this.peerFeatures=this.peerFeatures.filter(f=>f!=='enchant-power-v1');
+      if(!['fragile-armor-v1','enchant-durability-v1','enchant-power-v1'].every(f=>this.peerFeatures.includes(f as ModernFeature)))this.peerFeatures=this.peerFeatures.filter(f=>f!=='percent-stats-v1');
       if(this.isHost){const maxWave=this.waveMaximum();this.sel={...this.sel,maxWave,wave:Math.min(this.sel.wave,maxWave)};}
       // Host: a client joined (fresh or reconnecting). The sid is what the client will keep using.
       this.sid = this.sid ?? msg.sid;

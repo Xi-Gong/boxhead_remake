@@ -144,7 +144,7 @@ function pauseGrowth(hud: any, state: GrowthState): void {
       const modern=session?!!session.confirmedPlayerStats?.[i]?.previews:combatWorld(hud.mWorld);
       const ammoText=modern?'AMMO <3x':`AMMO +${compactStat(((1+capacity)*(1+.15*(bonus?.capacity??0))-1)*100)}%`;
       const actual=session?session.confirmedPlayerStats?.find(s=>s.index===i):capturePlayerStats(hud.mWorld).find(s=>s.index===i);
-      const caption=`HP ${compactStat(actual?.maximum??Math.round(base*(1+.1*(bonus?.health??0))))} / SHIELD ${compactStat(actual?.armorMaximum??Math.round(base*(1+.1*(bonus?.armor??0))))} | DMG +${compactStat(((1+damage)*(1+.08*(bonus?.damage??0))-1)*100)}% | ${ammoText}`;
+      const caption=`HP ${compactStat(actual?.maximum??Math.round(base*(1+.1*(bonus?.health??0))))} / SHIELD ${compactStat(actual?.armorMaximum??Math.round(base*(1+.1*(bonus?.armor??0))))} | DMG +${compactStat(actual?.percentages?actual.percentages.damage*100:((1+damage)*(1+.08*(bonus?.damage??0))-1)*100)}% | ${actual?.percentages?'DODGE '+compactStat(actual.percentages.dodge*100)+'%':ammoText}`;
       const summary=text(layer,'_GrowthStats'+i,x,122,280,16,BODY_FONT,10,0xcccccc,false,'left',caption);
       if(summary.textWidth>276){const format=summary.getTextFormat();format.size*=276/summary.textWidth;summary.setTextFormat(format);}
     }
