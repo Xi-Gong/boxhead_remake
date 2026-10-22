@@ -110,7 +110,7 @@ process.on('message', (m: any) => {
     if (m.step && session.phase !== 'ended' && session.tickIndex(world) < m.total) {
       const t = session.tickIndex(world);
       game.setKeys(t < 2 ? [] : [t % 21 < 10 ? (role ? KEYS.P1.LEFT : KEYS.P1.RIGHT) : KEYS.P1.UP,
-        ...(t % 7 < 4 ? [KEYS.P1.FIRE] : []), ...(options.weapons && t % 15 === 10 ? [KEYS.P1.NEXT] : [])]);
+        ...((options.heldFire?t%80<60:t%7<4) ? [KEYS.P1.FIRE] : []), ...(options.weapons && t % 15 === 10 ? [KEYS.P1.NEXT] : [])]);
       if(m.renderGap)advanceVirtual(20);else game.step(1);
       for (const player of game.players()) if (player.mWeapon_Current) weapons.add(player.mWeapon_Current.mNameID);
       for (let i = 0; i < (m.extraDraws ?? 0); i++) world.Draw();

@@ -16,6 +16,7 @@ import {verifyV034Candidate} from './v034-candidate.browser.mjs';
 import {verifyEmptyFeedback} from './empty-feedback.browser.mjs';
 import {verifyNameSpacing} from './name-spacing.browser.mjs';
 import {verifyExactWaveCase} from './exact-wave.browser.mjs';
+import {verifyHeldFire} from './held-fire.browser.mjs';
 
 const expected=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
 const root=process.cwd(),out=resolve(process.env.BOXHEAD_QA_OUT??`generated/reports/v${expected.replaceAll('.','')}/portable`);
@@ -72,6 +73,7 @@ try{
   if(process.env.BOXHEAD_QA_ENCHANTMENT==='1')await verifyPersistentEnchantment(g,join(out,'enchantment'));
   if(expected==='0.3.5'&&process.env.BOXHEAD_QA_TIMED==='1')await verifyEmptyFeedback(g,join(out,'empty-feedback'));
   if(process.env.BOXHEAD_QA_TIMED==='1')await (['0.3.4','0.3.5'].includes(expected)?verifyV034Candidate:expected==='0.3.3'?verifyV033Candidate:expected==='0.3.2'?verifyV032Candidate:verifyV031Candidate)(g,join(out,'timed-candidate'));
+  if(process.env.BOXHEAD_QA_HELD_FIRE==='1')await verifyHeldFire(g,join(out,'held-fire'));
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
  }

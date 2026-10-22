@@ -895,4 +895,12 @@ export const DEVIATIONS: Deviation[] = [
       'and attack steps remain independent. Old peers/fixtures retain their original initialization. '+
       'Restored v2 worlds keep their actual saved wave, earned allocations, vitals and inventory.',
   },
+  {
+    id:'HELD_FIREARMS',file:'local/WeaponAccess.ts, Gamepad.ts, ModernFeatures.ts; electron/lan.ts',
+    description:'Optional held-fire-v1 lets firearms repeat at their existing cooldown while keyboard '+
+      'or pad fire stays down, without waiting for the original AutoFire unlock. Charged grenades and '+
+      'press-driven placement/detonation retain their original controls. Consume original input latches '+
+      'and keep legacy negotiated weapon behavior. Merge per-poll pad key requests before reconciliation '+
+      'so a second idle controller cannot release the active controller in Single player.',
+  },
 ];

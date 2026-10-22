@@ -103,6 +103,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   const now=opts.now??(()=>performance.now());
   const cancelHolds=(slot:0|1):void=>{for(const value of Object.values(holds[slot]))if(value)setBindingProgress(value.world,value.index,undefined);holds[slot]={};};
   const pushedByPad = new Set<number>();
+  const wantedByPads = new Map<number,boolean>();
   // DYNAMIC_VIEWPORT: the cursor lives in STAGE space (engine mouse coords); menus are centred on the grown stage,
   // so the roam range is the live stage, not the authored 640x480 (identity when there is no presenter).
   const stageBounds = (): { w: number; h: number } => (opts.presenter ? { w: opts.presenter.stageW, h: opts.presenter.stageH } : { w: STAGE_W, h: STAGE_H });
@@ -155,6 +156,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
 
   const releaseAll = (): void => {
     cancelHolds(0);cancelHolds(1);
+    wantedByPads.clear();
     for (const vk of [...pushedByPad]) {
       if (Key.isDown(vk)) Key._up(vk);
       pushedByPad.delete(vk);
@@ -168,11 +170,14 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   const onBlur=():void=>releaseAll();
   if(typeof window!=='undefined')window.addEventListener('blur',onBlur);
 
-  /** Reconcile one wanted key state with Key, never fighting the physical keyboard. */
+  /** Multiple connected pads can drive one player. Merge before changing any key. */
   const setKey = (slotLatch: { mKeycode: number } | undefined, want: boolean): void => {
     const vk = slotLatch?.mKeycode;
     if (typeof vk !== 'number' || !(vk >= 0 && vk <= 255)) return;
-    const is = Key.isDown(vk);
+    wantedByPads.set(vk,want||!!wantedByPads.get(vk));
+  };
+  const flushKeys=():void=>{for(const vk of new Set([...wantedByPads.keys(),...pushedByPad])){
+    const want=!!wantedByPads.get(vk),is = Key.isDown(vk);
     if (want && !is) {
       Key._down(vk);
       pushedByPad.add(vk);
@@ -182,7 +187,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     }
     // want && is && !pushedByPad: the physical keyboard holds it - leave it be. A keyboard _up while the pad still
     // wants it is picked up by the next poll (want && !is -> _down again); self-healing after Key._clear() too.
-  };
+  }};
 
   const mapPad = (slot: 0 | 1, p: PadPoll,batch:object): boolean => {
     for (const b of p.down) held[slot].add(b);
@@ -353,8 +358,10 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
         overlayDismissed = true;
         dismissAudioOverlay();
       }
+      wantedByPads.clear();
       const batch={},cursorReady=mapPad(0, p0,batch);
       mapPad(1, p1,batch);
+      flushKeys();
       if(cursorReady)moveCursor(p0);
     },
     status(): GamepadStatus {

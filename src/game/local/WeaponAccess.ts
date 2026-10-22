@@ -1,6 +1,7 @@
 // Selection may inspect an unlocked empty gun; emission still uses its actual ammunition.
 import {CSound,Thing} from '../packages.ts';
 import {hasFeature} from './ModernFeatures.ts';
+const heldFireWeapons=new Set(['pistol','uzi','shotgun','railgun','rocket','devastator']);
 function selectable(player:any,fn:()=>any):any{
  const saved:Array<{gun:any;own:PropertyDescriptor|undefined}>=[];
  for(const entry of player.mWeaponList??[])if(entry.mActive&&entry.mThing){
@@ -28,7 +29,14 @@ export function installWeaponAccess():void{
     return;
    }
   }
-  const ammo=this.mAmmo,detonating=this.mNameID==='chargepack'&&!!this.mDetonate,result=update.call(this,key);
+  let firingKey=key;
+  if(hasFeature(this.mWorld,'held-fire-v1')&&heldFireWeapons.has(this.mNameID)){
+   // Consume the real edge latch, but let a held firearm try again at its normal
+   // cooldown. Do not mutate mAuto or the charged/release/placement controls.
+   firingKey=Object.create(key);
+   firingKey.IsPressed=()=>{const pressed=key.IsPressed();return key.IsDown()||pressed;};
+  }
+  const ammo=this.mAmmo,detonating=this.mNameID==='chargepack'&&!!this.mDetonate,result=update.call(this,firingKey);
   if(hasFeature(this.mWorld,'empty-weapon-feedback-v1')&&this.mAmmo<=0&&(ammo>0||detonating&&!this.mDetonate)&&this.mParent.mWeapon_Current===this){
    this.mWorld.mHud.AddMessage_Critical(this.mName+' is out of ammo!');this.mParent.SelectWeapon('pistol');
   }
