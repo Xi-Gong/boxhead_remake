@@ -858,4 +858,11 @@ export const DEVIATIONS: Deviation[] = [
       'Auto/Xbox/Nintendo preference covers generic XInput IDs. The same resolved letters drive B fire, A/Y '+
       'shortcuts, X draft stats and A menu/READY. Changing layouts cancels holds and waits for button release.',
   },
+  {
+    id:'EMPTY_WEAPON_FEEDBACK',file:'local/WeaponAccess.ts, ModernFeatures.ts; local/Net/bridge.ts; electron/lan.ts',
+    description:'Optional empty-weapon-feedback-v1 depends on empty-weapons-v1 and returns to the pistol '+
+      'after the last successful finite emission. Empty weapons remain selectable and held; attempted fire '+
+      'plays the original short alert with tick-bounded repeats. Placed remote charges remain detonatable '+
+      'after reselecting. No new ammo is granted; v0.3.4 peers retain their negotiated held-empty behavior.',
+  },
 ];

@@ -1,5 +1,5 @@
 // Selection may inspect an unlocked empty gun; emission still uses its actual ammunition.
-import {Thing} from '../packages.ts';
+import {CSound,Thing} from '../packages.ts';
 import {hasFeature} from './ModernFeatures.ts';
 function selectable(player:any,fn:()=>any):any{
  const saved:Array<{gun:any;own:PropertyDescriptor|undefined}>=[];
@@ -21,9 +21,17 @@ export function installWeaponAccess():void{
    this.mWorld.mUpgrades.ApplyUpgrade_Weapon(this);
    if(this.WeaponEmpty()){
     this.mFire=false;this.mFireRateCount=Math.max(0,this.mFireRateCount-1);
-    key?.IsPressed?.();key?.IsReleased?.();return;
+    const pressed=key?.IsPressed?.();key?.IsReleased?.();
+    if(hasFeature(this.mWorld,'empty-weapon-feedback-v1')&&(pressed||key?.IsDown?.())&&(pressed||!this.mFireRateCount)){
+     CSound.mSamples.Click.PlaySound();this.mFireRateCount=10;
+    }
+    return;
    }
   }
-  return update.call(this,key);
+  const ammo=this.mAmmo,detonating=this.mNameID==='chargepack'&&!!this.mDetonate,result=update.call(this,key);
+  if(hasFeature(this.mWorld,'empty-weapon-feedback-v1')&&this.mAmmo<=0&&(ammo>0||detonating&&!this.mDetonate)&&this.mParent.mWeapon_Current===this){
+   this.mWorld.mHud.AddMessage_Critical(this.mName+' is out of ammo!');this.mParent.SelectWeapon('pistol');
+  }
+  return result;
  };
 }

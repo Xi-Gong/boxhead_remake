@@ -7,6 +7,13 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([[],['empty-weapon-feedback-v1'],['empty-weapons-v1'],['empty-weapons-v1','empty-weapon-feedback-v1']].map(optional=>({optional})))('negotiates empty feedback only with selectable-empty support ($optional)',({optional})=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  const base=['combat-pve-v2','combat-pve-v3','draft-ready-v1','tiered-growth-v1','clearable-waves-v1','enemy-variants-v1','wave-draft-v1','timed-waves-v1','endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1'];
+  try{lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features:[...base,...optional]});b.phase='setup';b.startGame(false);const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.features.includes('empty-weapon-feedback-v1')).toBe(optional.length===2);
+   if(optional.length===2){b.session={startOpts:{cfg:start.cfg}}as any;lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features:[...base,'empty-weapons-v1']});expect((b as any).peerSupportsRun()).toBe(false);}
+  }finally{launch.mockRestore();CMain.mSaveData=previous;b.session=null;}
+ });
  it.each([false,true])('negotiates v3 only for a capable peer (%s), and refuses incompatible reconnects',simple=>{
   const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;
   const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});

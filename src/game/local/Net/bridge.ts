@@ -428,7 +428,7 @@ class LanBridge {
       this.peerCombat = Array.isArray(msg.features) && msg.features.includes('combat-pve-v2');
       this.peerSimpleCombat = Array.isArray(msg.features) && msg.features.includes('combat-pve-v3');
       this.peerFeatures=MODERN_FEATURES.filter(f=>Array.isArray(msg.features)&&msg.features.includes(f));
-      if(!this.peerFeatures.includes('empty-weapons-v1'))this.peerFeatures=this.peerFeatures.filter(f=>f!=='weapon-bindings-v1');
+      if(!this.peerFeatures.includes('empty-weapons-v1'))this.peerFeatures=this.peerFeatures.filter(f=>f!=='weapon-bindings-v1'&&f!=='empty-weapon-feedback-v1');
       this.peerBossWaves = Array.isArray(msg.features) && msg.features.includes('boss-waves-v1');
       this.peerBossEncounters = Array.isArray(msg.features) && msg.features.includes('boss-encounters-v1');
       this.peerTieredGrowth = Array.isArray(msg.features) && msg.features.includes('tiered-growth-v1');
