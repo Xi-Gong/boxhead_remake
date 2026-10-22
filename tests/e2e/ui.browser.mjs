@@ -209,7 +209,8 @@ await runGroup('options', async () => {
   check('CLOSE hides the window', (await g.expr(`${W}._visible`)) === false);
   await g.clickClip(`${S}.mcSubScreen.mcLevel_Selection.mcLevelIcons`);
   check('room starts', await g.waitExpr("g.state()==='State_RunWorld' && m.mcWorld && m.mcWorld.mLoaded", 60000));
-  check('Expert: level 20, x30; Slow: 12.5 ticks/s', eq(await g.expr('[m.mcWorld.mUpgrades.mLevelIndex, m.mcWorld.mUpgrades.mMultiplierIndex, P.CMain.mFPS]'), [20, 30, 12.5]));
+  const exactDifficulty=await g.expr('m.mcWorld.mUpgrades.features?.includes("difficulty-waves-v1")');
+  check(exactDifficulty?'Expert: selected Wave 1, x1; Slow: 12.5 ticks/s':'Legacy Expert: level 20, x30; Slow: 12.5 ticks/s', eq(await g.expr('[m.mcWorld.mUpgrades.mLevelIndex, m.mcWorld.mUpgrades.mMultiplierIndex, P.CMain.mFPS]'), exactDifficulty?[1,1,12.5]:[20,30,12.5]));
   const t1 = await g.expr('m.mcWorld.mTick');
   await g.page.waitForTimeout(2000);
   const rate = ((await g.expr('m.mcWorld.mTick')) - t1) / 2;
