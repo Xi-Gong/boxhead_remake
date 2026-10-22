@@ -1,6 +1,7 @@
 import {CMain,Thing,World} from '../packages.ts';
 import {difficultyIndex} from './BalanceRules.ts';
 import {netSession} from './Net/NetSession.ts';
+import {hasFeature} from './ModernFeatures.ts';
 import {timedWave,timedWavesConfigured,livingWavePlayers} from './TimedWaves.ts';
 import {CLEAR_WAVES_RULE,clearWaveKeys,newClearWave} from './ClearWaveRules.ts';
 const classic=new WeakSet<object>();
@@ -34,7 +35,7 @@ export function installClearWaves():void{
   };
   u.Process=function(this:any):any{
     const w=this.mWorld,state=timedWave(w),c=state?.clear;
-    if(c&&state.phase==='combat'&&c.killedZombies>=c.zombies&&c.killedDevils>=c.devils&&w.mLoaded&&!w.mCompleteState&&livingWavePlayers(w).length){this.FinishTimedWave();return;}
+    if(c&&state.phase==='combat'&&c.killedZombies>=c.zombies&&c.killedDevils>=c.devils&&w.mLoaded&&!w.mCompleteState&&livingWavePlayers(w).length){const early=state.remainingTicks>0&&hasFeature(w,'clear-rewards-v1');this.FinishTimedWave(early?2:1,early?'clear':'survived');return;}
     return process.call(this);
   };
   const world=World.CWorld.prototype as any;

@@ -27,7 +27,7 @@ it('reserves pending arrivals and stops at the exact family budget without banki
  for(let i=0;i<100;i++)w.mUpgrades.Process();expect(c.emittedZombies).toBe(1);expect(s.warnings).toHaveLength(0);g.quit();
 });
 it('finishes early only after all real kills, deduplicates credit and gives one ordinary draft',()=>{
- const g=createHeadlessGame(),w=g.world(),s=timedWave(w)!,c=s.clear!;c.zombies=1;c.devils=0;
+ const g=createHeadlessGame({classicFeatures:['clear-rewards-v1']}),w=g.world(),s=timedWave(w)!,c=s.clear!;c.zombies=1;c.devils=0;
  const e:any=new Thing.Creature.CThing_Creature_Zombie(g.players()[0].mPosition.Clone());w.mThing_Collection.AddThing(e);e.Process_Init();
  e.mLife=0;e.lanFatalSlot=0;w.LogKill(e);w.LogKill(e);expect(c.killedZombies).toBe(1);expect(remainingEnemies(w).zombies).toBe(0);
  const xp=w.mUpgrades.lanGrowth.players[0].xp;w.mUpgrades.Process();expect(s.phase).toBe('draft');

@@ -7,6 +7,8 @@ import {combatWorld,simplifiedWorld,passiveBonuses,restoredSupply,replenishedAmm
 import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {percentStats,statPercent} from './PercentStats.ts';
+import {hasFeature} from './ModernFeatures.ts';
+import type {DraftOutcome} from './WaveDraftRules.ts';
 import {syncVitals,playerMaximum,playerArmorMaximum} from './SurvivalRules.ts';
 import {takeDraftChoice,draftSampleBits} from './WaveDraftInput.ts';
 import {durabilityEnabled,durabilityMaximum,syncDurability,enchantPowerEnabled,enchantmentDamage} from './EnchantmentRules.ts';
@@ -65,13 +67,13 @@ function heldBits(p:any,playerIndex=0,consumeTap=false):number {
   },0);
   return consumeTap?draftSampleBits(p?.mWorld,bits,pressed):bits;
 }
-export function beginWaveDraft(world:any,multiplier=1):void {
+export function beginWaveDraft(world:any,multiplier=1,outcome?:DraftOutcome):void {
   const state=waveDraft(world),timed=timedWave(world);if(!state||!timed||timed.phase==='draft')return;
   clearWaveCombat(world);timed.phase='draft';
   const count=World.CWorld.mGameMode==='Single'?1:2,indices=Array.from({length:count},(_,i)=>i);
   // Discard battle latches, while retaining held flags for the entry release guard.
   for(const i of indices)heldBits(player(world,i),i,true);
-  state.round={wave:world.mUpgrades.mLevelIndex,remainingTicks:Math.ceil(CMain.mFPS*12),multiplier,
+  state.round={...(hasFeature(world,'clear-rewards-v1')?{outcome:outcome??(multiplier===2?'boss':'survived')}:{}),wave:world.mUpgrades.mLevelIndex,remainingTicks:Math.ceil(CMain.mFPS*12),multiplier,
     ...(draftReadyConfigured()?{readyRule:DRAFT_READY_RULE,remainingTicks:0}:{}),
     offers:indices.map(i=>rewardOffers(player(world,i))),selected:indices.map(()=>0),confirmed:indices.map(()=>false),
     armed:indices.map(i=>!(heldBits(player(world,i),i)&16)),previousBits:indices.map(i=>heldBits(player(world,i),i))};
@@ -131,8 +133,8 @@ export function installWaveDraft():void {
   const world=World.CWorld.prototype as any,init=world.InitFinished;
   world.InitFinished=function(this:any):any{const value=init.call(this);initializeWaveDraft(this);return value;};
   const u=World.CUpgrades.prototype as any,finish=u.FinishTimedWave,process=u.Process;
-  u.FinishTimedWave=function(this:any,multiplier=1):any{
-    if(waveDraft(this.mWorld))return beginWaveDraft(this.mWorld,multiplier);return finish.call(this,multiplier);
+  u.FinishTimedWave=function(this:any,multiplier=1,outcome?:DraftOutcome):any{
+    if(waveDraft(this.mWorld))return beginWaveDraft(this.mWorld,multiplier,outcome);return finish.call(this,multiplier);
   };
   u.Process=function(this:any):any{
     if(timedWave(this.mWorld)?.phase==='draft')return processWaveDraft(this.mWorld);return process.call(this);

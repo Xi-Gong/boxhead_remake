@@ -105,7 +105,7 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
  view.backdrop._visible=view.clip._visible=!world.mHud.mcScreenPause;
  const size=`${world.mScreenSize.x},${world.mScreenSize.y}`;
  if(size!==view.size){view.backdrop.clear();view.backdrop.beginFill(0x23231f,28);view.backdrop.moveTo(0,0);view.backdrop.lineTo(world.mScreenSize.x,0);view.backdrop.lineTo(world.mScreenSize.x,world.mScreenSize.y);view.backdrop.lineTo(0,world.mScreenSize.y);view.backdrop.lineTo(0,0);view.backdrop.endFill();view.size=size;}
- view.clip._Title.text=round.multiplier===2?'BOSS DOWN!  DOUBLE REWARD':'WAVE '+round.wave+' CLEARED!';
+ view.clip._Title.text=round.outcome==='clear'?'EARLY CLEAR!  DOUBLE REWARD':round.outcome==='survived'?'WAVE '+round.wave+' SURVIVED':round.multiplier===2?'BOSS DOWN!  DOUBLE REWARD':'WAVE '+round.wave+' CLEARED!';
  const partner=session?(round.confirmed[1-session.role]?'PARTNER READY':'PARTNER IS CHOOSING'):'';
  const stats=session?session.confirmedPlayerStats:capturePlayerStats(world),open=indices.map(i=>statsOpen(world,i));
  label(view.clip._Controls,`MOVE: SELECT   A: READY   X / ${indices.map(statsKeyLabel).join(' / ')}: ${open.some(Boolean)?'BACK TO UPGRADES':'VIEW STATS'}`,12);
@@ -133,7 +133,7 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
   const shortcuts=`A: ${s?.bindings?.A?.toUpperCase()??'--'} / Y: ${s?.bindings?.Y?.toUpperCase()??'--'}`;
   if(side._Stats._Sources)side._Stats._Sources.text=s?.percentages?'ADDITIVE % / LEVEL + CHOICES':`${shortcuts}\nBUILD: DMG ${b.damage} / HP ${b.health} / SHIELD ${b.armor}`;
   setButtonLabel(side._Stats._Bind,`CHANGE KEY: ${statsKeyLabel(index)} / PAD: X`);
-  side._Hint.text=opened?(statsBindingHint(world)||(s?.percentages?shortcuts:'' )||(indices.length===2?`${shortcuts} / END ${b.endurance??0}${s?.enchantDamage?` / PWR ${b.enchantPower??0}`:''}`:`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}${s?.enchantDamage?` / POWER ${b.enchantPower??0}`:''}`)):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?'EVERY BENEFIT IS DOUBLED':'SELECT A CARD, THEN READY';
+  side._Hint.text=opened?(statsBindingHint(world)||(s?.percentages?shortcuts:'' )||(indices.length===2?`${shortcuts} / END ${b.endurance??0}${s?.enchantDamage?` / PWR ${b.enchantPower??0}`:''}`:`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}${s?.enchantDamage?` / POWER ${b.enchantPower??0}`:''}`)):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?(round.outcome?'DOUBLE GAINS / STAT CAPS APPLY':'EVERY BENEFIT IS DOUBLED'):'SELECT A CARD, THEN READY';
   side._Hint.textColor=ready&&!opened?GREEN:MUTED;
   side._Ready._visible=!opened;setButtonLabel(side._Ready,ready?'READY! / WAITING':`READY / ${REWARD_LABELS[round.offers[index]![round.selected[index]!]!]}`);side._Ready.enabled=!ready;side._Ready._alpha=ready?70:100;
  }

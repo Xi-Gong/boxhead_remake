@@ -921,4 +921,11 @@ export const DEVIATIONS: Deviation[] = [
       'Store allocations in the existing snapshot graph; capture percentages as confirmed LAN metadata. '+
       'Old v2 conversion never heals, refills ammunition or revives depleted enchantment.',
   },
+  {
+    id:'EARLY_CLEAR_BUILD_REWARD',file:'local/ClearWaves.ts, WaveDraft.ts, WaveDraftRules.ts, DraftWindow.ts; electron/lan.ts',
+    description:'Optional clear-rewards-v1 doubles the perk for clearing the actual finite objective '+
+      'before its deadline. Surviving the clock grants one perk with no unearned kill XP; Boss kills '+
+      'remain double. Optional snapshot-owned draft outcome distinguishes clear/survival/Boss and '+
+      'persists selection and multiplier across restore. Existing reward-wave commit guards remain.',
+  },
 ];

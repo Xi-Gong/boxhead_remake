@@ -108,7 +108,7 @@ export function installBossWaves():void{
     const w=this.mWorld,boss=timedWave(w)?.boss;
     if(boss){
       syncBoss(w,boss);
-      if(boss.defeated&&w.mLoaded&&!w.mCompleteState&&livingWavePlayers(w).length){this.FinishTimedWave(2);return;}
+      if(boss.defeated&&w.mLoaded&&!w.mCompleteState&&livingWavePlayers(w).length){this.FinishTimedWave(2,'boss');return;}
     }return process.call(this);
   };
   const collection=Thing.CThing_Collection.prototype as any,add=collection.AddThing;

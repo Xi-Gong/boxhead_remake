@@ -3,7 +3,9 @@ export const WAVE_DRAFT_RULE='wave-draft-v1';
 export const DRAFT_READY_RULE='draft-ready-v1';
 export type Reward='damage'|'health'|'armor'|'capacity'|'heal'|'ammo'|'haste'|'mobility'|'penetration'|'scavenging'|'endurance'|'enchantPower'|'dodge';
 export interface WaveBonuses {damage:number;health:number;armor:number;capacity:number;haste?:number;mobility?:number;penetration?:number;scavenging?:number;endurance?:number;enchantPower?:number;dodge?:number}
+export type DraftOutcome='clear'|'boss'|'survived';
 export interface DraftRound {
+  outcome?:DraftOutcome;
   readyRule?:typeof DRAFT_READY_RULE;
   wave:number;remainingTicks:number;multiplier:number;
   offers:Reward[][];selected:number[];confirmed:boolean[];armed:boolean[];previousBits:number[];
