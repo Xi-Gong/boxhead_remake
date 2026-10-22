@@ -1,36 +1,31 @@
-# v0.3.5 revised HUD acceptance
+# v0.3.5 compact weapon-name spacing
 
-This is the current v0.3.5 HUD revision requested after the initial release. It supersedes the [initial acceptance](initial-README.md) and [initial publication receipt](initial-publication.json); the previous EXE remains in the local v0.3.5-initial archive. The existing release URL is reused.
+This small display revision supersedes the [previous HUD revision](previous-hud-README.md). Its complete functional baseline and publication receipt remain separately preserved; the same release URL is reused.
 
-Runtime source freeze: **1b0359f**. Renderer: **dist/bundle/main-CjjAT_Bz.js**. Package, lockfile, asar and PE versions are **0.3.5**. Later changes concern documentation and publication evidence.
+Runtime source: **6648700**. Renderer: **dist/bundle/main-aVVqC9Oi.js**. Package, lockfile, asar and PE remain **0.3.5**. Later commits contain QA/documentation and the publication receipt.
 
-## Visible changes
+## Change
 
-- Restore blue armor over the original green health clip, retaining its authored masks and right-to-left fill animation. Full armor covers health, partial armor reveals it, and empty armor hides. LAN armor still reads confirmed values. Armor maxima, full crate refills, damage absorption and saves are unchanged.
-- Native Boss bars remain short (**36 logical pixels**) and now match the authored player's HP height, normally **7.5**. Raised edges stay inside the strip. Historical Boss fixtures retain their original geometry.
-- Weapon shortcut letters move out by another two logical pixels. Actual Canvas ink gaps are **5 / 5 / 4 / 5 pixels** for pistol, empty UZI, shotgun and the inherited large-magazine railgun fixture. Enchantment remains **30×3.5**, no wider than HP and at most half its height.
+Without enchantment, weapon names return to the exact authored y=-65.9 position. With active durability they move down 3.6 logical pixels from the previous revision. Text-box-to-purple spacing is 0.5 pixels; purple-to-health spacing is 1 pixel. Binding/progress displays follow the same-frame position. Blue armor overlays, health/Boss/enchantment sizes and horizontal shortcut spacing are preserved. LAN continues to read confirmed durability. No simulation, protocol, save or mechanical port changes.
 
-## Verification
+## Simplified acceptance requested by the user
 
-All **25 required functional gate groups** passed against the exact new asar: browser UI/audio, draft stats, candidate UI, native balance, browser/Electron/packaged play, historical v012/v019/v020/v023/v024/typing/LAN UI/retry/network entries, delayed packaged LAN at 30/60/100 ms, Electron/packaged smoke, native controls, old-save migration and actual portable launch.
+- **7/7 focused HUD tests**: unchanged health/armor geometry, compact active spacing, original inactive position, weapon switches, depletion and repeated updates.
+- Full build and its **three typechecks** pass.
+- One headless Chrome game checks normal/enchanted/normal at **640×480, 960×540, 480×720**, with actual blue/purple pixels, geometry and real menu/pause input.
+- The actual new portable EXE passes hidden startup, isolated save/continue, 31 decoded audio assets and the same focused spacing/pixel checks. Its full extracted asar matches the validated build; all **70 packaged files** match the fresh build byte-for-byte.
+- Four affected combat README images were recaptured from the final production renderer and directly reviewed at 640-pixel width. Original PNG links remain. Menu, draft, stats and LAN images retain the previous accepted build; they show unchanged surfaces. Prepared scenes are illustrative, not balance evidence.
 
-Across the complete serial Vitest run and the unchanged permitted-network rerun, **1874 tests passed, 0 remain failed, and 75 were not executed / 1949 total**. The raw sandbox run had 1865 passes, nine localhost failures and two EACCES errors; its two TCP/UDP suites then passed all 22 original assertions with networking permitted. The aggregate replaces those exact test identities rather than double-counting passes. Both raw reports remain archived; this is **not described as a single clean invocation**. The 75 not executed comprise 71 pre-existing source/opt-in conditions and four excluded mixed-explosion stress cases. No assertion was removed or skipped to conceal a failure.
+The full Vitest, LAN, balance, historical and standalone Electron/unpacked suites were **not rerun** for this spacing-only revision. Their prior baseline is linked above and is not represented as current execution. No stress or performance benchmarks ran. The first unit attempt exposed hold-progress overlap and was fixed by preserving wrapper order; an initial localhost service isolation failure was resolved without changing assertions. See the [evidence ledger](evidence.json).
 
-All three typechecks, full build and static audit passed. The **117 mechanical ports remain unchanged**. The 12 armor stock/viewport combinations verify actual blue/green pixels and identical health/armor bounds at 640×480, 960×540 and 480×720; pause/resume and QUIT use real input. Final candidate/portable checks combine the restored overlay, endurance, power cards, A/Y bindings and the three native Boss health fractions. LAN gates compare complete gameplay and ordered confirmed sound/decal identities at shared confirmed ticks and retain actual reconnect/retry checks.
-
-All **nine README images** were recaptured from the final renderer or final packaged LAN build and reviewed at a 640-pixel display width, with original PNG links retained. The combat gallery shows blue armor over green health, the compact purple strip, adjusted labels and equal-height Boss bars. Prepared positions, supplies and draft advancement illustrate features; they are not balance evidence.
-
-The accepted method combines direct screenshot review, pixel/geometry assertions and real clicks; zai was unavailable. Injected pads validate mappings, **not physical hardware**. Checks are serial, hidden and low resolution with isolated saves/ports. No foreground game, performance benchmark, extreme rendered stress or remote-machine result is claimed. Fixture failures and the sandbox network errors are retained honestly. This revision does not change simulation, growth, inventory or protocol; the earlier bounded balance comparisons remain applicable.
+The visual method is direct screenshot review plus actual Canvas pixels/geometry and real input; zai was unavailable. Runs are serial, hidden, low resolution and use isolated saves. Injected gamepads are not required for this change; no physical-controller claim is made.
 
 ## Artifacts
 
-- EXE: **101678203 bytes**, SHA256 **f2663c2d1738db91906e674aac224f40f3342fb91e1d16bbf8d87acada49796c**.
-- Complete asar SHA256: **957ed5f97f66757f9f3371a8eada40a2d13a3ce21f1173cd9a747d0627206b09**.
-- All **70 built files** match byte-for-byte.
-- External build: C:/Users/royxg/boxhead-build/v035-revision-20261022; isolated stage: release/v035-revision.
-- Portable copies: ignored release/ and C:/Users/royxg/boxhead-exe-archive/. Binaries are not committed.
-- **381 raw evidence files**, with a SHA256 manifest, archived at C:/Users/royxg/boxhead-exe-archive/v0.3.5-revision-verification; isolated profiles are excluded.
+- EXE: **101677110 bytes**; SHA256 **a6f542b361e2f0b9593341378a701d7778e397f8d2f61a314e691c367a109eaa**.
+- Complete asar SHA256: **10b01afaed4fd99197bc72a7a3dbc4786b0dcc64e3084d4e549e0bfe5ac16a08**.
+- External build: C:/Users/royxg/boxhead-build/v035-name-spacing-20261022.
+- Portable copies: ignored release/ and C:/Users/royxg/boxhead-exe-archive/. Previous f2663c2d… EXE retained in v0.3.5-hud-revision/. No binary is committed.
+- Raw reports/screenshots/failure notes and SHA256 manifest: C:/Users/royxg/boxhead-exe-archive/v0.3.5-name-spacing-verification.
 
-See the [evidence ledger](evidence.json), English [release notes](release-notes.md), Chinese [PARITY](../../../PARITY.md) and [publication receipt](publication.json). The revised attachments are independently downloaded and launched before the final annotated tag is moved to the latest receipt commit.
-
-The revised EXE and checksum attachment were independently downloaded from the formal release. Size, SHA256, GitHub digest, PE/package versions and the complete extracted asar match acceptance. The downloaded EXE passed save/continue, audio and the controls/power/HUD scenario, including the restored armor overlay and 36×7.5 Boss bars. See the [updated publication receipt](publication.json). The final annotated tag update follows this receipt commit; the prior receipt remains available separately.
+See [English release notes](release-notes.md), [PARITY](../../../PARITY.md), and the [publication receipt](publication.json). The updated assets are independently downloaded and launched before the final annotated tag moves to the latest receipt commit.

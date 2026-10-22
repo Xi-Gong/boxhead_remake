@@ -17,7 +17,7 @@
 ## 快速开始
 
 **Windows 便携版：** 在 [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest) 下载单文件 exe，双击即可游玩。
-**[v0.3.5正式版](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** 修正手柄字母对应、属性查看后误确认、最后一发回手枪和空弹提示，新增个人附魔威力成长。修订版下载恢复蓝甲叠加绿血，原生Boss血条与玩家血条等高，绑定字母与枪名稍拉开间距。见[发行验证记录](docs/verification/v0.3.5/README.md)。
+**[v0.3.5正式版](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** 修正手柄字母对应、属性查看后误确认、最后一发回手枪和空弹提示，新增个人附魔威力成长。修订版下载恢复蓝甲叠加绿血，原生Boss血条与玩家血条等高，绑定字母与枪名稍拉开间距。枪名现紧贴血条或生效中的附魔条，无附魔时恢复原版位置。见[发行验证记录](docs/verification/v0.3.5/README.md)。
 存档与设置统一保存在 `%USERPROFILE%\.boxhead`。
 
 **从源码运行：**
@@ -30,7 +30,7 @@ npm run dist        # Windows 便携版：release/Boxhead 2Play Rooms-<版本>-p
 
 首次打包会下载工具链；需要代理时设置 `NODE_USE_ENV_PROXY=1`。
 
-<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="v0.3.5修订版战斗：A/Y 绑定、蓝甲叠加绿血及紧凑附魔耐久" width="640"></a></p>
+<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="v0.3.5修订版战斗：紧凑枪名间距、A/Y 绑定、蓝甲叠加绿血及附魔耐久" width="640"></a></p>
 
 ## 操作
 

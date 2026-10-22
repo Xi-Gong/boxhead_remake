@@ -1,5 +1,11 @@
 # 🎮 Follow the letters on your pad
 
+## 🎨 Compact weapon-name spacing
+
+- Restore the original weapon-name position when enchantment is absent. Active enchantment uses tighter spacing above its strip.
+- Preserve the blue armor overlay, equal-height Boss bars and A/Y label gap. Refresh the four affected combat screenshots and rebuild the portable download.
+- This small display revision uses focused HUD checks, a full build and actual portable startup; the earlier full functional baseline is recorded separately.
+
 ## 🎨 Revised v0.3.5 HUD
 
 - Restore **blue armor over the original green health bar**. Full armor covers it; partial armor reveals the remaining health. Armor values and full crate refills are unchanged.
@@ -29,6 +35,6 @@
 
 ## 🖼️ Verification and current screenshots
 
-Both READMEs refresh the running-game gallery and show the saved Nintendo layout. Release acceptance includes serial functional tests, three viewport sizes, real menu/dropdown clicks, injected controller mappings, delayed packaged LAN and actual portable launches. See the [verification record](https://github.com/Xi-Gong/boxhead_remake/blob/v0.3.5/docs/verification/v0.3.5/README.md) for exact results and hardware limitations.
+The latest revision refreshes four combat images in both READMEs. It passes seven focused HUD tests, three viewport shapes, Canvas pixel/geometry checks, real menu/pause inputs, full build/typechecks and actual portable startup. The earlier full functional/LAN baseline and unchanged menu/stat/controller images remain separately documented; those suites were not repeated for this spacing-only change. See the [verification record](https://github.com/Xi-Gong/boxhead_remake/blob/v0.3.5/docs/verification/v0.3.5/README.md) for exact results and hardware limitations.
 
 [PARITY details](https://github.com/Xi-Gong/boxhead_remake/blob/v0.3.5/PARITY.md) · [Full changelog](https://github.com/Xi-Gong/boxhead_remake/compare/v0.3.4...v0.3.5)

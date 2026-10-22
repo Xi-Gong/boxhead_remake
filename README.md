@@ -17,7 +17,7 @@ gamepads and LAN multiplayer. Intentional additions are documented in [PARITY.md
 ## Quick Start
 
 **Windows portable:** download the single-file exe from [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest).
-**[v0.3.5](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** fixes printed Xbox/Nintendo button letters, confirmation after stats, last-round pistol fallback and empty-fire alerts, and adds personal enchantment power growth. The revised download restores blue armor over health, matches native Boss bars to player health height and slightly widens shortcut-label spacing. See the [release verification](docs/verification/v0.3.5/README.md).
+**[v0.3.5](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** fixes printed Xbox/Nintendo button letters, confirmation after stats, last-round pistol fallback and empty-fire alerts, and adds personal enchantment power growth. The revised download restores blue armor over health, matches native Boss bars to player health height and slightly widens shortcut-label spacing. Weapon names now sit close to health or the active enchantment strip, restoring their original position without enchantment. See the [release verification](docs/verification/v0.3.5/README.md).
 Saves and settings live in `%USERPROFILE%\.boxhead`.
 
 **Run from source:**
@@ -30,7 +30,7 @@ npm run dist        # Windows portable: release/Boxhead 2Play Rooms-<version>-po
 
 Packaging downloads its toolchain on the first run; use `NODE_USE_ENV_PROXY=1` if your network requires it.
 
-<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="Revised v0.3.5 gameplay with A/Y binding, blue armor over green health and compact enchantment durability" width="640"></a></p>
+<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="v0.3.5 compact weapon-name spacing, A/Y binding, blue armor over health and enchantment durability" width="640"></a></p>
 
 ## Controls
 
