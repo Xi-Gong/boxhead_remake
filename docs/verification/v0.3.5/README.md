@@ -32,3 +32,5 @@ The accepted method combines direct screenshot review, pixel/geometry assertions
 - **381 raw evidence files**, with a SHA256 manifest, archived at C:/Users/royxg/boxhead-exe-archive/v0.3.5-revision-verification; isolated profiles are excluded.
 
 See the [evidence ledger](evidence.json), English [release notes](release-notes.md), Chinese [PARITY](../../../PARITY.md) and [publication receipt](publication.json). The revised attachments are independently downloaded and launched before the final annotated tag is moved to the latest receipt commit.
+
+The revised EXE and checksum attachment were independently downloaded from the formal release. Size, SHA256, GitHub digest, PE/package versions and the complete extracted asar match acceptance. The downloaded EXE passed save/continue, audio and the controls/power/HUD scenario, including the restored armor overlay and 36×7.5 Boss bars. See the [updated publication receipt](publication.json). The final annotated tag update follows this receipt commit; the prior receipt remains available separately.
