@@ -906,10 +906,11 @@ export const DEVIATIONS: Deviation[] = [
   {
     id:'HORDE_BALANCE',file:'local/DifficultyRules.ts, CombatEnemies.ts, CombatRules.ts, CombatPacing.ts, BossWaves.ts, TimedGrowthRules.ts; electron/lan.ts',
     description:'Optional horde-balance-v1 starts all difficulties with fragile ordinary enemies and ramps '+
-      'individual health smoothly over thirty waves. Larger finite zombie objectives and one extra native '+
+      'individual health smoothly over thirty waves. Two-hit opening pistol targets and sparse finite '+
+      'groups ramp to the larger zombie profile by wave 25. One extra native '+
       'Boss (at most four) replace health sponges; aggregate Boss HP falls. Every finite weapon receives '+
       '125% of its authored base stock (rounded up), and shotgun cooldown is 14 rather than 18 ticks. '+
-      'Reference player XP includes the larger objective; enemy damage growth retains its prior reference. '+
+      'Reference player XP follows the actual objective; enemy damage growth retains its prior reference. '+
       'Older negotiated peers keep every original health, count, ammo and cadence rule.',
   },
   {
