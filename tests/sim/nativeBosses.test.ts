@@ -4,6 +4,20 @@ import {Thing,World} from '../../src/game/packages.ts';
 import {clearWaveCombat,timedWave,attemptTimedSpawn} from '../../src/game/local/TimedWaves.ts';
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {getRandomState} from '../../src/engine/flash/rng.ts';
+import {bossHealthLayout,drawBossHealth} from '../../src/game/local/BossHealthUi.ts';
+import {DrawPrimitive} from '../../src/game/packages.ts';
+
+it('keeps the raised native Boss strip below three quarters of the authored player health height',()=>{
+ const g=createHeadlessGame(),w=g.world();try{
+  clearWaveCombat(w);w.mUpgrades.__set__mLevel(5);expect(attemptTimedSpawn(w,'Devil','boss')).toBe(true);g.tick(1);
+  const boss=timedWave(w)!.boss!.members![0]!,enemy=w.mThing_Collection.mThings[boss.id!];enemy.Move(g.players()[0].mPosition.Clone());enemy.SetState('State_GotoPlayer');
+  DrawPrimitive.XSI.CDrawPrimitive_XSI_DI.RenderStack_Process(0,Infinity);
+  const layout=bossHealthLayout(w,boss)!;expect(layout).toBeDefined();
+  const head=w.mHud.mcPlayers[0],life=head.mcLife.getBounds(head);expect(layout.width).toBe(36);expect(layout.height).toBe(5.5);
+  expect(layout.height).toBeLessThanOrEqual((life.yMax-life.yMin)*.75);expect(layout.y+layout.height+3).toBeLessThanOrEqual(layout.headTop);
+  drawBossHealth(w,timedWave(w)!.boss!,true);const bar=w._BossHealthHud._Boss0,b=bar.getBounds(bar);expect(b.yMax-b.yMin).toBe(layout.height);expect(b.xMax-b.xMin).toBe(layout.width);
+ }finally{g.quit();}
+});
 
 it('spawns only native families at high waves, with no variant bookkeeping or extra charger loot draw',()=>{
  const g=createHeadlessGame(),w=g.world();try{

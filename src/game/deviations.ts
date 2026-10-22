@@ -865,4 +865,10 @@ export const DEVIATIONS: Deviation[] = [
       'plays the original short alert with tick-bounded repeats. Placed remote charges remain detonatable '+
       'after reselecting. No new ammo is granted; v0.3.4 peers retain their negotiated held-empty behavior.',
   },
+  {
+    id:'RAISED_COMPACT_METERS',file:'local/HudMeter.ts, BossHealthUi.ts, Enchantment.ts',
+    description:'Modern native Boss strips use 36x5.5 geometry capped at three quarters of authored '+
+      'player HP height. Enchantment uses 30x3.5 capped at half HP height and no wider than HP. '+
+      'All ink, highlights and dark lower edges stay inside bounds; historic Boss fixtures retain their strips.',
+  },
 ];

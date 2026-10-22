@@ -2,6 +2,7 @@
 import {DrawPrimitive,Thing,World} from '../packages.ts';
 import {flash} from '../../engine/runtime.ts';
 import {ENCHANT_COLOR,enchantmentDamage,enchantedAmmo,enchantedWeapon,persistentWeapon,durabilityEnabled,durabilityMaximum,syncDurability,captureEnchantment,restoreEnchantment} from './EnchantmentRules.ts';
+import {raisedMeter} from './HudMeter.ts';
 import {netSession} from './Net/NetSession.ts';
 import {simplifiedWorld} from './CombatRules.ts';
 import {variantsWorld} from './EnemyVariants.ts';
@@ -140,9 +141,8 @@ export function installEnchantmentScope():void{
   const head=this.mcPlayers[p.mPlayerIndex];if(head&&durabilityEnabled(this.mWorld)){
    const value=session?stats?.enchantDurability??0:enchantedAmmo(p.mWeapon_Current),maximum=session?stats?.enchantMaximum??1:durabilityMaximum(p.mWeapon_Current);
    const bar=head._EnchantBar??head.createEmptyMovieClip('_EnchantBar',head.getNextHighestDepth());bar._visible=value>0;
-   if(value>0){const bounds=head.mcAmmo.getBounds(head),life=head.mcLife.getBounds(head);bar._x=(life.xMin+life.xMax-48)/2;bar._y=bounds.yMax+2;const ratio=value/Math.max(1,maximum);
-    if(bar._ratio!==ratio){bar.clear();bar.lineStyle(1,0x37283f,100);bar.beginFill(0x3c2c47,100);bar.moveTo(0,0);bar.lineTo(48,0);bar.lineTo(48,3);bar.lineTo(0,3);bar.lineTo(0,0);bar.endFill();
-     bar.lineStyle();bar.beginFill(ENCHANT_COLOR,100);bar.moveTo(1,1);bar.lineTo(1+46*ratio,1);bar.lineTo(1+46*ratio,2);bar.lineTo(1,2);bar.lineTo(1,1);bar.endFill();bar._ratio=ratio;}
+   if(value>0){const bounds=head.mcAmmo.getBounds(head),life=head.mcLife.getBounds(head),width=Math.min(30,life.xMax-life.xMin),height=Math.min(3.5,(life.yMax-life.yMin)/2);bar._x=(life.xMin+life.xMax-width)/2;bar._y=bounds.yMax+2;const ratio=value/Math.max(1,maximum),paint=`${width},${height},${ratio}`;
+    if(bar._paint!==paint){raisedMeter(bar,width,height,ratio,ENCHANT_COLOR,0xf2dfff,0x754498);bar._paint=paint;}
    }
   }
   return result;

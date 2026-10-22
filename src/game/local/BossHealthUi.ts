@@ -2,6 +2,8 @@
 import {bossMembers,type BossWaveState,type BossMemberState} from './TimedWaves.ts';
 import { capsule } from './UiStyle.ts';
 import {simplifiedWorld} from './CombatRules.ts';
+import {hasFeature} from './ModernFeatures.ts';
+import {raisedMeter} from './HudMeter.ts';
 
 const WIDTH = 64, HEIGHT = 7, GAP = 5;
 const paints=new WeakMap<object,{width:number;height:number;fraction:number;kind:BossMemberState['kind']}>();
@@ -20,11 +22,12 @@ export function bossHealthLayout(world: any, boss: BossMemberState | undefined) 
   // Do not pin labels to screen edges for enemies outside this camera's visible playfield.
   if (position.x < 0 || position.x > screen.x || top > screen.y ||
       top + frame.sBMD.height < 0 || left + frame.sBMD.width < 0 || left > screen.x) return;
-  const simple=simplifiedWorld(world),width=simple?boss.kind==='charger'||boss.kind==='zombie'?44:40:WIDTH,height=simple?5:HEIGHT,gap=simple?4:GAP;
+  const simple=simplifiedWorld(world),raised=hasFeature(world,'native-bosses-v1'),head=world.mHud?.mcPlayers?.[0],lifeBounds=head?.mcLife?.getBounds(head);
+  const width=raised?36:simple?boss.kind==='charger'||boss.kind==='zombie'?44:40:WIDTH,height=raised?Math.min(5.5,lifeBounds?(lifeBounds.yMax-lifeBounds.yMin)*.75:5.5):simple?5:HEIGHT,gap=simple?4:GAP;
   const x = Math.round(Math.max(2, Math.min(screen.x - width - 2, position.x - width / 2)));
   const y = Math.round(Math.max(2, top - height - gap));
   const life = Math.min(boss.maximum, boss.life);
-  return { x, y, width, height, headTop: top,
+  return { x, y, width, height, raised, headTop: top,
     fraction: Math.max(0, Math.min(1, life / boss.maximum)) };
 }
 
@@ -55,6 +58,7 @@ function paintBar(layer:any,layout:NonNullable<ReturnType<typeof bossHealthLayou
     layer.beginFill(color, alpha); capsule(layer,x,y,w,h); layer.endFill();
   };
   const accent = boss.kind === 'charger'||boss.kind==='zombie' ? 0xd5c89a : boss.kind==='butcher'?0xd99a88:boss.kind==='hunter'?0x9cd4cf:0xffae64;
+  if(layout.raised){raisedMeter(layer,width,height,layout.fraction,accent,0xffecd0,0xa45a39);paints.set(layer,{width,height,fraction:layout.fraction,kind:boss.kind});return;}
   pill(0,0,width,height,0x171a18,94);
   pill(1,1,width-2,height-2,0x534844);
   pill(1,1,Math.max(1,(width-2)*layout.fraction),height-2,accent);
