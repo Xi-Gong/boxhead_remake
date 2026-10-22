@@ -58,7 +58,7 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
   const bars=await g.expr(`(()=>{const w=m.mcWorld,layer=w._BossHealthHud;return {top:!!w._BossWaveHud,devils:w._LanGrowthHud._Wave._Devils.text,clock:w._LanGrowthHud._Wave._Clock.text,bars:[0,1].map(i=>{const b=layer['_Boss'+i],r=b?.getBounds(m._parent);return {visible:b?._visible,number:b?._Health?.text,width:r?r.xMax-r.xMin:0,height:r?r.yMax-r.yMin:0};})};})()`);
   assert.equal(bars.devils,'2');assert.match(bars.clock,/^\d+:\d{2}$/);assert(!bars.top);
   assert(bars.bars.every(b=>b.visible&&b.number===undefined&&b.width<=70&&b.height<=12));
-  if(simple)assert(bars.bars.every((b,i)=>b.width===(native?(raised?36:40):[44,40][i])&&b.height===(raised?5.5:5)));
+  if(simple){const playerHeight=await g.expr('(()=>{const h=m.mcWorld.mHud.mcPlayers[0],b=h.mcLife.getBounds(h);return b.yMax-b.yMin;})()');assert(bars.bars.every((b,i)=>b.width===(native?(raised?36:40):[44,40][i])&&b.height===(raised?playerHeight:5)));}
   (result.bars??=[]).push(bars);await g.shot(join(out,`${label}-two-bosses-${i}.png`),false);
  }
  for(let i=0;i<4;i++){

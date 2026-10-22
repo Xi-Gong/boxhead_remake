@@ -23,7 +23,7 @@ export function bossHealthLayout(world: any, boss: BossMemberState | undefined) 
   if (position.x < 0 || position.x > screen.x || top > screen.y ||
       top + frame.sBMD.height < 0 || left + frame.sBMD.width < 0 || left > screen.x) return;
   const simple=simplifiedWorld(world),raised=hasFeature(world,'native-bosses-v1'),head=world.mHud?.mcPlayers?.[0],lifeBounds=head?.mcLife?.getBounds(head);
-  const width=raised?36:simple?boss.kind==='charger'||boss.kind==='zombie'?44:40:WIDTH,height=raised?Math.min(5.5,lifeBounds?(lifeBounds.yMax-lifeBounds.yMin)*.75:5.5):simple?5:HEIGHT,gap=simple?4:GAP;
+  const width=raised?36:simple?boss.kind==='charger'||boss.kind==='zombie'?44:40:WIDTH,height=raised?(lifeBounds?lifeBounds.yMax-lifeBounds.yMin:7.5):simple?5:HEIGHT,gap=simple?4:GAP;
   const x = Math.round(Math.max(2, Math.min(screen.x - width - 2, position.x - width / 2)));
   const y = Math.round(Math.max(2, top - height - gap));
   const life = Math.min(boss.maximum, boss.life);
