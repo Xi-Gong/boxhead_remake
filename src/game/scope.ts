@@ -33,7 +33,7 @@ import { installTimedWaves } from './local/TimedWaves.ts';
 import { installTimedWaveUi } from './local/TimedWaveUi.ts';
 import { installWaveDraft } from './local/WaveDraft.ts';
 import {installCombatScope,settleCombatPlayers} from './local/Combat.ts';
-import {installModernFeatures,hasFeature} from './local/ModernFeatures.ts';
+import {installModernFeatures,hasFeature,availableFeatures} from './local/ModernFeatures.ts';
 import {installWeaponAccess} from './local/WeaponAccess.ts';
 import {installWeaponBindings} from './local/WeaponBindings.ts';
 import {installCombatPacing} from './local/CombatPacing.ts';
@@ -50,7 +50,7 @@ import { installExplosionFlash } from './local/ExplosionFlash.ts';
 import {installBalanceScope} from './local/Balance.ts';
 import { installFriendlyFire } from './local/FriendlyFire.ts';
 import { initializeLocalGrowth, localGrowthEnabled } from './local/LocalGrowth.ts';
-import { installEndlessScope } from './local/Endless.ts';
+import { installEndlessScope,endlessSelectionEnabled } from './local/Endless.ts';
 import { installEnemyVariantsScope } from './local/EnemyVariants.ts';
 
 /**
@@ -398,6 +398,13 @@ export function applyScope(): void {
     if (typeof prev !== 'function') continue;
     selectProto[m] = function (this: any): void {
       prev.call(this);
+      const options=this.mcWindow_Options,authoredHelp=options?.$kids().find((c:any)=>c.$def?.id===357);
+      if(authoredHelp){
+        const modern=this.mMode!=='DeathMatch'&&endlessSelectionEnabled()&&availableFeatures().includes('difficulty-waves-v1');
+        authoredHelp._visible=!modern;
+        if(modern&&!options._DifficultyHelp)text(options,'_DifficultyHelp',-214,-118,420,19,'Calibri',12,0x666666,false,'left','Enemy count, stats & growth. Start Wave stays as selected.');
+        if(options._DifficultyHelp)options._DifficultyHelp._visible=modern;
+      }
       if (this.mcStartWave) this.mcStartWave._visible = !(this.mcWindow_Options._visible || this.mcWindow_Controls._visible);
       this.waveInput?.refresh();
     };

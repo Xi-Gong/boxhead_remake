@@ -12,6 +12,12 @@ import type {GameConfig} from '../../src/game/local/Net/protocol.ts';
 const cfg:GameConfig={difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:0,charP2:1,
  progression:'personal-growth-v1',supplies:'armor-ammo-v1',survival:'survival-v1',loot:'supply-crates-v2',balance:'pve-balance-v1',endless:'endless-pve-v1',variants:'enemy-variants-v1',enchantment:'persistent-enchantment-v1',
  timedWaves:'timed-waves-v1',waveDraft:'wave-draft-v1',draftReady:'draft-ready-v1',tieredGrowth:'tiered-growth-v1',clearWaves:'clearable-waves-v1',combat:'combat-pve-v3',features:[...MODERN_FEATURES]};
+it('replaces only the modern options hint, keeping original legacy copy and nonoverlapping controls',()=>{
+ for(const legacy of [false,true]){const g=createHeadlessGame({menuOnly:'Select',classicFeatures:legacy?['difficulty-waves-v1']:undefined});try{
+  const s=g.main().mcScreen;s.WindowOptions_Open();const win=s.mcWindow_Options,original=win.$kids().find((c:any)=>c.$def?.id===357);expect(original._visible).toBe(legacy);
+  if(legacy)expect(win._DifficultyHelp).toBeUndefined();else{expect(win._DifficultyHelp.text).toContain('Start Wave stays as selected');const text=win._DifficultyHelp.getBounds(win),controls=win._Level_Nightmare.getBounds(win);expect(text.yMin).toBeGreaterThan(controls.yMax);expect(win._DifficultyHelp.textWidth).toBeLessThan(win._DifficultyHelp._width-4);}
+ }finally{g.quit();}}
+});
 it.each(['Single','Coop']as const)('%s honors every selected wave under all four difficulties, including one and beyond 100',mode=>{
  for(const difficulty of [0,1,2,3])for(const wave of [1,2,10,35,126]){
   const g=createHeadlessGame({mode,menuOnly:'Select'});try{

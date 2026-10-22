@@ -8,6 +8,7 @@ export async function verifyExactWaveCase(g,out,{mode='Single',difficulty=3,wave
  mkdirSync(out,{recursive:true});await g.expr(`P.CSaveData.mSharedObject.data.mMaxWaveReached=${Math.max(35,wave)}`);
  await g.clickClip(mode==='Single'?'m.mcScreen.mcSinglePlay':'m.mcScreen.mcCoopPlay');assert(await g.waitScreen('State_SelectWorld_'+mode,'Screen_SelectWorld'));
  await g.clickClip('m.mcScreen._Game_Options');assert(await g.expr('m.mcScreen.mcWindow_Options._visible'));
+ assert.equal(await g.expr('m.mcScreen.mcWindow_Options._DifficultyHelp.text'),'Enemy count, stats & growth. Start Wave stays as selected.');
  await g.clickClip('m.mcScreen.mcWindow_Options.'+['_Level_Beginner','_Level_Intermediate','_Level_Expert','_Level_Nightmare'][difficulty]);assert.equal(await g.expr('P.CMain.mSaveData.mDifficulty'),difficulty);
  await g.page.waitForTimeout(150);await g.shot(out+'/difficulty.png',false);await g.clickClip('m.mcScreen.mcWindow_Options._Button_Close');assert(await g.expr('!m.mcScreen.mcWindow_Options._visible'));
  const field=g.page.getByRole('textbox',{name:'Start wave'});await field.click();await g.page.keyboard.press('Control+A');await g.page.keyboard.type(String(wave));await g.page.keyboard.press('Enter');await g.page.keyboard.press('Tab');assert.equal(await g.expr('m.mcScreen.mcStartWave.mcValue.text'),String(wave));
