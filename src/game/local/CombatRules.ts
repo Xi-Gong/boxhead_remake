@@ -22,13 +22,14 @@ export function replenishedAmmo(world:any,ammo:number,maximum:number,added:numbe
  const next=Math.min(maximum,ammo+added);return simplifiedWorld(world)?Math.max(ammo,next):next;
 }
 export function shotgunFalloff(distance:number,range:number):number{return 1-.55*Math.max(0,Math.min(1,(distance/Math.max(.1,range)-.3)/.7));}
-export function modernWeapon(raw:any,flags:any,stats:{damage:number;capacity:number},bonus:WaveBonuses,classID:string,_fps:number){
+export function modernWeapon(raw:any,flags:any,stats:{damage:number;capacity:number},bonus:WaveBonuses,classID:string,_fps:number,horde=false){
  const factor=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;
  const damage=(raw.mDamage??0)*factor*(1+stats.damage)*(1+.08*bonus.damage)*(classID==='CThing_Weapon_Shotgun'? .65:1);
  const ammunition=flags?.InfinateAmmo?1.25:flags?.QuadAmmo?1:flags?.DoubleAmmo? .5:0;
- const capacity=raw.mTotalAmmo===999999?999999:Math.floor(raw.mTotalAmmo*(1+diminishing(ammunition+stats.capacity+.08*bonus.capacity)));
- const limits:Record<string,number>={CThing_Weapon_Pistol:5,CThing_Weapon_UZI:8,CThing_Weapon_Shotgun:2.5,CThing_Weapon_Rocket:2,CThing_Weapon_Railgun:2.5};
- const base=raw.mFireRate*(classID==='CThing_Weapon_Railgun'?3:classID==='CThing_Weapon_Shotgun'||classID==='CThing_Weapon_Rocket'?1.5:1);
+ const baseCapacity=horde?Math.ceil(raw.mTotalAmmo*1.25):raw.mTotalAmmo;
+ const capacity=raw.mTotalAmmo===999999?999999:Math.floor(baseCapacity*(1+diminishing(ammunition+stats.capacity+.08*bonus.capacity)));
+ const limits:Record<string,number>={CThing_Weapon_Pistol:5,CThing_Weapon_UZI:8,CThing_Weapon_Shotgun:horde?3.125:2.5,CThing_Weapon_Rocket:2,CThing_Weapon_Railgun:2.5};
+ const base=raw.mFireRate*(classID==='CThing_Weapon_Railgun'?3:classID==='CThing_Weapon_Shotgun'?(horde?1.2:1.5):classID==='CThing_Weapon_Rocket'?1.5:1);
  // Keep authored tick periods independent of game-speed, like the original weapons.
  const fireRate=Math.max(limits[classID]?Math.round(25/limits[classID]!):2,Math.round(base/(1+(flags?.RapidFire? .3:0)+diminishing(.06*(bonus.haste??0),.75))));
  return {damage,capacity,fireRate};

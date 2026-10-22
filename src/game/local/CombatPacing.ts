@@ -7,6 +7,7 @@ import {waveSeconds} from './TimedWaveRules.ts';
 import {combatWorld,combatState,simplifiedWorld,reinforcementLimit} from './CombatRules.ts';
 import {netSession} from './Net/NetSession.ts';
 import {variantSight} from './EnemyVariants.ts';
+import {hasFeature} from './ModernFeatures.ts';
 export interface MapPacing {area:number;entranceDistance:number;seconds:number}
 const profiles=new WeakMap<object,MapPacing>();
 export function walkDistances(world:any,starts:any[]):Map<any,number>{
@@ -27,7 +28,7 @@ export function mapPacing(world:any):MapPacing{
 }
 export function modernBudget(world:any,wave:number,difficulty:number,devils:boolean,players:number):{zombies:number;devils:number}{
  const size=world.mMap.mSize,seconds=simplifiedWorld(world)?mapPacing(world).seconds:waveSeconds(size.x,size.y);
- return combatWaveBudget(wave,seconds,difficulty,devils,players);
+ return combatWaveBudget(wave,seconds,difficulty,devils,players,hasFeature(world,'horde-balance-v1'));
 }
 export function installCombatPacing():void{
  const u=World.CUpgrades.prototype as any,level=u.__set__mLevel;
@@ -38,7 +39,7 @@ export function installCombatPacing():void{
    const profile=mapPacing(world),seconds=profile.seconds+(state.boss?30:0);state.totalTicks=state.remainingTicks=seconds*CMain.mFPS;
    state.mapPacing={...profile};
    state.entranceCursor=0;
-   const tuning=balancedWave(wave,d),limit=Math.floor(.4*Math.min(tuning.Zombie_Count,_root._quality==='LOW'?40:60));
+   const tuning=balancedWave(wave,d),limit=Math.floor((hasFeature(world,'horde-balance-v1')?.46:.4)*Math.min(tuning.Zombie_Count,_root._quality==='LOW'?40:60));
    upgrades.Level.Zombie_Count=state.boss?reinforcementLimit(world)+(state.boss.members??[state.boss]).filter((m:any)=>m.kind==='charger'||m.kind==='zombie').length:Math.max(1,limit);
    if(state.clear)Object.assign(state.clear,modernBudget(world,wave,d,cfg?.devils??!!CMain.mSaveData.__get__mDevilsActive(),World.CWorld.mGameMode==='Single'?1:2));
   }

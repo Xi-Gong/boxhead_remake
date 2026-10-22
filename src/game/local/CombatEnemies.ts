@@ -6,7 +6,7 @@ import {netSession} from './Net/NetSession.ts';
 import {capsule} from './UiStyle.ts';
 import {hasFeature} from './ModernFeatures.ts';
 import {worldDifficulty} from './Balance.ts';
-import {difficultyEnemy} from './DifficultyRules.ts';
+import {difficultyEnemy,hordeHealth} from './DifficultyRules.ts';
 export interface EnemyArmor {id:string;armor:number;maximum:number;boss:boolean}
 export function captureEnemyArmor(world:any):EnemyArmor[]{
  if(!combatWorld(world)||simplifiedWorld(world))return [];
@@ -40,10 +40,11 @@ export function installCombatEnemies():void{
   p.Process_Init=function(this:any):any{
    const result=init.call(this);if(!combatWorld(this.mWorld))return result;
    const devil=this._CLASSID_==='CThing_Creature_Devil';
-   this.mLife=this.mMaxLife=this.mMaxLife*(this.mBossKind?2:devil?2:2.5);
+   const horde=hasFeature(this.mWorld,'horde-balance-v1');
+   this.mLife=this.mMaxLife=this.mMaxLife*(horde?hordeHealth(this.mWorld.mUpgrades.mLevelIndex,devil,!!this.mBossKind):this.mBossKind?2:devil?2:2.5);
    this.mSpeed*=this.mEnemyVariant?1.1:devil?1.12:1.2;
    this.mSpeed=Math.max(this.mSpeed,devil ? .08 : this.mEnemyVariant ? .075 : .06);
-   const tuning=hasFeature(this.mWorld,'difficulty-waves-v1')?difficultyEnemy(this.mWorld.mUpgrades.mLevelIndex,worldDifficulty(this.mWorld)):undefined;
+   const tuning=hasFeature(this.mWorld,'difficulty-waves-v1')?difficultyEnemy(this.mWorld.mUpgrades.mLevelIndex,worldDifficulty(this.mWorld),horde):undefined;
    if(tuning){this.mLife=this.mMaxLife=this.mMaxLife*tuning.health;if(devil)this.mAttackDamage*=tuning.damage;else this.mDamage*=tuning.damage;}
    if(devil&&this.mBossKind==='devil'&&hasFeature(this.mWorld,'native-bosses-v1')){
     this.mNativeBossAttackStep=Math.min(.2*(this.mSpeed*25*1.5)*1.15*(tuning?.attack??1),1);

@@ -12,6 +12,7 @@ import {tieredGrowthWorld} from './TieredGrowth.ts';
 import {clearWavesWorld} from './ClearWaves.ts';
 import {combatWorld,simplifiedWorld} from './CombatRules.ts';
 import {mapPacing} from './CombatPacing.ts';
+import {hasFeature} from './ModernFeatures.ts';
 const classic=new WeakSet<object>();
 const worlds=new WeakMap<object,{difficulty:number;devils:boolean;players:number}>();
 export function setClassicEndlessFixture(main:object):void {classic.add(main);}
@@ -25,9 +26,9 @@ export function endlessSelectionEnabled():boolean {
   return netSession()?endlessConfigured():!classic.has(CMain._this)&&!classicWaveFixture(CMain._this)&&!classicGrowthFixture(CMain._this);
 }
 export function endlessWorld(world:any):boolean {return worlds.has(world);}
-export function timedWorldStartLevel(world:any,wave:number):number {
+export function timedWorldStartLevel(world:any,wave:number,horde=hasFeature(world,'horde-balance-v1')):number {
   const rule=worlds.get(world)!;
-  return timedStartLevel(wave,{...rule,seconds:waveSeconds(world.mMap.mSize.x,world.mMap.mSize.y),bosses:bossWavesConfigured(),tiered:tieredGrowthWorld(world),clearable:clearWavesWorld(world),combat:combatWorld(world),simplified:simplifiedWorld(world),combatSeconds:combatWorld(world)?mapPacing(world).seconds:undefined});
+  return timedStartLevel(wave,{...rule,horde,seconds:waveSeconds(world.mMap.mSize.x,world.mMap.mSize.y),bosses:bossWavesConfigured(),tiered:tieredGrowthWorld(world),clearable:clearWavesWorld(world),combat:combatWorld(world),simplified:simplifiedWorld(world),combatSeconds:combatWorld(world)?mapPacing(world).seconds:undefined});
 }
 // Only the current wave's immutable result is cached. Switching/replaying waves replaces it, never grows a table.
 const growthCache=new WeakMap<object,{wave:number;tiered:boolean;clearable:boolean;combat:boolean;simplified:boolean;value:{health:number;damage:number}}>();
@@ -36,7 +37,7 @@ export function worldEnemyGrowth(world:any):{health:number;damage:number} {
   const wave=world.mUpgrades.mLevelIndex;
   if(!world.mUpgrades.timedWave)return enemyGrowth(wave,rule.devils,rule.players);
   const tiered=tieredGrowthWorld(world),clearable=clearWavesWorld(world),combat=combatWorld(world),simplified=simplifiedWorld(world),cached=growthCache.get(world);if(cached?.wave===wave&&cached.tiered===tiered&&cached.clearable===clearable&&cached.combat===combat&&cached.simplified===simplified)return cached.value;
-  const excess=Math.max(0,timedWorldStartLevel(world,wave)-125),value={health:1+.02*excess,damage:1+.008*excess};
+  const excess=Math.max(0,timedWorldStartLevel(world,wave,false)-125),value={health:1+.02*excess,damage:1+.008*excess};
   growthCache.set(world,{wave,tiered,clearable,combat,simplified,value});return value;
 }
 export function installEndlessScope():void {

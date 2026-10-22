@@ -6,6 +6,7 @@ import {combatWorld,combatState,simplifiedWorld,reinforcementLimit,SIMPLE_COMBAT
 import {combatFamily,type BossKind} from './CombatRosterRules.ts';
 import {variantsWorld,variantSight,emberZones} from './EnemyVariants.ts';
 import {attemptTimedSpawn,bossMembers,livingWavePlayers,reachableSpawnCells,roomForTimedSpawn,timedSpawnRole,timedWave,timedWavesConfigured,type BossWaveState} from './TimedWaves.ts';
+import {hasFeature} from './ModernFeatures.ts';
 
 export const BOSS_WAVES_RULE='boss-waves-v1';
 export const BOSS_ENCOUNTERS_RULE='boss-encounters-v1';
@@ -82,7 +83,7 @@ export function installBossWaves():void{
         state.totalTicks+=ticks(60);state.remainingTicks=state.totalTicks;
         state.boss={kind,defeated:false,life:0,maximum:0,reinforcementTicks:ticks(2)};
         const available:BossKind[]=native?[devils?'devil':'zombie']:!devils?['charger']:simple?['charger','devil']:modern?wave>=20?['charger','priest','butcher','hunter']:wave>=15?['charger','priest','butcher']:['charger','priest']:['charger','priest'];
-        if(bossEncountersConfigured())state.boss.members=Array.from({length:bossCount(wave)},(_,i)=>({
+        if(bossEncountersConfigured())state.boss.members=Array.from({length:bossCount(wave)+(hasFeature(this.mWorld,'horde-balance-v1')?1:0)},(_,i)=>({
           kind:modern?available[(available.indexOf(kind)+i)%available.length]!:i%2===0?kind:kind==='charger'&&devils?'priest':'charger',
           defeated:false,life:0,maximum:0}));
         const members=bossMembers(state.boss);

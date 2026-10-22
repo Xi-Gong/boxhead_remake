@@ -32,7 +32,7 @@ it('retains only native zombies, chargers and devils across successful high-wave
  }finally{g.quit();}
 });
 it('uses native devil Bosses without armor and saves them without a variant marker',()=>{
- const g=createHeadlessGame(),w=g.world();try{
+ const g=createHeadlessGame({classicFeatures:['horde-balance-v1']}),w=g.world();try{
   clearWaveCombat(w);w.mUpgrades.__set__mLevel(10);
   expect(timedWave(w)!.boss!.members!.map(m=>m.kind)).toEqual(['devil']);
   expect(attemptTimedSpawn(w,'Devil','boss')).toBe(true);g.tick(1);

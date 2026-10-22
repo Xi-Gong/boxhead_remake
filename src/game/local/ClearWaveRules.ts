@@ -18,9 +18,9 @@ export function clearWaveBudget(wave:number,seconds:number,difficulty:number,dev
 export function newClearWave(wave:number,seconds:number,difficulty:number,devils:boolean,players:number):ClearWaveState{
   return {rule:CLEAR_WAVES_RULE,...clearWaveBudget(wave,seconds,difficulty,devils,players),emittedZombies:0,emittedDevils:0,killedZombies:0,killedDevils:0};
 }
-export function combatWaveBudget(wave:number,legacySeconds:number,difficulty:number,devils:boolean,players:number):{zombies:number;devils:number}{
+export function combatWaveBudget(wave:number,legacySeconds:number,difficulty:number,devils:boolean,players:number,horde=false):{zombies:number;devils:number}{
  const b=clearWaveBudget(wave,legacySeconds,difficulty,devils,players);
- return {zombies:Math.max(1,Math.floor(b.zombies*.4)),devils:b.devils?Math.max(1,Math.floor(b.devils*.4)):0};
+ return {zombies:Math.max(1,Math.floor(b.zombies*(horde?.46:.4))),devils:b.devils?Math.max(1,Math.floor(b.devils*.4)):0};
 }
 export function clearWaveKeys(family:'Zombie'|'Devil'):{total:'zombies'|'devils';emitted:'emittedZombies'|'emittedDevils';killed:'killedZombies'|'killedDevils'}{
   return family==='Zombie'?{total:'zombies',emitted:'emittedZombies',killed:'killedZombies'}:{total:'devils',emitted:'emittedDevils',killed:'killedDevils'};
