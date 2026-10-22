@@ -37,7 +37,7 @@ export function installEnchantmentScope():void{
   p.Fire=function(this:any,...args:any[]):any{
    if(!variantsWorld(this.mWorld)||!enchantedWeapon(this))return fire.apply(this,args);
    const context:Emission={weapon:this,things:[]},damage=this.mDamage;
-   if(typeof damage==='number')this.mDamage=damage*enchantmentDamage(this.mWorld);
+   if(typeof damage==='number')this.mDamage=damage*enchantmentDamage(this.mWorld,this.mParent?.mPlayerIndex??0);
    try{return emitting(this.mThing_Collection,context,()=>fire.apply(this,args));}
    finally{if(typeof damage==='number')this.mDamage=damage;for(const t of context.things)if(t.mEffect)mark(t.mEffect);}
   };

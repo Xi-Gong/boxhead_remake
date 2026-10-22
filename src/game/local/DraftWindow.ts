@@ -74,11 +74,12 @@ function rows(s:PlayerStats|undefined):[string,string][]{
   ['SHIELD',`${number(s.armor)} / ${number(s.armorMaximum)}`],['MOVEMENT',`${Math.round(s.speed/.16*100)}%`],['WEAPON',s.weapon+(keys?` [${keys}]`:'')],
   ['DMG / RATE',`${number(s.damage)} / ${s.rate.toFixed(1)}/s`],['AMMUNITION',`${ammo(s.ammo)} / ${ammo(s.capacity)}`],
   [s.simplified?'HEAL / AMMO':'PIERCE / SUPPLY',s.simplified?`+${Math.round(s.supply*100)}%`:`${Math.round(s.penetration*100)} / +${Math.round(s.supply*100)}%`],
-  [s.enchantMaximum!==undefined?'ENCHANT +15%':'ENCHANTMENT',s.enchantMaximum!==undefined?`${number(s.enchantDurability??0)} / ${number(s.enchantMaximum)}`:s.enchanted?`ACTIVE +${s.simplified?15:35}%`:'NONE']];
+  [s.enchantMaximum!==undefined?`ENCHANT +${s.enchantDamage?((s.enchantDamage-1)*100).toFixed(1):15}%`:'ENCHANTMENT',s.enchantMaximum!==undefined?`${number(s.enchantDurability??0)} / ${number(s.enchantMaximum)}`:s.enchanted?`ACTIVE +${s.simplified?15:35}%`:'NONE']];
 }
 function benefit(reward:Reward,s:PlayerStats|undefined,m:number):[string,string]{
- const percent:Record<Reward,number>={damage:8,health:s?.simplified?8:10,armor:s?.simplified?6:10,capacity:s?.previews?8:15,heal:35,ammo:35,haste:6,mobility:4,penetration:12,scavenging:10,endurance:10};
- const description:Record<Reward,string>={damage:'weapon damage',health:'max health',armor:'max shield',capacity:'ammo capacity',heal:'restore health',ammo:'restore ammo',haste:'fire-rate growth',mobility:'movement growth',penetration:'armor piercing',scavenging:'healing & ammo',endurance:'enchant endurance'};
+ if(reward==='enchantPower'){const next=s?.previews?.enchantPower?.[m-1]??s?.enchantDamage??1.15;return [`+${((next-1)*100).toFixed(1)}%`,'total enchanted bonus'];}
+ const percent:Record<Reward,number>={damage:8,health:s?.simplified?8:10,armor:s?.simplified?6:10,capacity:s?.previews?8:15,heal:35,ammo:35,haste:6,mobility:4,penetration:12,scavenging:10,endurance:10,enchantPower:0};
+ const description:Record<Reward,string>={damage:'weapon damage',health:'max health',armor:'max shield',capacity:'ammo capacity',heal:'restore health',ammo:'restore ammo',haste:'fire-rate growth',mobility:'movement growth',penetration:'armor piercing',scavenging:'healing & ammo',endurance:'enchant endurance',enchantPower:'enchanted damage'};
  return [`+${percent[reward]*m}%`,description[reward]];
 }
 function animate(view:View):void{
@@ -120,7 +121,7 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
   const shortcuts=`A: ${s?.bindings?.A?.toUpperCase()??'--'} / Y: ${s?.bindings?.Y?.toUpperCase()??'--'}`;
   if(side._Stats._Sources)side._Stats._Sources.text=`${shortcuts}\nBUILD: DMG ${b.damage} / HP ${b.health} / SHIELD ${b.armor}`;
   setButtonLabel(side._Stats._Bind,`CHANGE KEY: ${statsKeyLabel(index)} / PAD: X`);
-  side._Hint.text=opened?(statsBindingHint(world)||(indices.length===2?`${shortcuts} / END ${b.endurance??0}`:`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}`)):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?'EVERY BENEFIT IS DOUBLED':'SELECT A CARD, THEN READY';
+  side._Hint.text=opened?(statsBindingHint(world)||(indices.length===2?`${shortcuts} / END ${b.endurance??0}${s?.enchantDamage?` / PWR ${b.enchantPower??0}`:''}`:`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}${s?.enchantDamage?` / POWER ${b.enchantPower??0}`:''}`)):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?'EVERY BENEFIT IS DOUBLED':'SELECT A CARD, THEN READY';
   side._Hint.textColor=ready&&!opened?GREEN:MUTED;
   side._Ready._visible=!opened;setButtonLabel(side._Ready,ready?'READY! / WAITING':`READY / ${REWARD_LABELS[round.offers[index]![round.selected[index]!]!]}`);side._Ready.enabled=!ready;side._Ready._alpha=ready?70:100;
  }

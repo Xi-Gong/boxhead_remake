@@ -9,7 +9,13 @@ import {draftBonuses,type WaveBonuses} from './WaveDraftRules.ts';
 export const ENCHANT_COLOR=0xce8fff;
 export const ENCHANT_DAMAGE=1.35;
 export const SIMPLE_ENCHANT_DAMAGE=1.15;
-export function enchantmentDamage(world:any):number{return simplifiedWorld(world)?SIMPLE_ENCHANT_DAMAGE:ENCHANT_DAMAGE;}
+export function enchantPowerEnabled(world:any):boolean{return hasFeature(world,'enchant-power-v1')&&durabilityEnabled(world);}
+/** Growth affects the enchantment's extra damage, never the ordinary weapon or already emitted attacks. */
+export function enchantmentDamage(world:any,index=0,bonus:Readonly<WaveBonuses>=draftBonuses(world,index)):number{
+ if(!enchantPowerEnabled(world))return simplifiedWorld(world)?SIMPLE_ENCHANT_DAMAGE:ENCHANT_DAMAGE;
+ const level=world?.mUpgrades?.lanGrowth?.players[index]?.level??1,x=.01*Math.max(0,level-1)+.10*(bonus.enchantPower??0);
+ return 1+.15*(1+2*x/(2+x));
+}
 export const ENCHANTMENT_RULE='persistent-enchantment-v1';
 const classic=new WeakSet<object>();
 /** Explicit historical fixture; never changes modern defaults. */

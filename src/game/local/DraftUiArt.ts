@@ -14,13 +14,16 @@ export function actionButton(parent:any,name:string,x:number,y:number,w:number,h
  const hover=(on:boolean)=>{face.clear();frame(face,w,h,on?0xffe7d4:CREAM,on?RED:INK,2);tf.textColor=on?RED:INK;};
  mc.onRollOver=()=>{if(mc.enabled!==false)hover(true);};mc.onRollOut=()=>hover(false);mc.onDragOut=()=>hover(false);mc.useHandCursor=true;return mc;
 }
-export function rewardColor(reward:Reward):number{return reward==='armor'?BLUE:reward==='endurance'?PURPLE:reward==='health'||reward==='heal'?RED:0x2b7044;}
+export function rewardColor(reward:Reward):number{return reward==='armor'?BLUE:reward==='endurance'||reward==='enchantPower'?PURPLE:reward==='health'||reward==='heal'?RED:0x2b7044;}
 export function drawIcon(c:any,reward:Reward):void{
  const accent=rewardColor(reward);c.clear();frame(c,28,28,0xe9e3d6,INK,1.4);c.lineStyle(1.6,INK,100);
  if(reward==='health'||reward==='heal'){
   c.beginFill(0xe44935,100);c.moveTo(14,23);c.curveTo(1,14,6,8);c.curveTo(10,3,14,9);c.curveTo(18,3,22,8);c.curveTo(27,14,14,23);c.endFill();
  }else if(reward==='armor'){
   c.beginFill(0x55afd0,100);c.moveTo(14,4);c.lineTo(23,7);c.lineTo(21,18);c.lineTo(14,24);c.lineTo(7,18);c.lineTo(5,7);c.lineTo(14,4);c.endFill();c.lineStyle(1.5,0xc8f1ff,100);c.moveTo(10,9);c.lineTo(10,16);c.lineTo(14,20);
+ }else if(reward==='enchantPower'){
+  c.beginFill(0xaa76ce,100);c.moveTo(13,3);c.lineTo(21,10);c.lineTo(17,14);c.lineTo(22,21);c.lineTo(12,25);c.lineTo(7,17);c.lineTo(11,13);c.lineTo(7,9);c.lineTo(13,3);c.endFill();
+  c.lineStyle(1.4,0xf3deff,100);c.moveTo(15,8);c.lineTo(12,15);c.lineTo(17,14);c.lineTo(13,21);
  }else if(reward==='endurance'){
   c.beginFill(0xaa76ce,100);c.moveTo(14,3);c.lineTo(23,12);c.lineTo(19,23);c.lineTo(9,23);c.lineTo(5,12);c.lineTo(14,3);c.endFill();c.lineStyle(1.4,0xf3deff,100);c.moveTo(14,5);c.lineTo(11,13);c.lineTo(14,21);c.lineTo(17,13);c.lineTo(14,5);
  }else if(reward==='damage'||reward==='penetration'){

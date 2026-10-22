@@ -42,6 +42,14 @@ export async function verifyV034Candidate(g,out){
   assert.equal(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mMaxLife'),173);
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.shot(`${out}/pause.png`,false);
   assert.match(await g.expr('m.mcWorld.mHud.mcScreenPause._PersonalUpgrades._GrowthStats0.text'),/HP 173 \/ SHIELD 40/);await g.page.keyboard.press('KeyP');assert(await g.waitExpr('!m.mcWorld.mPaused'));
+  if(report.initial.features.includes('enchant-power-v1')){
+   await g.expr(`(()=>{const w=m.mcWorld;window.qaPowerBase=Object.values(w.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mDamage;w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers=[['enchantPower','armor','endurance']];})()`);
+   assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Card0._Label.text==="ENCHANT POWER"'));
+   assert.equal(await g.expr('m.mcWorld._WaveDraftHud._Player0._Card0._Benefit.text'),'+16.4%');assert.match(await g.expr('m.mcWorld._WaveDraftHud._Player0._Card0._Preview.text'),/15.0%.*16.4%/);
+   await g.page.waitForTimeout(300);await g.shot(`${out}/enchant-power.png`,false);await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===3'));
+   assert(await g.expr('m.mcWorld.mUpgrades.waveDraft.bonuses[0].enchantPower===1&&Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mDamage===window.qaPowerBase'));
+   report.powerReward=true;
+  }
   report.bosses=await g.eval(()=>{
    const P=window.__game.pkg,w=window.__game.main().mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];w.mUpgrades.AdvanceTimedWave();w.mUpgrades.__set__mLevel(25);p.Move(new P.Thing.Math.CThing_Position(11.5,8.5,0));w.TrackThing(p);w.mTrackPosition=p.mPosition.Clone();w.lTrackPosition=p.mPosition.Clone();
    const enemies=w.mUpgrades.timedWave.boss.members.map((member,i)=>{const e=new P.Thing.Creature.CThing_Creature_Devil(new P.Thing.Math.CThing_Position(8.5+i*3,11.5,0));e.mBossKind=member.kind;e.mBossSlot=i;w.mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');e.mLife=member.life=e.mMaxLife*[1,.5,.1][i];member.maximum=e.mMaxLife;w.mUpgrades.Level.mDevilCount++;return e;});

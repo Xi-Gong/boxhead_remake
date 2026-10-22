@@ -871,4 +871,12 @@ export const DEVIATIONS: Deviation[] = [
       'player HP height. Enchantment uses 30x3.5 capped at half HP height and no wider than HP. '+
       'All ink, highlights and dark lower edges stay inside bounds; historic Boss fixtures retain their strips.',
   },
+  {
+    id:'PERSONAL_ENCHANT_POWER',file:'local/EnchantmentRules.ts, Enchantment.ts, WaveDraft.ts, PlayerStats.ts, Net/bridge.ts',
+    description:'Optional enchant-power-v1 requires durability and persistent enchantment. Per-player '+
+      'level and draft points increase only the extra enchanted damage from 15% toward 45% with bounded '+
+      'diminishing returns. Scale once at emission using its owner; existing children keep damage. '+
+      'New selected-wave builds share nine stats; saved builds are never redistributed. Cards expose '+
+      'exact single/double projections and confirmed stats show the bonus and training source.',
+  },
 ];

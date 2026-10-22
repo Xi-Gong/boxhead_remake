@@ -18,6 +18,7 @@ export function rewardPreview(stats:PlayerStats|undefined,reward:Reward,m:number
  if(reward==='penetration')return `PIERCING  ${number(stats.penetration*100)}%  >  ${number(stats.previews?.penetration?.[m-1]??0)}%`;
  if(reward==='scavenging')return `SUPPLY EFFECT  +${number(stats.supply*100)}%  >  +${number(stats.previews?.scavenging?.[m-1]??0)}%`;
  if(reward==='endurance')return `ENCHANT SHOTS  ${number(stats.enchantMaximum??0)}  >  ${number(stats.previews?.endurance?.[m-1]??0)}`;
+ if(reward==='enchantPower')return `BONUS  +${((stats.enchantDamage!-1)*100).toFixed(1)}%  >  +${(((stats.previews?.enchantPower?.[m-1]??stats.enchantDamage!)-1)*100).toFixed(1)}%`;
  if(reward==='capacity')return stats.infinite?'CAPACITY  /  FINITE WEAPONS':`CAPACITY  ${ammo(stats.capacity)}  >  ${ammo(stats.previews?.capacity[m-1]??stats.capacity+Math.floor(stats.capacityBase*.15*(b.capacity+m))-Math.floor(stats.capacityBase*.15*b.capacity))}`;
  if(reward==='heal')return `HP  ${number(stats.life)}  >  ${number(Math.min(stats.maximum,stats.life+stats.maximum*.35*m*(1+stats.supply)))}`;
  return stats.infinite?'RESTORE AMMO TO FINITE WEAPONS':`AMMO  ${ammo(stats.ammo)}  >  ${ammo(Math.min(stats.capacity,stats.ammo+Math.ceil(stats.capacity*.35*m*(1+stats.supply))))}`;

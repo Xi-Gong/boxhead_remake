@@ -8,7 +8,7 @@ import {syncCombatPlayer} from './Combat.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
 import {syncVitals,playerArmorMaximum} from './SurvivalRules.ts';
 import {takeDraftChoice,draftSampleBits} from './WaveDraftInput.ts';
-import {durabilityEnabled,durabilityMaximum,syncDurability} from './EnchantmentRules.ts';
+import {durabilityEnabled,durabilityMaximum,syncDurability,enchantPowerEnabled,enchantmentDamage} from './EnchantmentRules.ts';
 import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,DRAFT_CONFIRM,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
 const classic=new WeakSet<object>();
 const classicReady=new WeakSet<object>();
@@ -22,7 +22,7 @@ export function waveDraftConfigured():boolean {
 }
 export function waveDraft(world:any):WaveDraftState|undefined{return world?.mUpgrades?.waveDraft;}
 export function initializeWaveDraft(world:any):void {
-  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world));
+  if(waveDraftConfigured())world.mUpgrades.waveDraft??=newWaveDraft(world.mUpgrades.mLevelIndex,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world),enchantPowerEnabled(world));
 }
 function player(world:any,index:number):any {
   return (Object.values(world.mThing_Collection.mPlayerThings) as any[]).find(p=>p.mPlayerIndex===index);
@@ -40,6 +40,7 @@ export function rewardOffers(p:any):Reward[] {
       return next&&(key==='capacity'?next.capacity>gun.mTotalAmmo:next.fireRate<gun.mFireRate);
     });
     const offense:Reward[]=simplifiedWorld(w)?['damage']:['damage','penetration'];if(canWeapon('haste'))offense.push('haste');
+    if(enchantPowerEnabled(w)&&enchantmentDamage(w,p.mPlayerIndex,{...b,enchantPower:(b.enchantPower??0)+1})-enchantmentDamage(w,p.mPlayerIndex,b)>1e-6)offense.push('enchantPower');
     const defense:Reward[]=['health'];if(playerArmorMaximum(p,{...b,armor:b.armor+1})>playerArmorMaximum(p,b))defense.push('armor');if(alive&&p.mLife<p.mMaxLife)defense.push('heal');
     const utility:Reward[]=['scavenging'];
     if(durabilityEnabled(w)&&weapons.some((gun:any)=>durabilityMaximum(gun,{...b,endurance:(b.endurance??0)+1})>durabilityMaximum(gun,b)))utility.push('endurance');
