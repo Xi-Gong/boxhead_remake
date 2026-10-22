@@ -14,7 +14,7 @@ export async function verifyBindingSpacing(g,out){
    const ink=x=>{for(let y=top;y<bottom;y++){const n=(y*png.width+x)*4;if(png.data[n]<110&&png.data[n+1]<110&&png.data[n+2]<110)return true;}return false;};
    let last=-1,first=-1;for(let x=Math.ceil(bounds.ammo.xMin);x<Math.floor(bounds.letter.xMin);x++)if(ink(x))last=x;
    for(let x=Math.ceil(bounds.letter.xMin);x<Math.min(bounds.letter.xMax,bounds.letter.xMin+12);x++)if(ink(x)){first=x;break;}
-   const gap=first-last-1;report.cases.push({name,ammo,key,bounds,last,first,gap});assert(last>=0&&first>last,`${name} separate visible glyphs`);assert(gap>=1&&gap<=7,`${name} gap ${gap}px`);
+   const gap=first-last-1;report.cases.push({name,ammo,key,bounds,last,first,gap});assert(last>=0&&first>last,`${name} separate visible glyphs`);assert(gap>=4&&gap<=5,`${name} slightly wider visible glyph gap: ${gap}px`);
   }
   assert.deepEqual(await g.scriptErrors(),[]);report.ok=true;
  }finally{await g.expr('(m.mcWorld.Process=window.qaSpacingProcess,delete window.qaSpacingProcess,true)').catch(()=>{});writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}

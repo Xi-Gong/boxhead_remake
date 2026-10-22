@@ -56,7 +56,7 @@ export function installWeaponBindings():void{
   // Project the laid-out text edge through the authored field/clip scales. _width already includes
   // scaling, so dividing by it made the old textWidth estimate too wide and separated the letter.
   const edge={x:field.getBounds(field).xMin+2+Math.max(0,...lines.map((line:any)=>line.x+line.width)),y:0};
-  field.localToGlobal(edge);head.globalToLocal(edge);label._x=edge.x+1;
+  field.localToGlobal(edge);head.globalToLocal(edge);label._x=edge.x+3;
   label._y=bounds.yMin+2;label.text=letters;
   const value=bindingProgress(this.mWorld,p.mPlayerIndex),bar=head._BindingProgress??head.createEmptyMovieClip('_BindingProgress',head.getNextHighestDepth());
   bar._visible=!!value&&!this.mWorld.mPaused&&!this.mWorld.mUpgrades.waveDraft?.round&&(!session||session.phase==='playing'&&!session.netPaused&&!session.pauseBarrier.pending);
