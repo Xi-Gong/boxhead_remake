@@ -1,0 +1,51 @@
+{
+  "version": "0.3.5",
+  "releaseUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5",
+  "publishedAt": "2026-10-22T02:39:17Z",
+  "verifiedAt": "2026-10-22T02:44:03.781Z",
+  "tagCommit": "c7d8cecfebd9f1cf5dc993bb59d1b41130cba3ff",
+  "annotatedTag": true,
+  "releaseId": 420251752,
+  "isDraft": false,
+  "isPrerelease": false,
+  "asset": {
+    "id": 664459725,
+    "name": "Boxhead.2Play.Rooms-0.3.5-portable.exe",
+    "url": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.5/Boxhead.2Play.Rooms-0.3.5-portable.exe",
+    "bytes": 101679002,
+    "sha256": "3dd3f2166e9cd2ae7883e50de84cf7f1f3ec548ac656c7d5b7bee8ca1b47b080",
+    "githubDigest": "sha256:3dd3f2166e9cd2ae7883e50de84cf7f1f3ec548ac656c7d5b7bee8ca1b47b080",
+    "downloadVerified": true,
+    "embeddedPEVersion": "0.3.5",
+    "embeddedPackageVersion": "0.3.5",
+    "downloadedPortableGameplaySaveAudio": true,
+    "downloadedNewControlsPowerAndHud": true
+  },
+  "checksums": {
+    "id": 664459728,
+    "name": "SHA256SUMS.txt",
+    "url": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.5/SHA256SUMS.txt",
+    "downloadVerified": true
+  },
+  "build": {
+    "source": "8ef5502fd06eccb3d44db155d4b058fe6894c00b",
+    "runtimeSourceSHA256": "42e18076cd94c5e82cf90987744280f63f2223bcbaf927de670a0a33e679c5df",
+    "asarSHA256": "56c9e8d2b73192a4a274b90799066b5ec187cd1c1247a81cae15e4e95a26cd2c",
+    "renderer": "dist/bundle/main-DfsZwiT5.js",
+    "verifiedBuiltFiles": 70
+  },
+  "validation": {
+    "fullPassed": 1874,
+    "fullFailed": 0,
+    "notExecuted": 75,
+    "finalGroups": 25,
+    "actualDownloadedPortable": true,
+    "isolatedFunctionalLan": true,
+    "readmeImages": 9
+  },
+  "publicationEvidence": {
+    "files": 19,
+    "manifestSHA256": "2b908c5180ebdea4e181cbf8e6db8d12ae6fa7ceb2be79aff4f04d8e3dd0a8cf",
+    "localArchive": "C:/Users/royxg/boxhead-exe-archive/v0.3.5-verification/publication"
+  }
+}

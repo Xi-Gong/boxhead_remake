@@ -43,3 +43,5 @@ Direct screenshot review is combined with pixel, geometry and real-click checks;
 - **538 raw evidence files (32727429 bytes)** with a SHA256 manifest are archived at `C:/Users/royxg/boxhead-exe-archive/v0.3.5-verification`, excluding isolated profiles.
 
 The compact [evidence ledger](evidence.json) binds the artifact, exact gate results, images and limitations. See the English [release notes](release-notes.md) and Chinese [PARITY](../../../PARITY.md). Publication/download verification is recorded separately after release.
+
+The [formal v0.3.5 release](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5) was published at 2026-10-22T02:39:17Z from annotated tag `c7d8cec`. Both assets were independently downloaded: file sizes, SHA256, GitHub digest, PE/package versions and checksum contents match. The downloaded portable passed gameplay, save/continue, audio and the new controls/power/HUD scenario; its complete extracted asar matches acceptance. The [publication receipt](publication.json) and 19 separately archived publication evidence files record this final verification.
