@@ -1,8 +1,8 @@
 // Serial functional release gates. Preserve raw failures; no performance or extreme stress switches.
 import {spawn} from 'node:child_process';
-import {mkdirSync,readFileSync,writeFileSync,createWriteStream} from 'node:fs';
+import {mkdirSync,readFileSync,writeFileSync,createWriteStream,statSync,copyFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {resolve,join} from 'node:path';
+import {resolve,join,dirname} from 'node:path';
 import {extractFile} from '@electron/asar';
 import {readdirSync} from 'node:fs';
 const out=resolve(process.env.BOXHEAD_QA_GATE_OUT??'generated/reports/v034/release-gates');mkdirSync(out,{recursive:true});
@@ -25,10 +25,14 @@ for(const [name,...args]of cases){
  if(report.cases.some(c=>c.name===name&&c.code===0)){console.log('REUSE '+name);continue;}
  console.log('START '+name);const started=new Date().toISOString(),attempt=report.cases.filter(c=>c.name===name).length+1,logPath=join(out,`${name}-${attempt}.log`),log=createWriteStream(logPath);
  const env={...process.env,GAME_URL:process.env.GAME_URL??'http://127.0.0.1:5311/',BOXHEAD_QA_FUNCTIONAL_ONLY:'1',BOXHEAD_QA_HIDDEN:'1',BOXHEAD_NETCODE:'rollback-v2',
-  BOXHEAD_QA_OUT:join(out,name),BOXHEAD_QA_TIMED:'1',BOXHEAD_QA_RELEASE_GATES:name==='lan-functional-30'?'1':'0',BOXHEAD_QA_RELEASE_SCENARIO:'v034'};
+  BOXHEAD_QA_OUT:join(out,name),CANDIDATE_OUT:join(out,name),BALANCE_OUT:join(out,name),BOXHEAD_QA_TIMED:'1',BOXHEAD_QA_RELEASE_GATES:name==='lan-functional-30'?'1':'0',BOXHEAD_QA_RELEASE_SCENARIO:'v034'};
  if(name==='portable')env.BOXHEAD_QA_EXE=process.env.BOXHEAD_QA_PORTABLE??resolve(`release/Boxhead 2Play Rooms-${version}-portable.exe`);
  const code=await new Promise((resolveCode,reject)=>{const child=spawn(process.execPath,args,{cwd:process.cwd(),windowsHide:true,env,stdio:['ignore','pipe','pipe']});child.stdout.pipe(log,{end:false});child.stderr.pipe(log,{end:false});child.once('error',reject);child.once('exit',resolveCode);});
- await new Promise(done=>log.end(done));report.cases.push({name,code,started,finished:new Date().toISOString(),log:logPath});report.ok=cases.every(([name])=>report.cases.some(c=>c.name===name&&c.code===0));writeFileSync(file,JSON.stringify(report,null,2));
+ await new Promise(done=>log.end(done));
+ // Older entry points intentionally reuse fixed report names. Snapshot each run before the next can overwrite it.
+ const snapshot=(folder,relative='')=>{for(const entry of readdirSync(folder,{withFileTypes:true})){const path=join(folder,entry.name),rel=join(relative,entry.name);if(entry.isDirectory()){if(/^(Default|Cache|GPUCache|Crashpad|Dawn|ShaderCache|net-|netsmooth-|data|.*portable|.*-save)/i.test(entry.name))continue;snapshot(path,rel);}else if(/\.(json|log|png|ya?ml)$/.test(entry.name)&&statSync(path).mtimeMs>=Date.parse(started)){const target=join(out,name,`legacy-attempt-${attempt}`,rel);mkdirSync(dirname(target),{recursive:true});copyFileSync(path,target);}}};
+ for(const folder of ['generated/reports/qa','generated/reports/platform']){try{snapshot(folder);}catch(error){if(error.code!=='ENOENT')throw error;}}
+ report.cases.push({name,code,started,finished:new Date().toISOString(),log:logPath});report.ok=cases.every(([name])=>report.cases.some(c=>c.name===name&&c.code===0));writeFileSync(file,JSON.stringify(report,null,2));
  console.log('END '+name+' '+code);if(code!==0){console.log(readFileSync(logPath,'utf8').slice(-4000));process.exit(1);}
 }
 console.log(report.ok?'ALL FUNCTIONAL RELEASE GATES PASSED':'SELECTED GATES PASSED; remaining gates still required');

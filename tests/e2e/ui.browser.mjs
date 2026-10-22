@@ -15,7 +15,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { launch, openGame, toMainMenu, MENU_Y, ROOT, URL as URL_ } from './lib.mjs';
 
-const OUT = join(ROOT, 'generated/reports/x1');
+const OUT = process.env.BOXHEAD_QA_OUT??join(ROOT, 'generated/reports/x1');
 mkdirSync(OUT, { recursive: true });
 const groups = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const want = (g) => groups.length === 0 || groups.includes(g);

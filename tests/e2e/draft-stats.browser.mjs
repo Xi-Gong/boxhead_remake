@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
-const out='generated/reports/v034/draft-stats-'+Date.now();mkdirSync(out,{recursive:true});
+const out=process.env.BOXHEAD_QA_OUT??'generated/reports/v034/draft-stats-'+Date.now();mkdirSync(out,{recursive:true});
 const report={ok:false,shots:[],geometry:[],method:'Single headless Chrome, real keyboard/mouse, injected pad mapping, direct screenshots'};
 const browser=await launch();let g;
 const sheet=i=>`m.mcWorld._WaveDraftHud._Player${i}._Stats._visible`;

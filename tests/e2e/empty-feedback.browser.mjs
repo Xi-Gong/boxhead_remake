@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {mkdirSync,writeFileSync} from 'node:fs';
+import {pathToFileURL} from 'node:url';
+import {launch,openGame,toMainMenu} from './lib.mjs';
+export async function verifyEmptyFeedback(g,out){
+ mkdirSync(out,{recursive:true});const report={ok:false,method:'Actual Nintendo-position pad samples and real numeric-key selection; prepared one-round UZI in one hidden game'};
+ const press=async(index,ms=120)=>{await g.eval(i=>window.qaEmptyPad.buttons[i].pressed=true,index);await g.page.waitForTimeout(ms);await g.eval(i=>window.qaEmptyPad.buttons[i].pressed=false,index);await g.page.waitForTimeout(150);};
+ try{
+  await g.eval(()=>{const P=window.__game.pkg,w=window.__game.main().mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];window.qaEmptyBindings={...w.mUpgrades.weaponBindings[0]};p.NewWeapon('uzi');p.SelectWeapon('uzi');p.mWeapon_Current.mAmmo=1;window.qaEmptySound=P.CSound.mSound.PlaySound;window.qaEmptyBeeps=0;P.CSound.mSound.PlaySound=function(item,...args){if(item===P.CSound.mSamples.Click)window.qaEmptyBeeps++;return window.qaEmptySound.call(this,item,...args);};window.qaEmptyPad={index:0,id:'8BitDo SN30 Pro',connected:true,axes:[0,0],buttons:Array.from({length:17},()=>({pressed:false}))};navigator.getGamepads=()=>[window.qaEmptyPad];});await g.page.waitForTimeout(150);
+  assert(await g.expr('m.mcWorld.mUpgrades.features.includes("empty-weapon-feedback-v1")'));await press(0);assert(await g.waitExpr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mNameID==="pistol"'));assert.equal(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mWeapons.uzi.mThing.mAmmo'),0);
+  await g.page.keyboard.press('Digit2');assert(await g.waitExpr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mNameID==="uzi"'));await press(0,650);
+  report.beeps=await g.eval(()=>window.qaEmptyBeeps);assert(report.beeps>=1&&report.beeps<=3);assert(await g.expr('(()=>{const p=Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0];return p.mWeapon_Current.mNameID==="uzi"&&p.mWeapon_Current.mAmmo===0&&!p.mWeapon_Current.mFire;})()'));
+  const before=report.beeps;await press(1,900);assert(await g.waitExpr('m.mcWorld.mUpgrades.weaponBindings[0].A==="uzi"'));assert.equal(await g.eval(()=>window.qaEmptyBeeps),before);await g.shot(`${out}/bound-empty.png`,false);
+  report.audio=await g.expr('g.audio()');assert.equal(report.audio.state,'running');assert.equal(report.audio.decoded,31);assert.deepEqual(report.audio.failed,[]);assert.deepEqual(await g.scriptErrors(),[]);report.ok=true;
+ }finally{await g.eval(()=>{if(window.qaEmptySound)window.__game.pkg.CSound.mSound.PlaySound=window.qaEmptySound;if(window.qaEmptyBindings)window.__game.main().mcWorld.mUpgrades.weaponBindings[0]=window.qaEmptyBindings;navigator.getGamepads=()=>[];}).catch(()=>{});writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
+ return report;
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const out=process.env.BOXHEAD_QA_OUT??'generated/reports/v035/empty-ui',browser=await launch();let g;try{g=await openGame(browser);await toMainMenu(g);await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));await g.page.waitForTimeout(700);await verifyEmptyFeedback(g,out);console.log('EMPTY FIRE FEEDBACK UI PASSED');}finally{await g?.close();await browser.close();}}

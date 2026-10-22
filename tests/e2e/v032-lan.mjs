@@ -6,6 +6,8 @@ import {Game} from './lib.mjs';
 
 export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
  const peers=[H,C],games=peers.map(p=>new Game(p.page,p.page.context(),report.errors));
+ const power=await games[0].expr('m.mcWorld.mUpgrades.features?.includes("enchant-power-v1")');
+ const raised=native&&await H.app.evaluate(({app})=>app.getVersion()!=='0.3.4');
  const label=native?'v034':simple?'v033':'v032',result=report[label]={checks:[]};
  const step=s=>{result.checks.push(s);console.log(s);};
  const both=async(code)=>{for(const g of games)assert(await g.waitExpr(code,20000),code);};
@@ -28,10 +30,22 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
  };
  await resume();
  if(native){
-  for(const [index,P]of peers.entries())await P.page.evaluate(index=>{window.qaBindingPad={index:0,connected:true,id:'QA standard controller',mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},(_,button)=>({pressed:button===(index?3:0),value:button===(index?3:0)?1:0}))};navigator.getGamepads=()=>[window.qaBindingPad];},index);
+  for(const [index,P]of peers.entries())await P.page.evaluate(index=>{window.qaBindingButton=index?3:0;window.qaBindingPad={index:0,connected:true,id:'QA standard controller',mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};navigator.getGamepads=()=>[window.qaBindingPad];},index);
+  await H.page.waitForTimeout(150);for(const P of peers)await P.page.evaluate(()=>window.qaBindingPad.buttons[window.qaBindingButton]={pressed:true,value:1});
   await H.page.waitForTimeout(1000);for(const P of peers)await P.page.evaluate(()=>window.qaBindingPad.buttons=window.qaBindingPad.buttons.map(()=>({pressed:false,value:0})));
   await both('m.mcWorld.mUpgrades.weaponBindings[0].A&&m.mcWorld.mUpgrades.weaponBindings[1].Y');
   const bindings=await Promise.all(games.map(g=>g.expr('m.mcWorld.mUpgrades.weaponBindings')));assert.deepEqual(bindings[0],bindings[1]);result.bindings=bindings[0];step('real sampled A/Y holds bind both roles through reliable one-shot tick commands');
+  if(await games[0].expr('m.mcWorld.mUpgrades.features.includes("empty-weapon-feedback-v1")')){
+   for(const peer of peers)await peer.page.evaluate(()=>{const sound=window.__game.pkg.CSound,original=sound.mSound.PlaySound;window.qaEmptyAlerts=0;sound.mSound.PlaySound=function(item,...args){if(item===sound.mSamples.Click)window.qaEmptyAlerts++;return original.call(this,item,...args);};});
+   await schedule(`const p=Object.values(w.mThing_Collection.mPlayerThings).find(p=>p.mPlayerIndex===0);p.NewWeapon('uzi');p.SelectWeapon('uzi');p.mWeapon_Current.mAmmo=1;`);
+   await both('Object.values(m.mcWorld.mThing_Collection.mPlayerThings).some(p=>p.mPlayerIndex===0&&p.mWeapon_Current.mNameID==="uzi"&&p.mWeapon_Current.mAmmo===1)');
+   await H.page.keyboard.press('Slash');await both('Object.values(m.mcWorld.mThing_Collection.mPlayerThings).some(p=>p.mPlayerIndex===0&&p.mWeapon_Current.mNameID==="pistol"&&p.mWeapons.uzi.mThing.mAmmo===0)');
+   await schedule(`Object.values(w.mThing_Collection.mPlayerThings).find(p=>p.mPlayerIndex===0).SelectWeapon('uzi');`);
+   await both('Object.values(m.mcWorld.mThing_Collection.mPlayerThings).some(p=>p.mPlayerIndex===0&&p.mWeapon_Current.mNameID==="uzi"&&p.mWeapon_Current.mAmmo===0)');
+   await H.page.keyboard.press('Slash');await H.page.waitForTimeout(500);result.emptyFeedback=await pause();
+   result.emptyAlerts=await Promise.all(games.map(g=>g.eval(()=>window.qaEmptyAlerts)));assert.deepEqual(result.emptyAlerts,[1,1],'one confirmed dry-fire alert on each peer');
+   await resume();step('last-shot fallback, empty reselection and confirmed dry-fire sound agree through real delayed TCP');
+  }
  }
  await schedule(`w.mUpgrades.AdvanceTimedWave();w.mUpgrades.__set__mLevel(15);`);
  await both('m.mcWorld.mUpgrades.mLevelIndex===15&&m.mcWorld.mUpgrades.timedWave.boss.members.length===2&&m.mcWorld.mUpgrades.timedWave.boss.members.every(b=>b.id)');
@@ -44,7 +58,7 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
   const bars=await g.expr(`(()=>{const w=m.mcWorld,layer=w._BossHealthHud;return {top:!!w._BossWaveHud,devils:w._LanGrowthHud._Wave._Devils.text,clock:w._LanGrowthHud._Wave._Clock.text,bars:[0,1].map(i=>{const b=layer['_Boss'+i],r=b?.getBounds(m._parent);return {visible:b?._visible,number:b?._Health?.text,width:r?r.xMax-r.xMin:0,height:r?r.yMax-r.yMin:0};})};})()`);
   assert.equal(bars.devils,'2');assert.match(bars.clock,/^\d+:\d{2}$/);assert(!bars.top);
   assert(bars.bars.every(b=>b.visible&&b.number===undefined&&b.width<=70&&b.height<=12));
-  if(simple)assert(bars.bars.every((b,i)=>b.width===(native?40:[44,40][i])&&b.height===5));
+  if(simple)assert(bars.bars.every((b,i)=>b.width===(native?(raised?36:40):[44,40][i])&&b.height===(raised?5.5:5)));
   (result.bars??=[]).push(bars);await g.shot(join(out,`${label}-two-bosses-${i}.png`),false);
  }
  for(let i=0;i<4;i++){
@@ -74,6 +88,7 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
  await resume();
  await schedule(`for(const e of Object.values(w.mThing_Collection.mThings))if(e.mBossKind&&e.mLife>0){e.mLife=0;e.lanFatalSlot=0;e.CheckForDead();}`);
  await both('m.mcWorld.mUpgrades.timedWave.phase==="draft"&&m.mcWorld.mUpgrades.waveDraft.round.multiplier===2');
+ if(power){await schedule(`w.mUpgrades.waveDraft.round.offers=w.mUpgrades.waveDraft.round.offers.map(cards=>['enchantPower',...cards.slice(1)]);`);await both('m.mcWorld.mUpgrades.waveDraft.round.offers.every(cards=>cards[0]==="enchantPower")');}
  // The simulation can enter draft before the LAN confirmed HUD has rendered its cards.
  for(const [i,g]of games.entries())assert(await g.waitExpr(`typeof m.mcWorld._WaveDraftHud?._Player${i}?._Card0?.onRelease==="function"`));
  // Both supported keyboard sets must navigate the LAN client without moving P1.
