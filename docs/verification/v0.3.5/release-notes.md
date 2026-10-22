@@ -1,5 +1,12 @@
 # 🎮 Follow the letters on your pad
 
+## 🎨 Revised v0.3.5 HUD
+
+- Restore **blue armor over the original green health bar**. Full armor covers it; partial armor reveals the remaining health. Armor values and full crate refills are unchanged.
+- Match native devil Boss health-bar height to the player's health bar while retaining the shorter width and raised edges. Keep the compact enchantment strip unchanged.
+- Give A/Y weapon labels a little more room: normally 4–5 visible pixels from the text.
+- Refresh the screenshots and rebuild both Windows artifacts. This revision replaces the original v0.3.5 tag and downloads.
+
 ## ✨ Controls that match
 
 - Follow the **printed A/B/X/Y letters** on Xbox and Nintendo layouts. Recognizable SN30/Switch names select Nintendo automatically; a saved **AUTO / XBOX / NINTENDO** selector handles controllers exposing a generic XInput name.
@@ -17,7 +24,7 @@
 
 - Personal levels and **ENCHANT POWER** cards increase the enchantment's extra damage from 15% toward 45%, with diminishing returns. Boss rewards count twice; cards show exact before/after values. Already emitted attacks retain their original damage.
 - New selected-wave builds include power; existing saved builds retain their earned allocations. Optional `enchant-power-v1` negotiation preserves older peers.
-- Shorter raised strips respect player health proportions: enchantment is no wider than health and at most half its height; native Boss strips stay within three quarters of that height. Highlights and shadows fit inside the bounds.
+- Shorter raised strips respect player health proportions: enchantment is no wider than health and at most half its height; native Boss strips match player health height. Highlights and shadows fit inside the bounds.
 - Retain enemy growth after bounded four-difficulty comparisons; the added power remains constrained by finite enchantment durability and upgrade choices.
 
 ## 🖼️ Verification and current screenshots

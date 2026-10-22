@@ -17,7 +17,7 @@ gamepads and LAN multiplayer. Intentional additions are documented in [PARITY.md
 ## Quick Start
 
 **Windows portable:** download the single-file exe from [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest).
-**[v0.3.5](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** fixes printed Xbox/Nintendo button letters, confirmation after stats, last-round pistol fallback and empty-fire alerts. It adds personal enchantment power growth, tighter shortcut labels and compact raised meters. See the [release verification](docs/verification/v0.3.5/README.md).
+**[v0.3.5](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** fixes printed Xbox/Nintendo button letters, confirmation after stats, last-round pistol fallback and empty-fire alerts, and adds personal enchantment power growth. The revised download restores blue armor over health, matches native Boss bars to player health height and slightly widens shortcut-label spacing. See the [release verification](docs/verification/v0.3.5/README.md).
 Saves and settings live in `%USERPROFILE%\.boxhead`.
 
 **Run from source:**
@@ -30,7 +30,7 @@ npm run dist        # Windows portable: release/Boxhead 2Play Rooms-<version>-po
 
 Packaging downloads its toolchain on the first run; use `NODE_USE_ENV_PROXY=1` if your network requires it.
 
-<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="Current gameplay with A/Y binding, thin armor and enchantment durability" width="640"></a></p>
+<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="Revised v0.3.5 gameplay with A/Y binding, blue armor over green health and compact enchantment durability" width="640"></a></p>
 
 ## Controls
 
@@ -58,10 +58,10 @@ Use the letters printed on your controller. The bottom-left pad selector offers 
 - **Tiered, endless PvE growth** — low early XP costs lead to slower elite levels. Continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Wave selection follows your best progress and grants a map-duration-based starting build. Old saves retain earned progression and their XP curve, then immediately adopt the new combat rules on load.
 - **Native enemies and Bosses** — ordinary zombies and original fireball devils, with chargers and their extra 50% crate roll retired. Devil Bosses move, attack and hit moderately harder; disabling devils selects non-charging zombie Bosses.
 - **Enchantment power and endurance** — enchanted attacks start at +15% damage; levels and power cards raise the extra damage toward +45% with diminishing returns. Durability is independent of ammo: purple crates refill it, ammo supplies do not. Levels and endurance cards raise its capacity. The raised purple strip stays narrower than health and at most half its height.
-- **Lighter armor and four supplies** — start with 160 health and an empty 40-capacity shield shown as a separate cyan strip. Every useful armor crate fills it completely. Medical, armor, enchantment and ammunition crates each have a 25% drop chance.
+- **Lighter armor and four supplies** — start with 160 health and an empty 40-capacity shield. Blue armor overlays the original green health bar; partial armor exposes the health beneath. Every useful armor crate fills it completely. Medical, armor, enchantment and ammunition crates each have a 25% drop chance.
 - **Comfort and setup** — type an unlocked starting wave directly, change LAN room rules as host, and enjoy softer explosion flashes and automatic audio recovery.
 - **Four survival difficulties** — tuned pacing, concurrency and speed ceilings, with increasingly strong enemies. A finite objective rewards active clearing; survival to the limit also advances. Older peers retain their supported rules.
-- **Clearer combat art** — five refined gun models, warm bullet tracers, cyan rail beams, directional rockets and matching enchanted effects. Compact Boss bars suit the retained original bodies; player health bars keep their existing design.
+- **Clearer combat art** — five refined gun models, warm bullet tracers, cyan rail beams, directional rockets and matching enchanted effects. Compact native Boss bars match player health-bar height; player health bars keep their existing design.
 - **Reliable supplies and clearer UI** — refills preserve inherited weapon capacity; confirmed P1/P2 pickup messages remain evenly spaced, and conditional lobby actions have room to breathe.
 - **Weapon shortcuts and recovery** — unlocked empty weapons remain selectable and bindable. A/Y labels and hold progress show shortcuts; death crates preserve ammunition and enchantment durability without adding duplicate durability.
 
@@ -71,7 +71,7 @@ Use the letters printed on your controller. The bottom-left pad selector offers 
 
 <p align="center"><a href="assets/readme/coop-stats.png"><img src="assets/readme/coop-stats.png" alt="Local co-op inspects both P1/P2 stat sheets" width="640"></a></p>
 
-<p align="center"><a href="assets/readme/boss.png"><img src="assets/readme/boss.png" alt="Native fireball-devil Bosses with compact health bars" width="640"></a></p>
+<p align="center"><a href="assets/readme/boss.png"><img src="assets/readme/boss.png" alt="Native fireball-devil Bosses with short health bars matching player health-bar height" width="640"></a></p>
 
 <p align="center"><a href="assets/readme/coop-crate.png"><img src="assets/readme/coop-crate.png" alt="Co-op weapon recovery" width="640"></a></p>
 

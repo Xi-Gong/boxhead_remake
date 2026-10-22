@@ -17,7 +17,7 @@
 ## 快速开始
 
 **Windows 便携版：** 在 [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest) 下载单文件 exe，双击即可游玩。
-**[v0.3.5正式版](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** 修正手柄字母对应、属性查看后误确认、最后一发回手枪和空弹提示；新增个人附魔威力成长，绑定字母贴近枪名，血条与耐久条更紧凑立体。见[发行验证记录](docs/verification/v0.3.5/README.md)。
+**[v0.3.5正式版](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** 修正手柄字母对应、属性查看后误确认、最后一发回手枪和空弹提示，新增个人附魔威力成长。修订版下载恢复蓝甲叠加绿血，原生Boss血条与玩家血条等高，绑定字母与枪名稍拉开间距。见[发行验证记录](docs/verification/v0.3.5/README.md)。
 存档与设置统一保存在 `%USERPROFILE%\.boxhead`。
 
 **从源码运行：**
@@ -30,7 +30,7 @@ npm run dist        # Windows 便携版：release/Boxhead 2Play Rooms-<版本>-p
 
 首次打包会下载工具链；需要代理时设置 `NODE_USE_ENV_PROXY=1`。
 
-<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="新版战斗、A/Y 绑定、轻护甲与附魔耐久" width="640"></a></p>
+<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="v0.3.5修订版战斗：A/Y 绑定、蓝甲叠加绿血及紧凑附魔耐久" width="640"></a></p>
 
 ## 操作
 
@@ -58,10 +58,10 @@ npm run dist        # Windows 便携版：release/Boxhead 2Play Rooms-<版本>-p
 - **分段无限成长**：前期升级快，后期经验门槛逐级升高；125级后继续提升生命、护甲、武器伤害和携弹量；选关随历史进度突破100波，按地图时长配给基础等级与构筑。旧档保留已得成长和经验曲线，读档时立即采用新战斗规则。
 - **原生敌群与 Boss**：普通关仅原版僵尸和火球小红；取消冲锋僵尸及额外 50% 掉箱。恶魔 Boss 移速/攻速/伤害适度提升，关闭恶魔时使用无冲锋技能的僵尸 Boss。
 - **附魔威力与续航成长**：初始增伤15%，等级与“附魔威力”卡片以递减收益提升，渐近45%；普通子弹额外贯穿一个目标。附魔按发射次数消耗独立耐久，空弹仍保留；紫箱补满，普通补弹不恢复。等级与“附魔续航”提升上限，立体紫条不比血条长、高度不超过其一半。
-- **轻护甲与四类补给**：初始 160 血/40 甲、护甲初始为空，使用独立青色细条；每个护甲箱有效拾取后直接补满。医疗、护甲、附魔、弹药箱各25%，满状态留给队友。
+- **轻护甲与四类补给**：初始 160 血/40 甲、护甲初始为空；蓝色护甲叠加在原绿色血条上，部分护甲露出下方血量。每个护甲箱有效拾取后直接补满。医疗、护甲、附魔、弹药箱各25%，满状态留给队友。
 - **操作与舒适度**：直接输入已解锁波次，房主可调整房间规则；减弱爆炸闪光，并自动恢复异常音频。
 - **四档生存难度**：保留各档节奏、并发和速度限制，敌人随波次变强；普通关有限敌群提供提前清关目标，到时仍可生存过关，旧端保留其支持的关卡规则。
-- **战斗美术精修**：五种持枪模型、暖色子弹、冷青轨道射线、分面火箭与对应附魔效果；Boss血条匹配保留的原有模型比例，玩家血条保持原设计。
+- **战斗美术精修**：五种持枪模型、暖色子弹、冷青轨道射线、分面火箭与对应附魔效果；原生Boss血条保持短条宽度、高度与玩家血条一致，玩家血条保持原设计。
 - **补给与界面更稳定**：补弹保留武器箱继承容量，P1/P2确认拾取白字稳定等距，大厅条件按钮分行排布。
 - **快捷武器与合作武器箱**：解锁后零弹也可切换并绑定；A/Y 标记显示快捷键，长按显示绑定/解绑进度。阵亡武器箱保留弹药及附魔耐久，合并不会叠加复制耐久。
 
@@ -71,7 +71,7 @@ npm run dist        # Windows 便携版：release/Boxhead 2Play Rooms-<版本>-p
 
 <p align="center"><a href="assets/readme/coop-stats.png"><img src="assets/readme/coop-stats.png" alt="本地双人共同查看 P1/P2 属性" width="640"></a></p>
 
-<p align="center"><a href="assets/readme/boss.png"><img src="assets/readme/boss.png" alt="原生火球恶魔 Boss 与紧凑生命条" width="640"></a></p>
+<p align="center"><a href="assets/readme/boss.png"><img src="assets/readme/boss.png" alt="原生火球恶魔 Boss 与玩家血条等高的紧凑生命条" width="640"></a></p>
 
 <p align="center"><a href="assets/readme/coop-crate.png"><img src="assets/readme/coop-crate.png" alt="合作武器回收" width="640"></a></p>
 
