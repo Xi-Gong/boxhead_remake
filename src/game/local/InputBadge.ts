@@ -17,6 +17,7 @@ const VISIBLE_MS = 4000;
 let handle: GamepadHandle | undefined;
 let el: HTMLDivElement | undefined;
 let chips: HTMLButtonElement[] = [];
+let layouts:HTMLSelectElement[]=[];
 let hintEl: HTMLDivElement | undefined;
 let timer: number | undefined;
 let lastKey = '';
@@ -29,10 +30,11 @@ export function installInputBadge(h: GamepadHandle): void {
   const stage = document.getElementById('stage') ?? document.body;
   el = document.createElement('div');
   el.style.cssText = 'position:absolute;left:10px;bottom:4px;z-index:8;display:flex;gap:6px;align-items:center;'
-    + 'font:bold 10px Calibri,sans-serif;user-select:none;pointer-events:none;transition:opacity .4s;'
+    + 'font:bold 10px Calibri,sans-serif;user-select:none;pointer-events:none;transition:opacity .4s;max-width:calc(100% - 20px);flex-wrap:wrap;'
     + '--badge-bg:rgba(245,245,243,.92);--badge-ink:#333';
   stage.appendChild(el);
   chips = [];
+  layouts=[];
   const mk = (label: string, click?: () => void): void => {
     const c = document.createElement('button');
     c.type = 'button';
@@ -46,8 +48,18 @@ export function installInputBadge(h: GamepadHandle): void {
     chips.push(c);
   };
   mk('KEYBOARD');
-  mk('PAD 1', () => handle?.swapAssignment());
-  mk('PAD 2', () => handle?.swapAssignment());
+  for(const slot of [0,1]as const){
+    mk(`PAD ${slot+1}`, () => handle?.swapAssignment());
+    const select=document.createElement('select');
+    select.setAttribute('aria-label',`PAD ${slot+1} button layout`);
+    select.title='Match the printed letters. Nintendo: A right, B bottom, X top, Y left.';
+    select.style.cssText=CHIP+';pointer-events:auto;font-size:11px';
+    for(const [value,label]of [['auto','AUTO'],['xbox','XBOX'],['nintendo','NINTENDO']]){const option=document.createElement('option');option.value=value!;option.textContent=label!;select.appendChild(option);}
+    select.addEventListener('pointerdown',event=>event.stopPropagation());
+    select.addEventListener('keydown',event=>event.stopPropagation());select.addEventListener('keyup',event=>event.stopPropagation());
+    select.addEventListener('change',event=>{event.stopPropagation();handle?.setLayout(slot,select.value as 'auto'|'xbox'|'nintendo');draw();});
+    el.appendChild(select);layouts.push(select);
+  }
   hintEl = document.createElement('div');
   hintEl.style.cssText = 'color:#9e9e9e;font:10px Calibri,sans-serif;white-space:nowrap';
   el.appendChild(hintEl);
@@ -64,7 +76,7 @@ function draw(): void {
   const now = Date.now();
   const latest = Math.max(s.keyboardActive, s.pads[0].lastActive, s.pads[1].lastActive);
   // Only touch the DOM when something actually changed (key = the whole visible state).
-  const key = JSON.stringify([s.pads.map((p) => [p.present, p.id, p.player, now - p.lastActive < ACTIVE_MS]),
+  const key = JSON.stringify([s.pads.map((p) => [p.present, p.id, p.player,p.layout,p.layoutChoice, now - p.lastActive < ACTIVE_MS]),
     now - s.keyboardActive < ACTIVE_MS, now - latest < VISIBLE_MS, s.assign, inGame]);
   if (key === lastKey) return;
   lastKey = key;
@@ -78,6 +90,8 @@ function draw(): void {
     chip.textContent = p.present ? `PAD ${i + 1} →P${p.player + 1}` : `PAD ${i + 1}`;
     chip.style.cssText = p.present && now - p.lastActive < ACTIVE_MS ? CHIP_ACTIVE : p.present ? CHIP : CHIP_OFF;
     chip.style.pointerEvents = 'auto'; // cssText replaces every inline property, including the click opt-in.
+    const select=layouts[i]!;select.style.display=p.present?'':'none';select.value=p.layoutChoice;
+    select.options[0]!.textContent=`AUTO: ${p.layout.toUpperCase()}`;
   }
   if (hintEl) hintEl.textContent = inGame || s.pads[0].present || s.pads[1].present ? '' : 'press any button on your gamepad to connect it';
 }
@@ -109,6 +123,7 @@ export function disposeInputBadge(): void {
   el?.remove();
   el = undefined;
   chips = [];
+  layouts=[];
   hintEl = undefined;
   handle = undefined;
   lastKey = '';

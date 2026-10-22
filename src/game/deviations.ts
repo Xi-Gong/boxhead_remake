@@ -851,4 +851,11 @@ export const DEVIATIONS: Deviation[] = [
       'two vertical columns. Nine readable stat rows expose shield, bindings and enchantment durability '+
       'with confirmed LAN metadata. Both mouse buttons and actual rebound keyboard/X prompts stay live.',
   },
+  {
+    id:'PRINTED_GAMEPAD_LETTERS',file:'local/Gamepad.ts, GamepadLayout.ts, InputBadge.ts',
+    description:'Standard Gamepad indices denote physical positions, not universal ABXY labels. Recognizable '+
+      'SN30/Switch pads use Nintendo letters; Xbox-labelled devices retain Xbox letters. A per-identity/slot '+
+      'Auto/Xbox/Nintendo preference covers generic XInput IDs. The same resolved letters drive B fire, A/Y '+
+      'shortcuts, X draft stats and A menu/READY. Changing layouts cancels holds and waits for button release.',
+  },
 ];

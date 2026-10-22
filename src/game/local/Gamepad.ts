@@ -26,9 +26,10 @@ import {toggleStats} from './DraftStatsInput.ts';
 import {netSession} from './Net/NetSession.ts';
 import {hasFeature} from './ModernFeatures.ts';
 import {bindingsFor,queueWeaponCommand,setBindingProgress,type WeaponButton} from './WeaponBindings.ts';
+import {padFaceButtons,padLayoutPreferences,resolvePadLayout,type PadLayout,type PadLayoutChoice,type PadLayoutStorage} from './GamepadLayout.ts';
 
 /** Standard-mapping button indices used by the mapping. */
-const BTN = { A: 0, B:1, X:2, Y:3, LB: 4, RB: 5, LT: 6, RT: 7, START: 9 } as const;
+const BTN = { LB: 4, RB: 5, LT: 6, RT: 7, START: 9 } as const;
 
 /** Virtual cursor speed in logical pixels per poll (d-pad, or a fully deflected stick). */
 const CURSOR_SPEED = 8;
@@ -52,6 +53,7 @@ export interface GamepadOptions {
   provider?: PadProvider;
   /** Render/input clock only. Hold completion becomes a deterministic queued tick command. */
   now?:()=>number;
+  layoutStorage?:PadLayoutStorage;
 }
 
 /** One pad as the input badge sees it. */
@@ -65,6 +67,8 @@ export interface PadStatus {
   lastActive: number;
   /** The player this pad currently drives (mode-aware: in Single player every pad drives player 1). */
   player: 0 | 1;
+  layout:PadLayout;
+  layoutChoice:PadLayoutChoice;
 }
 
 /** Input-badge state (v0.1.4): pad presence / names / activity + the pad->player assignment. */
@@ -83,6 +87,7 @@ export interface GamepadHandle {
   status(): GamepadStatus;
   /** Swap which player each pad drives (the badge's manual re-connect; releases held pad keys first). */
   swapAssignment(): void;
+  setLayout(slot:0|1,choice:PadLayoutChoice):void;
   dispose(): void;
 }
 
@@ -116,6 +121,9 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   const padPresent: [boolean, boolean] = [false, false];
   const padIds: [string | undefined, string | undefined] = [undefined, undefined];
   const padActive: [number, number] = [0, 0];
+  const layouts:[PadLayoutChoice,PadLayoutChoice]=['auto','auto'];
+  const awaitRelease=[false,false];
+  const preferences=padLayoutPreferences(opts.layoutStorage);
   let keyboardActive = 0;
   const onKeydown = (): void => { keyboardActive = Date.now(); };
   if (typeof window !== 'undefined') window.addEventListener('keydown', onKeydown, true);
@@ -176,7 +184,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // wants it is picked up by the next poll (want && !is -> _down again); self-healing after Key._clear() too.
   };
 
-  const mapPad = (slot: 0 | 1, p: PadPoll,batch:object): void => {
+  const mapPad = (slot: 0 | 1, p: PadPoll,batch:object): boolean => {
     for (const b of p.down) held[slot].add(b);
     for (const b of p.up) held[slot].delete(b);
     // An absent pad must not map at all: with its directions all false it would immediately "release" whatever
@@ -184,10 +192,13 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     if (!p.present) {
       cancelHolds(slot);
       held[slot].clear();
-      return;
+      return false;
     }
+    // Changing letters must not turn a held shortcut into fire or a mouse confirmation.
+    if(awaitRelease[slot]){if(!held[slot].size)awaitRelease[slot]=false;return false;}
+    const face=padFaceButtons(p.id,layouts[slot]);
     const input = (CMain as any)?.mInput as Record<string, { mKeycode: number } | undefined> | undefined;
-    if (!input) return;
+    if (!input) return true;
     // Pad 1 drives player 2 outside Single player (player 2 does not exist there); the v0.1.4 assignment
     // override decides which pad that is (swapAssignment).
     const postfix = assign[slot] === 0 || World.CWorld.mGameMode === 'Single' ? '' : '2';
@@ -197,7 +208,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     const combat=!!actor&&world.mLoaded&&!world.mPaused&&!world.mUpgrades.waveDraft?.round&&actor.mLife>0&&(!session||session.phase==='playing'&&!session.netPaused&&!session.pauseBarrier.pending);
     if(!modern||!combat)cancelHolds(slot);
     else for(const button of ['A','Y']as const){
-      const key=BTN[button];let hold=holds[slot][button];
+      const key=face[button];let hold=holds[slot][button];
       if(p.down.has(key))hold=holds[slot][button]={world,index,weapon:actor.mWeapon_Current.mNameID,started:now(),fired:false};
       if(!hold)continue;
       if(hold.world!==world||hold.index!==index||hold.weapon!==actor.mWeapon_Current.mNameID){setBindingProgress(hold.world,hold.index,undefined);delete holds[slot][button];continue;}
@@ -210,7 +221,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
         delete holds[slot][button];setBindingProgress(world,index,undefined);
       }
     }
-    if(p.down.has(BTN.X)){
+    if(p.down.has(face.X)){
       const world=CMain?._this?.mcWorld;if(world&&!world.mPaused)toggleStats(world,netSession()?.role??(postfix?1:0),batch);
     }
     const dirs = {
@@ -223,13 +234,15 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     setKey(input['KEY_RIGHT' + postfix], dirs.right);
     setKey(input['KEY_UP' + postfix], dirs.up);
     setKey(input['KEY_DOWN' + postfix], dirs.down);
-    setKey(input['KEY_FIRE' + postfix], h.has(BTN.RT) || h.has(BTN.LT) || h.has(BTN.B) || h.has(BTN.A)&&(!modern||!!world?.mUpgrades.waveDraft?.round));
+    setKey(input['KEY_FIRE' + postfix], h.has(BTN.RT) || h.has(BTN.LT) || h.has(face.B) || h.has(face.A)&&(!modern||!!world?.mUpgrades.waveDraft?.round));
     setKey(input['KEY_NEXT_WEAPON' + postfix], h.has(BTN.RB));
     setKey(input['KEY_PREV_WEAPON' + postfix], h.has(BTN.LB));
     setKey(input.KEY_PAUSE, h.has(BTN.START));
+    return true;
   };
 
   const moveCursor = (p: PadPoll): void => {
+    const face=padFaceButtons(p.id,layouts[0]);
     // Gameplay (including drafts) uses per-player keys. A hidden cursor's mouse-up must not
     // click a newly displayed card and lock its player READY before they can navigate.
     const main=CMain?._this,world=main?.mcWorld;
@@ -266,7 +279,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     if (p.present && (dx || dy || p.down.size || p.up.size)) lastPadActivity = Date.now();
     // A = click: press on the down edge, release on the up edge (the engine fires onRelease only when the
     // pointer is still over the pressed button, like a real mouse).
-    if (p.down.has(BTN.A)) {
+    if (p.down.has(face.A)) {
       if (focusDomTextAt(cursorX, cursorY)) {
         domClick = true; // this press-release pair belongs to the DOM widget, not the engine
       } else {
@@ -276,7 +289,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
         mouseIsDown = true;
       }
     }
-    if (p.up.has(BTN.A)) {
+    if (p.up.has(face.A)) {
       if (domClick) domClick = false;
       else {
         opts.player.mouseMove(cursorX, cursorY);
@@ -328,6 +341,11 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
       }
       const p0 = watchers[0].poll();
       const p1 = watchers[1].poll();
+      for(const [slot,p]of [[0,p0],[1,p1]]as const)if(p.present&&(!padPresent[slot]||p.id!==padIds[slot])){
+        cancelHolds(slot);
+        if(padIds[slot]!==undefined){releaseAll();awaitRelease[slot]=true;}
+        layouts[slot]=preferences.read(p.id,slot);
+      }
       stamp(0, p0);
       stamp(1, p1);
       // The first pad button anywhere dismisses the audio-unlock overlay (gamepads fire no DOM events).
@@ -335,9 +353,9 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
         overlayDismissed = true;
         dismissAudioOverlay();
       }
-      const batch={};mapPad(0, p0,batch);
+      const batch={},cursorReady=mapPad(0, p0,batch);
       mapPad(1, p1,batch);
-      moveCursor(p0);
+      if(cursorReady)moveCursor(p0);
     },
     status(): GamepadStatus {
       const mode = (World as any).CWorld?.mGameMode;
@@ -347,6 +365,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
         present: padPresent[slot],
         lastActive: padActive[slot],
         player: assign[slot] === 0 || mode === 'Single' ? 0 : 1,
+        layout:resolvePadLayout(padIds[slot],layouts[slot]),layoutChoice:layouts[slot],
       });
       return { pads: [one(0), one(1)], assign: [assign[0], assign[1]], keyboardActive };
     },
@@ -355,6 +374,11 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
       const t = assign[0];
       assign[0] = assign[1];
       assign[1] = t;
+    },
+    setLayout(slot,choice):void {
+      if(!['auto','xbox','nintendo'].includes(choice))return;
+      releaseAll();awaitRelease[slot]=true;
+      layouts[slot]=choice;preferences.write(padIds[slot],slot,choice);
     },
     dispose(): void {
       releaseAll();
