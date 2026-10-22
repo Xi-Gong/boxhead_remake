@@ -9,6 +9,15 @@ import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
 import {applyCratePayload} from '../../src/game/local/WeaponCrate.ts';
 import {syncSupplyWeapon} from '../../src/game/local/ReliableSupplies.ts';
 const bonus={damage:0,health:0,armor:0,capacity:0};
+it('retains the exact legacy floating-point operation order for old negotiated peers',()=>{
+ for(const damage of [26,35,51])for(const growth of [.01,.03,.07,.2,.33,.47])for(const picks of [1,3,7,11]){
+  const raw={mDamage:damage,mTotalAmmo:100,mFireRate:12},flags={DoubleDamage:true,RapidFire:true},b={...bonus,damage:picks,haste:picks};
+  const actual=modernWeapon(raw,flags,{damage:growth,capacity:0},b,'CThing_Weapon_Shotgun',25);
+  expect(actual.damage).toBe(damage*2*(1+growth)*(1+.08*picks)*.65);
+  const value=.06*picks,diminished=.75*value/(.75+value);
+  expect(actual.fireRate).toBe(Math.max(10,Math.round(12*1.5/(1+.3+diminished))));
+ }
+});
 it('bounds all finite capacities and rate ceilings at arbitrarily high growth while preserving game-speed tick periods',()=>{
  for(const [id,ammo,delay]of [['Pistol',999999,8],['UZI',100,4],['Shotgun',20,12],['Rocket',20,12],['Railgun',15,5]]as const){
   const raw={mDamage:51,mTotalAmmo:ammo,mFireRate:delay};

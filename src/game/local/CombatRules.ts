@@ -26,7 +26,9 @@ export function shotgunFalloff(distance:number,range:number):number{return 1-.55
 export function modernWeapon(raw:any,flags:any,stats:{damage:number;capacity:number},bonus:WaveBonuses,classID:string,_fps:number,horde=false,percent=false){
  const factor=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;
  const damageBonus=percent?statPercent('damage',bonus,factor-1+stats.damage):factor*(1+stats.damage)*(1+.08*bonus.damage)-1;
- const damage=(raw.mDamage??0)*(1+damageBonus)*(classID==='CThing_Weapon_Shotgun'? .65:1);
+ // Legacy peers require the original operation order, including its exact floating-point rounding.
+ const damage=percent?(raw.mDamage??0)*(1+damageBonus)*(classID==='CThing_Weapon_Shotgun'? .65:1)
+  :(raw.mDamage??0)*factor*(1+stats.damage)*(1+.08*bonus.damage)*(classID==='CThing_Weapon_Shotgun'? .65:1);
  const ammunition=flags?.InfinateAmmo?1.25:flags?.QuadAmmo?1:flags?.DoubleAmmo? .5:0;
  const baseCapacity=horde?Math.ceil(raw.mTotalAmmo*1.25):raw.mTotalAmmo;
  const capacityBonus=percent?statPercent('capacity',bonus,ammunition+stats.capacity):diminishing(ammunition+stats.capacity+.08*bonus.capacity);
@@ -35,6 +37,7 @@ export function modernWeapon(raw:any,flags:any,stats:{damage:number;capacity:num
  const base=raw.mFireRate*(classID==='CThing_Weapon_Railgun'?3:classID==='CThing_Weapon_Shotgun'?(horde?1.2:1.5):classID==='CThing_Weapon_Rocket'?1.5:1);
  // Keep authored tick periods independent of game-speed, like the original weapons.
  const hasteBonus=percent?statPercent('haste',bonus,flags?.RapidFire?.3:0):(flags?.RapidFire? .3:0)+diminishing(.06*(bonus.haste??0),.75);
- const fireRate=Math.max(limits[classID]?Math.round(25/limits[classID]!):2,Math.round(base/(1+hasteBonus)));
+ const denominator=percent?1+hasteBonus:1+(flags?.RapidFire? .3:0)+diminishing(.06*(bonus.haste??0),.75);
+ const fireRate=Math.max(limits[classID]?Math.round(25/limits[classID]!):2,Math.round(base/denominator));
  return {damage,capacity,fireRate,damageBonus,capacityBonus,hasteBonus};
 }
