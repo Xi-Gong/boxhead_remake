@@ -29,3 +29,5 @@ The visual method is direct screenshot review plus actual Canvas pixels/geometry
 - Raw reports/screenshots/failure notes and SHA256 manifest: C:/Users/royxg/boxhead-exe-archive/v0.3.5-name-spacing-verification.
 
 See [English release notes](release-notes.md), [PARITY](../../../PARITY.md), and the [publication receipt](publication.json). The updated assets are independently downloaded and launched before the final annotated tag moves to the latest receipt commit.
+
+The replacement EXE and checksum attachment were independently downloaded from the formal Release. Size, SHA256, GitHub digest, PE/package version and the complete extracted asar match acceptance. The downloaded portable passes hidden startup, save/continue and audio. Its asar is identical to the candidate that passed the focused name-spacing checks; those checks were not unnecessarily repeated on the download. The annotated tag update follows this receipt commit.

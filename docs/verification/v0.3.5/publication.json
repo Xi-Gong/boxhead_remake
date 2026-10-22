@@ -1,35 +1,36 @@
 {
   "version": "0.3.5",
-  "revision": "2026-10-22 HUD revision",
+  "revision": "Compact weapon-name spacing",
   "releaseUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5",
   "releaseId": 420251752,
   "publishedAt": "2026-10-22T02:39:17Z",
-  "revisionVerifiedAt": "2026-10-22T07:57:30.136Z",
-  "runtimeSourceCommit": "1b0359ffe89754471be2221a97feed2efdfa8450",
+  "verifiedAt": "2026-10-22T08:44:48.118Z",
+  "runtimeSourceCommit": "6648700ce6c1ad9fe2bd644d63e9f04b435e171b",
   "isDraft": false,
   "isPrerelease": false,
-  "annotatedTag": "v0.3.5; final target verified after committing this receipt",
+  "annotatedTag": "v0.3.5; final latest receipt commit verified after commit",
   "asset": {
-    "id": 665107850,
+    "id": 665221253,
     "name": "Boxhead.2Play.Rooms-0.3.5-portable.exe",
     "url": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.5/Boxhead.2Play.Rooms-0.3.5-portable.exe",
-    "bytes": 101678203,
-    "sha256": "f2663c2d1738db91906e674aac224f40f3342fb91e1d16bbf8d87acada49796c",
-    "githubDigest": "sha256:f2663c2d1738db91906e674aac224f40f3342fb91e1d16bbf8d87acada49796c",
+    "bytes": 101677110,
+    "sha256": "a6f542b361e2f0b9593341378a701d7778e397f8d2f61a314e691c367a109eaa",
+    "githubDigest": "sha256:a6f542b361e2f0b9593341378a701d7778e397f8d2f61a314e691c367a109eaa",
     "downloadVerified": true,
     "embeddedPEVersion": "0.3.5",
     "embeddedPackageVersion": "0.3.5",
-    "downloadedPortableGameplaySaveAudio": true,
-    "downloadedNewControlsPowerAndHud": true
+    "actualDownloadedPortableSaveContinueAudio": true
   },
   "checksums": {
-    "id": 665107852,
+    "id": 665221254,
     "url": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.5/SHA256SUMS.txt",
+    "sha256": "c66fcce59d7aa16306b0278308a38ebc899b3acafe17aa0febad17ba45f0c3d8",
     "bytes": 105,
-    "sha256": "e990326e2b77cc8a74139ef576d547d9bb295d7bc68a758c885998fb7578b4df",
     "downloadVerified": true
   },
-  "asarSHA256": "957ed5f97f66757f9f3371a8eada40a2d13a3ce21f1173cd9a747d0627206b09",
-  "previousReceipt": "initial-publication.json",
-  "publicationEvidence": "C:/Users/royxg/boxhead-exe-archive/v0.3.5-revision-verification/publication"
+  "asarSHA256": "10b01afaed4fd99197bc72a7a3dbc4786b0dcc64e3084d4e549e0bfe5ac16a08",
+  "focusedSpacingVerifiedInCandidatePortable": true,
+  "previousReceipt": "previous-hud-publication.json",
+  "notRepeated": "Full functional/LAN/balance suites; user requested greatly simplified testing",
+  "archive": "C:/Users/royxg/boxhead-exe-archive/v0.3.5-name-spacing-verification"
 }
