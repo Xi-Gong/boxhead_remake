@@ -65,7 +65,7 @@ try{
   await g.clickClip('m.mcScreen.mcContinue');assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
   const audio=await g.expr('g.audio()');assert.equal(audio.decoded,31);assert.equal(audio.state,'running');
   if(process.env.BOXHEAD_QA_ENCHANTMENT==='1')await verifyPersistentEnchantment(g,join(out,'enchantment'));
-  if(process.env.BOXHEAD_QA_TIMED==='1')await (expected==='0.3.4'?verifyV034Candidate:expected==='0.3.3'?verifyV033Candidate:expected==='0.3.2'?verifyV032Candidate:verifyV031Candidate)(g,join(out,'timed-candidate'));
+  if(process.env.BOXHEAD_QA_TIMED==='1')await (['0.3.4','0.3.5'].includes(expected)?verifyV034Candidate:expected==='0.3.3'?verifyV033Candidate:expected==='0.3.2'?verifyV032Candidate:verifyV031Candidate)(g,join(out,'timed-candidate'));
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
  }
