@@ -52,8 +52,11 @@ export function installWeaponBindings():void{
   if(!label){label=text(head,'_WeaponBinding',0,0,24,13,BODY_FONT,10,INK,true,'left','');label.filters=glow();}
   // The authored ammo field is much wider than its visible centered text. Follow the glyph edge,
   // not that empty field, so small shortcut letters stay beside the weapon and clear of map props.
-  const field=head.mcAmmo.tfAmount,box=field.getBounds(head),width=field.textWidth*(box.xMax-box.xMin)/Math.max(1,field._width),align=field.getTextFormat().align;
-  label._x=(align==='center'?(box.xMin+box.xMax+width)/2:align==='right'?box.xMax:box.xMin+width)+4;
+  const field=head.mcAmmo.tfAmount,lines=field.$getLayout().lines;
+  // Project the laid-out text edge through the authored field/clip scales. _width already includes
+  // scaling, so dividing by it made the old textWidth estimate too wide and separated the letter.
+  const edge={x:field.getBounds(field).xMin+2+Math.max(0,...lines.map((line:any)=>line.x+line.width)),y:0};
+  field.localToGlobal(edge);head.globalToLocal(edge);label._x=edge.x+1;
   label._y=bounds.yMin+2;label.text=letters;
   const value=bindingProgress(this.mWorld,p.mPlayerIndex),bar=head._BindingProgress??head.createEmptyMovieClip('_BindingProgress',head.getNextHighestDepth());
   bar._visible=!!value&&!this.mWorld.mPaused&&!this.mWorld.mUpgrades.waveDraft?.round&&(!session||session.phase==='playing'&&!session.netPaused&&!session.pauseBarrier.pending);
