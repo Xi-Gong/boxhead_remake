@@ -49,7 +49,6 @@ try{
  const extractedAsarSha256=createHash('sha256').update(readFileSync(archive)).digest('hex');
  const verifiedRuntimeFiles=[];
  if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
-  if(process.env.BOXHEAD_QA_EXACT_WAVE==='1')await verifyExactWaveCase(g,join(out,'exact-wave'));
   assert.equal(extractedAsarSha256,createHash('sha256').update(readFileSync(process.env.BOXHEAD_QA_STAGED_ASAR??'release/win-unpacked/resources/app.asar')).digest('hex'),'complete portable asar matches the validated unpacked build');
   for(const file of [join('dist-electron','main.cjs'),join('dist-electron','preload.cjs'),...readdirSync('dist/bundle').filter(n=>n.endsWith('.js')).map(n=>join('dist','bundle',n))]){
    assert.ok(asar.extractFile(archive,file).equals(readFileSync(file)),'portable contains current built code: '+file);
@@ -61,6 +60,7 @@ try{
  const viewport=await page.evaluate(()=>({width:innerWidth,height:innerHeight,dpr:devicePixelRatio}));
  assert.deepEqual(viewport,{width:640,height:480,dpr:1});
  if(!process.env.BOXHEAD_QA_CAPTURE_ASAR){
+  if(process.env.BOXHEAD_QA_EXACT_WAVE==='1')await verifyExactWaveCase(g,join(out,'exact-wave'));
   await g.clickClip('m.mcScreen.mcSinglePlay');assert.ok(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
   await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');
   assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
