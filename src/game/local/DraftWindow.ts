@@ -97,9 +97,11 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
  if(size!==view.size){view.backdrop.clear();view.backdrop.beginFill(0x23231f,28);view.backdrop.moveTo(0,0);view.backdrop.lineTo(world.mScreenSize.x,0);view.backdrop.lineTo(world.mScreenSize.x,world.mScreenSize.y);view.backdrop.lineTo(0,world.mScreenSize.y);view.backdrop.lineTo(0,0);view.backdrop.endFill();view.size=size;}
  view.clip._Title.text=round.multiplier===2?'BOSS DOWN!  DOUBLE REWARD':'WAVE '+round.wave+' CLEARED!';
  const partner=session?(round.confirmed[1-session.role]?'PARTNER READY':'PARTNER IS CHOOSING'):'';
- view.clip._Clock.text=round.readyRule?partner?partner+' / CONTINUE WHEN BOTH ARE READY':'TAKE YOUR TIME / CHOOSE ONE UPGRADE':`CHOOSE ONE / ${Math.ceil(round.remainingTicks/CMain.mFPS)}s / DEFAULT: FIREPOWER`;
  const stats=session?session.confirmedPlayerStats:capturePlayerStats(world),open=indices.map(i=>statsOpen(world,i));
  label(view.clip._Controls,`MOVE: SELECT   A: READY   X / ${indices.map(statsKeyLabel).join(' / ')}: ${open.some(Boolean)?'BACK TO UPGRADES':'VIEW STATS'}`,12);
+ // Keep the full-width prompt above the cards; the persistent DOM pad selectors occupy the bottom row.
+ view.clip._Controls._visible=false;
+ view.clip._Clock.text=[round.readyRule?partner:`${Math.ceil(round.remainingTicks/CMain.mFPS)}s / DEFAULT: FIREPOWER`,view.clip._Controls.text].filter(Boolean).join(' / ');
  const signature=JSON.stringify([round.selected,round.confirmed,round.offers,round.multiplier,stats,open,statsBindingHint(world),indices.map(statsKeyLabel)]);
  if(signature===view.signature){animate(view);return;}view.signature=signature;
  for(const index of indices){

@@ -879,4 +879,10 @@ export const DEVIATIONS: Deviation[] = [
       'New selected-wave builds share nine stats; saved builds are never redistributed. Cards expose '+
       'exact single/double projections and confirmed stats show the bonus and training source.',
   },
+  {
+    id:'DRAFT_PAD_PROMPT_LAYOUT',file:'local/DraftWindow.ts',
+    description:'Place draft action hints in the full-width header alongside readiness or countdown '+
+      'status, leaving the persistent DOM controller layout selectors a separate bottom row. Preserve '+
+      'actual rebound keys, LAN partner state and legacy countdown/default text; no simulation changes.',
+  },
 ];

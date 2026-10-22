@@ -23,6 +23,16 @@ try{
  await press(2,900);assert(await g.waitExpr('m.mcWorld.mUpgrades.weaponBindings[0].Y==="uzi"&&!m.mcWorld.mUpgrades.weaponBindings[0].A'));
  await g.expr('m.mcWorld.mUpgrades.FinishTimedWave()');assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._visible'));await press(3);assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Stats._visible'));
  await press(1);assert(await g.expr('!m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]'));await g.shot(`${out}/nintendo-stats.png`,false);
+ // Actual DOM selectors must never cover the visible game instructions, with one or two pads.
+ for(const size of [{width:640,height:480},{width:960,height:540},{width:480,height:720}])for(const pads of [1,2]){
+  await g.page.setViewportSize(size);await g.eval(pads=>{window.qaLetterPad2={...window.qaLetterPad,index:1,id:'8BitDo SN30 Pro second',buttons:Array.from({length:17},()=>({pressed:false}))};navigator.getGamepads=()=>pads===2?[window.qaLetterPad,window.qaLetterPad2]:[window.qaLetterPad];},pads);await g.page.waitForTimeout(350);
+  const prompt=await g.expr('(()=>{const d=m.mcWorld._WaveDraftHud,c=d._Controls._visible?d._Controls:d._Clock;return {source:c===d._Clock?"header":"footer",text:c.text,bounds:c.getBounds(m._parent),width:c._width,textWidth:c.textWidth};})()'),b=prompt.bounds;
+  const [left,top]=await g.stageToPage(b.xMin,b.yMin),[right,bottom]=await g.stageToPage(b.xMax,b.yMax),boxes=[];for(let i=1;i<=pads;i++)boxes.push(await g.page.getByRole('combobox',{name:`PAD ${i} button layout`}).boundingBox());
+  (report.controls??=[]).push({size,pads,prompt,client:{left,top,right,bottom},boxes});
+  assert(prompt.textWidth<=prompt.width-4,'instruction text fits its field');for(const box of boxes)assert(box&&!(Math.min(right,box.x+box.width)>Math.max(left,box.x)&&Math.min(bottom,box.y+box.height)>Math.max(top,box.y)),'controller layout covers visible draft instructions');
+  await g.shot(`${out}/prompt-${size.width}x${size.height}-${pads}pads.png`,false);
+ }
+ await g.eval(()=>navigator.getGamepads=()=>[window.qaLetterPad]);await g.page.setViewportSize({width:640,height:480});await g.page.waitForTimeout(350);
  report.beforeClose=await g.expr('({state:g.state(),round:m.mcWorld.mUpgrades.waveDraft.round,fire:m.mInput?.KEY_FIRE?.IsDown(),stats:m.mcWorld._WaveDraftHud._Player0._Stats._visible})');
  await press(3);report.afterClose=await g.expr('({state:g.state(),round:m.mcWorld.mUpgrades.waveDraft.round,stats:m.mcWorld._WaveDraftHud?._Player0?._Stats?._visible})');
  assert(await g.waitExpr('!m.mcWorld._WaveDraftHud._Player0._Stats._visible',5000));await press(1);assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));
