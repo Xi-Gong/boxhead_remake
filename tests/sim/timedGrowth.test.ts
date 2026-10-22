@@ -45,8 +45,8 @@ it('initializes all 18 selected maps from their timed reference with evenly dist
   expect(w.mUpgrades.waveDraft.bonuses[0]).toEqual(startingBonuses(20));expect(g.players()[0].mWeapons.railgun.mActive).toBe(true);g.quit();
  }
 });
-it('keeps the difficulty floor and current enemy-growth cache deterministic without RNG or saved growth changes',()=>{
- const g=createHeadlessGame({mode:'Coop',difficulty:3}),w=g.world(),p=g.players()[0];
+it('keeps the legacy difficulty floor and current enemy-growth cache deterministic without RNG or saved growth changes',()=>{
+ const g=createHeadlessGame({mode:'Coop',difficulty:3,classicFeatures:['difficulty-waves-v1']}),w=g.world(),p=g.players()[0];
  expect(growthOf(w)!.players[0].level).toBe(timedWorldStartLevel(w,35));
  const rng=getRandomState(),old=worldEnemyGrowth(w);for(let i=0;i<10;i++)expect(worldEnemyGrowth(w)).toBe(old);
  w.mUpgrades.__set__mLevel(1000);const high=worldEnemyGrowth(w);expect(high.health).toBeGreaterThan(old.health);

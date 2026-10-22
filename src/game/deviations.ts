@@ -886,4 +886,13 @@ export const DEVIATIONS: Deviation[] = [
       'status, leaving the persistent DOM controller layout selectors a separate bottom row. Preserve '+
       'actual rebound keys, LAN partner state and legacy countdown/default text; no simulation changes.',
   },
+  {
+    id:'EXACT_DIFFICULTY_WAVES',file:'scope.ts; local/StartWave.ts, LocalGrowth.ts, CombatEnemies.ts, DifficultyRules.ts; local/Net/NetSession.ts',
+    description:'Optional difficulty-waves-v1 honors the exact selected starting wave, including one, '+
+      'without the original difficulty wave/weapon grant or personal-growth floor. Existing difficulty '+
+      'spawn budgets/cadences remain; higher difficulties add initial enemy health, damage, movement '+
+      'and attack strength with different wave slopes and bounded speed growth. Native Boss movement '+
+      'and attack steps remain independent. Old peers/fixtures retain their original initialization. '+
+      'Restored v2 worlds keep their actual saved wave, earned allocations, vitals and inventory.',
+  },
 ];

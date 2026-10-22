@@ -7,6 +7,7 @@ import { settleVitals } from './SurvivalRules.ts';
 import { endlessWorld, timedWorldStartLevel } from './Endless.ts';
 import { endlessStartLevel } from './EndlessRules.ts';
 import {tieredGrowthConfigured} from './TieredGrowth.ts';
+import {hasFeature} from './ModernFeatures.ts';
 
 const classicFixtures = new WeakSet<object>();
 /** Explicit oracle fixture; never exposed in player settings or saves. */
@@ -23,7 +24,7 @@ export function initializeLocalGrowth(world: any, restored: boolean): void {
   if(existing){if(endless)for(const p of existing.players)p.endless=true;return;}
   const upgrades = world.mUpgrades, single = World.CWorld.mGameMode === 'Single';
   const difficulty = difficultyIndex(CMain.mSaveData.__get__mDifficulty());
-  const wave = Math.max(upgrades.mLevelIndex, DIFFICULTY_START_WAVES[difficulty]!);
+  const wave = hasFeature(world,'difficulty-waves-v1')?upgrades.mLevelIndex:Math.max(upgrades.mLevelIndex, DIFFICULTY_START_WAVES[difficulty]!);
   const level = upgrades.timedWave?timedWorldStartLevel(world,wave):(endless?endlessStartLevel:balancedStartLevel)(wave, !!CMain.mSaveData.__get__mDevilsActive(), single ? 1 : 2);
   const state = upgrades.lanGrowth = newGrowth(level, true,endless,!restored&&tieredGrowthConfigured());
   if (restored) {

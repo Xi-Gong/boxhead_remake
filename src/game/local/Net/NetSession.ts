@@ -59,6 +59,7 @@ import {capturePlayerStats,type PlayerStats} from '../PlayerStats.ts';
 import {captureEnemyArmor,type EnemyArmor} from '../CombatEnemies.ts';
 import {settleCombatPlayers} from '../Combat.ts';
 import {applyWeaponCommands,takeWeaponCommands,validWeaponCommands,type WeaponCommand} from '../WeaponBindings.ts';
+import {hasFeature} from '../ModernFeatures.ts';
 
 /** Outbound side of the transport (the Electron bridge or a test pipe). */
 export interface NetLink {
@@ -503,7 +504,7 @@ export class NetSession {
     if (this.mode === 'Coop' && this.startOpts?.cfg.progression === GROWTH_RULE) {
       const balanced=this.startOpts.cfg.balance===BALANCE_RULE,fresh=!world.mUpgrades.lanGrowth;
       const endless=endlessWorld(world);
-      const baseWave=Math.max(world.mUpgrades.mLevelIndex,DIFFICULTY_START_WAVES[difficultyIndex(this.startOpts.cfg.difficulty)]!);
+      const baseWave=hasFeature(world,'difficulty-waves-v1')?world.mUpgrades.mLevelIndex:Math.max(world.mUpgrades.mLevelIndex,DIFFICULTY_START_WAVES[difficultyIndex(this.startOpts.cfg.difficulty)]!);
       const reference=world.mUpgrades.timedWave?timedWorldStartLevel(world,baseWave):balanced?(endless?endlessStartLevel:balancedStartLevel)(baseWave,this.startOpts.cfg.devils):world.mUpgrades.mMultiplierIndex;
       world.mUpgrades.lanGrowth ??= newGrowth(reference,balanced,endless,fresh&&tieredGrowthConfigured());
       if(balanced){

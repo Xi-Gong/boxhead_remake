@@ -8,6 +8,8 @@ const classicFixtures=new WeakSet<object>();
 export function setClassicWaveFixture(main:object):void{classicFixtures.add(main);}
 export function classicWaveFixture(main:object):boolean{return classicFixtures.has(main);}
 export function balancedWorld(world:any):boolean{return rules.has(world);}
+/** Difficulty is fixed when this world is built, independent of later menu/save settings. */
+export function worldDifficulty(world:any):number{return rules.get(world)??0;}
 export function installBalanceScope():void{
   const upgrades=World.CUpgrades.prototype as any,init=upgrades.InitLists;
   upgrades.InitLists=function(this:any):any{

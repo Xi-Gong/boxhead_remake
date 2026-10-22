@@ -33,7 +33,7 @@ import { installTimedWaves } from './local/TimedWaves.ts';
 import { installTimedWaveUi } from './local/TimedWaveUi.ts';
 import { installWaveDraft } from './local/WaveDraft.ts';
 import {installCombatScope,settleCombatPlayers} from './local/Combat.ts';
-import {installModernFeatures} from './local/ModernFeatures.ts';
+import {installModernFeatures,hasFeature} from './local/ModernFeatures.ts';
 import {installWeaponAccess} from './local/WeaponAccess.ts';
 import {installWeaponBindings} from './local/WeaponBindings.ts';
 import {installCombatPacing} from './local/CombatPacing.ts';
@@ -374,7 +374,9 @@ export function applyScope(): void {
   // Consumed once; nothing armed (or wave 1) leaves today's behaviour bit-identical.
   const setDifficultyPrev = upgradesProto.SetDifficulty;
   upgradesProto.SetDifficulty = function (this: any, tDifficulty: any): void {
-    setDifficultyPrev.call(this, tDifficulty);
+    // Modern difficulty is already captured by the enemy/pacing wrappers. Do not grant the
+    // original 10/20/35-wave head start (or its free weapon tiers) before applying the actual choice.
+    setDifficultyPrev.call(this, hasFeature(this.mWorld,'difficulty-waves-v1')?0:tDifficulty);
     consumeArmedWaveOn(this);
   };
   // The level selection screens: reset the cycler to wave 1 on every entry (the choice is not persisted - "didn't

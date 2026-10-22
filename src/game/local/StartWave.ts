@@ -10,10 +10,12 @@
 //              seeds it to 1);
 //   armed    - the one-shot value a game start (local LoadLevel or LAN startLocalGame) hands to the
 //              CUpgrades.SetDifficulty scope wrapper, which applies it at world build time - BEFORE tick 0, so both
-//              lockstep peers compute it identically - and consumes it. Default 1 = exactly the original behaviour.
+//              lockstep peers compute it identically - and consumes it. Under difficulty-waves-v1, 1 is an exact
+//              choice too; older negotiated games retain their original difficulty head starts.
 import { World } from '../packages.ts';
 import { maxUnlockedWave } from './WaveUnlock.ts';
 import { endlessSelectionEnabled } from './Endless.ts';
+import {hasFeature} from './ModernFeatures.ts';
 
 /**
  * Starting wave -> starting multiplier. Anchors = the original difficulty pairs of CUpgrades.SetDifficulty
@@ -68,7 +70,7 @@ export function consumeArmedWave(): number {
  */
 export function consumeArmedWaveOn(upgrades: any): void {
   const wave = consumeArmedWave();
-  if (wave <= 1 || World.CWorld.mGameMode === 'DeathMatch') return;
+  if ((wave <= 1&&!hasFeature(upgrades.mWorld,'difficulty-waves-v1')) || World.CWorld.mGameMode === 'DeathMatch') return;
   const hud = upgrades.mWorld?.mHud;
   const silent = hud?.mSilentMessages;
   if (hud) hud.mSilentMessages = true;
