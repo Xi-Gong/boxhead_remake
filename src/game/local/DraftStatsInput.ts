@@ -34,11 +34,18 @@ export function beginStatsBinding(world:any,index:number):void{view(world).bindi
 export function statsBindingHint(world:any):string{return view(world).message;}
 export function draftInputBlocked(world:any,index:number):boolean{
  if(!world?.mUpgrades?.waveDraft?.round)return false;
- const sheet=view(world).sheets[index]!;if(sheet.open)return true;
- if(!sheet.release)return false;
+ const sheet=view(world).sheets[index]!;
+ if(!sheet.open&&!sheet.release)return false;
  const input=CMain.mInput,s=netSession();
- const held=SLOT_ORDER.some(name=>(s?['','2']:[index?'2':'']).some(postfix=>input?.['KEY_'+name+postfix]?.IsDown()));
- if(!held)sheet.release=false;return held;
+ let held=false;
+ for(const name of SLOT_ORDER)for(const postfix of s?['','2']:[index?'2':'']){
+  const slot=input?.['KEY_'+name+postfix];held=!!slot?.IsDown()||held;
+  // Blocked taps must be consumed, not merely hidden until inspection closes.
+  slot?.IsPressed();slot?.IsReleased();
+ }
+ if(!sheet.open&&!held)sheet.release=false;
+ // Discard the neutral release sample too: LAN may have sampled its edges before reaching this filter.
+ return true;
 }
 export function installDraftStatsInput():void{
  const proto=CInput.prototype as any,process=proto.ProcessAllKeys;
