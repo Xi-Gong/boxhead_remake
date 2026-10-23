@@ -99,12 +99,14 @@ const startState = await page.evaluate(() => {
   const w = window.__game.main().mcWorld;
   const p = w.mThing_Collection.mPlayerThings;
   const first = Object.values(p)[0];
-  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, rule: w.mUpgrades.combat?.rule, growth: w.mUpgrades.lanGrowth?.players[0], weapons: first.mWeaponList.filter((x) => x.mActive).map((x) => x.mNameID) };
+  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, rule: w.mUpgrades.combat?.rule, horde: !!w.mUpgrades.features?.includes('horde-balance-v1'), room: w.mWorldLibLink, growth: w.mUpgrades.lanGrowth?.players[0], weapons: first.mWeaponList.filter((x) => x.mActive).map((x) => x.mNameID) };
 });
 if (startState.level !== 25 || startState.mult !== 36) fail(`wave-25 start wrong: level ${startState.level} mult ${startState.mult}`);
 const simplified = startState.rule === 'combat-pve-v3';
-// The v3 earned-wave reference uses the actual map deadline; retain the old 85-level oracle.
-if (!classicGrowth && (startState.growth?.level !== (simplified ? 61 : 85) || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
+// Room 9's 95-second goals yield level 57 under the sparse opening curve.
+// Preserve both earlier level-61 v3 and level-85 pre-v3 reference assertions.
+if (startState.horde && startState.room !== 'ROOM_Single_0009') fail('unexpected reference map: '+startState.room);
+if (!classicGrowth && (startState.growth?.level !== (startState.horde ? 57 : simplified ? 61 : 85) || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
 const wantWeapons = classicGrowth ? 'pistol,uzi,shotgun,barrel,grenade,fakewall' : simplified ? 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack' : 'pistol,uzi,shotgun,barrel,grenade,fakewall,mine,rocket,chargepack,railgun';
 if (startState.weapons.join(',') !== wantWeapons) fail(`wave-25 loadout wrong (${startState.weapons.join(',')}), wanted ${wantWeapons}`);
 step(`wave-25 run verified: level ${startState.level} mult ${startState.mult} weapons ${startState.weapons.join(',')}`);
@@ -121,7 +123,8 @@ const zombieState = await page.evaluate(() => {
 });
 step(`wave-25 field after 6.2 s: ${JSON.stringify(zombieState)}`);
 if (zombieState.bosses) {
-  if (zombieState.bosses !== 3 || zombieState.arrived !== 3 || zombieState.ordinary !== (simplified ? 2 : 1)) fail('wave-25 Boss arrival/reinforcement count wrong: '+JSON.stringify(zombieState));
+  const expectedBosses=startState.horde?4:3;
+  if (zombieState.bosses !== expectedBosses || zombieState.arrived !== expectedBosses || zombieState.ordinary !== (simplified ? 2 : 1)) fail('wave-25 Boss arrival/reinforcement count wrong: '+JSON.stringify(zombieState));
 } else if (zombieState.zombies < 10) fail(`wave-25 spawned only ${zombieState.zombies} zombies in 6.2 s`);
 // Draw the horde on camera for the README shot: a few seconds of real movement + fire (the real keyboard path).
 for (const key of ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp']) {

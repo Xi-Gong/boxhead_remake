@@ -85,11 +85,13 @@ if (!(await waitRunning())) fail('wave-25 room did not start');
 const startState = await page.evaluate(() => {
   const w = window.__game.main().mcWorld;
   const first = Object.values(w.mThing_Collection.mPlayerThings)[0];
-  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, rule: w.mUpgrades.combat?.rule, score: w.mHud.nTotalScore, growth: w.mUpgrades.lanGrowth?.players[0] };
+  return { level: w.mUpgrades.mLevelIndex, mult: w.mUpgrades.mMultiplierIndex, rule: w.mUpgrades.combat?.rule, horde: !!w.mUpgrades.features?.includes('horde-balance-v1'), room: w.mWorldLibLink, score: w.mHud.nTotalScore, growth: w.mUpgrades.lanGrowth?.players[0] };
 });
 if (startState.level !== 25) fail(`run did not start at level 25: ${startState.level}`);
 const simplified = startState.rule === 'combat-pve-v3';
-if (!classicGrowth && (startState.growth?.level !== (simplified ? 61 : 85) || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
+// Match the sparse room-9 reference; keep both earlier reference curves explicit.
+if (startState.horde && startState.room !== 'ROOM_Single_0009') fail('unexpected reference map: '+startState.room);
+if (!classicGrowth && (startState.growth?.level !== (startState.horde ? 57 : simplified ? 61 : 85) || startState.growth.xp !== 0 || startState.growth.score !== 0)) fail('wave-25 personal growth wrong: '+JSON.stringify(startState.growth));
 step(`wave-25 run started: ${JSON.stringify(startState)}`);
 
 // ---- REAL passive death: hands off the keyboard, wave 25's zombies do the rest -----------------------
