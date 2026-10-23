@@ -4,18 +4,20 @@ import {clearWaveCombat,timedWave,chooseTimedSpawn} from '../../src/game/local/T
 import {mapPacing,modernBudget} from '../../src/game/local/CombatPacing.ts';
 import {combatWaveBudget} from '../../src/game/local/ClearWaveRules.ts';
 import {timedWaveExperience,timedPreviousExperience,type TimedGrowthConfig} from '../../src/game/local/TimedGrowthRules.ts';
-it('uses actual deadlines and reachable original entrances for every map and difficulty',()=>{
+function verifyPacing(horde=false){
  for(let room=1;room<=18;room++)for(const difficulty of [0,1,2,3]as const){
-  const g=createHeadlessGame({room,difficulty});try{
+  const g=createHeadlessGame({room,difficulty,classicFeatures:horde?[]:['horde-balance-v1']});try{
    const w=g.world(),profile=mapPacing(w),wave=[1,11,21,36][difficulty];clearWaveCombat(w);w.mUpgrades.__set__mLevel(wave);
    const s=timedWave(w)!;expect(s.totalTicks).toBe(profile.seconds*25);
-   expect(s.clear).toMatchObject(combatWaveBudget(wave,profile.seconds,difficulty,true,1));
-   expect(modernBudget(w,wave,difficulty,true,1)).toEqual(combatWaveBudget(wave,profile.seconds,difficulty,true,1));
+   expect(s.clear).toMatchObject(combatWaveBudget(wave,profile.seconds,difficulty,true,1,horde));
+   expect(modernBudget(w,wave,difficulty,true,1)).toEqual(combatWaveBudget(wave,profile.seconds,difficulty,true,1,horde));
    expect(chooseTimedSpawn(w,'Zombie')?.warning).toBe(false);
    w.mUpgrades.__set__mLevel(10);g.tick(12);expect(timedWave(w)!.boss!.members!.every(m=>m.id)).toBe(true);
   }finally{g.quit();}
  }
-});
+}
+it('uses actual deadlines and reachable original entrances for every map and difficulty',()=>verifyPacing());
+it('uses the revised sparse-to-horde objectives and reachable entrances on every map and difficulty',()=>verifyPacing(true));
 it('allows two ordinary Boss reinforcements independently of the charger Boss slot',()=>{
  const g=createHeadlessGame({classicFeatures:['native-bosses-v1']}),w=g.world();try{
   clearWaveCombat(w);w.mUpgrades.__set__mLevel(5);const boss=timedWave(w)!.boss!;

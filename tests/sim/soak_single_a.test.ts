@@ -14,6 +14,17 @@ describe('Single soak, difficulty 0 (Beginner)', () => {
       const r = soak({ mode: 'Single', room, seed: 1000 + room, difficulty: 0, ticks: 1500, options: { infiniteLife: true } });
       expect(r.ticks, summary(r)).toBe(1500);
       expectHealthySoak(r, { running: true });
+      const u=r.game.world().mUpgrades,c=u.timedWave.clear;
+      expect(u.timedWave.phase).toBe('draft');
+      expect(u.timedWave.remainingTicks).toBeGreaterThan(0);
+      expect(c.emittedZombies).toBe(c.zombies);expect(c.killedZombies).toBe(c.zombies);
+      expect(c.emittedDevils).toBe(c.devils);expect(c.killedDevils).toBe(c.devils);
+      expect(u.waveDraft.round.outcome).toBe('clear');expect(u.waveDraft.round.multiplier).toBe(2);
+    });
+    // Keep the original combat-at-60s assertion on the prior objective/health profile.
+    it(`legacy horde fixture room ${room}`,()=>{
+      const r=soak({classicFeatures:['horde-balance-v1'],mode:'Single',room,seed:1000+room,difficulty:0,ticks:1500,options:{infiniteLife:true}});
+      expect(r.ticks,summary(r)).toBe(1500);expectHealthySoak(r,{running:true});
       expect(r.game.world().mUpgrades.timedWave.phase).toBe('combat');
       expect(r.game.world().mUpgrades.timedWave.remainingTicks).toBeGreaterThan(0);
     });

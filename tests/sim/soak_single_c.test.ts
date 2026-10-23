@@ -11,7 +11,7 @@ const MIN_LEVEL: Record<number, number> = {};
 describe('Single soak, difficulty 1 (Intermediate: level 10, x10)', () => {
   for (const room of ROOMS) {
     it(`room ${room}`, () => {
-      const r = soak({ classicFeatures:['difficulty-waves-v1'], mode: 'Single', room, seed: 1000 + room, difficulty: 1, ticks: 1500, options: { infiniteLife: true } });
+      const r = soak({ classicFeatures:['difficulty-waves-v1'], mode: 'Single', room, seed: 1000 + room, difficulty: 1, ticks: 1500, options: { infiniteLife: true }, bots:[{cycleEvery:90,digits:true,detourBlockedStrafe:true}] });
       expect(r.ticks, summary(r)).toBe(1500);
       expectHealthySoak(r, { running: true, minLevel: MIN_LEVEL[room] });
     });

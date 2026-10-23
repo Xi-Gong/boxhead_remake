@@ -20,6 +20,8 @@ export interface BotOptions {
   passive?: boolean;
   /** Random-ish wander when no enemy (deterministic: derived from the tick). */
   wander?: boolean;
+  /** Try the target axis after a blocked gun-line strafe; opt in without changing historical input fixtures. */
+  detourBlockedStrafe?: boolean;
 }
 
 const DIR_KEYS = (k: PlayerKeys, d: number): number[] => {
@@ -56,7 +58,7 @@ export class Bot {
   constructor(index: number, opts: BotOptions = {}) {
     this.index = index;
     this.keys = index === 0 ? KEYS.P1 : KEYS.P2;
-    this.opts = { fleeDist: 1.4, cycleEvery: 0, digits: false, grenadeHold: 10, passive: false, wander: true, ...opts };
+    this.opts = { fleeDist: 1.4, cycleEvery: 0, digits: false, grenadeHold: 10, passive: false, wander: true, detourBlockedStrafe: false, ...opts };
   }
 
   /** Every key this bot may press. */
@@ -173,7 +175,9 @@ export class Bot {
     this.hold = 0;
     this.moving = true;
     if (shootDir >= 0) out.push(...DIR_KEYS(k, shootDir)); // on a line but too far: close in
-    else if (strafe.length) out.push(...strafe);
+    // An authored wall can block the small gun-line strafe indefinitely (rooms 15/17).
+    // While recovering from a blocked move, close along the target direction using ordinary keys.
+    else if (strafe.length && (!this.opts.detourBlockedStrafe || this.fightTicks <= 0)) out.push(...strafe);
     else out.push(...DIR_KEYS(k, dirOf(dx, dy))); // on the gun line already: turn towards it
     return out;
   }
