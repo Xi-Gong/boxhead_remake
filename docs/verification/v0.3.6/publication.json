@@ -1,0 +1,82 @@
+{
+  "status": "published-and-independently-verified",
+  "version": "0.3.6",
+  "verifiedAt": "2026-10-23T02:07:52.742Z",
+  "releaseUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.6",
+  "publishedAt": "2026-10-23T02:01:46Z",
+  "latest": true,
+  "draft": false,
+  "prerelease": false,
+  "annotatedTag": "4673385218cfd077a8bddb783e74a37322f4f589",
+  "tagCommit": "01d9dbf82f1513cd2688615da17faf435f38630f",
+  "artifactBuildCommit": "f842b55da920093e4b94a91ec6c710dae6fc19e7",
+  "runtimeSourceCommit": "3e7ca65",
+  "assets": [
+    {
+      "name": "Boxhead.2Play.Rooms-0.3.6-portable.exe",
+      "bytes": 101681426,
+      "sha256": "2aabaec4b78b52c17758b8a8377f6fefdcb20f6a46c78071aef7c20316ecd8c2",
+      "githubDigest": "sha256:2aabaec4b78b52c17758b8a8377f6fefdcb20f6a46c78071aef7c20316ecd8c2",
+      "downloadUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.6/Boxhead.2Play.Rooms-0.3.6-portable.exe"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 105,
+      "sha256": "00b25f320f252f40137bb2c99f05a273fc7bfb4a20285a93cf3d2a49946b09d7",
+      "githubDigest": "sha256:00b25f320f252f40137bb2c99f05a273fc7bfb4a20285a93cf3d2a49946b09d7",
+      "downloadUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.6/SHA256SUMS.txt"
+    }
+  ],
+  "extractedAsarSHA256": "f6d13ab862cb46c020cc909349f778d99f4558d63ddb2d380171aa88f61bf267",
+  "independentDownload": {
+    "peVersion": "0.3.6",
+    "checksumTextMatched": true,
+    "actualPortableLaunch": true,
+    "normalGameplay": true,
+    "saveContinue": true,
+    "audioDecoded": 31,
+    "audioState": "running",
+    "outputMuted": true,
+    "viewport": {
+      "width": 640,
+      "height": 480,
+      "dpr": 1
+    },
+    "verifiedRuntimeFiles": [
+      "dist-electron/main.cjs",
+      "dist-electron/preload.cjs",
+      "dist/bundle/gallery-CmDtL4W7.js",
+      "dist/bundle/main-CRfh27bI.js",
+      "dist/bundle/Player-o3pII7gY.js"
+    ],
+    "fullAsarMatched": true
+  },
+  "acceptance": {
+    "serialGates": 32,
+    "vitestPassed": 1921,
+    "vitestUnresolved": 0,
+    "conditionalOrExcluded": 75,
+    "physicalController": false,
+    "physicalTwoComputerLan": false,
+    "performanceBenchmark": false,
+    "extremeStress": false
+  },
+  "cleanup": {
+    "ok": true,
+    "stoppedPreviewPids": [
+      36708
+    ],
+    "qaTcpListeners": 0,
+    "qaDiscoveryListeners": 0,
+    "remainingHiddenDebugGames": 0,
+    "playerPortsUntouched": true,
+    "method": "Stopped only the verified owned Vite listener on 5316; QA processes already exited through their finally cleanup."
+  },
+  "rawEvidence": [
+    "generated/reports/v036/publication-metadata.json",
+    "generated/reports/v036/publication-tag.json",
+    "generated/reports/v036/download-identity.json",
+    "generated/reports/v036/download-portable/launch-0.3.6.json",
+    "generated/reports/v036/release-gates-final/report.json"
+  ]
+}

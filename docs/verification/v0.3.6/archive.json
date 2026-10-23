@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "version": "0.3.6",
+  "locationRelativeToUserProfile": "boxhead-exe-archive/v0.3.6/verification-20261023020752824",
+  "fileCount": 570,
+  "bytes": 36553123,
+  "manifestSHA256": "5e39d8d67269c9e329ab881dbb187a8975fa12cef3ac7184adce92c5015b66f6",
+  "scope": "Raw v036 JSON/log/PNG/text evidence, including failures, interrupted attempts, current and superseded candidates; excludes executables, Chromium profiles and caches. Actual release EXE is stored separately in the parent archive folder.",
+  "exeSHA256": "2aabaec4b78b52c17758b8a8377f6fefdcb20f6a46c78071aef7c20316ecd8c2",
+  "asarSHA256": "f6d13ab862cb46c020cc909349f778d99f4558d63ddb2d380171aa88f61bf267",
+  "publicUpload": false
+}
