@@ -1,99 +1,650 @@
 {
-  "status": "candidate-not-published",
-  "sourceCommit": "b7da358a588540732288d0e3aabf9d877f460aef",
+  "status": "accepted-for-release",
   "version": "0.3.6",
-  "renderer": "dist/bundle/main-0rrdHfID.js",
-  "exeBytes": 101679663,
-  "exeSHA256": "08108709207096d102a72894e7bf93f36a0b7b5ff48cc01eb60240d7d30cb7a9",
-  "asarSHA256": "5882ca54b318d49f5fcf7d9382ba3cf1cb791f6d548b762338d48e91ed796316",
+  "sourceCommit": "f842b55da920093e4b94a91ec6c710dae6fc19e7",
+  "renderer": "dist/bundle/main-CRfh27bI.js",
+  "exeBytes": 101681426,
+  "exeSHA256": "2aabaec4b78b52c17758b8a8377f6fefdcb20f6a46c78071aef7c20316ecd8c2",
+  "asarSHA256": "f6d13ab862cb46c020cc909349f778d99f4558d63ddb2d380171aa88f61bf267",
   "packagedFilesCompared": 70,
-  "extractedPortableAsarMatches": true,
-  "basicPortable": {
-    "ok": true,
-    "viewport": {
-      "width": 640,
-      "height": 480,
-      "dpr": 1
-    },
-    "runtimeFilesCompared": [
-      "dist-electron/main.cjs",
-      "dist-electron/preload.cjs",
-      "dist/bundle/gallery-CmDtL4W7.js",
-      "dist/bundle/main-0rrdHfID.js",
-      "dist/bundle/Player-o3pII7gY.js"
-    ]
+  "runtimeInputsSHA256": "b19711b8c6b55baa96239e5d10ef0aafcd2ac07bb8d41959b13dff828b6764bb",
+  "inputCount": 429,
+  "authorization": {
+    "completeSerialFunctional": true,
+    "shortTwoProcessLan": true,
+    "delaysMs": [
+      30,
+      60,
+      100
+    ],
+    "performanceBenchmark": false,
+    "extremeStress": false
   },
-  "targeted": {
-    "status": "candidate-not-published",
-    "note": "Separate overlapping targeted runs, not a full-suite count. Full serial/two-process QA awaiting explicit authorization after automatic approval rejection.",
-    "tests": [
+  "vitest": {
+    "ok": true,
+    "method": "Latest result per absolute test file, full test name and duplicate occurrence; full run plus scoped fixture corrections. Preserve original runs; not one clean invocation.",
+    "runs": [
       {
-        "path": "generated/horde-tests-final.json",
-        "passed": 91,
-        "failed": 0,
-        "pending": 0,
-        "total": 91,
-        "success": true
+        "path": "generated/reports/v036/vitest-revised.json",
+        "passed": 1905,
+        "failed": 9,
+        "pending": 75,
+        "total": 1989
       },
       {
-        "path": "generated/percent-final.json",
-        "passed": 66,
-        "failed": 0,
+        "path": "generated/reports/v036/fixtures-bot-correction.json",
+        "passed": 40,
+        "failed": 2,
         "pending": 0,
-        "total": 66,
-        "success": true
+        "total": 42
       },
       {
-        "path": "generated/percent-commit.json",
-        "passed": 19,
+        "path": "generated/reports/v036/fixtures-bot-final.json",
+        "passed": 42,
         "failed": 0,
         "pending": 0,
-        "total": 19,
-        "success": true
-      },
-      {
-        "path": "generated/percent-migration-final.json",
-        "passed": 20,
-        "failed": 0,
-        "pending": 0,
-        "total": 20,
-        "success": true
-      },
-      {
-        "path": "generated/clear-rewards.json",
-        "passed": 35,
-        "failed": 0,
-        "pending": 0,
-        "total": 35,
-        "success": true
-      },
-      {
-        "path": "generated/v036-legacy-order-final.json",
-        "passed": 14,
-        "failed": 0,
-        "pending": 0,
-        "total": 14,
-        "success": true
+        "total": 42
       }
     ],
-    "ui": [
+    "passed": 1921,
+    "failed": 0,
+    "pending": 75,
+    "total": 1996,
+    "unresolved": []
+  },
+  "fullAcceptance": {
+    "status": "passed",
+    "report": "generated/reports/v036/release-gates-final/report.json",
+    "gateCount": 32,
+    "latestAttempts": [
       {
-        "path": "generated/reports/v036/percent-ui-final/report.json",
-        "ok": true,
-        "cases": 6,
-        "method": "Serial single hidden Chrome at low resolution. Real menu, card, stats and READY clicks; prepared offers, not balance evidence. Direct screenshots plus geometry and pixel checks."
+        "name": "early-gameplay",
+        "code": 0,
+        "started": "2026-10-23T01:52:32.877Z",
+        "finished": "2026-10-23T01:53:57.017Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\early-gameplay-3.log"
       },
       {
-        "path": "generated/reports/v036/early-clear-ui/report.json",
-        "ok": true,
-        "cases": 1,
-        "method": "Serial single hidden Chrome at low resolution. Real menu, card, stats and READY clicks; prepared offers, not balance evidence. Direct screenshots plus geometry and pixel checks."
+        "name": "percent-ui",
+        "code": 0,
+        "started": "2026-10-23T00:18:52.705Z",
+        "finished": "2026-10-23T00:20:58.541Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\percent-ui-1.log"
+      },
+      {
+        "name": "early-clear-ui",
+        "code": 0,
+        "started": "2026-10-23T00:20:58.542Z",
+        "finished": "2026-10-23T00:23:04.831Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\early-clear-ui-1.log"
+      },
+      {
+        "name": "exact-wave",
+        "code": 0,
+        "started": "2026-10-23T00:23:04.832Z",
+        "finished": "2026-10-23T00:27:22.586Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\exact-wave-1.log"
+      },
+      {
+        "name": "held-fire",
+        "code": 0,
+        "started": "2026-10-23T01:53:57.098Z",
+        "finished": "2026-10-23T01:54:21.886Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\held-fire-2.log"
+      },
+      {
+        "name": "gamepad-layout",
+        "code": 0,
+        "started": "2026-10-23T00:27:48.637Z",
+        "finished": "2026-10-23T00:28:49.706Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\gamepad-layout-1.log"
+      },
+      {
+        "name": "ui",
+        "code": 0,
+        "started": "2026-10-23T00:28:49.707Z",
+        "finished": "2026-10-23T00:34:16.214Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\ui-1.log"
+      },
+      {
+        "name": "audio",
+        "code": 0,
+        "started": "2026-10-23T00:34:16.214Z",
+        "finished": "2026-10-23T00:36:05.442Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\audio-1.log"
+      },
+      {
+        "name": "draft-stats",
+        "code": 0,
+        "started": "2026-10-23T00:36:05.443Z",
+        "finished": "2026-10-23T00:36:32.251Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\draft-stats-1.log"
+      },
+      {
+        "name": "candidate",
+        "code": 0,
+        "started": "2026-10-23T01:54:21.960Z",
+        "finished": "2026-10-23T01:54:45.823Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\candidate-2.log"
+      },
+      {
+        "name": "enchant-power",
+        "code": 0,
+        "started": "2026-10-23T00:36:57.547Z",
+        "finished": "2026-10-23T00:37:58.648Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\enchant-power-1.log"
+      },
+      {
+        "name": "native-balance",
+        "code": 0,
+        "started": "2026-10-23T01:12:53.841Z",
+        "finished": "2026-10-23T01:16:54.831Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\native-balance-2.log"
+      },
+      {
+        "name": "browser",
+        "code": 0,
+        "started": "2026-10-23T01:16:54.832Z",
+        "finished": "2026-10-23T01:19:40.515Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\browser-1.log"
+      },
+      {
+        "name": "electron-play",
+        "code": 0,
+        "started": "2026-10-23T01:22:50.907Z",
+        "finished": "2026-10-23T01:25:22.633Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\electron-play-2.log"
+      },
+      {
+        "name": "packaged-play",
+        "code": 0,
+        "started": "2026-10-23T01:25:22.634Z",
+        "finished": "2026-10-23T01:27:53.836Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\packaged-play-1.log"
+      },
+      {
+        "name": "v012",
+        "code": 0,
+        "started": "2026-10-23T01:27:53.837Z",
+        "finished": "2026-10-23T01:28:39.568Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v012-1.log"
+      },
+      {
+        "name": "v019",
+        "code": 0,
+        "started": "2026-10-23T01:30:12.789Z",
+        "finished": "2026-10-23T01:30:55.956Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v019-2.log"
+      },
+      {
+        "name": "v020",
+        "code": 0,
+        "started": "2026-10-23T01:31:14.419Z",
+        "finished": "2026-10-23T01:31:54.833Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v020-1.log"
+      },
+      {
+        "name": "v023",
+        "code": 0,
+        "started": "2026-10-23T01:32:22.278Z",
+        "finished": "2026-10-23T01:32:58.949Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v023-1.log"
+      },
+      {
+        "name": "v024",
+        "code": 0,
+        "started": "2026-10-23T01:32:58.949Z",
+        "finished": "2026-10-23T01:34:12.990Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v024-1.log"
+      },
+      {
+        "name": "typing",
+        "code": 0,
+        "started": "2026-10-23T01:34:12.991Z",
+        "finished": "2026-10-23T01:34:37.970Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\typing-1.log"
+      },
+      {
+        "name": "lanui",
+        "code": 0,
+        "started": "2026-10-23T01:34:37.971Z",
+        "finished": "2026-10-23T01:35:03.428Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\lanui-1.log"
+      },
+      {
+        "name": "netretry",
+        "code": 0,
+        "started": "2026-10-23T01:35:03.429Z",
+        "finished": "2026-10-23T01:35:43.632Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\netretry-1.log"
+      },
+      {
+        "name": "net",
+        "code": 0,
+        "started": "2026-10-23T01:35:43.633Z",
+        "finished": "2026-10-23T01:37:31.513Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\net-1.log"
+      },
+      {
+        "name": "lan-functional-30",
+        "code": 0,
+        "started": "2026-10-23T01:37:31.514Z",
+        "finished": "2026-10-23T01:38:52.577Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\lan-functional-30-1.log"
+      },
+      {
+        "name": "lan-functional-60",
+        "code": 0,
+        "started": "2026-10-23T01:38:52.577Z",
+        "finished": "2026-10-23T01:39:23.183Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\lan-functional-60-1.log"
+      },
+      {
+        "name": "lan-functional-100",
+        "code": 0,
+        "started": "2026-10-23T01:39:23.183Z",
+        "finished": "2026-10-23T01:39:53.464Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\lan-functional-100-1.log"
+      },
+      {
+        "name": "electron-smoke",
+        "code": 0,
+        "started": "2026-10-23T01:39:53.465Z",
+        "finished": "2026-10-23T01:40:10.010Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\electron-smoke-1.log"
+      },
+      {
+        "name": "packaged-smoke",
+        "code": 0,
+        "started": "2026-10-23T01:40:10.011Z",
+        "finished": "2026-10-23T01:40:12.893Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\packaged-smoke-1.log"
+      },
+      {
+        "name": "native",
+        "code": 0,
+        "started": "2026-10-23T01:40:12.894Z",
+        "finished": "2026-10-23T01:40:55.347Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\native-1.log"
+      },
+      {
+        "name": "old-save",
+        "code": 0,
+        "started": "2026-10-23T01:40:55.348Z",
+        "finished": "2026-10-23T01:41:33.298Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\old-save-1.log"
+      },
+      {
+        "name": "portable",
+        "code": 0,
+        "started": "2026-10-23T01:50:56.357Z",
+        "finished": "2026-10-23T01:51:46.232Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\portable-5.log"
+      }
+    ],
+    "attempts": [
+      {
+        "name": "early-gameplay",
+        "code": 1,
+        "started": "2026-10-23T00:16:02.574Z",
+        "finished": "2026-10-23T00:16:26.104Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\early-gameplay-1.log"
+      },
+      {
+        "name": "early-gameplay",
+        "code": 0,
+        "started": "2026-10-23T00:17:25.245Z",
+        "finished": "2026-10-23T00:18:52.703Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\early-gameplay-2.log"
+      },
+      {
+        "name": "percent-ui",
+        "code": 0,
+        "started": "2026-10-23T00:18:52.705Z",
+        "finished": "2026-10-23T00:20:58.541Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\percent-ui-1.log"
+      },
+      {
+        "name": "early-clear-ui",
+        "code": 0,
+        "started": "2026-10-23T00:20:58.542Z",
+        "finished": "2026-10-23T00:23:04.831Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\early-clear-ui-1.log"
+      },
+      {
+        "name": "exact-wave",
+        "code": 0,
+        "started": "2026-10-23T00:23:04.832Z",
+        "finished": "2026-10-23T00:27:22.586Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\exact-wave-1.log"
+      },
+      {
+        "name": "held-fire",
+        "code": 0,
+        "started": "2026-10-23T00:27:22.587Z",
+        "finished": "2026-10-23T00:27:48.637Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\held-fire-1.log"
+      },
+      {
+        "name": "gamepad-layout",
+        "code": 0,
+        "started": "2026-10-23T00:27:48.637Z",
+        "finished": "2026-10-23T00:28:49.706Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\gamepad-layout-1.log"
+      },
+      {
+        "name": "ui",
+        "code": 0,
+        "started": "2026-10-23T00:28:49.707Z",
+        "finished": "2026-10-23T00:34:16.214Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\ui-1.log"
+      },
+      {
+        "name": "audio",
+        "code": 0,
+        "started": "2026-10-23T00:34:16.214Z",
+        "finished": "2026-10-23T00:36:05.442Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\audio-1.log"
+      },
+      {
+        "name": "draft-stats",
+        "code": 0,
+        "started": "2026-10-23T00:36:05.443Z",
+        "finished": "2026-10-23T00:36:32.251Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\draft-stats-1.log"
+      },
+      {
+        "name": "candidate",
+        "code": 0,
+        "started": "2026-10-23T00:36:32.252Z",
+        "finished": "2026-10-23T00:36:57.546Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\candidate-1.log"
+      },
+      {
+        "name": "enchant-power",
+        "code": 0,
+        "started": "2026-10-23T00:36:57.547Z",
+        "finished": "2026-10-23T00:37:58.648Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\enchant-power-1.log"
+      },
+      {
+        "name": "native-balance",
+        "code": 1073807364,
+        "started": "2026-10-23T00:37:58.648Z",
+        "finished": "2026-10-23T00:38:05.773Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\native-balance-1.log",
+        "disposition": "interrupted by desktop turn cancellation; requires rerun"
+      },
+      {
+        "name": "native-balance",
+        "code": 0,
+        "started": "2026-10-23T01:12:53.841Z",
+        "finished": "2026-10-23T01:16:54.831Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\native-balance-2.log"
+      },
+      {
+        "name": "browser",
+        "code": 0,
+        "started": "2026-10-23T01:16:54.832Z",
+        "finished": "2026-10-23T01:19:40.515Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\browser-1.log"
+      },
+      {
+        "name": "electron-play",
+        "code": null,
+        "started": "2026-10-23T01:19:40.5244083Z",
+        "finished": "2026-10-23T01:21:39.3828265Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\electron-play-1.log",
+        "disposition": "interrupted by user request for silent QA; owned coordinator and all children terminated; rerun required"
+      },
+      {
+        "name": "electron-play",
+        "code": 0,
+        "started": "2026-10-23T01:22:50.907Z",
+        "finished": "2026-10-23T01:25:22.633Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\electron-play-2.log"
+      },
+      {
+        "name": "packaged-play",
+        "code": 0,
+        "started": "2026-10-23T01:25:22.634Z",
+        "finished": "2026-10-23T01:27:53.836Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\packaged-play-1.log"
+      },
+      {
+        "name": "v012",
+        "code": 0,
+        "started": "2026-10-23T01:27:53.837Z",
+        "finished": "2026-10-23T01:28:39.568Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v012-1.log"
+      },
+      {
+        "name": "v019",
+        "code": 1,
+        "started": "2026-10-23T01:28:39.569Z",
+        "finished": "2026-10-23T01:29:22.126Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v019-1.log"
+      },
+      {
+        "name": "v019",
+        "code": 0,
+        "started": "2026-10-23T01:30:12.789Z",
+        "finished": "2026-10-23T01:30:55.956Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v019-2.log"
+      },
+      {
+        "name": "v020",
+        "code": 0,
+        "started": "2026-10-23T01:31:14.419Z",
+        "finished": "2026-10-23T01:31:54.833Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v020-1.log"
+      },
+      {
+        "name": "v023",
+        "code": 0,
+        "started": "2026-10-23T01:32:22.278Z",
+        "finished": "2026-10-23T01:32:58.949Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v023-1.log"
+      },
+      {
+        "name": "v024",
+        "code": 0,
+        "started": "2026-10-23T01:32:58.949Z",
+        "finished": "2026-10-23T01:34:12.990Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\v024-1.log"
+      },
+      {
+        "name": "typing",
+        "code": 0,
+        "started": "2026-10-23T01:34:12.991Z",
+        "finished": "2026-10-23T01:34:37.970Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\typing-1.log"
+      },
+      {
+        "name": "lanui",
+        "code": 0,
+        "started": "2026-10-23T01:34:37.971Z",
+        "finished": "2026-10-23T01:35:03.428Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\lanui-1.log"
+      },
+      {
+        "name": "netretry",
+        "code": 0,
+        "started": "2026-10-23T01:35:03.429Z",
+        "finished": "2026-10-23T01:35:43.632Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\netretry-1.log"
+      },
+      {
+        "name": "net",
+        "code": 0,
+        "started": "2026-10-23T01:35:43.633Z",
+        "finished": "2026-10-23T01:37:31.513Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\net-1.log"
+      },
+      {
+        "name": "lan-functional-30",
+        "code": 0,
+        "started": "2026-10-23T01:37:31.514Z",
+        "finished": "2026-10-23T01:38:52.577Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\lan-functional-30-1.log"
+      },
+      {
+        "name": "lan-functional-60",
+        "code": 0,
+        "started": "2026-10-23T01:38:52.577Z",
+        "finished": "2026-10-23T01:39:23.183Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\lan-functional-60-1.log"
+      },
+      {
+        "name": "lan-functional-100",
+        "code": 0,
+        "started": "2026-10-23T01:39:23.183Z",
+        "finished": "2026-10-23T01:39:53.464Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\lan-functional-100-1.log"
+      },
+      {
+        "name": "electron-smoke",
+        "code": 0,
+        "started": "2026-10-23T01:39:53.465Z",
+        "finished": "2026-10-23T01:40:10.010Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\electron-smoke-1.log"
+      },
+      {
+        "name": "packaged-smoke",
+        "code": 0,
+        "started": "2026-10-23T01:40:10.011Z",
+        "finished": "2026-10-23T01:40:12.893Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\packaged-smoke-1.log"
+      },
+      {
+        "name": "native",
+        "code": 0,
+        "started": "2026-10-23T01:40:12.894Z",
+        "finished": "2026-10-23T01:40:55.347Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\native-1.log"
+      },
+      {
+        "name": "old-save",
+        "code": 0,
+        "started": "2026-10-23T01:40:55.348Z",
+        "finished": "2026-10-23T01:41:33.298Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\old-save-1.log"
+      },
+      {
+        "name": "portable",
+        "code": 1,
+        "started": "2026-10-23T01:41:33.299Z",
+        "finished": "2026-10-23T01:42:41.530Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\portable-1.log"
+      },
+      {
+        "name": "portable",
+        "code": 1,
+        "started": "2026-10-23T01:43:43.955Z",
+        "finished": "2026-10-23T01:44:31.303Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\portable-2.log"
+      },
+      {
+        "name": "portable",
+        "code": 1,
+        "started": "2026-10-23T01:46:22.655Z",
+        "finished": "2026-10-23T01:47:14.729Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\portable-3.log"
+      },
+      {
+        "name": "portable",
+        "code": 1,
+        "started": "2026-10-23T01:48:26.054Z",
+        "finished": "2026-10-23T01:49:18.412Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\portable-4.log"
+      },
+      {
+        "name": "portable",
+        "code": 0,
+        "started": "2026-10-23T01:50:56.357Z",
+        "finished": "2026-10-23T01:51:46.232Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\portable-5.log"
+      },
+      {
+        "name": "early-gameplay",
+        "code": 0,
+        "started": "2026-10-23T01:52:32.877Z",
+        "finished": "2026-10-23T01:53:57.017Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\early-gameplay-3.log"
+      },
+      {
+        "name": "held-fire",
+        "code": 0,
+        "started": "2026-10-23T01:53:57.098Z",
+        "finished": "2026-10-23T01:54:21.886Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\held-fire-2.log"
+      },
+      {
+        "name": "candidate",
+        "code": 0,
+        "started": "2026-10-23T01:54:21.960Z",
+        "finished": "2026-10-23T01:54:45.823Z",
+        "log": "C:\\Users\\royxg\\GitHub\\boxhead_remake\\generated\\reports\\v036\\release-gates-final\\candidate-2.log"
       }
     ]
   },
-  "fullAcceptance": {
-    "status": "awaiting-explicit-user-authorization",
-    "automaticApprovalRejected": true,
-    "noFullSuiteOrTwoProcessLanRun": true
-  }
+  "superseded": "superseded-candidate.json",
+  "qaSourceCommit": "bf3644e78506b14ca9608595d64e4f4c6d0348f6",
+  "runtimeSourceCommit": "3e7ca65",
+  "artifactBuildCommit": "f842b55da920093e4b94a91ec6c710dae6fc19e7",
+  "buildInputProvenance": {
+    "originalBroadInputSHA256": "31e87e2c59a10c02d55107935268d503dac4238f88aa5515db900480217f57d5",
+    "note": "The broad input fingerprint also includes tools. Only acceptance orchestration changed after packaging; all 70 packaged build files, the renderer, full asar and EXE remain byte-identical."
+  },
+  "silentQa": {
+    "sourceCommit": "8084cca",
+    "probe": "generated/reports/v036/silent-launch/attempts.json",
+    "method": "User requested no speaker output during acceptance. All subsequent runners preload silent-launch.cjs; Chrome/Electron/portable receive --mute-audio before startup. Internal WebAudio remains active. Player settings and system volume untouched."
+  },
+  "screenshotReview": {
+    "method": "Direct screenshot inspection, real mouse/keyboard, geometry and pixel assertions; zai unavailable; no physical-controller claim.",
+    "production": [
+      {
+        "name": "menu.png",
+        "sha256": "144a85a21e3b657b489712ca968a8b48954ea4bb01181e3f4af8a37fd8c2915c"
+      },
+      {
+        "name": "gameplay.png",
+        "sha256": "98f853aa7dfc725a30a545f23bbc4493e3f4bfb0dcb6258c24b44d56b1b59d1e"
+      },
+      {
+        "name": "upgrade-cards.png",
+        "sha256": "3bd3e1ae5c6b338bccbb67cc8874709090313dd6ccfa1febd0feb93f3fd3d5ec"
+      },
+      {
+        "name": "controller-layout.png",
+        "sha256": "7da745100d00d95af1c1bbb33ba7787aa7e439cac863205f95d7bc08687abf69"
+      },
+      {
+        "name": "boss.png",
+        "sha256": "f0d22238763dbe29d7b2a80fddb728ff0da5069cdea1e8bacacdb5948fb75fa3"
+      },
+      {
+        "name": "coop-crate.png",
+        "sha256": "277ff25d5b1321e453373c39dbb36ab591174f864ab35a7702943aa5e164d153"
+      },
+      {
+        "name": "devil-supplies.png",
+        "sha256": "d4a0b87a6d289749048c568d6f622d8ad161772e2fca1f0e5fe592b19a0eda0a"
+      },
+      {
+        "name": "coop-stats.png",
+        "sha256": "d61760dcb3b7c5fa7a10ec3147d16865993e58c24ca4927956b8c1081f6d595f"
+      }
+    ],
+    "normalPackagedLan": "generated/reports/v036/readme-lan-final/readme-lan.json",
+    "nightmare": "generated/reports/v036/release-gates-final/exact-wave/Single-d3-640x480"
+  },
+  "coverageLimits": [
+    "Two independent processes use real localhost transport with injected 30/60/100ms one-way delay; not physical two-computer LAN.",
+    "Controlled positions and hit probes are functional evidence, not win-rate evidence.",
+    "Injected pads verify mappings and layouts, not physical hardware.",
+    "No performance benchmark or extreme stress.",
+    "71 existing optional/source conditions and 4 expressly excluded extreme mixed-explosion cases were not run."
+  ]
 }

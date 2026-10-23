@@ -12,12 +12,12 @@ The 2007 Flash classic **Boxhead: 2Play Rooms** by Sean Cooper, rebuilt in **Typ
 A class-by-class AS2 port preserves the original art, sound and game logic, with 2× rasterization, saves,
 gamepads and LAN multiplayer. Intentional additions are documented in [PARITY.md](PARITY.md).
 
-<p align="center"><a href="assets/readme/menu.png"><img src="assets/readme/menu.png" alt="Boxhead v0.3.5 main menu" width="640"></a></p>
+<p align="center"><a href="assets/readme/menu.png"><img src="assets/readme/menu.png" alt="Boxhead v0.3.6 main menu" width="640"></a></p>
 
 ## Quick Start
 
 **Windows portable:** download the single-file exe from [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest).
-**[v0.3.5](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.5)** fixes printed Xbox/Nintendo button letters, confirmation after stats, last-round pistol fallback and empty-fire alerts, and adds personal enchantment power growth. The revised download restores blue armor over health, matches native Boss bars to player health height and slightly widens shortcut-label spacing. Weapon names now sit close to health or the active enchantment strip, restoring their original position without enchantment. See the [release verification](docs/verification/v0.3.5/README.md).
+**v0.3.6** makes early waves easier across all four difficulties, raises finite base ammunition by 25% (UZI: 125), and speeds up the shotgun. Build bonuses now add explicit, capped percentages, including **dodge up to 50%**. Early clears and Boss victories grant double upgrades; surviving the deadline grants one. Exact starting waves, controller letters, empty-weapon feedback and LAN compatibility remain. See the [release verification](docs/verification/v0.3.6/README.md).
 Saves and settings live in `%USERPROFILE%\.boxhead`.
 
 **Run from source:**
@@ -30,7 +30,11 @@ npm run dist        # Windows portable: release/Boxhead 2Play Rooms-<version>-po
 
 Packaging downloads its toolchain on the first run; use `NODE_USE_ENV_PROXY=1` if your network requires it.
 
-<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="v0.3.5 compact weapon-name spacing, A/Y binding, blue armor over health and enchantment durability" width="640"></a></p>
+<p align="center"><a href="assets/readme/gameplay.png"><img src="assets/readme/gameplay.png" alt="v0.3.6 compact weapon-name spacing, A/Y binding, blue armor over health and enchantment durability" width="640"></a></p>
+
+Nightmare with **START WAVE 1** now enters **WAVE 1 / LV 1**, with the pistol. [Difficulty selection](assets/readme/nightmare-options.png).
+
+<p align="center"><a href="assets/readme/nightmare-wave-one.png"><img src="assets/readme/nightmare-wave-one.png" alt="Final v0.3.6 Nightmare start at selected Wave 1, level 1 and pistol only" width="640"></a></p>
 
 ## Controls
 
@@ -43,7 +47,7 @@ Packaging downloads its toolchain on the first run; use `NODE_USE_ENV_PROXY=1` i
 | Inspect stats between waves | Tab (rebindable) | R (rebindable) |
 
 `P` pauses, `F11` toggles fullscreen. Right-click for sound, quality and render scale.
-Gamepads: stick/d-pad to move, B/LT/RT to fire, LB/RB to cycle and START to pause. In modern PvE, tap A/Y to switch bound weapons; hold either for 0.8 seconds to bind/unbind the held weapon. A confirms menus/upgrades; X toggles stats only between waves. Local co-op shows both players together; LAN players independently inspect only their own stats.
+Gamepads: stick/d-pad to move, B/LT/RT to fire, LB/RB to cycle and START to pause. Hold fire on the keyboard or controller for continuous firearm shots at the normal weapon rate. Grenades retain charge/release and deployables retain press-to-place/detonate. In modern PvE, tap A/Y to switch bound weapons; hold either for 0.8 seconds to bind/unbind the held weapon. A confirms menus/upgrades; X toggles stats only between waves. Local co-op shows both players together; LAN players independently inspect only their own stats.
 
 Use the letters printed on your controller. The bottom-left pad selector offers **AUTO / XBOX / NINTENDO** and remembers each device/slot. Recognizable SN30/Switch names choose Nintendo automatically; when an SN30 reports a generic Xbox/XInput name, choose **NINTENDO** once. The final shot switches to the pistol; unlocked empty weapons remain selectable and give a short alert when fired. Last remote charges can still be selected and detonated.
 
@@ -51,21 +55,22 @@ Use the letters printed on your controller. The bottom-left pad selector offers 
 
 ## Beyond the original
 
-- **Save, resume & retry** — continue a saved run, retry the failed wave, or select a previously reached wave.
+- **Save, resume & retry** — continue a saved run, retry the failed wave, or select a previously reached wave. The selected Wave is exact on all four difficulties; Wave 1 starts at level 1 with the pistol. Higher difficulty changes enemy numbers, spawn cadence, health, damage, movement, attack speed and growth. Both LAN peers need this updated build for the new rule; older peers retain their negotiated behavior.
 - **LAN co-op & death match** — discover rooms or join by IP in the desktop app, with rollback and reconnect support.
-- **Timed, endless PvE** — clear finite enemy groups early or survive ordinary 80–105-second rounds. Every fifth wave adds 30 seconds and 1–3 Bosses, each with one compact overhead health bar and counted under DEVIL. Boss rounds allow two ordinary reinforcements at once.
-- **Cards and attributes** — a comic-paper window with large icons, benefits and exact previews. Both players confirm READY without a countdown; defeating all Bosses doubles the reward. X and the actual keyboard shortcut are displayed.
-- **Tiered, endless PvE growth** — low early XP costs lead to slower elite levels. Continue beyond level 125 with growing health, armor, weapon damage and ammo capacity. Wave selection follows your best progress and grants a map-duration-based starting build. Old saves retain earned progression and their XP curve, then immediately adopt the new combat rules on load.
+- **Timed, endless PvE** — clear finite enemy groups early or survive ordinary 80–105-second rounds. Every fifth wave adds 30 seconds and 2–4 Bosses, each with one compact overhead health bar and counted under DEVIL. Boss rounds allow two ordinary reinforcements at once.
+- **Larger base ammunition** — finite base stocks are UZI 125, shotgun/rocket/grenade 25, railgun 19, barrel/mine/remote charge 13 and wall 7. The shotgun base period falls from 18 to 14 ticks.
+- **Cards and attributes** — a comic-paper window with large icons, benefits and exact previews. Attribute bonuses add percentage points with visible caps, including dodge up to 50%. Both players confirm READY without a countdown; early clears and Boss victories double the reward. X and the actual keyboard shortcut are displayed.
+- **Tiered, endless PvE growth** — low early XP costs lead to slower elite levels. Levels continue beyond 125; health, armor, damage and capacity share explicit percentage caps. Wave selection follows your best progress and grants a map-duration-based starting build. Old saves retain earned progression and their XP curve, then immediately adopt the new combat rules on load.
 - **Native enemies and Bosses** — ordinary zombies and original fireball devils, with chargers and their extra 50% crate roll retired. Devil Bosses move, attack and hit moderately harder; disabling devils selects non-charging zombie Bosses.
-- **Enchantment power and endurance** — enchanted attacks start at +15% damage; levels and power cards raise the extra damage toward +45% with diminishing returns. Durability is independent of ammo: purple crates refill it, ammo supplies do not. Levels and endurance cards raise its capacity. The raised purple strip stays narrower than health and at most half its height.
+- **Enchantment power and endurance** — enchanted attacks start at +15% damage; levels and power cards add percentage points up to +45%. Durability is independent of ammo: purple crates refill it, ammo supplies do not. Levels and endurance cards raise its capacity. The raised purple strip stays narrower than health and at most half its height.
 - **Lighter armor and four supplies** — start with 160 health and an empty 40-capacity shield. Blue armor overlays the original green health bar; partial armor exposes the health beneath. Every useful armor crate fills it completely. Medical, armor, enchantment and ammunition crates each have a 25% drop chance.
 - **Comfort and setup** — type an unlocked starting wave directly, change LAN room rules as host, and enjoy softer explosion flashes and automatic audio recovery.
-- **Four survival difficulties** — tuned pacing, concurrency and speed ceilings, with increasingly strong enemies. A finite objective rewards active clearing; survival to the limit also advances. Older peers retain their supported rules.
+- **Four survival difficulties** — sparse opening waves with two-hit pistol zombies ease into stronger, larger later hordes and more, less durable Bosses. A finite objective rewards active clearing; survival to the limit also advances. Older peers retain their supported rules.
 - **Clearer combat art** — five refined gun models, warm bullet tracers, cyan rail beams, directional rockets and matching enchanted effects. Compact native Boss bars match player health-bar height; player health bars keep their existing design.
 - **Reliable supplies and clearer UI** — refills preserve inherited weapon capacity; confirmed P1/P2 pickup messages remain evenly spaced, and conditional lobby actions have room to breathe.
 - **Weapon shortcuts and recovery** — unlocked empty weapons remain selectable and bindable. A/Y labels and hold progress show shortcuts; death crates preserve ammunition and enchantment durability without adding duplicate durability.
 
-[Feature details](docs/features.md) · [v0.3.5 release verification](docs/verification/v0.3.5/README.md) · [v0.3.4 verification](docs/verification/v0.3.4/README.md)
+[Feature details](docs/features.md) · [v0.3.6 release verification](docs/verification/v0.3.6/README.md) · [v0.3.4 verification](docs/verification/v0.3.4/README.md)
 
 <p align="center"><a href="assets/readme/upgrade-cards.png"><img src="assets/readme/upgrade-cards.png" alt="Enchantment power and endurance cards with exact previews and stats shortcuts" width="640"></a></p>
 

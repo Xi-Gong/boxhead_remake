@@ -23,7 +23,7 @@ export async function verifyReadmeLan(H,C,report,out){
  await C.page.waitForTimeout(300);
  await both('m.mcWorld.mUpgrades.timedWave.phase==="draft"&&m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]&&!m.mcWorld.mUpgrades.waveDraft.round.confirmed[1]');
  await games[1].shot(join(out,'lan-growth.png'),false);await games[0].shot(join(out,'host-ready.png'),false);
- result.client=await games[1].expr('({title:m.mcWorld._WaveDraftHud._Player1._Status.text,partner:m.mcWorld._WaveDraftHud._Clock.text,level:m.mcWorld._WaveDraftHud._Player1._Stats._Value0.text,shield:m.mcWorld._WaveDraftHud._Player1._Stats._Value2.text,weapon:m.mcWorld._WaveDraftHud._Player1._Stats._Value4.text})');
+ result.client=await games[1].expr('(()=>{const d=m.mcWorld._WaveDraftHud,s=d._Player1._Stats,percent=m.mcWorld.mUpgrades.features.includes("percent-stats-v1");return {title:d._Player1._Status.text,partner:d._Clock.text,level:s._Value0.text,shield:s._Value2.text,weapon:s["_Value"+(percent?11:4)].text};})()');
  for(const g of games)assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(report.errors,[]);result.ok=true;
  writeFileSync(join(out,'readme-lan.json'),JSON.stringify(result,null,2));console.log('NORMAL PACKAGED README LAN PASSED');
 }

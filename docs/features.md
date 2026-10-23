@@ -6,27 +6,32 @@
 
 Solo, local co-op and compatible LAN co-op loop indefinitely. Death match retains its rules.
 
-Modern v0.3.4 rounds target **90 seconds normally and 120 seconds for Bosses**, adjusted to authored floor area and entrance paths: ordinary maps last 80–105 seconds; Bosses add 30 seconds. Menus show the exact limit. Pause, draft and disconnect freezes stop the simulation clock. Clear the finite ordinary objective or survive; defeating every Boss ends its round immediately. Timeouts grant no passive XP or kill rewards.
+Modern v0.3.6 rounds target **90 seconds normally and 120 seconds for Bosses**, adjusted to authored floor area and entrance paths: ordinary maps last 80–105 seconds; Bosses add 30 seconds. Menus show the exact limit. Pause, draft and disconnect freezes stop the simulation clock. Clear the finite ordinary objective or survive; defeating every Boss ends its round immediately. Timeouts grant no passive XP or kill rewards.
 
-Finite objectives use the actual map deadline with the retained 40% budget coefficient. Concurrency remains at most 22 at HIGH and 16 at LOW. Enemies enter only through reachable original spawn points, never random ground near a player. Arrival windows alternate with recovery gaps. Distant or wall-obscured approaches accelerate and slow for contact. Ordinary zombie HP retains its 2.5× multiplier and devil/Boss HP its 2× multiplier; all enemies have no armor.
+Finite objectives use the actual map deadline with a zombie budget coefficient rising from 14% at wave 1 to 46% at wave 25. Concurrent groups grow from two opening zombies to at most 25 at HIGH and 16 at LOW. Enemies enter only through reachable original spawn points, never random ground near a player. Arrival windows alternate with recovery gaps. Distant or wall-obscured approaches accelerate and slow for contact. Ordinary zombie health starts at 0.38× authored health and rises continuously to 1.10× over thirty waves; every difficulty's first-wave ordinary zombie takes two base pistol hits. Devils rise from 0.85× to 1.25×. The first Boss health layer is 0.45×, rising to 0.80× over thirty waves. Difficulty health separation is gentle initially and grows later; all enemies have no armor.
 
-The modern roster contains original zombies and fireball devils. Chargers, their skills and the extra 50% red-box roll are retired. Every fifth wave uses 1–3 native devil Bosses; disabling devils selects non-charging zombie Bosses. Two ordinary zombie reinforcements remain independent of Boss slots. Devil Boss movement, attack-animation progression and damage increase by 15%, 15% and 10% relative to the previous native Boss; projectile speed and range stay unchanged. Initial attacks are staggered by member slot. Retired behavior remains isolated for older negotiated rules and historical fixtures.
+The modern roster contains original zombies and fireball devils. Chargers, their skills and the extra 50% red-box roll are retired. Every fifth wave uses 2–4 native devil Bosses; disabling devils selects non-charging zombie Bosses. Two ordinary zombie reinforcements remain independent of Boss slots. Devil Boss movement, attack-animation progression and damage increase by 15%, 15% and 10% relative to the previous native Boss; projectile speed and range stay unchanged. Initial attacks are staggered by member slot. Retired behavior remains isolated for older negotiated rules and historical fixtures.
 
 Between waves, choose an offense, defense or utility card with exact current-to-next previews. **There is no countdown or automatic selection. Both players confirm READY.** Move or cycle weapons to navigate, press A/fire to confirm, or select a card and click READY. **X**, P1 **Tab** or P2 **R** opens stats only during this stage; actual rebound keys are shown. Single shows the player, local co-op opens both P1/P2 together, and LAN shows only the local player with independent toggles. Opening blocks the corresponding draft input; closing waits for held keys to release. LAN values come from confirmed ticks. The entire comic-paper window uses original portraits, large icons, clear benefits and red/green state markers.
 
-| Upgrade | One reward |
-|---|---|
-| Firepower / Vitality / Shield | +8% damage / +8% health / +6% armor bonus |
-| Magazine | +8% capacity training, with diminishing returns |
-| Haste / Mobility | +6% cadence / +4% movement training, with diminishing returns |
-| Supply | +10% healing/ammo recovery training, with diminishing returns |
-| Enchant endurance | +10% durability training, with diminishing returns |
-| Enchant power | One power point; exact increased enchantment bonus shown on the card |
-| First aid / Resupply | Restore 35% maximum health / owned finite ammo, improved by supply efficiency |
+All permanent bonuses add **percentage points** from levels and choices, rather than multiplying the current total. Cards show the exact change, current/next percentage and cap. Integer health/ammo and weapon tick ceilings still apply.
 
-Rewards persist within the run, including saves and retries; new runs reset them. Useless/capped choices are excluded. Defeating all Bosses doubles one reward per player; survival earns the ordinary reward. New selected-wave builds distribute nine permanent attributes and derive earned XP without replaying prior waves or assuming Boss kills. Saved allocations stay intact. Armor-piercing rewards are retired with enemy armor.
+| Attribute | One reward | Cap |
+|---|---|---|
+| Damage / Health / Shield | +8 / +8 / +6 points | +900 / +500 / +150%; shield also ≤40% final HP |
+| Capacity | +8 points | +200% of the new base |
+| Fire rate / Movement | +6 / +4 points | +75 / +25%, plus per-weapon tick floors |
+| Supply effect | +10 points | +60% |
+| Enchant endurance | +10 points | +200% |
+| Enchant damage | +3 points | 45% total extra damage |
+| Dodge | +3 points | 50% chance |
+| First aid / Resupply | Restore 35% max health / finite ammo | Actual maximum; supply improves recovery |
 
-Finite ammo approaches at most 3× authored capacity; only the authored pistol stays infinite. Cadence has per-weapon ceilings. Shotgun pellets deal 65% damage and fall off with range; direct rocket self-blast damage is 15% before armor. Medical and ammunition supplies replenish 40% of maximum, improved by bounded efficiency. Every useful armor crate fills the armor cap completely. Existing natural regeneration and weapon unlocks remain.
+Rewards persist within the run, including saves and retries; new runs reset them. Capped choices are excluded. **Clearing every finite target before the deadline or defeating all Bosses doubles the chosen benefit**; merely surviving earns one and grants no unearned kill XP. New selected-wave builds distribute ten permanent attributes and derive earned XP without assuming early-clear perks or Boss kills. Saved allocations stay intact. Armor-piercing rewards remain retired.
+
+All finite authored base ammunition is raised by 25%, rounded up: UZI 125, shotgun/rocket/grenade 25, railgun 19, barrel/mine/remote charge 13, wall 7. Capacity bonuses reach at most three times these new bases. Only the authored pistol stays infinite. Inherited finite surplus is never truncated by refills or upgrades. Shotgun base cooldown falls from 18 to 14 ticks; pellets retain 65% damage and range falloff. Direct rocket self-blast damage remains 15% before armor. Supplies restore 40% of maximum, improved by bounded efficiency; armor crates fill the cap. Natural regeneration and weapon unlocks remain.
+
+Dodge uses the seeded simulation RNG before damage and hit reactions. A successful dodge prevents the whole eligible hit, including armor consumption and stagger. Zero chance, spawn protection and legacy peers consume no additional dodge random draw. Saves and rollback retain the allocation, and LAN sheets display only confirmed percentages.
 
 The v2 save container retains optional rule markers, timers, offers, bonuses, identities and skills. Old saves migrate immediately when v3 is available: retain earned progression and inventory, scale health/armor by their remaining fractions, convert retired enemies by family and turn piercing points/cards into firepower. Existing clocks and completion fractions remain; rereading a converted save does not convert it again. LAN negotiates combat-pve-v3 with all dependencies; older peers retain their supported rules and cannot load v3 saves. Classic art and assertions remain available.
 
@@ -57,21 +62,25 @@ The v2 save container retains optional rule markers, timers, offers, bonuses, id
   score/level/XP panels flank WAVE and its clock. Ordinary-wave counts include the unspawned objective;
   Bosses count under DEVIL. There are individual upgrade summaries while paused.
   Retry restores the current wave's starting growth and
-  inventory; a fresh selected-wave run grants its baseline level from the same earned-wave curve, respecting
-  the difficulty head start. Kill scores use the level before that kill's upgrade. Local co-op keeps its shared
+  inventory; a fresh selected-wave run grants its baseline level from the same earned-wave curve,
+  with no difficulty head start. Kill scores use the level before that kill's upgrade. Local co-op keeps its shared
   camera and controls; death match retains its rules. Old v2 local saves convert once while preserving total
   score, health/armor fractions, weapons and ammo; co-op splits old score equally, with any odd point going to P1.
-- **Growing survivability** — start at 160 health and empty 40-capacity armor. Base health adds 2 per level through 10, 3 through 30 and 4 afterward. Armor is `min(floor(base health × 25% × (1 + 6% × armor picks)), floor(final health × 40%))`, displayed as blue armor over the original health bar. Level/armor picks do not refill armor; armor crates do. Full/dead players leave crates for an eligible teammate. Armor absorbs damage 1:1 before health, with normal overflow and lethal hits. Shield reaction resistance, natural regeneration and health-on-level-up remain.
+- **Growing survivability** — start at 160 health and empty 40-capacity armor. Base health adds 2 per level through 10, 3 through 30 and 4 afterward. Level vitality growth and +8-point health choices add against the 160-health base, capped at +500%. Armor adds level vitality growth and +6-point choices against a base of 40, capped at +150% and 40% of final health, displayed as blue armor over the original health bar. Level/armor picks do not refill armor; armor crates do. Full/dead players leave crates for an eligible teammate. Armor absorbs damage 1:1 before health, with normal overflow and lethal hits. Shield reaction resistance, natural regeneration and health-on-level-up remain.
 - **Endless weapon growth** — new runs add 1% weapon damage and 0.5% finite capacity per level at 11–30,
   then 2% and 1% per level from 31 onward. Existing saved curves retain their post-125 growth of 1% damage and
   `max(1, ceil(capacity at level 125 × 0.005))` finite ammo per level. Only the added capacity is supplied;
   modern refill capacity is bounded while previously earned finite surplus remains usable. Saves restore current supplies without a bonus refill.
 - **Four PvE difficulty curves** — Single and co-op retain Beginner, Intermediate, Expert and Nightmare pacing,
   active caps and speed ceilings. Modern waves replenish within a finite reduced objective; legacy finite-wave budgets stop at 200 zombies and 10 devils, including variants.
-  Enemy health/damage continue scaling from the earned-wave reference level. LAN enables new rules after negotiation.
+  The selected starting Wave is exact on all four difficulties; Wave 1 starts at level 1 with the pistol.
+  Difficulty changes enemy counts, initial health/damage/movement/attack and wave growth instead of granting player levels or weapons.
+  Enemy health/damage continue scaling from the earned-wave reference level, with bounded additional movement and attack growth.
+  LAN enables `difficulty-waves-v1` after both peers negotiate it; older peers retain compatible rules and existing saves keep their actual saved Wave.
   See the [balance audit and explosion measurements](verification/v0.2.8/README.md).
 - **Enchanted weapons** — purple crates fill the held weapon’s independent enchantment durability without adding ammunition. Each successful shot or placement spends one unit; a shotgun volley counts once and failed placement costs nothing. Empty ammo keeps remaining durability and can receive a purple crate. Ammo refills and reconstruction preserve remaining durability; they do not replenish it. The final emitted attack and its children retain the damage bonus captured at emission (initially +15%) and the normal enchantment effects. Exhaustion returns the gun to ordinary damage. A slim purple meter and the attribute sheet show remaining/max durability. Death crates merge by maximum, never addition; empty enchanted payloads do not grant ammunition. Legacy persistent enchantment converts once to a full budget; finite old stock converts by remaining units. Fake walls cannot enchant.
 - **A/Y weapon shortcuts** — every unlocked weapon remains selectable with zero ammunition. In modern PvE, tap A/Y to select, or hold for 0.8 seconds to bind the held gun, replace a binding or unbind the same gun. A gun occupies one key; labels and hold progress show the result. Bindings are personal to the run and survive death, waves, retry, saves and reconnects. Menus/drafts retain A confirmation; B/LT/RT fire. Pausing, losing focus, disconnecting, changing guns or entering a draft cancels a hold.
+  Firearms repeat at their unchanged rate while keyboard or controller fire is held, without requiring AutoFire unlocks. Grenades retain charge/release; deployables retain press-to-place/detonate. Connected controllers' inputs are merged so an idle second pad cannot cancel Single-player fire. Older peers retain their original weapon trigger rules through `held-fire-v1` negotiation.
   Xbox and Nintendo layouts follow printed letters, including menu A and draft X. Auto detection covers recognizable SN30/Switch names; the bottom-left per-pad selector remembers explicit overrides for generic XInput IDs. A layout change cancels holds until release. The final successful finite shot/placement returns to the pistol; selecting an empty weapon retains it and attempted fire plays the original alert, repeating at most every 10 simulation ticks. Empty remote charges remain useful while a placed charge can be detonated. Older peers retain their negotiated behavior through `empty-weapon-feedback-v1`.
 - **Reliable pickups and spacing** — supply effects synchronize personal maxima and preserve higher inherited
   capacities within the modern cap. Red single-weapon rewards replenish only the selected weapon. P1/P2 notices use three evenly spaced
@@ -103,12 +112,12 @@ highscores; timing stays at the original 50 fps logic on any refresh rate.
 ### Enchantment durability
 
 Base budgets: pistol **60**, UZI **120**, shotgun/railgun **30**, rocket/grenade **24**, barrel/mine/charge pack **12**.
-For `x = 0.01 × (level − 1) + 0.10 × endurance picks`, the cap is `floor(base × (1 + 2x/(2+x)))`, approaching three times the base. Boss rewards grant two picks. Increasing the cap adds only its difference to a still-active enchantment; exhausted enchantment stays exhausted. Existing builds are not redistributed.
+With `percent-stats-v1`, durability is `floor(base × (1 + min(2, 0.01 × (level − 1) + 0.10 × endurance picks)))`, capped at three times base. Older peers retain `floor(base × (1 + 2x/(2+x)))` for the same x. Boss rewards grant two picks. Increasing the cap adds only its difference to a still-active enchantment; exhausted enchantment stays exhausted. Existing builds are not redistributed.
 
 ### Enchantment power and compact meters
 
-With the independently negotiated `enchant-power-v1`, let `x = 0.01 × (level − 1) + 0.10 × power picks`. The damage multiplier is `1 + 0.15 × (1 + 2x/(2+x))`: an initial 15% bonus approaches 45%. It scales the owner's attack once at emission, including the last durability unit; existing projectiles and placed explosives keep that captured damage. Normal attacks remain unchanged. Boss cards grant two points; exact previews and the attribute sheet show the bonus and its source. Older peers retain +15%.
+With `percent-stats-v1`, the enchantment damage multiplier is `1 + min(0.45, 0.15 + 0.0015 × (level − 1) + 0.03 × power picks)`. Older `enchant-power-v1` peers retain `1 + 0.15 × (1 + 2x/(2+x))` for `x = 0.01 × (level − 1) + 0.10 × power picks`. It scales the owner's attack once at emission, including the last durability unit; existing projectiles and placed explosives keep that captured damage. Normal attacks remain unchanged. Boss cards grant two points; exact previews and the attribute sheet show the bonus and its source. Older peers retain +15%.
 
-The enchantment strip is about 30×3.5 logical pixels, no wider than health and at most half its height. Native Boss health uses about 36×7.5, matching player health height. Bright and dark edges remain inside each strip. Four-difficulty selected-wave comparisons retain existing zombie health/damage/speed growth; bounded power and finite durability avoid requiring a penalty for ordinary weapons.
+The enchantment strip is about 30×3.5 logical pixels, no wider than health and at most half its height. Native Boss health uses about 36×7.5, matching player health height. Bright and dark edges remain inside each strip. Four difficulties retain exact selected waves. Early health and finite enemy objectives use the new horde profile; ordinary damage, movement and attack rules retain their established progression.
 
 The v2 save format adds optional capabilities, bindings and durability fields. Old armor migrates once by remaining fraction; retired charger Bosses become the current native family with HP fraction, member slot and clock preserved. Unsupported new saves are rejected before changing a legacy world.

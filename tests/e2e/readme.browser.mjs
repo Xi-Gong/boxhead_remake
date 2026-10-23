@@ -31,7 +31,7 @@ try{
  report.bossViewports=[];
  for(const [width,height]of [[640,480],[960,540],[480,720]]){
   await g.page.setViewportSize({width,height});await g.page.waitForTimeout(150);await g.expr('(m.mcWorld.Draw(),true)');await g.page.waitForTimeout(150);
-  const scene=await g.expr('(()=>{const w=m.mcWorld,h=w.mHud.mcPlayers[0],life=h.mcLife.getBounds(h);return {playerHeight:life.yMax-life.yMin,bars:[0,1,2].map(i=>{const c=w._BossHealthHud["_Boss"+i],b=c.getBounds(c);return {visible:c._visible,width:b.xMax-b.xMin,height:b.yMax-b.yMin,bounds:c.getBounds(m._parent)};})};})()');
+  const scene=await g.expr('(()=>{const w=m.mcWorld,h=w.mHud.mcPlayers[0],life=h.mcLife.getBounds(h);return {playerHeight:life.yMax-life.yMin,bars:w.mUpgrades.timedWave.boss.members.map((_,i)=>{const c=w._BossHealthHud["_Boss"+i],b=c.getBounds(c);return {visible:c._visible,width:b.xMax-b.xMin,height:b.yMax-b.yMin,bounds:c.getBounds(m._parent)};})};})()');
   const file=join(out,`boss-${width}x${height}.png`);await g.shot(file,false);const pixels=PNG.sync.read(readFileSync(file));
   for(const bar of scene.bars){assert(bar.visible);assert.equal(bar.width,36);assert.equal(bar.height,scene.playerHeight);const a=await g.stageToPage(bar.bounds.xMin,bar.bounds.yMin),b=await g.stageToPage(bar.bounds.xMax,bar.bounds.yMax);assert(a[0]>=0&&a[1]>=0&&b[0]<=width&&b[1]<=height);let fill=0;for(let y=Math.floor(a[1]);y<Math.ceil(b[1]);y++)for(let x=Math.floor(a[0]);x<Math.ceil(b[0]);x++){const n=(y*pixels.width+x)*4;if([255,174,100].every((v,c)=>Math.abs(v-pixels.data[n+c])<4))fill++;}assert(fill>0);bar.fillPixels=fill;}
   report.bossViewports.push({width,height,...scene});

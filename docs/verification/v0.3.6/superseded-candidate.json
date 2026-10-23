@@ -1,0 +1,99 @@
+{
+  "status": "candidate-not-published",
+  "sourceCommit": "b7da358a588540732288d0e3aabf9d877f460aef",
+  "version": "0.3.6",
+  "renderer": "dist/bundle/main-0rrdHfID.js",
+  "exeBytes": 101679663,
+  "exeSHA256": "08108709207096d102a72894e7bf93f36a0b7b5ff48cc01eb60240d7d30cb7a9",
+  "asarSHA256": "5882ca54b318d49f5fcf7d9382ba3cf1cb791f6d548b762338d48e91ed796316",
+  "packagedFilesCompared": 70,
+  "extractedPortableAsarMatches": true,
+  "basicPortable": {
+    "ok": true,
+    "viewport": {
+      "width": 640,
+      "height": 480,
+      "dpr": 1
+    },
+    "runtimeFilesCompared": [
+      "dist-electron/main.cjs",
+      "dist-electron/preload.cjs",
+      "dist/bundle/gallery-CmDtL4W7.js",
+      "dist/bundle/main-0rrdHfID.js",
+      "dist/bundle/Player-o3pII7gY.js"
+    ]
+  },
+  "targeted": {
+    "status": "candidate-not-published",
+    "note": "Separate overlapping targeted runs, not a full-suite count. Full serial/two-process QA awaiting explicit authorization after automatic approval rejection.",
+    "tests": [
+      {
+        "path": "generated/horde-tests-final.json",
+        "passed": 91,
+        "failed": 0,
+        "pending": 0,
+        "total": 91,
+        "success": true
+      },
+      {
+        "path": "generated/percent-final.json",
+        "passed": 66,
+        "failed": 0,
+        "pending": 0,
+        "total": 66,
+        "success": true
+      },
+      {
+        "path": "generated/percent-commit.json",
+        "passed": 19,
+        "failed": 0,
+        "pending": 0,
+        "total": 19,
+        "success": true
+      },
+      {
+        "path": "generated/percent-migration-final.json",
+        "passed": 20,
+        "failed": 0,
+        "pending": 0,
+        "total": 20,
+        "success": true
+      },
+      {
+        "path": "generated/clear-rewards.json",
+        "passed": 35,
+        "failed": 0,
+        "pending": 0,
+        "total": 35,
+        "success": true
+      },
+      {
+        "path": "generated/v036-legacy-order-final.json",
+        "passed": 14,
+        "failed": 0,
+        "pending": 0,
+        "total": 14,
+        "success": true
+      }
+    ],
+    "ui": [
+      {
+        "path": "generated/reports/v036/percent-ui-final/report.json",
+        "ok": true,
+        "cases": 6,
+        "method": "Serial single hidden Chrome at low resolution. Real menu, card, stats and READY clicks; prepared offers, not balance evidence. Direct screenshots plus geometry and pixel checks."
+      },
+      {
+        "path": "generated/reports/v036/early-clear-ui/report.json",
+        "ok": true,
+        "cases": 1,
+        "method": "Serial single hidden Chrome at low resolution. Real menu, card, stats and READY clicks; prepared offers, not balance evidence. Direct screenshots plus geometry and pixel checks."
+      }
+    ]
+  },
+  "fullAcceptance": {
+    "status": "awaiting-explicit-user-authorization",
+    "automaticApprovalRejected": true,
+    "noFullSuiteOrTwoProcessLanRun": true
+  }
+}
