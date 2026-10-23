@@ -8,7 +8,9 @@ export async function verifyV034Candidate(g,out){
  const raised=JSON.parse(readFileSync(new URL('../../package.json',import.meta.url))).version!=='0.3.4';
  mkdirSync(out,{recursive:true});const report={ok:false,method:'One hidden 640x480 renderer; prepared legitimate-value UI fixtures, real mouse/keys and injected standard gamepad'};
  try{
+  await g.eval(()=>{window.qaCandidateOriginalPads=navigator.getGamepads;});
   report.initial=await g.expr(`(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];p.NewWeapon('uzi');p.SelectWeapon('uzi');p.mArmor=20;p.mWeapon_Current.mAmmo=0;p.mWeapon_Current.mEnchantDurability=97;p.mWeapon_Current.mEnchantMaximum=120;return {rule:w.mUpgrades.combat.rule,features:w.mUpgrades.features,health:p.mMaxLife};})()`);
+  const percent=report.initial.features.includes('percent-stats-v1'),horde=report.initial.features.includes('horde-balance-v1');
   assert.equal(report.initial.rule,'combat-pve-v3');assert.equal(report.initial.health,160);assert(report.initial.features.includes('native-bosses-v1'));
   assert(await g.waitExpr('(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];if(p.mInvincible&&p.mInvincible%2)return false;window.qaHoldPhotoProcess=w.Process;w.Process=()=>{};w.Draw();return true;})()'));await g.page.waitForTimeout(150);
   await g.eval(()=>{window.qaReleasePad={index:0,connected:true,id:'QA standard mapping',mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};navigator.getGamepads=()=>[window.qaReleasePad];});
@@ -35,10 +37,10 @@ export async function verifyV034Candidate(g,out){
   await g.expr(`(()=>{const w=m.mcWorld;w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers=[['health','armor','endurance']];})()`);
   assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._Player0?._Card0?._Benefit.text==="+8%"'));await g.page.waitForTimeout(700);
   report.cards=await g.expr('Array.from({length:3},(_,i)=>{const c=m.mcWorld._WaveDraftHud._Player0["_Card"+i];return {benefit:c._Benefit.text,preview:c._Preview.text,x:c._x,y:c._y,width:c._cardWidth};})');
-  assert.deepEqual(report.cards.map(c=>c.benefit),['+8%','+6%','+10%']);assert.match(report.cards[1].preview,/40.*42/);assert.match(report.cards[2].preview,/120.*131/);assert(report.cards[0].x<report.cards[1].x&&report.cards[1].x<report.cards[2].x);
+  assert.deepEqual(report.cards.map(c=>c.benefit),['+8%','+6%','+10%']);if(percent){assert.match(report.cards[1].preview,/0%.*6%/);assert.match(report.cards[2].preview,/0%.*10%/);}else{assert.match(report.cards[1].preview,/40.*42/);assert.match(report.cards[2].preview,/120.*131/);}assert(report.cards[0].x<report.cards[1].x&&report.cards[1].x<report.cards[2].x);
   await g.shot(`${out}/cards.png`,false);await g.page.keyboard.press('Tab');assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Stats._visible'));
-  report.stats=await g.expr('Array.from({length:9},(_,i)=>[m.mcWorld._WaveDraftHud._Player0._Stats["_Name"+i].text,m.mcWorld._WaveDraftHud._Player0._Stats["_Value"+i].text])');
-  assert.equal(report.stats[7][0],'HEAL / AMMO');assert.equal(report.stats[8][1],'97 / 120');assert.match(report.stats[4][1],/\[A\]/);assert.match(await g.expr('m.mcWorld._WaveDraftHud._Player0._Stats._Sources.text'),/A: UZI \/ Y: --/);await g.shot(`${out}/stats.png`,false);
+  report.stats=await g.expr(`Array.from({length:${percent?12:9}},(_,i)=>[m.mcWorld._WaveDraftHud._Player0._Stats["_Name"+i].text,m.mcWorld._WaveDraftHud._Player0._Stats["_Value"+i].text])`);
+  if(percent){assert.equal(report.stats[8][0],'DODGE');assert.equal(report.stats[10][1],'97/120 (+0%)');assert.match(report.stats[11][1],/\[A\]/);assert.match(await g.expr('m.mcWorld._WaveDraftHud._Player0._Hint.text'),/A: UZI \/ Y: --/);}else{assert.equal(report.stats[7][0],'HEAL / AMMO');assert.equal(report.stats[8][1],'97 / 120');assert.match(report.stats[4][1],/\[A\]/);assert.match(await g.expr('m.mcWorld._WaveDraftHud._Player0._Stats._Sources.text'),/A: UZI \/ Y: --/);}await g.shot(`${out}/stats.png`,false);
   await g.page.keyboard.press('Tab');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));
   assert.equal(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mMaxLife'),173);
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.shot(`${out}/pause.png`,false);
@@ -46,23 +48,23 @@ export async function verifyV034Candidate(g,out){
   if(report.initial.features.includes('enchant-power-v1')){
    await g.expr(`(()=>{const w=m.mcWorld;window.qaPowerBase=Object.values(w.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mDamage;w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers=[['enchantPower','armor','endurance']];})()`);
    assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Card0._Label.text==="ENCHANT POWER"'));
-   assert.equal(await g.expr('m.mcWorld._WaveDraftHud._Player0._Card0._Benefit.text'),'+16.4%');assert.match(await g.expr('m.mcWorld._WaveDraftHud._Player0._Card0._Preview.text'),/15.0%.*16.4%/);
+   assert.equal(await g.expr('m.mcWorld._WaveDraftHud._Player0._Card0._Benefit.text'),percent?'+3%':'+16.4%');assert.match(await g.expr('m.mcWorld._WaveDraftHud._Player0._Card0._Preview.text'),percent?/15%.*18%/:/15.0%.*16.4%/);
    await g.page.waitForTimeout(300);await g.shot(`${out}/enchant-power.png`,false);await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===3'));
    assert(await g.expr('m.mcWorld.mUpgrades.waveDraft.bonuses[0].enchantPower===1&&Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mDamage===window.qaPowerBase'));
    report.powerReward=true;
   }
   report.bosses=await g.eval(()=>{
    const P=window.__game.pkg,w=window.__game.main().mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];w.mUpgrades.AdvanceTimedWave();w.mUpgrades.__set__mLevel(25);p.Move(new P.Thing.Math.CThing_Position(11.5,8.5,0));w.TrackThing(p);w.mTrackPosition=p.mPosition.Clone();w.lTrackPosition=p.mPosition.Clone();
-   const enemies=w.mUpgrades.timedWave.boss.members.map((member,i)=>{const e=new P.Thing.Creature.CThing_Creature_Devil(new P.Thing.Math.CThing_Position(8.5+i*3,11.5,0));e.mBossKind=member.kind;e.mBossSlot=i;w.mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');e.mLife=member.life=e.mMaxLife*[1,.5,.1][i];member.maximum=e.mMaxLife;w.mUpgrades.Level.mDevilCount++;return e;});
+   const enemies=w.mUpgrades.timedWave.boss.members.map((member,i)=>{const e=new P.Thing.Creature.CThing_Creature_Devil(new P.Thing.Math.CThing_Position(8.5+i*3,11.5,0));e.mBossKind=member.kind;e.mBossSlot=i;w.mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');e.mLife=member.life=e.mMaxLife*[1,.5,.1,.75][i];member.maximum=e.mMaxLife;w.mUpgrades.Level.mDevilCount++;return e;});
    // Hold simulation positions while allowing the normal Draw/presenter frame to reach the canvas.
-   w.Process=()=>{};w.Draw();return enemies.map((e,i)=>{const b=w._BossHealthHud['_Boss'+i],r=b.getBounds(b),a=e.mXSI_Animation,o=a.mAnimationObject,f=o.mDirections[o.mLookup256[e.mAngle.__get__mAngle256()&255]].mFrames[a.mCurrentFrameID&16777215];return {kind:e.mBossKind,x:b._x,y:b._y,width:r.xMax-r.xMin,height:r.yMax-r.yMin,headTop:w.GetScreenPosition(e.mPosition).y+f.mDisp.y,armor:e.mEnemyArmor??0,fraction:e.mLife/e.mMaxLife,visible:b._visible};});
+   window.qaBossPhotoProcess=w.Process;w.Process=()=>{};w.Draw();return enemies.map((e,i)=>{const b=w._BossHealthHud['_Boss'+i],r=b.getBounds(b),a=e.mXSI_Animation,o=a.mAnimationObject,f=o.mDirections[o.mLookup256[e.mAngle.__get__mAngle256()&255]].mFrames[a.mCurrentFrameID&16777215];return {kind:e.mBossKind,x:b._x,y:b._y,width:r.xMax-r.xMin,height:r.yMax-r.yMin,headTop:w.GetScreenPosition(e.mPosition).y+f.mDisp.y,armor:e.mEnemyArmor??0,fraction:e.mLife/e.mMaxLife,visible:b._visible};});
   });
-  assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Wave._Devils.text'),'3');
+  assert.equal(await g.expr('m.mcWorld._LanGrowthHud._Wave._Devils.text'),horde?'4':'3');
   for(const b of report.bosses){assert.equal(b.kind,'devil');assert(b.visible);assert.equal(b.width,raised?36:40);assert.equal(b.height,raised?report.meterBounds[1].yMax-report.meterBounds[1].yMin:5);assert.equal(b.armor,0);assert(b.y+b.height+3<=b.headTop);}
   await g.page.waitForTimeout(150);await g.shot(`${out}/bosses.png`,false);const png=PNG.sync.read(readFileSync(`${out}/bosses.png`));for(const b of report.bosses){let pixels=0;for(let y=b.y+2;y<b.y+4;y++)for(let x=b.x;x<b.x+b.width;x++){const k=(y*png.width+x)*4;if([255,174,100].every((v,c)=>Math.abs(v-png.data[k+c])<4))pixels++;}assert(pixels>0&&pixels<=Math.ceil(38*b.fraction)*2+4);b.fillPixels=pixels;}
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
  }catch(error){report.error=String(error);report.scriptErrors=await g.scriptErrors();report.browserLog=g.log;await g.shot(`${out}/failed.png`,false);throw error;}
- finally{writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
+ finally{await g.eval(()=>{const w=window.__game.main().mcWorld;for(const key of ['qaHoldPhotoProcess','qaCandidateProcess','qaBossPhotoProcess'])if(window[key]){w.Process=window[key];delete window[key];}if(window.qaCandidateOriginalPads){navigator.getGamepads=window.qaCandidateOriginalPads;delete window.qaCandidateOriginalPads;}}).catch(()=>{});writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
  return report;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){

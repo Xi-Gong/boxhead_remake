@@ -9,12 +9,15 @@ export async function verifyHeldFire(g,out){
  const waitShots=async n=>assert(await g.waitFor(n=>window.qaHeldShots.length>=n,n,5000),'held fire continues without new press edges');
  const released=async()=>{const n=await count();await g.page.waitForTimeout(450);assert.equal(await count(),n,'release stops firing');};
  try{
-  await g.eval(async()=>{
-   await window.__game.__setInfiniteLife(true);
+  report.setup=await g.eval(()=>{
    const w=window.__game.main().mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];
+   const expected=window.__game.pkg.Thing.Affect.CThing_Affect.mAffect_PlayerLineOfSight;
+   if(p.mAffectFlags!==expected)throw new Error('Enable the original infinite-life switch before initializing this input-test player');
    if(!w.mUpgrades.features.includes('held-fire-v1'))throw new Error('held-fire capability missing');
+   window.qaHeldWorld=w;window.qaHeldPlayer=p;
    p.SelectWeapon('pistol');window.qaHeldGun=p.mWeapon_Current;window.qaHeldOriginal=Object.getOwnPropertyDescriptor(window.qaHeldGun,'Fire');window.qaHeldFire=window.qaHeldGun.Fire;window.qaHeldShots=[];
    window.qaHeldGun.Fire=function(...args){window.qaHeldShots.push(w.mTick);return window.qaHeldFire.apply(this,args);};
+   return {affectFlags:p.mAffectFlags,expectedAffectFlags:expected,wave:w.mUpgrades.mLevelIndex,level:w.mUpgrades.lanGrowth.players[0].level};
   });
   await g.page.keyboard.down('Space');await waitShots(5);await g.page.keyboard.up('Space');await released();
   report.phases.push({input:'keyboard Space held without release',ticks:await g.eval(()=>window.qaHeldShots.slice())});
@@ -34,6 +37,8 @@ export async function verifyHeldFire(g,out){
   await g.eval(()=>window.qaHeldPads[1].buttons[1].pressed=false);await g.page.waitForTimeout(100);await released();
   report.rate=await g.eval(()=>window.qaHeldGun.mFireRate);for(const phase of report.phases)for(let i=1;i<phase.ticks.length;i++)assert.equal(phase.ticks[i]-phase.ticks[i-1],report.rate,'held fire preserves the simulation cooldown');
   report.audio=await g.expr('g.audio()');assert.equal(report.audio.decoded,31);assert.deepEqual(report.audio.failed,[]);assert.deepEqual(await g.scriptErrors(),[]);await g.shot(out+'/held-fire.png',false);report.ok=true;
+ }catch(error){
+  report.error=String(error);report.diagnostic=await g.eval(()=>{const w=window.__game.main().mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0],gun=p.mWeapons.uzi?.mThing;return {state:window.__game.state(),tick:w.mTick,phase:w.mUpgrades.timedWave.phase,paused:w.mPaused,player:{life:p.mLife,flags:p.mFlags,state:p.mStateID,weapon:p.mWeapon_Current.mNameID},growth:w.mUpgrades.lanGrowth.players[0],uzi:Object.fromEntries(Object.entries(gun??{}).filter(([k,v])=>/ammo|capacity|generation|ench|fire/i.test(k)&&['number','boolean','string'].includes(typeof v))),pistolSame:p.mWeapons.pistol.mThing===window.qaHeldGun,shots:window.qaHeldShots,pads:window.qaHeldPads?.map(p=>p.buttons.map(b=>!!b.pressed)),process:String(w.Process).slice(0,100)};}).catch(e=>({error:String(e)}));throw error;
  }finally{
   await g.page.keyboard.up('Space').catch(()=>{});
   await g.eval(()=>{if(window.qaHeldGun){if(window.qaHeldOriginal)Object.defineProperty(window.qaHeldGun,'Fire',window.qaHeldOriginal);else delete window.qaHeldGun.Fire;}if(window.qaHeldGetPads)navigator.getGamepads=window.qaHeldGetPads;}).catch(()=>{});
@@ -41,4 +46,4 @@ export async function verifyHeldFire(g,out){
  }
  return report;
 }
-if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const browser=await launch();let g;try{g=await openGame(browser);await toMainMenu(g);await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));await verifyHeldFire(g,process.env.BOXHEAD_QA_OUT??'generated/reports/v035/held-fire-ui');console.log('HELD FIRE INPUT PASSED');}finally{await g?.close();await browser.close();}}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const browser=await launch();let g;try{g=await openGame(browser);await toMainMenu(g);await g.eval(async()=>{await window.__game.__setInfiniteLife(true);});await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));await verifyHeldFire(g,process.env.BOXHEAD_QA_OUT??'generated/reports/v035/held-fire-ui');console.log('HELD FIRE INPUT PASSED');}finally{await g?.close();await browser.close();}}

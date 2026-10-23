@@ -1,17 +1,31 @@
-// Real menu/options/wave input, shared with actual portable smoke. Prepared unlock only permits typing wave 7.
+// Real menu/options/wave input, shared with actual portable smoke. Prepared BEST 35 permits wave 7 and boundary validation.
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {PNG} from 'pngjs';
 import {launch,openGame,toMainMenu} from './lib.mjs';
-export async function verifyExactWaveCase(g,out,{mode='Single',difficulty=3,wave=1}={}){
+export async function verifyExactWaveCase(g,out,{mode='Single',difficulty=3,wave=1,validate=false}={}){
  mkdirSync(out,{recursive:true});await g.expr(`P.CSaveData.mSharedObject.data.mMaxWaveReached=${Math.max(35,wave)}`);
  await g.clickClip(mode==='Single'?'m.mcScreen.mcSinglePlay':'m.mcScreen.mcCoopPlay');assert(await g.waitScreen('State_SelectWorld_'+mode,'Screen_SelectWorld'));
  await g.clickClip('m.mcScreen._Game_Options');assert(await g.expr('m.mcScreen.mcWindow_Options._visible'));
  assert.equal(await g.expr('m.mcScreen.mcWindow_Options._DifficultyHelp.text'),'Enemy count, stats & growth. Start Wave stays as selected.');
  await g.clickClip('m.mcScreen.mcWindow_Options.'+['_Level_Beginner','_Level_Intermediate','_Level_Expert','_Level_Nightmare'][difficulty]);assert.equal(await g.expr('P.CMain.mSaveData.mDifficulty'),difficulty);
  await g.page.waitForTimeout(150);await g.shot(out+'/difficulty.png',false);await g.clickClip('m.mcScreen.mcWindow_Options._Button_Close');assert(await g.expr('!m.mcScreen.mcWindow_Options._visible'));
- const field=g.page.getByRole('textbox',{name:'Start wave'});await field.click();await g.page.keyboard.press('Control+A');await g.page.keyboard.type(String(wave));await g.page.keyboard.press('Enter');await g.page.keyboard.press('Tab');assert.equal(await g.expr('m.mcScreen.mcStartWave.mcValue.text'),String(wave));
+ const field=g.page.getByRole('textbox',{name:'Start wave'});
+ if(validate){
+  for(const invalid of ['0','36','1.5','abc']){
+   await field.click();await g.page.keyboard.press('Control+A');await g.page.keyboard.type(invalid);await g.page.keyboard.press('Enter');
+   assert(await g.waitExpr('m.mcScreen._WaveError?._visible'));assert.equal(await g.state(),'State_SelectWorld_'+mode);
+   await g.page.getByRole('button',{name:'Close wave error'}).click();assert(await g.waitExpr('!m.mcScreen._WaveError._visible'));
+   await g.page.keyboard.press('Escape');assert.equal(await field.inputValue(),'1');
+  }
+  await g.clickClip('m.mcScreen.mcStartWave.bLeft');assert.equal(await field.inputValue(),'35');
+  await g.clickClip('m.mcScreen.mcStartWave.bRight');assert.equal(await field.inputValue(),'1');
+  const map=await g.expr('P.CMain.mSaveData["mLevelIndex_'+mode+'"]'),maps=await g.expr('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons._totalframes');
+  await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.bRight');assert.equal(await g.expr('P.CMain.mSaveData["mLevelIndex_'+mode+'"]'),(map+1)%maps);
+  await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.bLeft');assert.equal(await g.expr('P.CMain.mSaveData["mLevelIndex_'+mode+'"]'),map);
+ }
+ await field.click();await g.page.keyboard.press('Control+A');await g.page.keyboard.type(String(wave));await g.page.keyboard.press('Enter');await g.page.keyboard.press('Tab');assert.equal(await g.expr('m.mcScreen.mcStartWave.mcValue.text'),String(wave));
  await g.page.waitForTimeout(150);await g.shot(out+'/selection.png',false);await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');if(!await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded',5000)){await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));}
  await g.page.waitForTimeout(700);assert(await g.waitExpr('(()=>{const w=m.mcWorld;if(Object.values(w.mThing_Collection.mPlayerThings).some(p=>p.mInvincible&&p.mInvincible%2))return false;window.qaExactProcess=w.Process;w.Process=()=>{};w.Draw();return true;})()'));await g.page.waitForTimeout(150);const state=await g.expr('(()=>{const w=m.mcWorld;return {wave:w.mUpgrades.mLevelIndex,display:w._LanGrowthHud._Wave._Number.text,bounds:w._LanGrowthHud._Wave._Number.getBounds(m._parent),features:w.mUpgrades.features,players:w.mUpgrades.lanGrowth.players,health:Object.values(w.mThing_Collection.mPlayerThings).map(p=>p.mMaxLife),weapons:Object.values(w.mThing_Collection.mPlayerThings).map(p=>p.mWeaponList.filter(e=>e.mActive).map(e=>e.mNameID))};})()');
  assert.equal(state.wave,wave);assert.equal(state.display,String(wave));assert(state.features.includes('difficulty-waves-v1'));
@@ -22,5 +36,7 @@ export async function verifyExactWaveCase(g,out,{mode='Single',difficulty=3,wave
  assert.deepEqual(await g.scriptErrors(),[]);const report={ok:true,mode,difficulty,selected:wave,...state,waveInkPixels:ink,realOptionsTypingAndSaveContinue:true};writeFileSync(out+'/report.json',JSON.stringify(report,null,2));return report;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const browser=await launch();let g;try{
- const out=process.env.BOXHEAD_QA_OUT??'generated/reports/v035-exact-wave/ui';for(const [width,height,mode,difficulty,wave]of [[640,480,'Single',3,1],[960,540,'Coop',2,7],[480,720,'Single',3,1]]){await g?.close();g=await openGame(browser,{viewport:{width,height}});await toMainMenu(g);await verifyExactWaveCase(g,`${out}/${width}x${height}`,{mode,difficulty,wave});}console.log('EXACT WAVE REAL MENU CHECKS PASSED');
+ const out=process.env.BOXHEAD_QA_OUT??'generated/reports/v036/exact-wave';
+ const cases=[...['Single','Coop'].flatMap(mode=>[0,1,2,3].map(difficulty=>[640,480,mode,difficulty,1])),[960,540,'Coop',2,7],[480,720,'Single',3,1]];
+ for(const [width,height,mode,difficulty,wave]of cases){await g?.close();g=await openGame(browser,{viewport:{width,height}});await toMainMenu(g);await verifyExactWaveCase(g,`${out}/${mode}-d${difficulty}-${width}x${height}`,{mode,difficulty,wave,validate:wave===1});}console.log('EXACT WAVE REAL MENU CHECKS PASSED');
 }finally{await g?.close();await browser.close();}}

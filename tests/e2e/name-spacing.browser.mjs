@@ -7,6 +7,7 @@ import {launch,openGame,toMainMenu} from './lib.mjs';
 export async function verifyNameSpacing(g,out){
  mkdirSync(out,{recursive:true});const report={ok:false,cases:[],method:'Single hidden/headless game; actual Canvas pixels, compact geometry and real menu/pause input; prepared ordinary inventory'};
  try{
+  report.bindingsBefore=await g.expr('(window.qaNameBindings={...m.mcWorld.mUpgrades.weaponBindings[0]})');
   assert(await g.waitExpr('(()=>{const w=m.mcWorld,p=Object.values(w.mThing_Collection.mPlayerThings)[0];if(p.mInvincible&&p.mInvincible%2)return false;window.qaNameProcess=w.Process;w.Process=()=>{};return true;})()'));
   for(const [width,height]of [[640,480],[960,540],[480,720]]){
    await g.page.setViewportSize({width,height});await g.page.waitForTimeout(100);
@@ -22,7 +23,7 @@ export async function verifyNameSpacing(g,out){
   await g.page.setViewportSize({width:640,height:480});await g.expr('(m.mcWorld.Process=window.qaNameProcess,delete window.qaNameProcess,true)');
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.page.keyboard.press('KeyP');assert(await g.waitExpr('!m.mcWorld.mPaused'));
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
- }finally{await g.expr('(()=>{if(window.qaNameProcess){m.mcWorld.Process=window.qaNameProcess;delete window.qaNameProcess;}return true;})()').catch(()=>{});writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
+ }finally{report.bindingsAfter=await g.expr('(()=>{if(window.qaNameProcess){m.mcWorld.Process=window.qaNameProcess;delete window.qaNameProcess;}if(window.qaNameBindings){m.mcWorld.mUpgrades.weaponBindings[0]=window.qaNameBindings;delete window.qaNameBindings;}return {...m.mcWorld.mUpgrades.weaponBindings[0]};})()').catch(()=>undefined);writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));if(report.ok)assert.deepEqual(report.bindingsAfter,report.bindingsBefore,'render fixture restores its incoming weapon bindings');}
  return report;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
