@@ -486,7 +486,7 @@ export const DEVIATIONS: Deviation[] = [
     id: 'LAN_MULTIPLAYER',
     file: 'local/Net/* (NetSlot, NetSession, NetScope, Lobby, overlay), electron/lan.ts + lanIpc.ts, scope.ts (net guards), Thing/Weapon/CThing_Weapon_Grenade.ts (Fire wrapper), World/Map/CMap_Cell.ts (nav budget in net sessions)',
     description:
-      'v0.3.7 validates decoded wire messages, handshake identity and discovery ports before handlers consume them; malformed peers disconnect without changing the wire format. Only the host may start a room, and established links cannot replay handshake messages. ' +
+      'v0.3.7 validates decoded wire messages, handshake identity and discovery ports before handlers consume them; malformed peers disconnect without changing the wire format. Only the host may start a room, and established links cannot replay handshake messages. Incoming inputs/commands/checksums are also bounded around the local tick while the simulation is frozen. ' +
       'v0.2.9: discovery beacons retain their socket identity across sends, reject stale room callbacks, enable ' +
       'directed UDP broadcasts after bind and contain discovery errors without terminating the TCP room. ' +
       'v0.2.8: rollback-v2 retains up to three scheduler slots actually dropped by a renderer gap only when ' +

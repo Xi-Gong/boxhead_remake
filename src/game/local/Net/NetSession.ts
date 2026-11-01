@@ -33,6 +33,7 @@ import { CMain, Thing, World } from '../../packages.ts';
 import { armSnapshot, capture, type RunSnapshot } from '../Resume.ts';
 import { armStartWave, getRunStartWave } from '../StartWave.ts';
 import { NetSlot, packBits, unpackBit, SLOT_ORDER, type SlotBitName } from './NetSlot.ts';
+import {validLanMessage} from './MessageValidation.ts';
 import { advanceShadow, newShadow, type ShadowState } from './Predict.ts';
 import {
   LAN_CHECKSUM_EVERY, LAN_INPUT_DELAY, PREDICT_MAX_LAG_TICKS, ROLLBACK_WINDOW_TICKS, type GameConfig, type LanChecksum, type LanMessage, type LanMode, type LanRole,
@@ -256,6 +257,13 @@ export class NetSession {
       return;
     }
     if (msg.t === 'in') {
+      if (!validLanMessage(msg)) return;
+      const head=this.world?this.tickIndex(this.world):0;
+      const oldest=head-(ROLLBACK_WINDOW_TICKS+this.inputDelay+3);
+      // Normal skew is a few ticks. Leave ample room for loading/history repair, but
+      // never let a frozen world accumulate arbitrarily distant unconsumable inputs.
+      const latest=head+2048;
+      if(msg.tick<oldest||msg.tick>latest)return;
       if(msg.weaponCommands!==undefined){
         if(!this.startOpts?.cfg.features?.includes('weapon-bindings-v1')||!validWeaponCommands(msg.weaponCommands))return;
         this.remoteWeaponCommands.set(msg.tick,msg.weaponCommands);
@@ -264,7 +272,7 @@ export class NetSession {
       }
       this.remoteFrames.set(msg.tick, msg.bits);
       if (this.rollback) rollbackOnRemoteFrame(this, msg.tick, msg.bits);
-      if (msg.sum) {
+      if (msg.sum && msg.sum.tick>=head-Math.max(2*LAN_CHECKSUM_EVERY,ROLLBACK_WINDOW_TICKS+this.inputDelay+3) && msg.sum.tick<=latest) {
         const key = JSON.stringify(msg.sum);
         this.remoteSums.set(msg.sum.tick, key);
         this.compareSum(msg.sum.tick);
