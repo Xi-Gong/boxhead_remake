@@ -1,6 +1,6 @@
 # v0.3.7 verification
 
-Nine confirmed baseline defects are fixed: **five P1 and four P2**, with no confirmed P0. The [Chinese prioritized audit](audit_zh_cn.md) gives triggers, fixes, screenshots and three P3 follow-up suggestions. The final candidate passed **one clean invocation with2068passing tests, zero failures**, with eight existing conditional skips.
+Nine confirmed baseline defects are fixed: **five P1 and four P2**, with no confirmed P0. The [Chinese prioritized audit](audit_zh_cn.md) gives triggers, fixes, screenshots and three P3 follow-up suggestions. One clean invocation finished with **2,068 passing tests, zero failures**, and eight existing conditional skips.
 
 ## Artifact identity
 
