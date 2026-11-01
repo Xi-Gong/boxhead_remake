@@ -11,12 +11,24 @@ const MIN_LEVEL: Record<number, number> = { 1: 2, 3: 2 };
 describe('Single soak, difficulty 0 (Beginner)', () => {
   for (const room of ROOMS) {
     it(`room ${room}`, () => {
-      const r = soak({ mode: 'Single', room, seed: 1000 + room, difficulty: 0, ticks: 1500, options: { infiniteLife: true } });
+      // New entry admission changes room 4's approach; use the existing key-only wall detour.
+      // Its original keys/early-clear assertions remain in the prior-entry fixture below.
+      const r = soak({ mode: 'Single', room, seed: 1000 + room, difficulty: 0, ticks: 1500, options: { infiniteLife: true },
+        ...(room===4?{bots:[{cycleEvery:90,digits:true,detourBlockedStrafe:true}]}:{}) });
       expect(r.ticks, summary(r)).toBe(1500);
       expectHealthySoak(r, { running: true });
       const u=r.game.world().mUpgrades,c=u.timedWave.clear;
       expect(u.timedWave.phase).toBe('draft');
       expect(u.timedWave.remainingTicks).toBeGreaterThan(0);
+      expect(c.emittedZombies).toBe(c.zombies);expect(c.killedZombies).toBe(c.zombies);
+      expect(c.emittedDevils).toBe(c.devils);expect(c.killedDevils).toBe(c.devils);
+      expect(u.waveDraft.round.outcome).toBe('clear');expect(u.waveDraft.round.multiplier).toBe(2);
+    });
+    if(room===4)it('prior-entry fixture room 4 retains its original keys and early clear',()=>{
+      const r=soak({classicFeatures:['safe-entrances-v1'],mode:'Single',room,seed:1000+room,difficulty:0,ticks:1500,options:{infiniteLife:true}});
+      expect(r.ticks,summary(r)).toBe(1500);expectHealthySoak(r,{running:true});
+      const u=r.game.world().mUpgrades,c=u.timedWave.clear;
+      expect(u.timedWave.phase).toBe('draft');expect(u.timedWave.remainingTicks).toBeGreaterThan(0);
       expect(c.emittedZombies).toBe(c.zombies);expect(c.killedZombies).toBe(c.zombies);
       expect(c.emittedDevils).toBe(c.devils);expect(c.killedDevils).toBe(c.devils);
       expect(u.waveDraft.round.outcome).toBe('clear');expect(u.waveDraft.round.multiplier).toBe(2);
