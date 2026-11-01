@@ -447,6 +447,7 @@ export const DEVIATIONS: Deviation[] = [
     id: 'SAVE_QUIT_RESUME',
     file: 'scope.ts (CHud.Pause wrapper, CMain.State_RunWorld/State_SaveQuitMenu/State_Continue/State_Debrief wrappers, CScreen_Main.Init_Buttons wrapper), local/Resume.ts, local/UiStyle.ts',
     description:
+      'v0.3.7 preflights complete v2 snapshots, including nested optional state, before advertising CONTINUE or mutating a world; valid legacy containers keep their existing migration. ' +
       'The original has no mid-run save at all. The remake adds a "SAVE & QUIT" button to the pause screen (drawn at ' +
       'runtime below QUIT; the original pause screen has a single QUIT) that stores a run snapshot in the game save ' +
       '(SharedObject BXHD_2PLAY_6 member mResumeData, written only by this button and flushed immediately) and returns ' +
@@ -486,7 +487,7 @@ export const DEVIATIONS: Deviation[] = [
     id: 'LAN_MULTIPLAYER',
     file: 'local/Net/* (NetSlot, NetSession, NetScope, Lobby, overlay), electron/lan.ts + lanIpc.ts, scope.ts (net guards), Thing/Weapon/CThing_Weapon_Grenade.ts (Fire wrapper), World/Map/CMap_Cell.ts (nav budget in net sessions)',
     description:
-      'v0.3.7 validates decoded wire messages, handshake identity and discovery ports before handlers consume them; malformed peers disconnect without changing the wire format. Only the host may start a room, and established links cannot replay handshake messages. Incoming inputs/commands/checksums are also bounded around the local tick while the simulation is frozen. ' +
+      'v0.3.7 validates decoded wire messages, handshake identity and discovery ports before handlers consume them; malformed peers disconnect without changing the wire format. Only the host may start a room, and established links cannot replay handshake messages. Incoming inputs/commands/checksums are also bounded around the local tick while the simulation is frozen. Received checkpoints share the v2 save preflight validator. ' +
       'v0.2.9: discovery beacons retain their socket identity across sends, reject stale room callbacks, enable ' +
       'directed UDP broadcasts after bind and contain discovery errors without terminating the TCP room. ' +
       'v0.2.8: rollback-v2 retains up to three scheduler slots actually dropped by a renderer gap only when ' +

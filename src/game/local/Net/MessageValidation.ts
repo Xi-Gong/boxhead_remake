@@ -1,5 +1,6 @@
 // Runtime wire checks: TypeScript types do not validate JSON received from another machine.
 import type {LanMessage} from './protocol.ts';
+import {validRunSnapshot} from '../ResumeValidation.ts';
 
 const record=(v:any):v is Record<string,any>=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const integer=(v:any,min=0,max=Number.MAX_SAFE_INTEGER):boolean=>Number.isSafeInteger(v)&&v>=min&&v<=max;
@@ -44,7 +45,7 @@ export function validLanMessage(v:unknown):v is LanMessage{
   case 'start':return mode(v.mode)&&room(v.roomLink)&&config(v.cfg)&&integer(v.seed,0,0xffffffff)
    &&optional(v.inputDelay,x=>integer(x,0,8))&&optional(v.resumeTick,integer)&&optional(v.wave,x=>integer(x,1))
    &&optional(v.rollback,x=>typeof x==='boolean')&&optional(v.netcode,x=>x==='rollback-v2')&&optional(v.epoch,x=>string(x,64))
-   &&optional(v.snap,x=>record(x)&&x.version===2&&room(x.roomLibLink)&&integer(x.wave,1)&&Array.isArray(x.players)&&Array.isArray(x.objects));
+   &&optional(v.snap,validRunSnapshot);
   case 'setup':return selection(v.sel);
   case 'lobby':return optional(v.sel,selection);
   case 'ready':return typeof v.ready==='boolean';

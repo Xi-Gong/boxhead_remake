@@ -44,6 +44,7 @@ import type {WeaponBindings} from './WeaponBindings.ts';
 import {durabilityEnabled,enchantPowerEnabled,type EnchantmentState} from './EnchantmentRules.ts';
 import {prepareNativeBossRestore} from './CombatMigration.ts';
 import {percentStats} from './PercentStats.ts';
+import {validRunSnapshot} from './ResumeValidation.ts';
 
 // v2: the Coop death weapon crate (COOP_DEATH_WEAPON_CRATE) is serialized as a placed object carrying its payload
 // (weapons + ammo + the dead player's held weapon). A v1 stored run no longer matches and is discarded on read.
@@ -453,7 +454,7 @@ function applyObjects(world: any, snap: RunSnapshot): void {
  * objects are fully initialized). Returns false (and changes nothing) on version / room / mode mismatch.
  */
 export function applyToWorld(world: any, snap: RunSnapshot): boolean {
-  if (snap?.version !== RESUME_VERSION) return false;
+  if (!validRunSnapshot(snap)) return false;
   if (snap.roomLibLink !== world.mWorldLibLink || snap.gameMode !== World.CWorld.mGameMode) return false;
   if (!Number.isSafeInteger(snap.wave) || snap.wave < 1) return false;
   if(snap.features?.some(f=>!availableFeatures().includes(f)))return false;
@@ -587,11 +588,7 @@ export function consumePending(world: any): boolean {
 // ------------------------------------------------------------------------------------------------------------------------------------ storage
 
 function validStored(v: any): RunSnapshot | null {
-  if (!v || typeof v !== 'object' || v.version !== RESUME_VERSION || !Array.isArray(v.players) || !Array.isArray(v.objects)
-    || typeof v.roomLibLink !== 'string' || typeof v.wave !== 'number') {
-    return null;
-  }
-  return v as RunSnapshot;
+  return validRunSnapshot(v)?v:null;
 }
 
 export function readStored(): RunSnapshot | null {

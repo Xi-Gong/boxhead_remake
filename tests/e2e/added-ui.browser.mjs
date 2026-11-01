@@ -22,7 +22,6 @@ async function surface(g,name){
 }
 try {
  const g=await openGame(browser,{viewport:{width:960,height:720},init:()=>{
-  localStorage.setItem('SO:BXHD_2PLAY_6',JSON.stringify({mResumeData:{version:2,players:[],objects:[],roomLibLink:'ROOM_Single_0001',wave:1}}));
   window.__qa={};
   window.boxheadDesktop={isElectron:true,versions:{},toggleFullscreen(){},quit(){},isFullscreen:async()=>false,lan:{
    onHosts(cb){window.__qa.hosts=cb;},onPeer(cb){window.__qa.peer=cb;},onMessage(cb){window.__qa.message=cb;},
@@ -30,6 +29,11 @@ try {
    connect:async()=>({ok:true}),send(){},closePeer(){},shutdown(){},addresses:async()=>['192.168.1.5']}};
  }});
  await toMainMenu(g);
+ // CONTINUE must come from a complete real save, rather than a truncated v2-shaped placeholder.
+ await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
+ await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));
+ await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));
+ await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');await toMainMenu(g);
  const menuRows=await g.expr('[m.mcScreen.mcSinglePlay,m.mcScreen.mcCoopPlay,m.mcScreen.mcDeathPlay,m.mcScreen.mcInstructions,m.mcScreen.mcContinue,m.mcScreen.mcLanGame].map(b=>b.getBounds(m.mcScreen))');
  assert.deepEqual(menuRows.map(b=>Math.round((b.yMin+b.yMax)/2)),[226,262,298,334,370,406]);
  assert(menuRows.every((b,i)=>!i||b.yMin-menuRows[i-1].yMax>=11.9),'all six menu hit areas have twelve-pixel gaps');
