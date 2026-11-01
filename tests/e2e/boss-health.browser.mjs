@@ -2,15 +2,25 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {PNG} from 'pngjs';
-import {launch,openGame,toMainMenu} from './lib.mjs';
+// The retained v0.3.1 geometry predates combat-pve-v2 and today's native Bosses.
+// Opt in explicitly when checking that legacy oracle against the current source.
+let sourceServer;
+if(process.env.BOXHEAD_QA_LEGACY_BOSS==='1'){
+ const {createServer}=await import('vite');
+ sourceServer=await createServer({server:{host:'127.0.0.1',port:0},logLevel:'error'});
+ await sourceServer.listen();process.env.GAME_URL=`http://127.0.0.1:${sourceServer.httpServer.address().port}/`;
+}
+const {launch,openGame,toMainMenu}=await import('./lib.mjs');
 const scale=Number(process.env.ART_SCALE??2),out=`generated/reports/v031/compact-hud/run-${Date.now()}-${scale}x`;
 mkdirSync(out,{recursive:true});
-const browser=await launch(),report={ok:false,scale,cases:[]};let g;
+const browser=await launch(),report={ok:false,scale,scope:sourceServer?'Source pre-combat legacy fixture; original charger/priest, 64x7 bars and three-member assertions':'Supplied GAME_URL',cases:[]};let g;
 try{
  g=await openGame(browser,{query:`?scale=${scale}`});await toMainMenu(g);
+ if(sourceServer)await g.eval(async()=>{const {setClassicCombatFixture}=await import('/src/game/local/Combat.ts');setClassicCombatFixture(window.__game.main());});
  await g.clickClip('m.mcScreen.mcSinglePlay');assert(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
  await g.expr('(P.CMain.mSaveData.mLevelIndex_Single=0,m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons.gotoAndStop(1),m.mcScreen.ChangeLevel(m.mcScreen.mcSubScreen.mcLevel_Selection,0))');
  await g.click(380,230);assert(await g.waitExpr('m.mcWorld?.mLoaded&&g.state()==="State_RunWorld"'));
+ if(sourceServer)assert.equal(await g.expr('!!m.mcWorld.mUpgrades.combat'),false);
  await g.page.waitForTimeout(700);
  await g.page.keyboard.down('ArrowRight');await g.page.waitForTimeout(100);await g.page.keyboard.up('ArrowRight');
  await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));
@@ -74,5 +84,5 @@ try{
  await g.page.waitForTimeout(120);await g.shot(`${out}/three-bosses.png`,false);
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
 }catch(error){report.error=String(error);throw error;}
-finally{await g?.close();await browser.close();writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
+finally{try{await g?.close();await browser.close();}finally{await sourceServer?.close();writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}}
 console.log('BOSS HEALTH LIGHT BROWSER PASSED '+out);
