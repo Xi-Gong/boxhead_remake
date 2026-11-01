@@ -39,7 +39,8 @@ export function drawBossHealth(world: any, boss: BossWaveState | undefined, visi
   }
   if (!layer) return;
   layer._visible=layouts.some(Boolean);
-  for(let i=0;i<3;i++)if(layer['_Boss'+i])layer['_Boss'+i]._visible=false;
+  // Encounters can now have four members; also clear bars retained from a larger encounter.
+  for(const bar of layer.$list)bar._visible=false;
   for(const [i,layout]of layouts.entries()){
     if(!layout)continue;
     const bar=layer['_Boss'+i]??layer.createEmptyMovieClip('_Boss'+i,layer.getNextHighestDepth());

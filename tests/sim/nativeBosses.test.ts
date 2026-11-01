@@ -6,6 +6,33 @@ import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {getRandomState} from '../../src/engine/flash/rng.ts';
 import {bossHealthLayout,drawBossHealth} from '../../src/game/local/BossHealthUi.ts';
 import {DrawPrimitive} from '../../src/game/packages.ts';
+import {simulationDigest} from '../../src/game/local/Net/StateDigest.ts';
+import {captureWorldSnap,makeSnapCtx} from '../../src/game/local/Net/WorldSnap.ts';
+
+it('clears the fourth overhead bar on death, off-camera movement and smaller encounters without changing simulation',()=>{
+ const g=createHeadlessGame(),w=g.world();try{
+  clearWaveCombat(w);w.mUpgrades.__set__mLevel(25);const boss=timedWave(w)!.boss!;
+  expect(boss.members).toHaveLength(4);
+  for(const [i,member]of boss.members!.entries()){
+   const e:any=new Thing.Creature.CThing_Creature_Devil(g.players()[0].mPosition.Clone());
+   e.mBossKind=member.kind;e.mBossSlot=i;w.mThing_Collection.AddThing(e);e.Process_Init();e.SetState('State_GotoPlayer');
+  }
+  DrawPrimitive.XSI.CDrawPrimitive_XSI_DI.RenderStack_Process(0,Infinity);
+  const confirmed={...boss,members:boss.members!.map(m=>({...m}))},ctx=makeSnapCtx(w),digest=()=>simulationDigest(captureWorldSnap(w,ctx,false)),before=digest();
+  drawBossHealth(w,confirmed,true);const layer=w._BossHealthHud;
+  expect([0,1,2,3].every(i=>layer['_Boss'+i]?._visible)).toBe(true);
+  confirmed.members[3]!.defeated=true;confirmed.members[3]!.life=0;
+  drawBossHealth(w,confirmed,true);expect(layer._visible).toBe(true);expect(layer._Boss3._visible).toBe(false);
+  confirmed.members[3]={...boss.members![3]!};drawBossHealth(w,confirmed,true);expect(layer._Boss3._visible).toBe(true);
+  const enemy=w.mThing_Collection.mThings[confirmed.members[3]!.id!],x=enemy.mPosition.mX;
+  enemy.mPosition.mX=-100;drawBossHealth(w,confirmed,true);
+  expect(layer._Boss3._visible).toBe(false);enemy.mPosition.mX=x;drawBossHealth(w,confirmed,true);
+  expect(layer._Boss3._visible).toBe(true);drawBossHealth(w,{...confirmed,members:confirmed.members.slice(0,1)},true);
+  expect([1,2,3].every(i=>!layer['_Boss'+i]._visible)).toBe(true);
+  drawBossHealth(w,confirmed,false);expect([0,1,2,3].every(i=>!layer['_Boss'+i]._visible)).toBe(true);
+  expect(digest()).toEqual(before);
+ }finally{g.quit();}
+});
 
 it('matches the raised native Boss strip to the authored player health height',()=>{
  const g=createHeadlessGame(),w=g.world();try{
