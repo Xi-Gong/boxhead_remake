@@ -39,8 +39,8 @@ export function validLanMessage(v:unknown):v is LanMessage{
  if(!record(v))return false;
  switch(v.t){
   case 'hello':return integer(v.proto)&&string(v.app)&&string(v.name)&&integer(v.char,0,3)&&optional(v.sid,string)
-   &&optional(v.capTick,integer)&&optional(v.netcodes,strings)&&optional(v.features,strings);
-  case 'welcome':return typeof v.ok==='boolean'&&integer(v.proto)&&string(v.app)&&string(v.name)&&string(v.sid)&&optional(v.reason,string);
+   &&optional(v.capTick,integer)&&optional(v.netcodes,strings)&&optional(v.features,strings)&&optional(v.transport,strings);
+  case 'welcome':return typeof v.ok==='boolean'&&integer(v.proto)&&string(v.app)&&string(v.name)&&string(v.sid)&&optional(v.reason,string)&&optional(v.transport,strings);
   case 'in':return integer(v.tick)&&integer(v.bits,0,127)&&optional(v.sum,checksum)&&optional(v.weaponCommands,commands);
   case 'start':return mode(v.mode)&&room(v.roomLink)&&config(v.cfg)&&integer(v.seed,0,0xffffffff)
    &&optional(v.inputDelay,x=>integer(x,0,8))&&optional(v.resumeTick,integer)&&optional(v.wave,x=>integer(x,1))

@@ -326,6 +326,9 @@ try {
         const {verifyV032Lan}=await import('../e2e/v032-lan.mjs');await verifyV032Lan(H,C,report,OUT,process.env.BOXHEAD_QA_RELEASE_SCENARIO!=='v032',process.env.BOXHEAD_QA_RELEASE_SCENARIO==='v034');
       }else{const {verifyV031Lan}=await import('../e2e/v031-lan.mjs');await verifyV031Lan(H,C,report,OUT);}
     }
+    if(process.env.BOXHEAD_QA_LARGE_CHECKPOINT==='1'){
+      const {verifyLargeCheckpoint}=await import('../e2e/large-checkpoint.mjs');await verifyLargeCheckpoint(H,C,report,OUT);
+    }
   }else{
 
   // (2) the smoothness window: constant steering on both machines; sample the observability fields.

@@ -16,9 +16,10 @@ import { connect as tcpConnect, createServer, type Server, type Socket as TcpSoc
 import { randomUUID } from 'node:crypto';
 import * as os from 'node:os';
 import { FastInputPath } from './fastInput.ts';
+import {LARGE_FRAMES_CAPABILITY,LargeFrameAssembler,outboundFrames} from './largeFrames.ts';
 import { validLanMessage } from '../src/game/local/Net/MessageValidation.ts';
 import {
-  decodeBeacon, encodeBeacon, encodeFrame, FrameDecoder, LinkWatchdog,
+  decodeBeacon, encodeBeacon, FrameDecoder, LinkWatchdog,
   LAN_DISCOVERY_PORT, LAN_HEARTBEAT_MS, LAN_HOST_STALE_MS, LAN_LINK_DEAD_MS, LAN_PROTOCOL_VERSION, LAN_TCP_PORT_FIRST, LAN_TCP_PORT_LAST,
   type BeaconMsg, type HostInfo, type LanMessage,
 } from '../src/game/local/Net/protocol.ts';
@@ -47,6 +48,8 @@ interface Peer {
   watchdog: LinkWatchdog;
   fast?: FastInputPath;
   probes?: Map<number, number>;
+  largeFrames:boolean;
+  assembler:LargeFrameAssembler;
 }
 
 // --boxhead-net-delay=<ms> (v0.2.1 smoothness QA): delay every TCP send by N ms (one way) so localhost
@@ -88,11 +91,13 @@ export class LanTransport {
   private readonly linkDeadMs: number;
   private connectGeneration = 0;
   private cancelConnect: (() => void) | undefined;
+  private readonly largeFrames:boolean;
 
-  constructor(opts: { identity: string; hostName?: string; linkDeadMs?: number }) {
+  constructor(opts: { identity: string; hostName?: string; linkDeadMs?: number; largeFrames?:boolean }) {
     this.identity = opts.identity;
     this.hostName = opts.hostName ?? os.hostname();
     this.linkDeadMs = opts.linkDeadMs ?? LAN_LINK_DEAD_MS;
+    this.largeFrames=opts.largeFrames!==false;
   }
 
   onEvent(cb: (e: LanEvent) => void): void { this.eventCb = cb; }
@@ -299,10 +304,11 @@ export class LanTransport {
         if (this.peer) { reject('busy'); return; }
         if (hello.proto !== LAN_PROTOCOL_VERSION || hello.app !== this.identity) { reject('version'); return; }
         const sid = hello.sid ?? randomUUID();
-        this.rawSend(socket, { t: 'welcome', ok: true, proto: LAN_PROTOCOL_VERSION, app: this.identity, name: this.hostName, sid });
+        const largeFrames=this.largeFrames&&!!hello.transport?.includes(LARGE_FRAMES_CAPABILITY);
+        this.rawSend(socket, { t: 'welcome', ok: true, proto: LAN_PROTOCOL_VERSION, app: this.identity, name: this.hostName, sid,...(largeFrames?{transport:[LARGE_FRAMES_CAPABILITY]}:{}) });
         handshaked = true;
         this.handshakes.delete(socket);
-        this.attachPeer(socket, decoder);
+        this.attachPeer(socket, decoder,largeFrames);
         this.fire({ ...hello, sid }); // the renderer needs char / capTick / sid
         // Frames that arrived in the same TCP segment as the hello belong to the live link, not the handshake.
         this.handlePeerMessages(this.peer!, msgs.slice(idx + 1));
@@ -349,7 +355,7 @@ export class LanTransport {
       socket.setTimeout(1500); // per-port patience; a closed port refuses instantly, a filtered one times out
       const decoder = new FrameDecoder();
       socket.on('connect', () => {
-        this.rawSend(socket, { t: 'hello', proto: LAN_PROTOCOL_VERSION, app: this.identity, name: hello.name, sid: hello.sid, char: hello.char, capTick: hello.capTick, netcodes: ['rollback-v2'], features: ['personal-growth-v1','armor-ammo-v1','pve-balance-v1','team-pass-v1','survival-v1','supply-crates-v2','reliable-supplies-v1','endless-pve-v1','enemy-variants-v1','persistent-enchantment-v1','timed-waves-v1','wave-draft-v1','draft-ready-v1','combat-pve-v2','combat-pve-v3','boss-waves-v1','boss-encounters-v1','tiered-growth-v1','clearable-waves-v1','fragile-armor-v1','empty-weapons-v1','weapon-bindings-v1','enchant-durability-v1','native-bosses-v1','empty-weapon-feedback-v1','enchant-power-v1','difficulty-waves-v1','held-fire-v1','horde-balance-v1','percent-stats-v1','clear-rewards-v1'] });
+        this.rawSend(socket, { t: 'hello', proto: LAN_PROTOCOL_VERSION, app: this.identity, name: hello.name, sid: hello.sid, char: hello.char, capTick: hello.capTick,...(this.largeFrames?{transport:[LARGE_FRAMES_CAPABILITY]}:{}), netcodes: ['rollback-v2'], features: ['personal-growth-v1','armor-ammo-v1','pve-balance-v1','team-pass-v1','survival-v1','supply-crates-v2','reliable-supplies-v1','endless-pve-v1','enemy-variants-v1','persistent-enchantment-v1','timed-waves-v1','wave-draft-v1','draft-ready-v1','combat-pve-v2','combat-pve-v3','boss-waves-v1','boss-encounters-v1','tiered-growth-v1','clearable-waves-v1','fragile-armor-v1','empty-weapons-v1','weapon-bindings-v1','enchant-durability-v1','native-bosses-v1','empty-weapon-feedback-v1','enchant-power-v1','difficulty-waves-v1','held-fire-v1','horde-balance-v1','percent-stats-v1','clear-rewards-v1'] });
       });
       socket.on('data', (chunk: Buffer) => {
         let msgs: unknown[];
@@ -364,7 +370,7 @@ export class LanTransport {
         settled = true;
         if (this.cancelConnect === cancel) this.cancelConnect = undefined;
         socket.setTimeout(0);
-        this.attachPeer(socket, decoder);
+        this.attachPeer(socket, decoder,this.largeFrames&&!!welcome.transport?.includes(LARGE_FRAMES_CAPABILITY));
         resolve({ ok: true });
         // Frames pipelined behind the welcome in the same segment belong to the live link.
         this.handlePeerMessages(this.peer!, msgs.slice(idx + 1));
@@ -381,8 +387,11 @@ export class LanTransport {
     peer.watchdog.heard();
     for (const m of msgs) {
       if (this.peer !== peer) return;
-      if (!validLanMessage(m)) { this.endPeer('protocol', peer); return; }
-      const msg = m;
+      let value:unknown;
+      try{value=peer.assembler.accept(m,peer.largeFrames);}catch{this.endPeer('protocol',peer);return;}
+      if(value===undefined)continue;
+      if (!validLanMessage(value)) { this.endPeer('protocol', peer); return; }
+      const msg = value;
       // The transport already consumed this connection's handshake. Replaying it must not
       // renegotiate the renderer's room identity or capabilities during an active run.
       if (msg.t === 'hello' || msg.t === 'welcome') { this.endPeer('protocol', peer); return; }
@@ -404,8 +413,8 @@ export class LanTransport {
   }
 
   /** Install the long-lived peer: message forwarding, heartbeat, watchdog. */
-  private attachPeer(socket: TcpSocket, decoder: FrameDecoder): void {
-    const peer: Peer = { socket, decoder, watchdog: new LinkWatchdog(undefined, this.linkDeadMs), probes: new Map() };
+  private attachPeer(socket: TcpSocket, decoder: FrameDecoder,largeFrames=false): void {
+    const peer: Peer = { socket, decoder, watchdog: new LinkWatchdog(undefined, this.linkDeadMs), probes: new Map(),largeFrames,assembler:new LargeFrameAssembler() };
     this.peer = peer;
     if (socket.remoteAddress) peer.fast = new FastInputPath(socket.remoteAddress,
       message => { if (this.peer === peer) this.rawSend(socket, message); },
@@ -441,6 +450,7 @@ export class LanTransport {
     this.peer = undefined;
     if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = undefined; }
     peer.socket.destroy();
+    peer.assembler.clear();
     peer.fast?.close();
     this.emit({ kind: 'peer', connected: false, reason, diagnostic: { silenceMs: peer.watchdog.silenceMs,
       pendingBytes: peer.socket.writableLength, udpReceived: peer.fast?.stats.received ?? 0, udpRejected: peer.fast?.stats.rejected ?? 0 } });
@@ -448,9 +458,13 @@ export class LanTransport {
 
   private rawSend(socket: TcpSocket, msg: LanMessage): void {
     if (socket.destroyed) return;
-    const buf = encodeFrame(msg);
-    if (NET_DELAY_MS > 0) setTimeout(() => { if (!socket.destroyed) socket.write(buf); }, NET_DELAY_MS);
-    else socket.write(buf);
+    let frames:Uint8Array[];
+    try{frames=outboundFrames(msg,this.peer?.socket===socket&&this.peer.largeFrames);}
+    catch(error){this.emit({kind:'error',message:error instanceof Error?error.message:String(error)});if(this.peer?.socket===socket)this.endPeer('message-too-large',this.peer);else socket.destroy();return;}
+    for(const buf of frames){
+      if (NET_DELAY_MS > 0) setTimeout(() => { if (!socket.destroyed) socket.write(buf); }, NET_DELAY_MS);
+      else socket.write(buf);
+    }
   }
 
   send(msg: LanMessage): void {
