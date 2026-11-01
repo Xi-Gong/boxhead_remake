@@ -383,6 +383,9 @@ export class LanTransport {
       if (this.peer !== peer) return;
       if (!validLanMessage(m)) { this.endPeer('protocol', peer); return; }
       const msg = m;
+      // The transport already consumed this connection's handshake. Replaying it must not
+      // renegotiate the renderer's room identity or capabilities during an active run.
+      if (msg.t === 'hello' || msg.t === 'welcome') { this.endPeer('protocol', peer); return; }
       if (msg?.t === 'input-path') { peer.fast?.accept(msg); continue; }
       if (msg?.t === 'start') peer.fast?.begin(msg.netcode === 'rollback-v2' ? msg.epoch : undefined);
       if (msg?.t === 'recover' && msg.stage === 'commit') peer.fast?.begin(msg.epoch);

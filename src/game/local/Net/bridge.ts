@@ -408,6 +408,8 @@ class LanBridge {
   private send(msg: LanMessage): void { desktop?.lan?.send(msg); }
 
   private onMessage(msg: any): void {
+    // Only the host may start a run; a fresh room has no session to enforce NetSession.role yet.
+    if (msg.t === 'start' && this.isHost || msg.t === 'hello' && !this.isHost) return;
     if (msg.t === 'recover' && msg.stage === 'offer' && !this.session) {
       this.send({ ...msg, stage: 'reject' });
       return;
