@@ -16,7 +16,7 @@ const modern=options.difficultyWaves?{progression:'personal-growth-v1' as const,
 const game = createHeadlessGame({ menuOnly: 'Main', options: { infiniteLife: true } });
 let sent: unknown[] = [];
 const session = new NetSession(role, { send: message => sent.push(message) });
-session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: 'ROOM_Single_0001', seed: 4242, wave:options.wave, netcode: 'rollback-v2',
+session.startLocalGame({ mode: options.mode ?? 'Coop', roomLink: `ROOM_Single_${String(options.room??1).padStart(4,'0')}`, seed: options.seed??4242, wave:options.wave, netcode: 'rollback-v2',
   cfg: { ...modern, ...(options.variants?{variants:'enemy-variants-v1' as const}:{}),...(options.endless?{endless:'endless-pve-v1' as const,refill:'reliable-supplies-v1' as const}:{}),...(options.loot?{loot:'supply-crates-v2' as const}:{}),...(options.survival?{survival:'survival-v1' as const}:{}),...(options.growth ? { progression: 'personal-growth-v1' as const } : {}), ...(options.supplies?{supplies:'armor-ammo-v1' as const}:{}),...(options.balance?{balance:'pve-balance-v1' as const}:{}),...(options.teamPass?{teamPass:'team-pass-v1' as const}:{}), difficulty: options.difficulty??0, gameSpeed: options.speed ?? 1, devils: true, collisions: true, damage: !options.teamPass,
     gameAmount: 3, detail: options.detail ?? true, charP1: 0, charP2: 0 } }, game.main());
 if (!game.waitRunning(3000)) throw new Error('boot failed');
@@ -121,6 +121,7 @@ process.on('message', (m: any) => {
       desync: session.desyncDetail, complete: world.mCompleteState, state: game.state(), endReason: session.endReason,
       errors: game.errors, ...(game.errors.length?{enemyDiagnostics:Object.values(world.mThing_Collection.mThings).filter((t:any)=>t._CLASSID_==='CThing_Creature_Zombie').map((t:any)=>({id:t.sUniqueID,x:t.mPosition.mX,y:t.mPosition.mY,state:t.mStateID,speed:t.mSpeed,delta:t.mDelta,count:t.mStateCount}))}:{}), stats: session.rollbackStats, weapons: [...weapons],
       checkpoint: session.netCheckpoint?.tick, startTick: world.mTick - session.tickIndex(world),
+      ...(options.safeEntrances?{entryDeadlockPairs:(()=>{const waiting=(Object.values(world.mThing_Collection.mThings)as any[]).filter(e=>e.Process&&e.mStateID==='State_Wait'&&e.mBaseStateID==='State_EnterMap');return waiting.filter(e=>waiting.some(other=>other!==e&&other.mCurrentCell===e.mDirectionCell&&other.mDirectionCell===e.mCurrentCell)).length;})()}:{}),
       growth: world.mUpgrades.lanGrowth,
       confirmedEnemies: session.confirmedEnemies,
       armor:game.players().map(p=>armorValue(p.mArmor,armorMaximum(p))),

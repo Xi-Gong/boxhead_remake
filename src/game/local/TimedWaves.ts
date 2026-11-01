@@ -8,6 +8,7 @@ import { TIMED_WAVES_RULE, spawnIntervalSeconds, waveSeconds } from './TimedWave
 import {CLEAR_WAVES_RULE,clearWaveKeys,type ClearWaveState} from './ClearWaveRules.ts';
 import {combatWorld} from './CombatRules.ts';
 import {walkDistances} from './CombatPacing.ts';
+import {hasFeature} from './ModernFeatures.ts';
 import type {BossKind} from './CombatRosterRules.ts';
 
 export type SpawnRole='boss'|'reinforcement';
@@ -76,8 +77,17 @@ export function chooseTimedSpawn(world:any,family:'Zombie'|'Devil'): {point:any;
   const players=livingWavePlayers(world);if(!players.length)return;
   if(combatWorld(world)){
     const reachable=walkDistances(world,players.map(p=>p.mPosition));
+    // Opening bursts queue actors before Process_Init writes mapwho. Reserve their original first step
+    // as well as their entrance so adjacent queued actors cannot wait forever for each other to enter.
+    const pending=new Set<any>();
+    if(hasFeature(world,'safe-entrances-v1'))for(const e of Object.values(world.mThing_Collection.mThings)as any[]){
+      if(e.Process!==e.Process_Init||!['CThing_Creature_Zombie','CThing_Creature_Devil'].includes(e._CLASSID_))continue;
+      const cell=world.mMap.mCells[Math.floor(e.mPosition.mY)]?.[Math.floor(e.mPosition.mX)];
+      if(cell){pending.add(cell);pending.add(cell.ValidMoveDirection());}
+    }
     const usable=(points:any[])=>points.filter((s:any)=>reachable.has(s.mNextCell)
       &&!(s.mCell.mCollide&World.Map.CMap_Cell.mCollide_NoSpawn)&&!(s.mNextCell.mCollide&World.Map.CMap_Cell.mCollide_NonMovable)
+      &&!pending.has(s.mCell)&&!pending.has(s.mNextCell)
       &&safeDistance(players,s.mPosition.mX,s.mPosition.mY));
     let entrances=usable(world['mSpawnPoint_'+family]??[]);
     // Some authored rooms put every Devil marker behind fixed obstacles. Use another original entrance;

@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const scenarios = [
+  {name:'safe entrance admission in room 16 under correction and recovery',safeEntrances:true,difficultyWaves:true,heldFire:true,room:16,seed:7052,difficulty:0,wave:1,rtt:100,jitter:20,reconnect:true,total:360},
   {name:'exact wave 1 on Nightmare with held fire, difficulty growth and recovery',difficultyWaves:true,heldFire:true,difficulty:3,wave:1,rtt:60,jitter:10,reconnect:true,total:180},
   {name:'exact wave 7 on Expert with difficulty growth and recovery',difficultyWaves:true,difficulty:2,wave:7,rtt:60,jitter:10,reconnect:true,total:180},
   {name:'enemy variants skills and drops under correction and recovery',variants:true,endless:true,loot:true,survival:true,balance:true,supplies:true,growth:true,wave:20,rtt:100,jitter:20,reconnect:true,total:240},
@@ -96,6 +97,7 @@ it.each(scenarios)('independent asynchronous peers converge: $name', async (scen
     expect(final[0].digest).toEqual(final[1].digest);
     expect(final[0].events).toEqual(final[1].events);
     expect(final[0].decals).toEqual(final[1].decals);
+    if(scenario.safeEntrances)for(const peer of final)expect(peer.entryDeadlockPairs).toBe(0);
     if (scenario.growth) {
       expect(final[0].growth).toEqual(final[1].growth);
       expect(final[0].confirmedEnemies).toEqual(final[1].confirmedEnemies);

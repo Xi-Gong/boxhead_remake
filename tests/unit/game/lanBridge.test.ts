@@ -7,6 +7,12 @@ import '../../../src/game/allClasses.ts';
 function deferred<T>() { let resolve!: (v:T)=>void;const promise=new Promise<T>(r=>{resolve=r;});return {promise,resolve}; }
 const settle=async()=>{await Promise.resolve();await Promise.resolve();await Promise.resolve();};
 describe('LAN bridge operation lifetime',()=>{
+ it.each([true,false])('negotiates safe entrance admission only for an advertising v3 peer (%s)',enabled=>{
+  const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={}as any;const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  const features=['combat-pve-v2','combat-pve-v3','draft-ready-v1','tiered-growth-v1','clearable-waves-v1','enemy-variants-v1','wave-draft-v1','timed-waves-v1','endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1',...(enabled?['safe-entrances-v1']:[])];
+  try{lan.onMessage.mock.calls[0]![0]({t:'hello',name:'guest',features});b.phase='setup';b.startGame(false);const start=lan.send.mock.calls.map(c=>c[0]).find(m=>m.t==='start');expect(start.cfg.features.includes('safe-entrances-v1')).toBe(enabled);}
+  finally{launch.mockRestore();CMain.mSaveData=previous;b.session=null;}
+ });
  it.each([undefined,'enchant-power-v1','enchant-durability-v1','persistent-enchantment-v1'])('negotiates enchant power only with complete dependencies (missing %s)',missing=>{
   const b=lanBridge(),previous=CMain.mSaveData;CMain.mSaveData={} as any;const launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
   const features=['combat-pve-v2','combat-pve-v3','draft-ready-v1','tiered-growth-v1','clearable-waves-v1','enemy-variants-v1','wave-draft-v1','timed-waves-v1','endless-pve-v1','personal-growth-v1','armor-ammo-v1','survival-v1','supply-crates-v2','pve-balance-v1','persistent-enchantment-v1','enchant-durability-v1','enchant-power-v1'].filter(f=>f!==missing);

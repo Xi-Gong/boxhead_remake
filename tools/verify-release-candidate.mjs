@@ -16,6 +16,10 @@ walk('dist');walk('dist-electron');for(const file of files)assert(asar.extractFi
 const renderer=files.find(p=>/main-[\w-]+\.js$/.test(p));assert(renderer);const script=readFileSync(renderer,'utf8');
 if(['0.3.5','0.3.6','0.3.7'].includes(version))for(const feature of ['difficulty-waves-v1','held-fire-v1'])assert(script.includes(feature),'missing '+feature);
 if(['0.3.6','0.3.7'].includes(version))for(const feature of ['horde-balance-v1','percent-stats-v1','clear-rewards-v1'])assert(script.includes(feature),'missing '+feature);
+if(version==='0.3.7'){
+ assert(script.includes('safe-entrances-v1'),'missing safe entrance admission');
+ assert(readFileSync('dist-electron/main.cjs','utf8').includes('large-frames-v1'),'missing negotiated large checkpoint transfer');
+}
 // Full animation names are composed during loading; inspect their prefixes here and the real sets at runtime.
 for(const marker of ['tiered-growth-v1','clearable-waves-v1','boss-encounters-v1','Polished_','Boss_','ClassicVariant_','combat-pve-v2','draft-ready-v1','FreshCombat_','FreshDemon_','Gunner_',...(['0.3.4','0.3.5','0.3.6','0.3.7'].includes(version)?['fragile-armor-v1','empty-weapons-v1','weapon-bindings-v1','enchant-durability-v1','native-bosses-v1']:[]),...(['0.3.5','0.3.6','0.3.7'].includes(version)?['empty-weapon-feedback-v1','enchant-power-v1','BOXHEAD_PAD_LAYOUT_V1','NINTENDO']:[])])assert(script.includes(marker),`missing new runtime marker ${marker}`);
 const inputs=execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{encoding:'utf8'}).split('\0').filter(p=>/^(src\/|electron\/|public\/assets\/|config\/|tools\/)/.test(p)||/^(package(?:-lock)?\.json|(?:gallery|index)\.html|vite\.config\.ts|electron-builder\.yml|tsconfig\.json)$/.test(p)).sort();

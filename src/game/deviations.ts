@@ -99,7 +99,8 @@ export const DEVIATIONS: Deviation[] = [
     description:'v0.3.1 optional timed-waves-v1 replaces finite enemy budgets with map-sized simulation timers '+
       'and continuous capped spawns. Nearby reachable entries are preferred; ground arrivals receive a warning. '+
       'Timeout disposes combat entities without kill rewards before recording the next checkpoint. '+
-      'Old peers and explicit classic fixtures retain the original finite waves; v2 saves carry remaining ticks.',
+        'Old peers and explicit classic fixtures retain the original finite waves; v2 saves carry remaining ticks. '+
+        'v0.3.7 safe-entrances-v1 reserves queued native enemies and their original first-step cells before mapwho initialization, preventing adjacent opening-entry deadlocks without extra RNG or ground spawns.',
   },
   {
     id:'PERSISTENT_ENCHANTMENT',
