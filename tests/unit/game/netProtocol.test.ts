@@ -9,6 +9,7 @@ import {
 import { LanTransport, type LanEvent } from '../../../electron/lan.ts';
 
 const ID = '0.1.3-test+chromium';
+const CFG = {difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:0,charP2:0};
 
 it('wall-clock jumps cannot expire a new network watchdog', () => {
   const watchdog = new LinkWatchdog();
@@ -111,7 +112,7 @@ describe('LanTransport over localhost', () => {
     const received: any[] = [];
     client.onMessage(m => received.push(m));
     expect((await client.connect('127.0.0.1', { name: 'c', char: 0 }, port)).ok).toBe(true);
-    host.send({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: {} as any, seed: 42, netcode: 'rollback-v2' });
+    host.send({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0001', cfg: CFG, seed: 42, netcode: 'rollback-v2' });
     await waitUntil(() => received.some(m => m.t === 'start'));
     const rawSend = (host as any).rawSend;
     (host as any).rawSend = function(socket: any, message: any) { if (message.t !== 'in') rawSend.call(this, socket, message); };
@@ -216,7 +217,7 @@ describe('LanTransport over localhost', () => {
     expect(typeof hello?.sid).toBe('string');
 
     client.send({ t: 'lobby' });
-    host.send({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0009', cfg: { charP1: 3, charP2: 3 } as any, seed: 42 });
+    host.send({ t: 'start', mode: 'Coop', roomLink: 'ROOM_Single_0009', cfg: { ...CFG,charP1: 3, charP2: 3 }, seed: 42 });
     await waitUntil(() => hostSeen.some((m) => m.t === 'lobby') && clientSeen.some((m) => m.t === 'start'));
     expect(clientSeen.find((m) => m.t === 'start')?.seed).toBe(42);
 

@@ -279,7 +279,7 @@ export function encodeBeacon(b: Omit<BeaconMsg, 'magic' | 'proto'> & Partial<Bea
 export function decodeBeacon(text: string): BeaconMsg | null {
   let b: any;
   try { b = JSON.parse(text); } catch { return null; }
-  if (!b || b.magic !== LAN_MAGIC || b.proto !== LAN_PROTOCOL_VERSION || typeof b.port !== 'number') return null;
+  if (!b || b.magic !== LAN_MAGIC || b.proto !== LAN_PROTOCOL_VERSION || !Number.isInteger(b.port) || b.port < 1 || b.port > 65535) return null;
   if (b.status !== 'lobby' && b.status !== 'playing') return null;
   return {
     magic: b.magic, proto: b.proto, app: String(b.app ?? ''), name: String(b.name ?? '?'),

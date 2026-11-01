@@ -16,6 +16,7 @@ import { connect as tcpConnect, createServer, type Server, type Socket as TcpSoc
 import { randomUUID } from 'node:crypto';
 import * as os from 'node:os';
 import { FastInputPath } from './fastInput.ts';
+import { validLanMessage } from '../src/game/local/Net/MessageValidation.ts';
 import {
   decodeBeacon, encodeBeacon, encodeFrame, FrameDecoder, LinkWatchdog,
   LAN_DISCOVERY_PORT, LAN_HEARTBEAT_MS, LAN_HOST_STALE_MS, LAN_LINK_DEAD_MS, LAN_PROTOCOL_VERSION, LAN_TCP_PORT_FIRST, LAN_TCP_PORT_LAST,
@@ -289,7 +290,8 @@ export class LanTransport {
       if (!handshaked) {
         const idx = msgs.findIndex((m) => (m as LanMessage)?.t === 'hello');
         if (idx === -1) { if (msgs.length) socket.destroy(); return; } // garbage before the handshake
-        const hello = msgs[idx] as Extract<LanMessage, { t: 'hello' }>;
+        const hello = msgs[idx];
+        if (!validLanMessage(hello) || hello.t !== 'hello') { socket.destroy(); return; }
         const reject = (reason: string): void => {
           this.rawSend(socket, { t: 'welcome', ok: false, reason, proto: LAN_PROTOCOL_VERSION, app: this.identity, name: this.hostName, sid: hello.sid ?? '' });
           socket.end();
@@ -354,7 +356,9 @@ export class LanTransport {
         try { msgs = decoder.push(chunk); } catch { done({ ok: false, reason: 'protocol' }); return; }
         const idx = msgs.findIndex((m) => (m as LanMessage)?.t === 'welcome');
         if (idx === -1) return;
-        const welcome = msgs[idx] as Extract<LanMessage, { t: 'welcome' }>;
+        const welcome = msgs[idx];
+        if (!validLanMessage(welcome) || welcome.t !== 'welcome') { done({ ok: false, reason: 'protocol' }); return; }
+        if (welcome.proto !== LAN_PROTOCOL_VERSION || welcome.app !== this.identity) { done({ ok: false, reason: 'version' }); return; }
         if (!welcome.ok) { done({ ok: false, reason: welcome.reason ?? 'refused' }); return; }
         if (settled) return;
         settled = true;
@@ -377,7 +381,8 @@ export class LanTransport {
     peer.watchdog.heard();
     for (const m of msgs) {
       if (this.peer !== peer) return;
-      const msg = m as LanMessage;
+      if (!validLanMessage(m)) { this.endPeer('protocol', peer); return; }
+      const msg = m;
       if (msg?.t === 'input-path') { peer.fast?.accept(msg); continue; }
       if (msg?.t === 'start') peer.fast?.begin(msg.netcode === 'rollback-v2' ? msg.epoch : undefined);
       if (msg?.t === 'recover' && msg.stage === 'commit') peer.fast?.begin(msg.epoch);
