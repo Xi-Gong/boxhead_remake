@@ -73,8 +73,8 @@ try{
   const audio=await g.expr('g.audio()');assert.equal(audio.decoded,31);assert.equal(audio.state,'running');
   if(process.env.BOXHEAD_QA_NAME_SPACING==='1')await verifyNameSpacing(g,join(out,'name-spacing'));
   if(process.env.BOXHEAD_QA_ENCHANTMENT==='1')await verifyPersistentEnchantment(g,join(out,'enchantment'));
-  if(['0.3.5','0.3.6'].includes(expected)&&process.env.BOXHEAD_QA_TIMED==='1')await verifyEmptyFeedback(g,join(out,'empty-feedback'));
-  if(process.env.BOXHEAD_QA_TIMED==='1')await (['0.3.4','0.3.5','0.3.6'].includes(expected)?verifyV034Candidate:expected==='0.3.3'?verifyV033Candidate:expected==='0.3.2'?verifyV032Candidate:verifyV031Candidate)(g,join(out,'timed-candidate'));
+  if(['0.3.5','0.3.6','0.3.7'].includes(expected)&&process.env.BOXHEAD_QA_TIMED==='1')await verifyEmptyFeedback(g,join(out,'empty-feedback'));
+  if(process.env.BOXHEAD_QA_TIMED==='1')await (['0.3.4','0.3.5','0.3.6','0.3.7'].includes(expected)?verifyV034Candidate:expected==='0.3.3'?verifyV033Candidate:expected==='0.3.2'?verifyV032Candidate:verifyV031Candidate)(g,join(out,'timed-candidate'));
   if(process.env.BOXHEAD_QA_HELD_FIRE==='1')await verifyHeldFire(g,join(out,'held-fire'));
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
