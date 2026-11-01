@@ -57,7 +57,7 @@ function timed(v:any):boolean{
 }
 function variants(v:any):boolean{
  return numbers(v,['wave','zombie','devil','nextZone'])&&v.rule==='enemy-variants-v1'&&list(v.zones,z=>numbers(z,['x','y','angle','damage','born','warning','duration','interval','lastPulse'])&&string(z.caster))
-  &&list(v.enemies,e=>numbers(e,['x','y','angle','frame'])&&string(e.id)&&string(e.kind)&&string(e.state)&&record(e.fields)
+  &&list(v.enemies,e=>numbers(e,['x','y','angle'])&&optional(e.frame,finite)&&string(e.id)&&string(e.kind)&&string(e.state)&&record(e.fields)
    &&Object.entries(e.fields).every(([k,value])=>/^m(?:Life$|MaxLife$|Variant|Charge|Boss|EnemyArmor|Combat|Gunner|NativeBoss)/.test(k)&&(value===undefined||finite(value)||string(value))));
 }
 export function validRunSnapshot(v:unknown):v is RunSnapshot{

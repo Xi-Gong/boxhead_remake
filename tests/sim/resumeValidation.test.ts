@@ -1,7 +1,8 @@
 import {expect,it} from 'vitest';
 import {createHeadlessGame} from './harness.ts';
 import {applyToWorld,capture,hasStored,SAVE_MEMBER} from '../../src/game/local/Resume.ts';
-import {CSaveData} from '../../src/game/packages.ts';
+import {CSaveData,Thing} from '../../src/game/packages.ts';
+import {validRunSnapshot} from '../../src/game/local/ResumeValidation.ts';
 
 const corruptions:[string,(s:any)=>void][]=[
  ['missing counters',s=>delete s.waveCounters],['null player',s=>s.players=[null]],
@@ -23,5 +24,13 @@ it('does not advertise a truncated save as CONTINUE or discard unrelated setting
  const g=createHeadlessGame();try{
   const data=CSaveData.mSharedObject.data;data.qaSetting='keep';data[SAVE_MEMBER]={version:2,players:[],objects:[],roomLibLink:'ROOM_Single_0001',wave:1};
   expect(hasStored()).toBe(false);expect(data[SAVE_MEMBER]).toBeUndefined();expect(data.qaSetting).toBe('keep');
+ }finally{g.quit();}
+});
+it('accepts an enemy before its first animation frame, but rejects a supplied nonnumeric frame',()=>{
+ const g=createHeadlessGame({classicSimplifiedCombat:true});try{
+  const e=new Thing.Creature.CThing_Creature_Devil(g.players()[0].mPosition.Clone());g.world().mThing_Collection.AddThing(e);e.Process_Init();
+  const saved=capture(g.world());expect(saved.variants!.enemies).toHaveLength(1);expect(saved.variants!.enemies[0]!.frame).toBeUndefined();
+  expect(validRunSnapshot(saved)).toBe(true);expect(validRunSnapshot(JSON.parse(JSON.stringify(saved)))).toBe(true);
+  (saved.variants!.enemies[0]as any).frame='invalid';expect(validRunSnapshot(saved)).toBe(false);
  }finally{g.quit();}
 });
