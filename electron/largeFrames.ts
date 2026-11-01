@@ -1,15 +1,18 @@
-// Negotiated transport-only fragmentation. Simulation messages retain their original JSON/wire fields.
+// Negotiated checkpoint-only fragmentation. Simulation messages retain their original JSON/wire fields.
 import {randomUUID} from 'node:crypto';
 import {encodeFrame,LAN_FRAME_MAX} from '../src/game/local/Net/protocol.ts';
 export const LARGE_FRAMES_CAPABILITY='large-frames-v1';
 export const LARGE_FRAME_MAX=8*1024*1024;
 const CHUNK=32*1024;
 interface Fragment {t:'fragment';id:string;index:number;count:number;data:string}
+const checkpoint=(value:any):boolean=>value?.t==='start'&&value.snap!==null&&typeof value.snap==='object'&&!Array.isArray(value.snap);
 
 export function outboundFrames(message:unknown,negotiated:boolean):Uint8Array[]{
  const encoded=encodeFrame(message);
  if(encoded.length-4<=LAN_FRAME_MAX)return [encoded];
  if(!negotiated||encoded.length-4>LARGE_FRAME_MAX)throw new Error('LAN message exceeds negotiated transfer limit');
+ // Inputs/commands/checksums retain the original cap, including unknown optional fields they cache.
+ if(!checkpoint(message))throw new Error('Large LAN transfer requires a checkpoint');
  const body=encoded.subarray(4),id=randomUUID(),count=Math.ceil(body.length/CHUNK),frames:Uint8Array[]=[];
  for(let index=0;index<count;index++)frames.push(encodeFrame({t:'fragment',id,index,count,data:Buffer.from(body.subarray(index*CHUNK,(index+1)*CHUNK)).toString('base64')} satisfies Fragment));
  return frames;
@@ -31,6 +34,7 @@ export class LargeFrameAssembler {
   this.pending=undefined;
   const result=JSON.parse(Buffer.concat(p.parts,p.bytes).toString('utf8'));
   if(result?.t==='fragment')throw new Error('Nested LAN fragments');
+  if(!checkpoint(result))throw new Error('Large LAN transfer requires a checkpoint');
   return result;
  }
  clear():void{this.pending=undefined;}

@@ -1,6 +1,7 @@
 import {expect,it} from 'vitest';
 import {LanTransport} from '../../../electron/lan.ts';
 import type {LanMessage} from '../../../src/game/local/Net/protocol.ts';
+import {encodeFrame} from '../../../src/game/local/Net/protocol.ts';
 const cfg={difficulty:0,gameSpeed:1,devils:true,collisions:true,damage:true,gameAmount:0,detail:true,charP1:0,charP2:0};
 const snapshot=()=>({version:2,gameMode:'Coop',roomLibLink:'ROOM_Single_0001',wave:1,tick:1,rngState:42,score:0,multiplierIndex:1,multiplierTick:50,multiplierTickTotal:50,multipleKillsIndex:0,multipleKillsTick:0,multipleKillsTickTotal:0,
  waveCounters:{spawnZombie:1,spawnDevil:1,zombieCount:2,zombieTotal:0,devilCount:0,devilTotal:0,playerCount:2},players:[],
@@ -13,6 +14,16 @@ it('transfers a checkpoint with 600 permanent crates intact over the real negoti
   host.send(message);
   for(let n=0;n<100&&!received.some(m=>m.t==='start');n++)await new Promise(r=>setTimeout(r,20));
   expect(received.find(m=>m.t==='start')).toMatchObject(message);expect(host.hasPeer&&client.hasPeer).toBe(true);
+ }finally{host.shutdown();client.shutdown();}
+});
+it('disconnects forged oversized control fragments before forwarding them to the renderer',async()=>{
+ const host=new LanTransport({identity:'large-control-test'}),client=new LanTransport({identity:'large-control-test'}),received:LanMessage[]=[],reasons:string[]=[];
+ client.onMessage(m=>received.push(m));client.onEvent(e=>{if(e.kind==='peer'&&!e.connected)reasons.push(e.reason!);});
+ try{const port=await host.startHost();expect((await client.connect('127.0.0.1',{name:'client',char:0},port)).ok).toBe(true);
+  const body=encodeFrame({t:'in',tick:1,bits:0,sum:{tick:1,score:0,things:1,zombies:0,q:[0,0,0,0,0,0],extension:'x'.repeat(100000)}}).subarray(4),count=Math.ceil(body.length/32768);
+  for(let index=0;index<count;index++)(host as any).peer.socket.write(encodeFrame({t:'fragment',id:'forged-control',index,count,data:Buffer.from(body.subarray(index*32768,(index+1)*32768)).toString('base64')}));
+  for(let n=0;n<100&&client.hasPeer;n++)await new Promise(r=>setTimeout(r,10));
+  expect(received.some(m=>m.t==='in')).toBe(false);expect(reasons).toContain('protocol');expect(client.hasPeer).toBe(false);
  }finally{host.shutdown();client.shutdown();}
 });
 it.each([[false,true],[true,false],[false,false]])('retains the legacy single-frame path when either endpoint lacks the capability (%s/%s)',async(hostCap,clientCap)=>{
