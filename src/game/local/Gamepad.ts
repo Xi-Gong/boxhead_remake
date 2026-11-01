@@ -199,6 +199,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     // the other pad pushed (they can share slots - pad 1 also drives player 1 in Single player).
     if (!p.present) {
       cancelHolds(slot);
+      draftEntries[slot]=undefined;
       held[slot].clear();
       return false;
     }

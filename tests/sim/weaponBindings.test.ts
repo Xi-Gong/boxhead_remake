@@ -9,14 +9,16 @@ import {beginWaveDraft,waveDraft} from '../../src/game/local/WaveDraft.ts';
 
 it.each([true,false].flatMap(modern=>['Single','Coop'].flatMap(mode=>['Xbox','Nintendo'].flatMap(layout=>[true,false].map(held=>({modern,mode,layout,held}))))))
  ('keeps draft entry physical A release separate from a fresh confirm ($modern/$mode/$layout/held=$held)',({modern,mode,layout,held})=>{
-  const g=createHeadlessGame({mode:mode as 'Single'|'Coop',classicFeatures:modern?[]:['weapon-bindings-v1']}),w=g.world();let buttons:number[]=[];
-  const a=layout==='Nintendo'?1:0,provider=()=>[{index:0,connected:true,id:layout==='Nintendo'?'Nintendo Switch Pro Controller':'Xbox Controller',axes:[0,0],buttons:Array.from({length:17},(_,n)=>({pressed:buttons.includes(n)}))}];
+  const g=createHeadlessGame({mode:mode as 'Single'|'Coop',classicFeatures:modern?[]:['weapon-bindings-v1']}),w=g.world();let buttons:number[]=[],present=true;
+  const a=layout==='Nintendo'?1:0,provider=()=>[present?{index:0,connected:true,id:layout==='Nintendo'?'Nintendo Switch Pro Controller':'Xbox Controller',axes:[0,0],buttons:Array.from({length:17},(_,n)=>({pressed:buttons.includes(n)}))}:null];
   const pad=installGamepad({player:g.player,provider});if(mode==='Coop')pad.swapAssignment();
   const index=mode==='Coop'?1:0,poll=(next:number[])=>{buttons=next;pad.poll(false);};
   try{
    noSpawn(g);poll([]);if(held)poll([a]);beginWaveDraft(w);const round=waveDraft(w)!.round!;
    if(held){
     poll([a]);g.tick(2);expect(round.confirmed[index]).toBe(false);
+    present=false;poll([a]);g.tick(1);expect(round.confirmed[index]).toBe(false);
+    present=true;poll([a]);g.tick(1);expect(round.confirmed[index]).toBe(false);
     poll([]);g.tick(2);expect(round.confirmed[index]).toBe(false);
    }
    poll([a]);g.tick(1);expect(round.confirmed[index]).toBe(true);
