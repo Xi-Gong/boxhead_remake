@@ -12,12 +12,13 @@
 重新带到现代平台。逐类移植 AS2，保留原版美术、声音与游戏逻辑，加入 2 倍光栅化、存档、手柄和局域网联机。
 有意调整的内容见 [PARITY.md](PARITY.md)。
 
-<p align="center"><a href="assets/readme/menu.png"><img src="assets/readme/menu.png" alt="Boxhead v0.3.6 主菜单" width="640"></a></p>
+<p align="center"><a href="assets/readme/menu.png"><img src="assets/readme/menu.png" alt="Boxhead v0.3.7 主菜单" width="640"></a></p>
 
 ## 快速开始
 
 **Windows 便携版：** 在 [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest) 下载单文件 exe，双击即可游玩。
-**v0.3.6** 调低四档难度的前期敌人血量，中后期逐渐加压；全武器基础载弹提高25%（UZI为125发），霰弹枪略微提速。属性统一为明确、有上限的百分比加成，新增**最高50%的闪避**。提前清场和Boss胜利均给双倍增益，撑到超时仍给单倍。保留精确选波、手柄字母、空弹反馈及旧端联机兼容。见[发行验证记录](docs/verification/v0.3.6/README.md)。
+**v0.3.7** 修复开场敌人互等死锁、第四名Boss血条残留、按住手柄A跨入升级后误确认、联机消息校验和房主权限、冻结期间输入缓存无界增长、损坏存档恢复，以及长局大检查点传输问题。详见[按优先级整理的问题与修复](docs/verification/v0.3.7/audit_zh_cn.md)和[发行验证记录](docs/verification/v0.3.7/README.md)。
+保留 v0.3.6 的渐进难度、全武器基础载弹提高25%（UZI为125发）、霰弹枪提速、百分比构筑与**最高50%的闪避**。提前清场和Boss胜利给双倍增益，撑到超时给单倍。
 存档与设置统一保存在 `%USERPROFILE%\.boxhead`。
 
 **从源码运行：**
@@ -70,7 +71,7 @@ npm run dist        # Windows 便携版：release/Boxhead 2Play Rooms-<版本>-p
 - **补给与界面更稳定**：补弹保留武器箱继承容量，P1/P2确认拾取白字稳定等距，大厅条件按钮分行排布。
 - **快捷武器与合作武器箱**：解锁后零弹也可切换并绑定；A/Y 标记显示快捷键，长按显示绑定/解绑进度。阵亡武器箱保留弹药及附魔耐久，合并不会叠加复制耐久。
 
-[完整功能说明](docs/features_zh_cn.md) · [v0.3.6发行验证](docs/verification/v0.3.6/README.md) · [v0.3.4验证](docs/verification/v0.3.4/README.md)
+[完整功能说明](docs/features_zh_cn.md) · [v0.3.7发行验证](docs/verification/v0.3.7/README.md) · [v0.3.6验证](docs/verification/v0.3.6/README.md)
 
 <p align="center"><a href="assets/readme/upgrade-cards.png"><img src="assets/readme/upgrade-cards.png" alt="附魔威力与续航卡片、精确收益预览和属性查看按键" width="640"></a></p>
 

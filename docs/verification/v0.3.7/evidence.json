@@ -1,0 +1,1367 @@
+{
+  "status": "accepted-for-release",
+  "version": "0.3.7",
+  "mode": "user-requested-accelerated",
+  "builtFrom": "a17a82a6750192aaa2f8154dd8bdb3b86d99193b",
+  "finished": "2026-11-01T09:23:49.525Z",
+  "acceleration": {
+    "reason": "User explicitly requested faster completion",
+    "reuse": {
+      "previousBuild": "85fcef2",
+      "previousArtifact": "1437e42b8a9f0fd74218d5163847b689ffcf6085b2d48b579b2d68a66494c198",
+      "previousFunctional": 32,
+      "changedRuntimeFiles": [
+        "src/game/deviations.ts",
+        "src/game/local/Gamepad.ts"
+      ],
+      "reason": "After the nine-defect candidate, only the render/input-owned modern pad A entry guard and absent-pad cleanup changed. Current full2076-test invocation, all7supplementary checks,265source-engine,216sim,room16,Boss lifecycle,600crate restart and current affected input/UI checks pass. Reuse previous evidence for unchanged non-pad surfaces/native/save/transport paths; do not call them current-artifact reruns."
+    },
+    "omitted": [
+      "Repeated unrelated historical/menu/native/save gates",
+      "Separate ordinary-workload comparison",
+      "Six local Chrome rendering-load probes",
+      "Five of six normal-input samples",
+      "Additional both-start-order/fault matrix beyond selected30/100ms and current600crate recovery"
+    ]
+  },
+  "artifact": {
+    "exeBytes": 101685040,
+    "exeSHA256": "a7c0997593ccfeffe9edc1b4d9a0fd5de690c766bd0bf6c75a06387eeb51b473",
+    "asarSHA256": "1c4e36c8a135d754a1dadd6d674ede9f23d555a592c168db2281aa48ef46d0d6",
+    "renderer": "dist/bundle/main-DGtBVX1E.js",
+    "runtimeInputsSHA256": "ca5be7590626a7008d4e5f9dd1c3cbb01a2b1d90f999e3950c56a19666b83619",
+    "inputCount": 432
+  },
+  "packagedFilesCompared": 70,
+  "windowsVersion": {
+    "unpackedPE": {
+      "product": "0.3.7.0",
+      "file": "0.3.7"
+    },
+    "portablePE": {
+      "product": "0.3.7",
+      "file": "0.3.7"
+    },
+    "verifiedAt": "2026-11-01T08:37:27.4659421Z",
+    "version": "0.3.7"
+  },
+  "findings": {
+    "P0": 0,
+    "P1": 5,
+    "P2": 4,
+    "P3": "Three deferred suggestions: compatibility-reason copy (code review), first-pause old score (prior native screenshot; timing contrast pending), and extreme-load allocation/long-frame optimization (three matched rounds); see audit_zh_cn.md",
+    "fixed": [
+      [
+        "P1",
+        "Queued adjacent entrance deadlock",
+        "e69a51c"
+      ],
+      [
+        "P1",
+        "LAN message and handshake identity validation",
+        "0ff1cac"
+      ],
+      [
+        "P1",
+        "Host authority and handshake replay",
+        "54e57a1"
+      ],
+      [
+        "P1",
+        "Frozen remote cache bounds",
+        "67b32ac"
+      ],
+      [
+        "P1",
+        "Damaged v2 save preflight",
+        "8086bb5"
+      ],
+      [
+        "P2",
+        "Negotiated large checkpoints",
+        "6981daa"
+      ],
+      [
+        "P2",
+        "Out-of-map saved player coordinates",
+        "980926e"
+      ],
+      [
+        "P2",
+        "Stale fourth Boss health bar",
+        "85fcef2"
+      ],
+      [
+        "P2",
+        "Held modern A auto-confirms draft entry",
+        "6338fa0"
+      ]
+    ],
+    "candidateCorrections": [
+      "b699157 preserves legitimately omitted enemy animation frame",
+      "b4c82b6 allows oversized fragments only for START snapshots; two pure and one actual TCP regressions reproduced before, 52 checks after"
+    ],
+    "compatibility": "New entrance and large-checkpoint capabilities require both peers. Legacy peers retain their existing negotiated rules; original PATCHY solid-cell spawn quirk remains a separate documented oracle."
+  },
+  "staticAudit": {
+    "modules": 657,
+    "portedModules": 117,
+    "changedPorts": []
+  },
+  "vitest": {
+    "method": "One clean serial invocation, SOAK=1 SOAK_TICKS=6000; no merge/reconciliation",
+    "passed": 2068,
+    "failed": 0,
+    "conditional": 8,
+    "total": 2076,
+    "filesPassed": 174,
+    "filesConditional": 1,
+    "independentScenarios": 37,
+    "long6000TickCases": 63,
+    "conditionalReason": "Existing removed-original-reference conditions: registerClass1, media5, text2; one separate zero-test hotspots file. No new skips. All four independent-process explosion sizes enabled.",
+    "raw": "generated/reports/audit-20261101/final/vitest.json"
+  },
+  "exploration": {
+    "simulation": {
+      "initial": 216,
+      "final": 216,
+      "method": "Sequential real simulation, mortal normal stats, seeded input bots; 18 maps x 4 difficulties x 3 modes; 750 ticks maximum per case. Bot performance is not human win-rate evidence."
+    },
+    "browser": {
+      "cases": 75,
+      "method": "One headless Chrome game at a time, real menus/options/map arrows, real keyboard movement/fire/switch/pause, real save/continue. No combat state mutations. Seed and isolated BEST data only are prepared.",
+      "scope": "Earlier production build containing the first four fixes, version0.3.6; exploration only, not final-artifact acceptance"
+    }
+  },
+  "functional": {
+    "asarSHA256": "1c4e36c8a135d754a1dadd6d674ede9f23d555a592c168db2281aa48ef46d0d6",
+    "currentArtifactCases": [
+      {
+        "name": "early-gameplay",
+        "code": 0,
+        "started": "2026-11-01T08:55:13.611Z",
+        "finished": "2026-11-01T08:56:37.650Z"
+      },
+      {
+        "name": "percent-ui",
+        "code": 0,
+        "started": "2026-11-01T08:56:37.928Z",
+        "finished": "2026-11-01T08:58:37.482Z"
+      },
+      {
+        "name": "early-clear-ui",
+        "code": 0,
+        "started": "2026-11-01T08:58:37.762Z",
+        "finished": "2026-11-01T09:00:37.282Z"
+      },
+      {
+        "name": "exact-wave",
+        "code": 0,
+        "started": "2026-11-01T09:00:37.569Z",
+        "finished": "2026-11-01T09:04:40.947Z"
+      },
+      {
+        "name": "held-fire",
+        "code": 0,
+        "started": "2026-11-01T09:04:41.223Z",
+        "finished": "2026-11-01T09:05:05.883Z"
+      },
+      {
+        "name": "gamepad-layout",
+        "code": 0,
+        "started": "2026-11-01T09:05:06.165Z",
+        "finished": "2026-11-01T09:06:04.748Z"
+      },
+      {
+        "name": "ui",
+        "code": 0,
+        "started": "2026-11-01T09:06:05.025Z",
+        "finished": "2026-11-01T09:11:03.584Z"
+      },
+      {
+        "name": "audio",
+        "code": 0,
+        "started": "2026-11-01T09:11:03.867Z",
+        "finished": "2026-11-01T09:12:47.218Z"
+      },
+      {
+        "name": "draft-stats",
+        "code": 0,
+        "started": "2026-11-01T09:12:47.499Z",
+        "finished": "2026-11-01T09:13:12.598Z"
+      },
+      {
+        "name": "candidate",
+        "code": 0,
+        "started": "2026-11-01T09:13:12.872Z",
+        "finished": "2026-11-01T09:13:36.870Z"
+      },
+      {
+        "name": "portable",
+        "code": 0,
+        "started": "2026-11-01T09:14:26.312Z",
+        "finished": "2026-11-01T09:15:12.860Z"
+      },
+      {
+        "name": "lan-functional-30",
+        "code": 0,
+        "started": "2026-11-01T09:15:13.152Z",
+        "finished": "2026-11-01T09:16:34.170Z"
+      },
+      {
+        "name": "lan-functional-100",
+        "code": 0,
+        "started": "2026-11-01T09:16:34.447Z",
+        "finished": "2026-11-01T09:17:04.261Z"
+      }
+    ],
+    "historicalUnchangedSourceCoverage": [
+      {
+        "name": "enchant-power",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "native-balance",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "browser",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "electron-play",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "packaged-play",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "v012",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "v019",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "v020",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "v023",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "v024",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "typing",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "lanui",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "netretry",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "net",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "lan-functional-60",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "electron-smoke",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "packaged-smoke",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "native",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      },
+      {
+        "name": "old-save",
+        "code": 0,
+        "build": "85fcef2",
+        "scope": "Historical unchanged-source coverage, not a current artifact rerun"
+      }
+    ],
+    "note": "Current artifact reruns and reused prior-build coverage are distinct; this is not a claim of32current-artifact gates."
+  },
+  "additionalChecks": [
+    {
+      "name": "build",
+      "code": 0,
+      "started": "2026-11-01T08:34:26.497Z",
+      "finished": "2026-11-01T08:34:38.834Z"
+    },
+    {
+      "name": "package-dir",
+      "code": 0,
+      "started": "2026-11-01T08:34:38.834Z",
+      "finished": "2026-11-01T08:34:50.045Z"
+    },
+    {
+      "name": "package-portable",
+      "code": 0,
+      "started": "2026-11-01T08:34:50.046Z",
+      "finished": "2026-11-01T08:36:30.688Z"
+    },
+    {
+      "name": "candidate-identity",
+      "code": 0,
+      "started": "2026-11-01T08:36:30.873Z",
+      "finished": "2026-11-01T08:36:31.506Z"
+    },
+    {
+      "name": "extra-draft-input",
+      "code": 0,
+      "started": "2026-11-01T08:36:31.506Z",
+      "finished": "2026-11-01T08:37:05.411Z"
+    },
+    {
+      "name": "extra-bitmap-blit",
+      "code": 0,
+      "started": "2026-11-01T08:37:05.411Z",
+      "finished": "2026-11-01T08:37:25.731Z"
+    },
+    {
+      "name": "extra-masked-copy",
+      "code": 0,
+      "started": "2026-11-01T08:37:25.732Z",
+      "finished": "2026-11-01T08:37:52.675Z"
+    },
+    {
+      "name": "extra-added-ui",
+      "code": 0,
+      "started": "2026-11-01T08:37:52.676Z",
+      "finished": "2026-11-01T08:39:02.402Z"
+    },
+    {
+      "name": "extra-viewportPause",
+      "code": 0,
+      "started": "2026-11-01T08:39:02.402Z",
+      "finished": "2026-11-01T08:39:38.329Z"
+    },
+    {
+      "name": "extra-binding-spacing",
+      "code": 0,
+      "started": "2026-11-01T08:39:38.329Z",
+      "finished": "2026-11-01T08:39:58.343Z"
+    },
+    {
+      "name": "extra-boss-health",
+      "code": 0,
+      "started": "2026-11-01T08:39:58.343Z",
+      "finished": "2026-11-01T08:40:46.13Z"
+    },
+    {
+      "name": "engine-browser",
+      "code": 0,
+      "started": "2026-11-01T08:40:46.13Z",
+      "finished": "2026-11-01T08:41:01.989Z"
+    },
+    {
+      "name": "entrance-admission",
+      "code": 0,
+      "started": "2026-11-01T08:41:01.989Z",
+      "finished": "2026-11-01T08:41:57.432Z"
+    },
+    {
+      "name": "boss-lifecycle",
+      "code": 0,
+      "started": "2026-11-01T08:41:57.432Z",
+      "finished": "2026-11-01T08:42:24.301Z"
+    },
+    {
+      "name": "large-checkpoint",
+      "code": 0,
+      "started": "2026-11-01T08:42:24.301Z",
+      "finished": "2026-11-01T08:43:14.302Z"
+    },
+    {
+      "name": "sim-matrix",
+      "code": 0,
+      "started": "2026-11-01T08:43:14.303Z",
+      "finished": "2026-11-01T08:43:48.977Z"
+    },
+    {
+      "name": "vitest",
+      "code": 0,
+      "started": "2026-11-01T08:43:48.978Z",
+      "finished": "2026-11-01T08:55:13.341Z"
+    },
+    {
+      "name": "identity",
+      "code": 0,
+      "started": "2026-11-01T09:14:25.402Z",
+      "finished": "2026-11-01T09:14:26.041Z"
+    },
+    {
+      "name": "portable",
+      "code": 0,
+      "started": "2026-11-01T09:14:26.042Z",
+      "finished": "2026-11-01T09:15:12.871Z"
+    },
+    {
+      "name": "lan-functional-30",
+      "code": 0,
+      "started": "2026-11-01T09:15:12.872Z",
+      "finished": "2026-11-01T09:16:34.181Z"
+    },
+    {
+      "name": "lan-functional-100",
+      "code": 0,
+      "started": "2026-11-01T09:16:34.187Z",
+      "finished": "2026-11-01T09:17:04.272Z"
+    },
+    {
+      "name": "performance",
+      "code": 0,
+      "started": "2026-11-01T09:17:04.274Z",
+      "finished": "2026-11-01T09:22:44.047Z"
+    },
+    {
+      "name": "natural-Coop-3",
+      "code": 0,
+      "started": "2026-11-01T09:22:44.047Z",
+      "finished": "2026-11-01T09:23:49.518Z"
+    }
+  ],
+  "proof": {
+    "entry": {
+      "ok": true,
+      "cases": [
+        {
+          "mode": "Single",
+          "ok": true,
+          "state": {
+            "room": "ROOM_Single_0016",
+            "wave": 1,
+            "tick": 205,
+            "features": [
+              "fragile-armor-v1",
+              "empty-weapons-v1",
+              "weapon-bindings-v1",
+              "enchant-durability-v1",
+              "native-bosses-v1",
+              "empty-weapon-feedback-v1",
+              "enchant-power-v1",
+              "difficulty-waves-v1",
+              "held-fire-v1",
+              "horde-balance-v1",
+              "percent-stats-v1",
+              "clear-rewards-v1",
+              "safe-entrances-v1"
+            ],
+            "players": [
+              {
+                "life": 160,
+                "max": 160,
+                "visible": true
+              }
+            ],
+            "enemies": [
+              {
+                "x": 46.47580735803745,
+                "y": 39.52419264196255,
+                "state": "State_CellToCell",
+                "base": "State_GotoPlayer",
+                "collidable": true
+              },
+              {
+                "x": 47.5,
+                "y": 38.379999999999995,
+                "state": "State_CellToCell",
+                "base": "State_GotoPlayer",
+                "collidable": true
+              }
+            ]
+          }
+        },
+        {
+          "mode": "Coop",
+          "ok": true,
+          "state": {
+            "room": "ROOM_Single_0016",
+            "wave": 1,
+            "tick": 205,
+            "features": [
+              "fragile-armor-v1",
+              "empty-weapons-v1",
+              "weapon-bindings-v1",
+              "enchant-durability-v1",
+              "native-bosses-v1",
+              "empty-weapon-feedback-v1",
+              "enchant-power-v1",
+              "difficulty-waves-v1",
+              "held-fire-v1",
+              "horde-balance-v1",
+              "percent-stats-v1",
+              "clear-rewards-v1",
+              "safe-entrances-v1"
+            ],
+            "players": [
+              {
+                "life": 160,
+                "max": 160,
+                "visible": true
+              },
+              {
+                "life": 160,
+                "max": 160,
+                "visible": true
+              }
+            ],
+            "enemies": [
+              {
+                "x": 46.47580735803745,
+                "y": 39.52419264196255,
+                "state": "State_CellToCell",
+                "base": "State_GotoPlayer",
+                "collidable": true
+              },
+              {
+                "x": 47.5,
+                "y": 38.379999999999995,
+                "state": "State_CellToCell",
+                "base": "State_GotoPlayer",
+                "collidable": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "fourthBoss": {
+      "ok": true,
+      "method": "Real Wave25 menu and four natural Boss admissions; prepared positions/camera, real P pause. Controlled fourth lethal DEAD flag enters CheckForDead and normal LogKill. No damage/balance/performance claim.",
+      "before": [
+        {
+          "visible": true,
+          "x": 174,
+          "y": 269,
+          "width": 36,
+          "height": 7.5
+        },
+        {
+          "visible": true,
+          "x": 254,
+          "y": 276,
+          "width": 36,
+          "height": 7.5
+        },
+        {
+          "visible": true,
+          "x": 334,
+          "y": 266,
+          "width": 36,
+          "height": 7.5
+        },
+        {
+          "visible": true,
+          "x": 414,
+          "y": 269,
+          "width": 36,
+          "height": 7.5
+        }
+      ],
+      "after": {
+        "defeated": [
+          false,
+          false,
+          false,
+          true
+        ],
+        "phase": "combat",
+        "layer": true,
+        "visible": [
+          true,
+          true,
+          true,
+          false
+        ]
+      },
+      "pixels": {
+        "before": 136,
+        "after": 0
+      }
+    },
+    "largeCheckpoint": {
+      "ok": true,
+      "method": "600 prepared permanent supplies; real packaged client renderer restart, IP typing and rejoin; full common-confirmed gameplay, crate identities and ordered event/decal identities checked",
+      "raw": "generated/reports/audit-20261101/final/large-checkpoint/net_smooth_report.json"
+    }
+  },
+  "network": {
+    "delaysOneWayMs": [
+      30,
+      100
+    ],
+    "startOrders": [
+      "host-first",
+      "client-first in performance round2"
+    ],
+    "scope": "Current artifact:600crate renderer restart/rejoin,30ms extended partial-Boss recovery/bindings/rewards,100ms common-confirmed gameplay/events. Actual separate processes with isolated48630/48631..48640 ports. Prior additional network paths remain historical coverage; no new extra jitter/order matrix after acceleration."
+  },
+  "performance": {
+    "method": "Three alternating baseline/candidate rounds of the heaviest combined workload:256explosive roots every100ticks+200permanent supplies, same960x720/seed/input schedule/3swarmup/20ssample. Six actual two-process sessions; no ordinary-workload speedup claim. Allocation estimates use sampling; collection-request time includesCDP/IPC, not directGC pauses. Wall-clock input scheduling andOS cache are not controlled at everytick.",
+    "sessions": 6,
+    "machine": {
+      "cpu": "Intel(R) Core(TM) 5 220H",
+      "os": "Windows 11 Home",
+      "node": "v24.14.1",
+      "warmupMs": 3000,
+      "sampleMs": 20000,
+      "oneWayDelayMs": 30,
+      "allocationSamplingInterval": 4194304,
+      "seed": 1822105515,
+      "inputSchedule": "Both roles alternate horizontal steering for 400 ms, then release for 100 ms; fire during each steering segment. Wall-clock input schedule, with actual tick cadence retained per run.",
+      "renderGeometry": [
+        960,
+        720,
+        1.5,
+        [
+          1440,
+          1080
+        ]
+      ]
+    },
+    "baselineAsarSHA256": "f6d13ab862cb46c020cc909349f778d99f4558d63ddb2d380171aa88f61bf267",
+    "candidateAsarSHA256": "1c4e36c8a135d754a1dadd6d674ede9f23d555a592c168db2281aa48ef46d0d6",
+    "baselineFailures": [],
+    "summaries": [
+      {
+        "workload": "burst-and-200-permanent-supplies",
+        "role": "host",
+        "deltaPercent": {
+          "p50": -2.9411762901243477,
+          "p95": 1.8181819807399302,
+          "tail": 1.5783540086564019,
+          "intervalP50": 0,
+          "intervalP95": -6.432748668468835,
+          "intervalTail": 15.43624166152522,
+          "allocationBytesPerSecond": 5.885804200639,
+          "heapAfterGC": -0.1746323647312087,
+          "heapBefore": 0.07943923566124944,
+          "heapAfter": 108.16973966776362,
+          "collectionMs": -10.256410256410254,
+          "busyRatio": -0.23239939984657232,
+          "objects": 0,
+          "inputMax": -17.647058823529417,
+          "lateStalls": null
+        },
+        "baseline": {
+          "median": {
+            "p50": 3.4000000059604645,
+            "p95": 11,
+            "tail": 88.7000000178814,
+            "intervalP50": 8.300000011920929,
+            "intervalP95": 17.100000023841858,
+            "intervalTail": 89.39999997615814,
+            "allocationBytesPerSecond": 111359933.30678877,
+            "heapAfterGC": 40537732,
+            "heapBefore": 34748572,
+            "heapAfter": 97637236,
+            "collectionMs": 78,
+            "busyRatio": 0.5515360478331768,
+            "objects": 306,
+            "inputMax": 51,
+            "lateStalls": 0
+          },
+          "raw": [
+            {
+              "round": 1,
+              "ok": true,
+              "errors": [],
+              "p50": 4.5,
+              "p95": 13.099999994039536,
+              "tail": 82.90000000596046,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 18.700000017881393,
+              "intervalTail": 83.7000000178814,
+              "allocationBytesPerSecond": 103961273.91539331,
+              "heapAfterGC": 40366048,
+              "heapBefore": 34711876,
+              "heapAfter": 134009772,
+              "collectionMs": 84,
+              "busyRatio": 0.6945845329926793,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 57,
+              "lateStalls": 0
+            },
+            {
+              "round": 2,
+              "ok": true,
+              "errors": [],
+              "p50": 3.300000011920929,
+              "p95": 11,
+              "tail": 88.7000000178814,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 17.100000023841858,
+              "intervalTail": 89.39999997615814,
+              "allocationBytesPerSecond": 111359933.30678877,
+              "heapAfterGC": 40548464,
+              "heapBefore": 34748572,
+              "heapAfter": 97637236,
+              "collectionMs": 78,
+              "busyRatio": 0.5438749253434202,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 51,
+              "lateStalls": 0
+            },
+            {
+              "round": 3,
+              "ok": true,
+              "errors": [],
+              "p50": 3.4000000059604645,
+              "p95": 9.899999976158142,
+              "tail": 109.49999997019768,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 15.699999988079071,
+              "intervalTail": 105.5,
+              "allocationBytesPerSecond": 117584597.71705292,
+              "heapAfterGC": 40537732,
+              "heapBefore": 34792604,
+              "heapAfter": 93039800,
+              "collectionMs": 69,
+              "busyRatio": 0.5515360478331768,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 34,
+              "lateStalls": 0
+            }
+          ]
+        },
+        "candidate": {
+          "median": {
+            "p50": 3.300000011920929,
+            "p95": 11.200000017881393,
+            "tail": 90.10000002384186,
+            "intervalP50": 8.300000011920929,
+            "intervalP95": 16,
+            "intervalTail": 103.2000000178814,
+            "allocationBytesPerSecond": 117914360.93918853,
+            "heapAfterGC": 40466940,
+            "heapBefore": 34776176,
+            "heapAfter": 203251180,
+            "collectionMs": 70,
+            "busyRatio": 0.550254281368075,
+            "objects": 306,
+            "inputMax": 42,
+            "lateStalls": 0
+          },
+          "raw": [
+            {
+              "round": 1,
+              "ok": true,
+              "errors": [],
+              "p50": 3.399999976158142,
+              "p95": 11.299999982118607,
+              "tail": 90.09999999403954,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 16.100000023841858,
+              "intervalTail": 103.2000000178814,
+              "allocationBytesPerSecond": 113379943.05494612,
+              "heapAfterGC": 40466940,
+              "heapBefore": 34776176,
+              "heapAfter": 106166148,
+              "collectionMs": 70,
+              "busyRatio": 0.5594729169713812,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 42,
+              "lateStalls": 0
+            },
+            {
+              "round": 2,
+              "ok": true,
+              "errors": [],
+              "p50": 3.300000011920929,
+              "p95": 9.900000005960464,
+              "tail": 120.09999999403954,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 15.300000011920929,
+              "intervalTail": 121.80000001192093,
+              "allocationBytesPerSecond": 120076614.75047843,
+              "heapAfterGC": 40731560,
+              "heapBefore": 34812684,
+              "heapAfter": 203251180,
+              "collectionMs": 69,
+              "busyRatio": 0.550254281368075,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 55,
+              "lateStalls": 0
+            },
+            {
+              "round": 3,
+              "ok": true,
+              "errors": [],
+              "p50": 3.300000011920929,
+              "p95": 11.200000017881393,
+              "tail": 90.10000002384186,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 16,
+              "intervalTail": 91.69999998807907,
+              "allocationBytesPerSecond": 117914360.93918853,
+              "heapAfterGC": 40418160,
+              "heapBefore": 34716092,
+              "heapAfter": 206998776,
+              "collectionMs": 71,
+              "busyRatio": 0.5489290205324688,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 42,
+              "lateStalls": 0
+            }
+          ]
+        }
+      },
+      {
+        "workload": "burst-and-200-permanent-supplies",
+        "role": "client",
+        "deltaPercent": {
+          "p50": -2.9411762901243477,
+          "p95": -7.017543960549566,
+          "tail": 2.2415939998149392,
+          "intervalP50": 0,
+          "intervalP95": -4.76190482948372,
+          "intervalTail": 11.547344111649283,
+          "allocationBytesPerSecond": 12.47914750073571,
+          "heapAfterGC": 1.8340567988667233,
+          "heapBefore": -0.014362902359632557,
+          "heapAfter": 100.3020266204127,
+          "collectionMs": 19.696969696969703,
+          "busyRatio": 2.6696140681907066,
+          "objects": 0,
+          "inputMax": -25,
+          "lateStalls": null
+        },
+        "baseline": {
+          "median": {
+            "p50": 3.4000000059604645,
+            "p95": 11.400000005960464,
+            "tail": 80.30000001192093,
+            "intervalP50": 8.300000011920929,
+            "intervalP95": 16.80000001192093,
+            "intervalTail": 86.59999999403954,
+            "allocationBytesPerSecond": 106700496.47696476,
+            "heapAfterGC": 40601796,
+            "heapBefore": 34784056,
+            "heapAfter": 108124244,
+            "collectionMs": 66,
+            "busyRatio": 0.5423808509584427,
+            "objects": 306,
+            "inputMax": 56,
+            "lateStalls": 0
+          },
+          "raw": [
+            {
+              "round": 1,
+              "ok": true,
+              "errors": [],
+              "p50": 4.5,
+              "p95": 14.199999988079071,
+              "tail": 80.30000001192093,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 17.400000005960464,
+              "intervalTail": 95.40000000596046,
+              "allocationBytesPerSecond": 106700496.47696476,
+              "heapAfterGC": 41194912,
+              "heapBefore": 34771856,
+              "heapAfter": 212362040,
+              "collectionMs": 81,
+              "busyRatio": 0.7030536585365854,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 56,
+              "lateStalls": 0
+            },
+            {
+              "round": 2,
+              "ok": true,
+              "errors": [],
+              "p50": 3.300000011920929,
+              "p95": 11.400000005960464,
+              "tail": 85.09999999403954,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 16.80000001192093,
+              "intervalTail": 86.59999999403954,
+              "allocationBytesPerSecond": 116863504.36648536,
+              "heapAfterGC": 40601796,
+              "heapBefore": 34784056,
+              "heapAfter": 108124244,
+              "collectionMs": 66,
+              "busyRatio": 0.5389066320674685,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 51,
+              "lateStalls": 0
+            },
+            {
+              "round": 3,
+              "ok": true,
+              "errors": [],
+              "p50": 3.4000000059604645,
+              "p95": 9.700000017881393,
+              "tail": 65.59999999403954,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 15.5,
+              "intervalTail": 77.59999999403954,
+              "allocationBytesPerSecond": 92918564.96111745,
+              "heapAfterGC": 40549956,
+              "heapBefore": 34843916,
+              "heapAfter": 69368592,
+              "collectionMs": 64,
+              "busyRatio": 0.5423808509584427,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 58,
+              "lateStalls": 0
+            }
+          ]
+        },
+        "candidate": {
+          "median": {
+            "p50": 3.300000011920929,
+            "p95": 10.599999994039536,
+            "tail": 82.09999999403954,
+            "intervalP50": 8.300000011920929,
+            "intervalP95": 16,
+            "intervalTail": 96.59999999403954,
+            "allocationBytesPerSecond": 120015808.81634249,
+            "heapAfterGC": 41346456,
+            "heapBefore": 34779060,
+            "heapAfter": 216575052,
+            "collectionMs": 79,
+            "busyRatio": 0.5568603264588017,
+            "objects": 306,
+            "inputMax": 42,
+            "lateStalls": 0
+          },
+          "raw": [
+            {
+              "round": 1,
+              "ok": true,
+              "errors": [],
+              "p50": 3.399999976158142,
+              "p95": 10.599999994039536,
+              "tail": 83.2999999821186,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 16,
+              "intervalTail": 92.30000001192093,
+              "allocationBytesPerSecond": 120015808.81634249,
+              "heapAfterGC": 40944412,
+              "heapBefore": 34726016,
+              "heapAfter": 67878140,
+              "collectionMs": 79,
+              "busyRatio": 0.5568603264588017,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 33,
+              "lateStalls": 0
+            },
+            {
+              "round": 2,
+              "ok": true,
+              "errors": [],
+              "p50": 3.300000011920929,
+              "p95": 9.799999982118607,
+              "tail": 78.90000000596046,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 15.099999994039536,
+              "intervalTail": 96.59999999403954,
+              "allocationBytesPerSecond": 105495129.47658403,
+              "heapAfterGC": 41346456,
+              "heapBefore": 34779060,
+              "heapAfter": 269245060,
+              "collectionMs": 80,
+              "busyRatio": 0.5387711530893349,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 42,
+              "lateStalls": 0
+            },
+            {
+              "round": 3,
+              "ok": true,
+              "errors": [],
+              "p50": 3.300000011920929,
+              "p95": 11.299999982118607,
+              "tail": 82.09999999403954,
+              "intervalP50": 8.300000011920929,
+              "intervalP95": 16.69999998807907,
+              "intervalTail": 102.5,
+              "allocationBytesPerSecond": 120729581.52361254,
+              "heapAfterGC": 41379508,
+              "heapBefore": 34812008,
+              "heapAfter": 216575052,
+              "collectionMs": 73,
+              "busyRatio": 0.5642885211995863,
+              "objects": 306,
+              "disposedBitmapRefs": 0,
+              "inputMax": 55,
+              "lateStalls": 0
+            }
+          ]
+        }
+      }
+    ],
+    "local": {
+      "status": "Not run after user requested accelerated completion; no local rendering speedup claim"
+    }
+  },
+  "naturalInput": {
+    "method": "One short normal-vitals real-key Cooperative Expert sample, wave2/room1/seed7307; position-aware controller, not human win rates or a multi-hour soak.",
+    "cases": [
+      {
+        "raw": "generated/reports/audit-20261101/pacing/v037-Coop-d3-active-w2-r0-1793524964303/report.json",
+        "tag": "v037-Coop-d3",
+        "coop": true,
+        "difficulty": 3,
+        "seed": 7307,
+        "wallMs": 46195,
+        "outcome": "wave-completed",
+        "earlyClear": true,
+        "terminal": {
+          "ms": 46167,
+          "state": "State_RunWorld",
+          "phase": "draft",
+          "wave": 2,
+          "tick": 1174,
+          "remaining": 828,
+          "total": 2000,
+          "players": [
+            {
+              "slot": 0,
+              "hp": 188.2026666666632,
+              "armor": 0,
+              "x": 10.288450399210623,
+              "y": 6.678982374606256
+            },
+            {
+              "slot": 1,
+              "hp": 121.83466666666702,
+              "armor": 0,
+              "x": 9.5220294025275,
+              "y": 5.853960890154928
+            }
+          ],
+          "goal": {
+            "rule": "clearable-waves-v1",
+            "zombies": 27,
+            "devils": 4,
+            "emittedZombies": 27,
+            "emittedDevils": 4,
+            "killedZombies": 27,
+            "killedDevils": 4
+          },
+          "life": 188.2026666666632,
+          "maxLife": 205,
+          "armor": 0,
+          "level": 19,
+          "xp": 7,
+          "score": 83600,
+          "playerState": "State_PlayerControl",
+          "x": 10.288450399210623,
+          "y": 6.678982374606256,
+          "dir": 0,
+          "weapon": "pistol",
+          "auto": true,
+          "ammo": 999999,
+          "weapons": {
+            "pistol": {
+              "active": true,
+              "ammo": 999999,
+              "capacity": 999999,
+              "damage": 56.42,
+              "rate": 8,
+              "range": 8,
+              "enchanted": false
+            },
+            "uzi": {
+              "active": true,
+              "ammo": 193,
+              "capacity": 193,
+              "damage": 40.949999999999996,
+              "rate": 3,
+              "range": 8,
+              "enchanted": false
+            },
+            "shotgun": {
+              "active": true,
+              "ammo": 26,
+              "capacity": 26,
+              "damage": 38.7855,
+              "rate": 14,
+              "range": 7,
+              "wide": 0,
+              "enchanted": false
+            },
+            "barrel": {
+              "active": true,
+              "ammo": 13,
+              "capacity": 13,
+              "damage": 175.5,
+              "rate": 2,
+              "enchanted": false
+            },
+            "grenade": {
+              "active": false,
+              "enchanted": false
+            },
+            "fakewall": {
+              "active": false,
+              "enchanted": false
+            },
+            "mine": {
+              "active": false,
+              "enchanted": false
+            },
+            "rocket": {
+              "active": false,
+              "enchanted": false
+            },
+            "chargepack": {
+              "active": false,
+              "enchanted": false
+            },
+            "railgun": {
+              "active": false,
+              "enchanted": false
+            }
+          },
+          "supplies": [
+            {
+              "x": 10.5,
+              "y": 2.5,
+              "kind": "red",
+              "id": "t5"
+            },
+            {
+              "x": 11.5,
+              "y": 15.5,
+              "kind": "red",
+              "id": "t6"
+            },
+            {
+              "x": 2.5,
+              "y": 15.5,
+              "kind": "red",
+              "id": "r2"
+            },
+            {
+              "x": 1.5,
+              "y": 8.5,
+              "kind": "ammo",
+              "id": "s5"
+            },
+            {
+              "x": 5.5,
+              "y": 4.5,
+              "kind": "red",
+              "id": "r6"
+            },
+            {
+              "x": 4.5,
+              "y": 14.5,
+              "kind": "red",
+              "id": "r7"
+            },
+            {
+              "x": 1.5,
+              "y": 6.5,
+              "kind": "enchant",
+              "id": "s8"
+            }
+          ],
+          "fireballs": [],
+          "muzzles": [
+            {
+              "x": 0.86392359375,
+              "y": 0.23652986995732958
+            },
+            {
+              "x": 0.37435671875,
+              "y": 0.5992133349209363
+            },
+            {
+              "x": -0.33450375,
+              "y": 0.610886231567677
+            },
+            {
+              "x": -0.8474156249999999,
+              "y": 0.26471017441087014
+            },
+            {
+              "x": -0.86392359375,
+              "y": -0.23652986995732958
+            },
+            {
+              "x": -0.37435671875,
+              "y": -0.5992133349209363
+            },
+            {
+              "x": 0.33450375,
+              "y": -0.610886231567677
+            },
+            {
+              "x": 0.8474156249999999,
+              "y": -0.26471017441087014
+            }
+          ],
+          "enemies": 0,
+          "dirs": [
+            {
+              "d": 0,
+              "x": 10.988450399210622,
+              "y": 6.678982374606256,
+              "free": true,
+              "space": 3
+            },
+            {
+              "d": 1,
+              "x": 10.783425146041207,
+              "y": 7.173957121436839,
+              "free": true,
+              "space": 3
+            },
+            {
+              "d": 2,
+              "x": 10.288450399210623,
+              "y": 7.378982374606256,
+              "free": true,
+              "space": 3
+            },
+            {
+              "d": 3,
+              "x": 9.793475652380039,
+              "y": 7.173957121436839,
+              "free": true,
+              "space": 3
+            },
+            {
+              "d": 4,
+              "x": 9.588450399210624,
+              "y": 6.678982374606256,
+              "free": true,
+              "space": 3
+            },
+            {
+              "d": 5,
+              "x": 9.793475652380039,
+              "y": 6.184007627775673,
+              "free": true,
+              "space": 3
+            },
+            {
+              "d": 6,
+              "x": 10.288450399210623,
+              "y": 5.978982374606256,
+              "free": true,
+              "space": 3
+            },
+            {
+              "d": 7,
+              "x": 10.783425146041205,
+              "y": 6.184007627775673,
+              "free": true,
+              "space": 3
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "review": {
+    "method": "Direct original screenshot review plus automated geometry, pixels and real clicks; no zai. Legacy Boss oracle uses explicit pre-combat source fixture, separate from current production/packaged Boss checks.",
+    "screenshots": [
+      "room16-entry.png",
+      "boss-fourth-defeated.png",
+      "draft-entry.png"
+    ]
+  },
+  "retainedAttempts": [
+    {
+      "path": "final-attempt-1",
+      "status": "superseded, partial run; legitimate omitted frame rejected"
+    },
+    {
+      "path": "final-attempt-2",
+      "status": "superseded complete2036pass3fail8conditional; guest test fixture plus real room16 deadlock"
+    },
+    {
+      "path": "final-attempt-3",
+      "status": "superseded complete2046pass1fail8conditional; original Bot wall-strafe trace; original prior-entry keys/assertions retained"
+    },
+    {
+      "path": "final-attempt-4",
+      "status": "superseded clean2048pass0fail8conditional and25functional; stopped owned coordinator during60ms gate after fragment-control review"
+    },
+    {
+      "path": "final-attempt-5",
+      "status": "superseded clean2052pass0fail8conditional,216matrix,32functional; extra-draft-input exposed real held-A role-transition defect, fixed6338fa0; engine-browser interrupted, no performance started"
+    },
+    {
+      "path": "final-attempt-6",
+      "status": "superseded6338fa0 artifact; seven early supplemental gates and engine source checks passed, stopped during entrance browser for absent-pad reference cleanup a17a82a; no full/functional/performance started"
+    }
+  ],
+  "limits": [
+    "Physical gamepads not tested; injected pads prove mappings",
+    "Localhost peers do not establish two-computer physical-network coverage",
+    "No multi-hour natural session or human win-rate claim",
+    "Checkpoint reassembly intentionally capped at8MiB",
+    "Prepared performance and lethal-hit scenes are distinct from normal-vitals real-input samples"
+  ],
+  "evidenceRoot": "generated/reports/audit-20261101",
+  "publication": "Publication and private raw-archive receipts are committed after remote download verification; see publication.json and archive-receipt.json on main."
+}

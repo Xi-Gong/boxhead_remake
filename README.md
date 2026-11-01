@@ -12,12 +12,13 @@ The 2007 Flash classic **Boxhead: 2Play Rooms** by Sean Cooper, rebuilt in **Typ
 A class-by-class AS2 port preserves the original art, sound and game logic, with 2× rasterization, saves,
 gamepads and LAN multiplayer. Intentional additions are documented in [PARITY.md](PARITY.md).
 
-<p align="center"><a href="assets/readme/menu.png"><img src="assets/readme/menu.png" alt="Boxhead v0.3.6 main menu" width="640"></a></p>
+<p align="center"><a href="assets/readme/menu.png"><img src="assets/readme/menu.png" alt="Boxhead v0.3.7 main menu" width="640"></a></p>
 
 ## Quick Start
 
 **Windows portable:** download the single-file exe from [Releases](https://github.com/Xi-Gong/boxhead_remake/releases/latest).
-**v0.3.6** makes early waves easier across all four difficulties, raises finite base ammunition by 25% (UZI: 125), and speeds up the shotgun. Build bonuses now add explicit, capped percentages, including **dodge up to 50%**. Early clears and Boss victories grant double upgrades; surviving the deadline grants one. Exact starting waves, controller letters, empty-weapon feedback and LAN compatibility remain. See the [release verification](docs/verification/v0.3.6/README.md).
+**v0.3.7** fixes blocked opening enemies, stale fourth-Boss health bars and held gamepad A accidentally confirming an upgrade. It hardens LAN messages and host authority, bounds frozen-session input caches, rejects damaged saves before restoring a world, and negotiates large long-run checkpoints. See the [prioritized audit and fixes](docs/verification/v0.3.7/audit_zh_cn.md) and [release verification](docs/verification/v0.3.7/README.md).
+It retains v0.3.6's gentler opening, 25% more finite base ammunition (UZI: 125), faster shotgun, capped percentage builds and **dodge up to 50%**. Early clears and Boss victories grant double upgrades; surviving the deadline grants one.
 Saves and settings live in `%USERPROFILE%\.boxhead`.
 
 **Run from source:**
@@ -70,7 +71,7 @@ Use the letters printed on your controller. The bottom-left pad selector offers 
 - **Reliable supplies and clearer UI** — refills preserve inherited weapon capacity; confirmed P1/P2 pickup messages remain evenly spaced, and conditional lobby actions have room to breathe.
 - **Weapon shortcuts and recovery** — unlocked empty weapons remain selectable and bindable. A/Y labels and hold progress show shortcuts; death crates preserve ammunition and enchantment durability without adding duplicate durability.
 
-[Feature details](docs/features.md) · [v0.3.6 release verification](docs/verification/v0.3.6/README.md) · [v0.3.4 verification](docs/verification/v0.3.4/README.md)
+[Feature details](docs/features.md) · [v0.3.7 release verification](docs/verification/v0.3.7/README.md) · [v0.3.6 verification](docs/verification/v0.3.6/README.md)
 
 <p align="center"><a href="assets/readme/upgrade-cards.png"><img src="assets/readme/upgrade-cards.png" alt="Enchantment power and endurance cards with exact previews and stats shortcuts" width="640"></a></p>
 
