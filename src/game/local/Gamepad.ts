@@ -100,6 +100,8 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   const held: [Set<number>, Set<number>] = [new Set(), new Set()];
   type Hold={world:any;index:number;weapon:string;started:number;fired:boolean};
   const holds:[Partial<Record<WeaponButton,Hold>>,Partial<Record<WeaponButton,Hold>>]=[{},{}];
+  // A is a shortcut in combat and a confirm in drafts. Keep physical entry state render-owned.
+  const draftEntries:[{world:any;wave:number;blockedA:boolean}|undefined,{world:any;wave:number;blockedA:boolean}|undefined]=[undefined,undefined];
   const now=opts.now??(()=>performance.now());
   const cancelHolds=(slot:0|1):void=>{for(const value of Object.values(holds[slot]))if(value)setBindingProgress(value.world,value.index,undefined);holds[slot]={};};
   const pushedByPad = new Set<number>();
@@ -156,6 +158,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
 
   const releaseAll = (): void => {
     cancelHolds(0);cancelHolds(1);
+    draftEntries[0]=draftEntries[1]=undefined;
     wantedByPads.clear();
     for (const vk of [...pushedByPad]) {
       if (Key.isDown(vk)) Key._up(vk);
@@ -209,6 +212,14 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     const postfix = assign[slot] === 0 || World.CWorld.mGameMode === 'Single' ? '' : '2';
     const h = held[slot]!;
     const world=CMain?._this?.mcWorld,session=netSession(),index=session?.role??(postfix?1:0),modern=hasFeature(world,'weapon-bindings-v1');
+    const round=world?.mUpgrades?.waveDraft?.round,entry=draftEntries[slot];
+    if(!modern||!round)draftEntries[slot]=undefined;
+    else{
+      // A held before the transition must not become a fresh FIRE edge merely because its role changed.
+      // World/wave identity survives rollback reconstruction; a genuinely new physical press stays usable.
+      if(entry?.world!==world||entry.wave!==round.wave)draftEntries[slot]={world,wave:round.wave,blockedA:h.has(face.A)&&!p.down.has(face.A)};
+      if(!h.has(face.A))draftEntries[slot]!.blockedA=false;
+    }
     const actor=(Object.values(world?.mThing_Collection?.mPlayerThings??{})as any[]).find(player=>player.mPlayerIndex===index);
     const combat=!!actor&&world.mLoaded&&!world.mPaused&&!world.mUpgrades.waveDraft?.round&&actor.mLife>0&&(!session||session.phase==='playing'&&!session.netPaused&&!session.pauseBarrier.pending);
     if(!modern||!combat)cancelHolds(slot);
@@ -239,7 +250,7 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     setKey(input['KEY_RIGHT' + postfix], dirs.right);
     setKey(input['KEY_UP' + postfix], dirs.up);
     setKey(input['KEY_DOWN' + postfix], dirs.down);
-    setKey(input['KEY_FIRE' + postfix], h.has(BTN.RT) || h.has(BTN.LT) || h.has(face.B) || h.has(face.A)&&(!modern||!!world?.mUpgrades.waveDraft?.round));
+    setKey(input['KEY_FIRE' + postfix], h.has(BTN.RT) || h.has(BTN.LT) || h.has(face.B) || h.has(face.A)&&(!modern||!!round)&&!draftEntries[slot]?.blockedA);
     setKey(input['KEY_NEXT_WEAPON' + postfix], h.has(BTN.RB));
     setKey(input['KEY_PREV_WEAPON' + postfix], h.has(BTN.LB));
     setKey(input.KEY_PAUSE, h.has(BTN.START));

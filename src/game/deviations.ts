@@ -712,6 +712,8 @@ export const DEVIATIONS: Deviation[] = [
     file:'local/Gamepad.ts',
     description:'Gamepad A drives the player fire/confirm slot during an active world, including wave drafts. '+
       'The virtual mouse is restricted to menus and pause so hidden cursor releases cannot confirm cards. '+
+      'Modern shortcut A held across combat-to-draft entry waits for physical release before it can confirm; '+
+      'fresh draft presses remain usable. This render-owned guard tracks world/wave across rollback reconstruction. '+
       'Keyboard remapping and both LAN-local key sets remain intact; no wire or simulation format changes.',
   },
   {
