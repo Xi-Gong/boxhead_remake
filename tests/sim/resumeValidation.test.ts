@@ -10,6 +10,7 @@ const corruptions:[string,(s:any)=>void][]=[
  ['bad draft bonuses',s=>s.waveDraft.bonuses=[null,null]],['null object',s=>s.objects=[null]],
  ['bad variants',s=>s.variants.enemies=null],['bad warning list',s=>s.timedWave.warnings=null],
  ['bad weapon',s=>s.players[0].weapons.pistol=null],['bad binding slots',s=>s.weaponBindings={}],
+ ['negative player position',s=>s.players[0].x=-1000],['huge finite player position',s=>s.players[0].y=1e300],
 ];
 it.each(corruptions)('rejects corrupt v2 state before mutating a live world: %s',(_name,corrupt)=>{
  const g=createHeadlessGame(),w=g.world();try{

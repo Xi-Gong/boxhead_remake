@@ -1,5 +1,6 @@
 // Validate persisted/received v2 data before any restore hook can mutate a world.
 import type {RunSnapshot} from './Resume.ts';
+import {ROOM_DIMENSIONS} from './TimedWaveRules.ts';
 const record=(v:any):v is Record<string,any>=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const finite=(v:any):boolean=>typeof v==='number'&&Number.isFinite(v);
 const integer=(v:any,min=0,max=Number.MAX_SAFE_INTEGER):boolean=>Number.isSafeInteger(v)&&v>=min&&v<=max;
@@ -64,6 +65,8 @@ export function validRunSnapshot(v:unknown):v is RunSnapshot{
   ||!integer(v.wave,1)||!integer(v.tick)||!integer(v.rngState,0,0xffffffff)||!numbers(v,['score','multiplierIndex','multiplierTick','multiplierTickTotal','multipleKillsIndex','multipleKillsTick','multipleKillsTickTotal'])
   ||!numbers(v.waveCounters,['spawnZombie','spawnDevil','zombieCount','zombieTotal','devilCount','devilTotal','playerCount'])
   ||!Array.isArray(v.players)||v.players.length>2||!v.players.every(player)||new Set(v.players.map(p=>p.index)).size!==v.players.length||!list(v.objects,object)||!data(v))return false;
+ const [width,height]=ROOM_DIMENSIONS[Number(v.roomLibLink.slice(-4))-1]!;
+ if(!v.players.every(p=>p.x>=0&&p.x<width&&p.y>=0&&p.y<height))return false;
  return optional(v.features,x=>list(x,string))&&optional(v.growth,growth)&&optional(v.waveDraft,draft)&&optional(v.timedWave,timed)&&optional(v.variants,variants)
   &&optional(v.weaponBindings,x=>Array.isArray(x)&&x.length===2&&x.every(b=>record(b)&&Object.entries(b).every(([k,w])=>['A','Y'].includes(k)&&weapon(w))))
   &&optional(v.combat,c=>record(c)&&['combat-pve-v2','combat-pve-v3'].includes(c.rule)&&optional(c.pendingWave,x=>integer(x,1)))
