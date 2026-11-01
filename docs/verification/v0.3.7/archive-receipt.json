@@ -1,0 +1,11 @@
+{
+  "version": "0.3.7",
+  "created": "2026-11-01T09:32:27.896Z",
+  "localArchive": "%USERPROFILE%/boxhead-exe-archive/v0.3.7/verification-20261101-published",
+  "fileCount": 1601,
+  "bytes": 117571258,
+  "manifestSHA256": "0d1e6869da4e41f6b12c504ecc02acee086379b82ce6f15c74207bd45790f3fd",
+  "scope": "Private raw QA: includes failed/interrupted/superseded attempts; not every archived report is acceptance. Executables, user data/profiles and caches excluded.",
+  "publicEvidence": "evidence.json",
+  "note": "Raw LAN logs remain private because they contain local network addresses. This receipt identifies the archive; binaries ship separately as the release asset."
+}

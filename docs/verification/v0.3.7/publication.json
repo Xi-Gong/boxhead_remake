@@ -1,0 +1,65 @@
+{
+  "status": "published-and-independently-verified",
+  "version": "0.3.7",
+  "verifiedAt": "2026-11-01T09:31:27.217Z",
+  "releaseUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.7",
+  "publishedAt": "2026-11-01T09:28:51Z",
+  "latest": true,
+  "draft": false,
+  "prerelease": false,
+  "annotatedTag": "9e5a8b1e17c65825341e2822e00a6aab72f23837",
+  "tagCommit": "eedeab3f25e192035dda4acc01a8c5f1f74d7744",
+  "artifactBuildCommit": "a17a82a6750192aaa2f8154dd8bdb3b86d99193b",
+  "assets": [
+    {
+      "name": "Boxhead.2Play.Rooms-0.3.7-portable.exe",
+      "bytes": 101685040,
+      "sha256": "a7c0997593ccfeffe9edc1b4d9a0fd5de690c766bd0bf6c75a06387eeb51b473",
+      "githubDigest": "sha256:a7c0997593ccfeffe9edc1b4d9a0fd5de690c766bd0bf6c75a06387eeb51b473",
+      "downloadUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.7/Boxhead.2Play.Rooms-0.3.7-portable.exe"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 105,
+      "sha256": "66c03fed75ef029c212abd79cb6c064183caf205b7c6fa714cb5a5272669c14c",
+      "githubDigest": "sha256:66c03fed75ef029c212abd79cb6c064183caf205b7c6fa714cb5a5272669c14c",
+      "downloadUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/download/v0.3.7/SHA256SUMS.txt"
+    }
+  ],
+  "extractedAsarSHA256": "1c4e36c8a135d754a1dadd6d674ede9f23d555a592c168db2281aa48ef46d0d6",
+  "independentDownload": {
+    "peVersion": "0.3.7",
+    "checksumTextMatched": true,
+    "actualPortableLaunch": true,
+    "normalGameplay": true,
+    "saveContinue": true,
+    "audioDecoded": 31,
+    "audioState": "running",
+    "outputMuted": true,
+    "viewport": {
+      "width": 640,
+      "height": 480,
+      "dpr": 1
+    },
+    "verifiedRuntimeFiles": [
+      "dist-electron/main.cjs",
+      "dist-electron/preload.cjs",
+      "dist/bundle/gallery-CmDtL4W7.js",
+      "dist/bundle/main-DGtBVX1E.js",
+      "dist/bundle/Player-o3pII7gY.js"
+    ],
+    "probeSHA256": "907b9f03d1205512c7866eef676d48c31c45da5cf31b51d5c4d0de72a6285ccb",
+    "scope": "Actual downloaded NSIS executable via unique CDP; normal-life Single and real save/continue. Optional timed/held-fire/exact-wave/capture-only flags unset; only startup mute, isolated data and hidden window enabled."
+  },
+  "acceptance": {
+    "cleanVitestPassed": 2068,
+    "failed": 0,
+    "existingConditional": 8,
+    "currentFunctional": 13,
+    "historicalUnchangedSourceCoverage": 19,
+    "stressSessions": 6,
+    "normalInputSamples": 1,
+    "mode": "user-requested-accelerated"
+  },
+  "tagUnchangedAfterPublication": true
+}
