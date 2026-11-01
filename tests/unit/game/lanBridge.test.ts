@@ -215,6 +215,7 @@ describe('LAN bridge operation lifetime',()=>{
  });
  it('first client launch preserves the host netcode selection',()=>{
   const b=lanBridge(), launch=vi.spyOn(b as any,'launch').mockImplementation(()=>{});
+  b.isHost=false;b.phase='lobby'; // The real join path establishes guest authority before receiving START.
   try {
    lan.onMessage.mock.calls[0]![0]({t:'start',mode:'Coop',roomLink:'ROOM_Single_0001',cfg:{},seed:7,inputDelay:0,netcode:'rollback-v2'});
    expect(launch.mock.calls[0]![8]).toBe('rollback-v2');
