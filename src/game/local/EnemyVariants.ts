@@ -44,15 +44,15 @@ export function captureVariants(w:any):VariantSave|undefined{
   zones:s.zones.map(({mPosition:p,mAngle:a,...rest}:EmberZone)=>({...rest,x:p.mX,y:p.mY,angle:a.__get__mAngle()})),
   enemies:things(w).filter(e=>(e.mBossKind||e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process&&e.mLife>0&&!e.lanKillLogged).map(e=>({id:e.sUniqueID,kind:e.mCombatKind??e.mEnemyVariant??(e._CLASSID_==='CThing_Creature_Zombie'?'zombie':'devil'),x:e.mPosition.mX,y:e.mPosition.mY,angle:e.mAngle.__get__mAngle(),state:e.mStateID,frame:e.mXSI_Animation.mCurrentFrameID,damageSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Damage),deathSound:Object.keys(CSound.mSamples).find(k=>CSound.mSamples[k]===e.mSound.Death),fields:Object.fromEntries([...skillFields.filter(k=>Object.hasOwn(e,k)).map(k=>[k,e[k]]),...(typeof e.mBossSlot==='number'?[['mBossSlot',e.mBossSlot]]:[])])}))};
 }
-export function restoreVariants(w:any,s:VariantSave|undefined,migrate=false):void{
+export function restoreVariants(w:any,s:VariantSave|undefined,migrate=false,relief=false):void{
  if(!variantsWorld(w)||s?.rule!==VARIANTS_RULE)return;
  for(const e of things(w))if((e.mBossKind||e.mCombatKind||e.mEnemyVariant||e.mEnemyArmorMaximum)&&e.Process){e.ClearCollideCell();e.Delete();}
  const identities=new Map<string,string>();
  for(const saved of s.enemies){
   const native=hasFeature(w,'native-bosses-v1'),fields={...saved.fields},retired=migrate&&saved.kind!=='charger'||native&&saved.kind!=='devil'&&saved.kind!=='zombie';
-  if(migrate||retired){
+  if(migrate||retired||relief){
    for(const key of Object.keys(fields))if(key==='mLife'||key==='mMaxLife'||key.startsWith('mEnemyArmor')||retired&&(key.startsWith('mCombat')||key.startsWith('mGunner')||key.startsWith('mVariant')||key.startsWith('mCharge')||key==='mBossChargesRemaining'))delete fields[key];
-   if(fields.mBossKind)fields.mBossKind=native?(netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive())?'devil':'zombie':fields.mBossKind==='charger'?'charger':'devil';
+   if((migrate||retired)&&fields.mBossKind)fields.mBossKind=native?(netSession()?.startOpts?.cfg.devils??!!CMain.mSaveData.__get__mDevilsActive())?'devil':'zombie':fields.mBossKind==='charger'?'charger':'devil';
   }
   const family=native&&fields.mBossKind?combatFamily(String(fields.mBossKind)):combatFamily(saved.kind),ctor=family==='Zombie'?Thing.Creature.CThing_Creature_Zombie:Thing.Creature.CThing_Creature_Devil;
   const e:any=new ctor(position(saved.x,saved.y),new Thing.Math.CThing_Angle(saved.angle));
@@ -64,7 +64,7 @@ export function restoreVariants(w:any,s:VariantSave|undefined,migrate=false):voi
   e.ClearCollideCell();e.Move(position(saved.x,saved.y));e.SetCollideDirection(e.mPosition,World.Map.CMap_Cell.mCollide_Creature);e.mFlags|=Thing.CThing.mFlag_Collidable;
   e.Affect_Setup(Thing.Affect.CThing_Affect.mAffect_Bullet|Thing.Affect.CThing_Affect.mAffect_Explosion|Thing.Affect.CThing_Affect.mAffect_FireBall);
   e.mBaseStateID='State_GotoPlayer';e.SetState(!retired&&['State_VariantCharge','State_VariantCast','State_CombatSmash','State_CombatAim','State_CombatCleave','State_CombatHunt'].includes(saved.state)?saved.state:'State_GotoPlayer');Object.assign(e,fields);
-  if(migrate||retired)e.mLife=Math.max(1,Math.min(e.mMaxLife,e.mMaxLife*Number(saved.fields.mLife)/Math.max(1,Number(saved.fields.mMaxLife))));
+  if(migrate||retired||relief)e.mLife=Math.max(1,Math.min(e.mMaxLife,e.mMaxLife*Number(saved.fields.mLife)/Math.max(1,Number(saved.fields.mMaxLife))));
   e.mXSI_Animation.SetAnimation_FORCED(e.mStateID==='State_CombatAim'?'stand':['State_CombatCleave','State_CombatHunt'].includes(e.mStateID)?e.mCombatPhase==='warning'?'attack':'stand':e.mStateID==='State_CombatSmash'?'attack':e.mStateID==='State_VariantCast'?'cast':e.mStateID==='State_VariantCharge'?(e.mVariantPhase==='warning'?'warning':e.mVariantPhase==='charge'?'charge':'recovery'):'walk',retired?0:saved.frame??0);
   if(!retired&&saved.damageSound)e.mSound.Damage=CSound.mSamples[saved.damageSound];if(!retired&&saved.deathSound)e.mSound.Death=CSound.mSamples[saved.deathSound];
   if(family==='Zombie')w.mUpgrades.Level.mZombieCount++;else w.mUpgrades.Level.mDevilCount++;

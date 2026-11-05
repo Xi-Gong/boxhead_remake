@@ -525,7 +525,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     if(migrate)prepareSimplifiedRestore(world);
     if(!snap.features?.includes('native-bosses-v1'))prepareNativeBossRestore(world);
     for (const s of snap.players) applyPlayer(world, s);
-    restoreVariants(world,snap.variants,migrate);
+    restoreVariants(world,snap.variants,migrate,hasFeature(world,'enemy-relief-v1')&&!snap.features?.includes('enemy-relief-v1'));
     reconnectSavedBoss(world);
     reconcileSavedClearWave(world);
     applyObjects(world, snap);

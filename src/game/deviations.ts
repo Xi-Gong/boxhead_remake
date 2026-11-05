@@ -935,4 +935,12 @@ export const DEVIATIONS: Deviation[] = [
       'remain double. Optional snapshot-owned draft outcome distinguishes clear/survival/Boss and '+
       'persists selection and multiplier across restore. Existing reward-wave commit guards remain.',
   },
+  {
+    id:'ENEMY_RELIEF',file:'local/CombatEnemies.ts, EnemyVariants.ts, Resume.ts, ModernFeatures.ts; electron/lan.ts',
+    description:'Optional enemy-relief-v1 reduces Boss HP by 40%, ordinary Devil HP by 30%, and '+
+      'ordinary zombie HP by 20%. All zombie-family damage/movement/attack progression fall by '+
+      '15%/12%/15%; attack reduction follows the original cap independently of movement. Boss HP '+
+      'uses only the Boss multiplier. Old saved living members keep their HP fraction, identity '+
+      'slots and encounter clocks on one-time conversion. Counts, growth, RNG and older peers remain intact.',
+  },
 ];

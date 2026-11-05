@@ -51,6 +51,10 @@ export function installCombatEnemies():void{
     this.mSpeed*=1.15;this.mAttackDamage*=1.10;this.mNativeBossAttackAt=this.mWorld.mTick+Math.ceil((this.mBossSlot??0)*.25*CMain.mFPS);
    }
    if(tuning)this.mSpeed*=tuning.movement;
+   if(hasFeature(this.mWorld,'enemy-relief-v1')){
+    this.mLife=this.mMaxLife=this.mMaxLife*(this.mBossKind?.6:devil?.7:.8);
+    if(!devil){this.mDamage*=.85;this.mSpeed*=.88;}
+   }
    if(!simplifiedWorld(this.mWorld)&&(devil||this.mBossKind))this.mEnemyArmor=this.mEnemyArmorMaximum=Math.ceil(this.mMaxLife*(this.mBossKind?.4:.3));
    const boss=timedWave(this.mWorld)?.boss,member=boss&&bossMembers(boss).find(m=>m.id===this.sUniqueID);
    if(member){member.life=this.mLife;member.maximum=this.mMaxLife;}
@@ -71,6 +75,13 @@ export function installCombatEnemies():void{
  };
  const zombie=Thing.Creature.CThing_Creature_Zombie.prototype as any,zombieAttack=zombie.State_Attack;
  zombie.State_Attack=function(this:any):any{
+  if(hasFeature(this.mWorld,'enemy-relief-v1')){
+   const speed=this.mSpeed,tuning=hasFeature(this.mWorld,'difficulty-waves-v1')?difficultyEnemy(this.mWorld.mUpgrades.mLevelIndex,worldDifficulty(this.mWorld)).attack:1;
+   // The port derives attack progression from movement. Recover its previous speed, cap first,
+   // then apply the independent attack reduction so high-wave saturated attacks also slow down.
+   this.mSpeed=Math.min(.3*(speed/.88*25*1.5)*tuning,1)*.85/(.3*25*1.5);
+   try{return zombieAttack.call(this);}finally{this.mSpeed=speed;}
+  }
   if(!hasFeature(this.mWorld,'difficulty-waves-v1'))return zombieAttack.call(this);
   const speed=this.mSpeed;this.mSpeed*=difficultyEnemy(this.mWorld.mUpgrades.mLevelIndex,worldDifficulty(this.mWorld)).attack;
   try{return zombieAttack.call(this);}finally{this.mSpeed=speed;}
