@@ -96,7 +96,7 @@ function findPlayer(world: any, index: number): any {
 export function modernWeaponProjection(world:any,index:number,classID:string,bonus:WaveBonuses):ReturnType<typeof modernWeapon>|undefined{
  const u=world.mUpgrades,p=growthOf(world)?.players[index],raw=u[classID]?.mOriginalStats;if(!p||!raw)return;
  const stats=p.tiered===TIERED_GROWTH_RULE?tieredLevelStats(p.level):{damage:.01*Math.max(0,p.level-MAX_LEVEL),capacity:.005*Math.max(0,p.level-MAX_LEVEL)};
- return modernWeapon(raw,atLevel(u,Math.min(MAX_LEVEL,p.level))[classID],stats,bonus,classID,CMain.mFPS,hasFeature(world,'horde-balance-v1'),percentStats(world));
+ return modernWeapon(raw,atLevel(u,Math.min(MAX_LEVEL,p.level))[classID],stats,bonus,classID,CMain.mFPS,hasFeature(world,'horde-balance-v1'),percentStats(world),hasFeature(world,'shotgun-boost-v1'));
 }
 function applyPersonal(upgrades: any, thing: any, previous: any): any {
   const state = growthOf(upgrades.mWorld);

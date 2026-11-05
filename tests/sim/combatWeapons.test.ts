@@ -53,7 +53,7 @@ it('marks rocket descendants and applies direct self damage before armor, leavin
  const other=new Thing.Affect.CThing_Affect_Explosion(p,{mPosition:p.mPosition.Clone()},100,2);p.mArmor=0;other.AffectThing(p);expect(p.mLife).toBe(0);g.quit();
 });
 it('retains emitted shotgun origin and applies falloff once per victim across rollback',()=>{
- const g=createHeadlessGame(),w=g.world(),p=g.players()[0];p.NewWeapon('shotgun');const gun=p.mWeapons.shotgun.mThing;
+ const g=createHeadlessGame({classicFeatures:['shotgun-boost-v1']}),w=g.world(),p=g.players()[0];p.NewWeapon('shotgun');const gun=p.mWeapons.shotgun.mThing;
  expect(gun.mDamage).toBeCloseTo(51*.65);gun.Fire(p.mPosition.Clone(),p.mAngle.Clone());
  const shot=g.things().find(t=>t.mCombatShotgun)!;expect(shot).toBeTruthy();
  const at=p.mPosition.Clone();at.mX+=gun.mRange;const victim=new Thing.Creature.CThing_Creature_Zombie(at);w.mThing_Collection.AddThing(victim);victim.Process_Init();victim.mLife=1000;

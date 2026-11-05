@@ -943,4 +943,10 @@ export const DEVIATIONS: Deviation[] = [
       'uses only the Boss multiplier. Old saved living members keep their HP fraction, identity '+
       'slots and encounter clocks on one-time conversion. Counts, growth, RNG and older peers remain intact.',
   },
+  {
+    id:'SHOTGUN_BOOST',file:'local/CombatRules.ts, Combat.ts; local/Net/Growth.ts',
+    description:'Optional shotgun-boost-v1 raises derived shotgun base damage by 15% and keeps 55% '+
+      'damage at maximum range instead of 45%. The original pellet pattern, range, cooldown and '+
+      'ammo use are retained; enchantment scales the emitted attack once. Legacy math stays exact.',
+  },
 ];

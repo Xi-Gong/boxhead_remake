@@ -8,7 +8,7 @@ import {tieredGrowthConfigured} from './TieredGrowth.ts';
 import {clearWavesConfigured} from './ClearWaves.ts';
 import {COMBAT_RULE,SIMPLE_COMBAT_RULE,combatWorld,simplifiedWorld,shotgunFalloff,passiveBonuses,type CombatRule} from './CombatRules.ts';
 import {draftBonuses} from './WaveDraftRules.ts';
-import {availableFeatures} from './ModernFeatures.ts';
+import {availableFeatures,hasFeature} from './ModernFeatures.ts';
 import {percentStats} from './PercentStats.ts';
 const classic=new WeakSet<object>();
 const classicSimplified=new WeakSet<object>();
@@ -89,7 +89,7 @@ export function installCombatScope():void{
  const bullet=Thing.Affect.CThing_Affect_Bullet.prototype as any,hit=bullet.AffectThing;
  bullet.AffectThing=function(this:any,victim:any):any{
   const shot=this.mAffector;if(!combatWorld(victim.mWorld)||!shot?.mCombatShotgun)return hit.call(this,victim);
-  const damage=this.mDamage;this.mDamage*=shotgunFalloff(Math.hypot(victim.mPosition.mX-shot.mCombatOriginX,victim.mPosition.mY-shot.mCombatOriginY),shot.mCombatRange);
+  const damage=this.mDamage;this.mDamage*=shotgunFalloff(Math.hypot(victim.mPosition.mX-shot.mCombatOriginX,victim.mPosition.mY-shot.mCombatOriginY),shot.mCombatRange,hasFeature(victim.mWorld,'shotgun-boost-v1'));
   try{return hit.call(this,victim);}finally{this.mDamage=damage;}
  };
  for(const ctor of [Thing.Affect.CThing_Affect,Thing.Affect.CThing_Affect_Bullet,Thing.Affect.CThing_Affect_Explosion,Thing.Affect.CThing_Affect_FireBall,Thing.Affect.CThing_Affect_ZombieAttack,Thing.Affect.CThing_Affect_DevilAttack]){

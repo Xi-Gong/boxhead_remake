@@ -22,13 +22,14 @@ export function restoredSupply(maximum:number,efficiency:number,fraction=.4):num
 export function replenishedAmmo(world:any,ammo:number,maximum:number,added:number):number{
  const next=Math.min(maximum,ammo+added);return simplifiedWorld(world)?Math.max(ammo,next):next;
 }
-export function shotgunFalloff(distance:number,range:number):number{return 1-.55*Math.max(0,Math.min(1,(distance/Math.max(.1,range)-.3)/.7));}
-export function modernWeapon(raw:any,flags:any,stats:{damage:number;capacity:number},bonus:WaveBonuses,classID:string,_fps:number,horde=false,percent=false){
+export function shotgunFalloff(distance:number,range:number,boost=false):number{return 1-(boost?.45:.55)*Math.max(0,Math.min(1,(distance/Math.max(.1,range)-.3)/.7));}
+export function modernWeapon(raw:any,flags:any,stats:{damage:number;capacity:number},bonus:WaveBonuses,classID:string,_fps:number,horde=false,percent=false,shotgunBoost=false){
  const factor=flags?.FatalDamage?10:flags?.QuadDamage?4:flags?.DoubleDamage?2:1;
  const damageBonus=percent?statPercent('damage',bonus,factor-1+stats.damage):factor*(1+stats.damage)*(1+.08*bonus.damage)-1;
  // Legacy peers require the original operation order, including its exact floating-point rounding.
- const damage=percent?(raw.mDamage??0)*(1+damageBonus)*(classID==='CThing_Weapon_Shotgun'? .65:1)
+ const legacyDamage=percent?(raw.mDamage??0)*(1+damageBonus)*(classID==='CThing_Weapon_Shotgun'? .65:1)
   :(raw.mDamage??0)*factor*(1+stats.damage)*(1+.08*bonus.damage)*(classID==='CThing_Weapon_Shotgun'? .65:1);
+ const damage=shotgunBoost&&classID==='CThing_Weapon_Shotgun'?legacyDamage*1.15:legacyDamage;
  const ammunition=flags?.InfinateAmmo?1.25:flags?.QuadAmmo?1:flags?.DoubleAmmo? .5:0;
  const baseCapacity=horde?Math.ceil(raw.mTotalAmmo*1.25):raw.mTotalAmmo;
  const capacityBonus=percent?statPercent('capacity',bonus,ammunition+stats.capacity):diminishing(ammunition+stats.capacity+.08*bonus.capacity);
