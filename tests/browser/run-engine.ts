@@ -1,7 +1,7 @@
 /**
  * Browser verification of the canvas-backed engine core (lane C).
  *
- *   node tests/browser/run-engine.ts [--headed] [--gpu]
+ *   node tests/browser/run-engine.ts [--headed] [--gpu] [--functional-only]
  *
  * Starts a Vite dev server (port 5199, or the next free one), opens tests/browser/engine.html in the INSTALLED Chrome
  * via playwright-core (no browser download), waits for the page checks, prints a summary, and writes
@@ -19,6 +19,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const outDir = resolve(root, 'generated/reports/engine');
 const headed = process.argv.includes('--headed');
 const gpu = process.argv.includes('--gpu');
+const functionalOnly = process.argv.includes('--functional-only');
 
 const server = await createServer({
   root,
@@ -36,11 +37,11 @@ const browser = await chromium.launch({
 });
 let exitCode = 0;
 try {
-  const page = await browser.newPage();
+  const page = await browser.newPage(functionalOnly?{viewport:{width:640,height:480}}:{});
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto(`${base}tests/browser/engine.html`);
+  await page.goto(`${base}tests/browser/engine.html${functionalOnly?'?functional-only=1':''}`);
   await page.waitForFunction(() => (window as unknown as { __engineDone?: boolean }).__engineDone === true, null, { timeout: 180_000 });
   const results = await page.evaluate(() => (window as unknown as { __engineResults: Result[] }).__engineResults);
   const snaps = await page.evaluate(() => (window as unknown as { __engineSnapshots: Record<string, string> }).__engineSnapshots);
@@ -54,7 +55,8 @@ try {
 
   mkdirSync(outDir, { recursive: true });
   for (const [name, b64] of Object.entries(snaps)) writeFileSync(resolve(outDir, `${name}.png`), Buffer.from(b64, 'base64'));
-  writeFileSync(resolve(outDir, 'results.json'), JSON.stringify({ results, perf, errors, gpuInfo }, null, 2));
+  if(functionalOnly&&Object.keys(perf).length)throw new Error('Functional acceptance must not run engine benchmarks');
+  writeFileSync(resolve(outDir, 'results.json'), JSON.stringify({ results, perf, errors, gpuInfo, functionalOnly }, null, 2));
 
   const failed = results.filter((r) => !r.pass);
   const lines = [

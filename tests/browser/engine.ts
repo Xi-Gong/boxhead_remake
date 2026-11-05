@@ -516,7 +516,8 @@ async function main(): Promise<void> {
       });
     }
     await snapshots2x();
-    await performance2x();
+    // Release functional acceptance retains every assertion and snapshot without the optional benchmark.
+    if(!new URLSearchParams(location.search).has('functional-only'))await performance2x();
   } catch (e) {
     check('uncaught exception', false, String((e as Error)?.stack ?? e));
   }

@@ -20,6 +20,13 @@ const cases=[
  ...['v012','v019','v020','v023','v024','typing','lanui','netretry','net'].map(name=>[name,`tests/sim/playtest.${name}.mjs`]),
  ...[30,60,100].map(delay=>['lan-functional-'+delay,'tests/sim/playtest.netsmooth.mjs',String(delay)]),
  ['electron-smoke','tests/unit/platform/electron-smoke.run.ts','--skip-build'],['packaged-smoke','tests/unit/platform/electron-smoke.run.ts','--packaged-only'],['native','tests/e2e/release-native.electron.mjs'],['old-save','tests/e2e/saveCompatibility.electron.mjs'],['portable','tests/e2e/portable.electron.mjs'],
+ ...(version==='0.3.8'?[
+  ...['draft-input','bitmap-blit','masked-copy','added-ui','viewportPause','binding-spacing'].map(name=>[name,`tests/e2e/${name}.browser.mjs`]),
+  ...[1,2].map(scale=>['boss-health-'+scale+'x','tests/e2e/boss-health.browser.mjs']),
+  ['engine-browser','tests/browser/run-engine.ts','--functional-only'],
+  ['entrance-admission','tests/e2e/entrance-admission.browser.mjs'],['boss-lifecycle','tests/e2e/boss-lifecycle.browser.mjs'],
+  ['large-checkpoint','tests/sim/playtest.netsmooth.mjs','30'],
+ ]:[]),
 ];
 const selected=process.argv.slice(2);if(selected.some(name=>!cases.some(c=>c[0]===name)))throw new Error('Unknown gate');
 for(const [name,...args]of cases){
@@ -29,11 +36,14 @@ for(const [name,...args]of cases){
  const env={...process.env,GAME_URL:process.env.GAME_URL??'http://127.0.0.1:5311/',BOXHEAD_QA_FUNCTIONAL_ONLY:'1',BOXHEAD_QA_HIDDEN:'1',BOXHEAD_NETCODE:'rollback-v2',
   BOXHEAD_QA_OUT:join(out,name),CANDIDATE_OUT:join(out,name),BALANCE_OUT:join(out,name),BOXHEAD_QA_TIMED:'1',BOXHEAD_QA_RELEASE_GATES:name==='lan-functional-30'?'1':'0',BOXHEAD_QA_RELEASE_SCENARIO:'v034',BOXHEAD_QA_CLEAR_REWARD:name==='early-clear-ui'?'1':'0',BOXHEAD_QA_EXACT_WAVE:['portable','lan-functional-30'].includes(name)?'1':'0',BOXHEAD_QA_HELD_FIRE:name==='portable'?'1':'0'};
  if(name==='portable')env.BOXHEAD_QA_EXE=process.env.BOXHEAD_QA_PORTABLE??resolve(`release/Boxhead 2Play Rooms-${version}-portable.exe`);
+ env.BOXHEAD_QA_LARGE_CHECKPOINT=name==='large-checkpoint'?'1':'0';
+ if(name.startsWith('boss-health-')){env.BOXHEAD_QA_LEGACY_BOSS='1';env.ART_SCALE=name==='boss-health-1x'?'1':'2';}
  const code=await new Promise((resolveCode,reject)=>{const child=spawn(process.execPath,['--require',resolve('tests/e2e/silent-launch.cjs'),...args],{cwd:process.cwd(),windowsHide:true,env,stdio:['ignore','pipe','pipe']});child.stdout.pipe(log,{end:false});child.stderr.pipe(log,{end:false});child.once('error',reject);child.once('exit',resolveCode);});
  await new Promise(done=>log.end(done));
  // Older entry points intentionally reuse fixed report names. Snapshot each run before the next can overwrite it.
  const snapshot=(folder,relative='')=>{for(const entry of readdirSync(folder,{withFileTypes:true})){const path=join(folder,entry.name),rel=join(relative,entry.name);if(entry.isDirectory()){if(/^(Default|Cache|GPUCache|Crashpad|Dawn|ShaderCache|net-|netsmooth-|data|.*portable|.*-save)/i.test(entry.name))continue;snapshot(path,rel);}else if(/\.(json|log|png|ya?ml)$/.test(entry.name)&&statSync(path).mtimeMs>=Date.parse(started)){const target=join(out,name,`legacy-attempt-${attempt}`,rel);mkdirSync(dirname(target),{recursive:true});copyFileSync(path,target);}}};
- for(const folder of ['generated/reports/qa','generated/reports/platform']){try{snapshot(folder);}catch(error){if(error.code!=='ENOENT')throw error;}}
+ const extraFolders=name==='draft-input'?['generated/reports/v032']:name==='bitmap-blit'||name==='masked-copy'?['generated/reports/v028/'+name]:name.startsWith('boss-health-')?['generated/reports/v031/compact-hud']:name==='engine-browser'?['generated/reports/engine']:[];
+ for(const folder of ['generated/reports/qa','generated/reports/platform',...extraFolders]){try{snapshot(folder);}catch(error){if(error.code!=='ENOENT')throw error;}}
  report.cases.push({name,code,started,finished:new Date().toISOString(),log:logPath});report.ok=cases.every(([name])=>report.cases.filter(c=>c.name===name).at(-1)?.code===0);writeFileSync(file,JSON.stringify(report,null,2));
  console.log('END '+name+' '+code);if(code!==0){console.log(readFileSync(logPath,'utf8').slice(-4000));process.exit(1);}
 }
