@@ -106,6 +106,27 @@ function pair(opts?: { identity?: string; linkDeadMs?: number }): { host: LanTra
 }
 
 describe('LanTransport over localhost', () => {
+  it('advertises safe entrances and current gameplay capabilities in the real TCP hello', async () => {
+    const { host, client } = pair();
+    const received: any[] = [];
+    host.onMessage(message => received.push(message));
+    try {
+      const port = await host.startHost();
+      expect(await client.connect('127.0.0.1', { name: 'capability-client', char: 1 }, port)).toEqual({ ok: true });
+      await waitUntil(() => received.some(message => message.t === 'hello'));
+      // Inspect the actual decoded handshake delivered to the host renderer, rather than a source-text fixture.
+      const hello = received.find(message => message.t === 'hello');
+      expect(hello.features).toEqual(expect.arrayContaining([
+        'personal-growth-v1','armor-ammo-v1','pve-balance-v1','survival-v1','supply-crates-v2',
+        'endless-pve-v1','timed-waves-v1','wave-draft-v1','draft-ready-v1','combat-pve-v3',
+        'native-bosses-v1','horde-balance-v1','percent-stats-v1','clear-rewards-v1',
+        'safe-entrances-v1','enemy-relief-v1','shotgun-boost-v1','shield-boost-v1','wave-clear-gate-v1',
+      ]));
+      expect(new Set(hello.features).size).toBe(hello.features.length);
+    } finally {
+      client.shutdown(); host.shutdown();
+    }
+  });
   it('delivers modern input over UDP when TCP input writes are withheld, with TCP fallback when UDP closes', async () => {
     const { host, client } = pair();
     const port = await host.startHost();

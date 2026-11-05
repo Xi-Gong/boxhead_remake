@@ -971,4 +971,10 @@ export const DEVIATIONS: Deviation[] = [
       'rate, ammunition and enchantment stock are omitted. Shield shows the final-HP constraint; '+
       'pause summaries use the same confirmed percentages. Simulation and legacy numeric sheets remain intact.',
   },
+  {
+    id:'SAFE_ENTRANCE_ADVERTISEMENT',file:'electron/lan.ts',
+    description:'Advertise the already implemented safe-entrances-v1 in the real TCP hello. '+
+      'Its omission silently removed the entrance guard during host negotiation. Retain the '+
+      'capability name and old-peer fallback; assert decoded transport data rather than source text.',
+  },
 ];

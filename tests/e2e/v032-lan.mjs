@@ -10,6 +10,10 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
  const horde=await games[0].expr('m.mcWorld.mUpgrades.features?.includes("horde-balance-v1")'),encounterCount=horde?3:2;
  const raised=native&&await H.app.evaluate(({app})=>app.getVersion()!=='0.3.4');
  const label=native?'v034':simple?'v033':'v032',result=report[label]={checks:[]};
+ if(native&&await H.app.evaluate(({app})=>app.getVersion()==='0.3.8')){
+  result.negotiatedFeatures=[];
+  for(const g of games){const features=await g.expr('m.mcWorld.mUpgrades.features');for(const name of ['safe-entrances-v1','enemy-relief-v1','shotgun-boost-v1','shield-boost-v1','wave-clear-gate-v1'])assert(features.includes(name),'negotiated '+name);result.negotiatedFeatures.push(features);}
+ }
  const step=s=>{result.checks.push(s);console.log(s);};
  const both=async(code)=>{for(const g of games)assert(await g.waitExpr(code,20000),code);};
  const states=()=>Promise.all(games.map(g=>g.expr(`(()=>{const w=m.mcWorld,u=w.mUpgrades,t=u.timedWave;return {tick:w.mTick,wave:u.mLevelIndex,time:t.remainingTicks,total:t.totalTicks,phase:t.phase,boss:t.boss,bonuses:u.waveDraft.bonuses.map(b=>({...b})),armor:Object.values(w.mThing_Collection.mThings).filter(e=>e.mBossKind&&e.mLife>0).map(e=>({id:e.sUniqueID,armor:e.mEnemyArmor})),round:u.waveDraft.round,devils:Number(w._LanGrowthHud._Wave._Devils.text),nativeDevils:u.Level.mDevilCount,growth:u.lanGrowth.players,checkpoint:g.lan().checkpoint};})()`)));

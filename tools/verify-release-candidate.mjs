@@ -19,6 +19,7 @@ if(['0.3.6','0.3.7','0.3.8'].includes(version))for(const feature of ['horde-bala
 if(['0.3.7','0.3.8'].includes(version)){
  assert(script.includes('safe-entrances-v1'),'missing safe entrance admission');
  assert(readFileSync('dist-electron/main.cjs','utf8').includes('large-frames-v1'),'missing negotiated large checkpoint transfer');
+ if(version==='0.3.8')assert(readFileSync('dist-electron/main.cjs','utf8').includes('safe-entrances-v1'),'missing desktop safe entrance advertisement');
 }
 if(version==='0.3.8')for(const feature of ['enemy-relief-v1','shotgun-boost-v1','shield-boost-v1','wave-clear-gate-v1']){
  assert(script.includes(feature),'missing renderer capability '+feature);
