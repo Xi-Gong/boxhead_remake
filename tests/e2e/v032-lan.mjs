@@ -106,6 +106,16 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
  await H.page.keyboard.press('Tab');assert(await games[0].waitExpr(native?'m.mcWorld._WaveDraftHud._Player0._Stats._visible&&!m.mcWorld._WaveDraftHud._Player1':'m.mcWorld._WaveDraftHud._Player0._Stats._visible&&!m.mcWorld._WaveDraftHud._Player1._Stats._visible'));
  if(native)assert(await games[1].expr('!m.mcWorld._WaveDraftHud._Player1._Stats._visible'));
  await C.page.keyboard.press('KeyR');assert(await games[1].waitExpr(native?'m.mcWorld._WaveDraftHud._Player1._Stats._visible&&!m.mcWorld._WaveDraftHud._Player0':'m.mcWorld._WaveDraftHud._Player1._Stats._visible&&!m.mcWorld._WaveDraftHud._Player0._Stats._visible'));
+ if(await games[0].expr('m.mcWorld.mUpgrades.features.includes("percent-stats-v1")')){
+  result.percentageSheets=[];const caps=[500,150,900,75,25,200,60,50,45,200];
+  for(const [i,g]of games.entries()){
+   const rows=await g.expr(`Array.from({length:12},(_,n)=>{const sheet=m.mcWorld._WaveDraftHud._Player${i}._Stats;return {label:sheet['_Name'+n].text,value:sheet['_Value'+n].text};})`);
+   assert.match(rows[0].value,/^\d+ \/ \d+ \/ \d+$/);assert(rows[11].value.length>0);
+   assert.equal(rows[6].label,'AMMO CAPACITY');
+   for(let n=1;n<=10;n++)assert.match(rows[n].value,new RegExp('^\\+\\d+(?:\\.\\d+)?% / '+caps[n-1]+'%'+(n===2?' \\(HP 40%\\)':'')+'$'),'confirmed peer '+i+' percentage-only '+rows[n].label);
+   result.percentageSheets.push({index:i,rows});
+  }
+ }
  await games[0].shot(join(out,`${label}-host-stats.png`),false);await games[1].shot(join(out,`${label}-client-stats.png`),false);
  await H.page.keyboard.press('Tab');if(native)assert(await games[1].expr('m.mcWorld._WaveDraftHud._Player1._Stats._visible'));await C.page.keyboard.press('KeyR');
  await games[0].clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');
