@@ -19,11 +19,12 @@ function playerBaseMaximum(player: any,kind:'health'|'armor'): number {
 }
 export function playerVitalPercent(player:any,kind:'health'|'armor',bonus:Readonly<WaveBonuses>):number{
  const n=statPercent(kind,bonus,playerBaseMaximum(player,'health')/160-1);
- return kind==='health'?n:Math.min(n,160*(1+statPercent('health',bonus,playerBaseMaximum(player,'health')/160-1))*.4/40-1);
+ return kind==='health'?n:Math.min(n,160*(1+statPercent('health',bonus,playerBaseMaximum(player,'health')/160-1))*.4/shieldBase(player)-1);
 }
+function shieldBase(player:any):number{return hasFeature(player.mWorld,'shield-boost-v1')?60:40;}
 export function playerMaximum(player:any,bonus:Readonly<WaveBonuses>=draftBonuses(player.mWorld,player.mPlayerIndex)):number {return percentStats(player.mWorld)?Math.round(160*(1+playerVitalPercent(player,'health',bonus))):Math.round(playerBaseMaximum(player,'health')*(1+vitalityStep(player.mWorld,'health')*bonus.health));}
 export function playerArmorMaximum(player:any,bonus:Readonly<WaveBonuses>=draftBonuses(player.mWorld,player.mPlayerIndex)):number {
- if(percentStats(player.mWorld))return Math.min(Math.floor(40*(1+playerVitalPercent(player,'armor',bonus))),Math.floor(playerMaximum(player,bonus)*.4));
+ if(percentStats(player.mWorld))return Math.min(Math.floor(shieldBase(player)*(1+playerVitalPercent(player,'armor',bonus))),Math.floor(playerMaximum(player,bonus)*.4));
  if(hasFeature(player.mWorld,'fragile-armor-v1'))return Math.min(Math.floor(playerBaseMaximum(player,'health')*.25*(1+.06*bonus.armor)),Math.floor(playerMaximum(player,bonus)*.4));
  return Math.round(playerBaseMaximum(player,'armor')*(1+vitalityStep(player.mWorld,'armor')*bonus.armor));
 }

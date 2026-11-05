@@ -949,4 +949,10 @@ export const DEVIATIONS: Deviation[] = [
       'damage at maximum range instead of 45%. The original pellet pattern, range, cooldown and '+
       'ammo use are retained; enchantment scales the emitted attack once. Legacy math stays exact.',
   },
+  {
+    id:'SHIELD_BOOST',file:'local/SurvivalRules.ts, ModernFeatures.ts; local/Net/bridge.ts',
+    description:'Optional shield-boost-v1 raises the percentage-build shield base from 40 to 60, '+
+      'retaining the final-HP 40% bound, empty initial shield, full useful crate refill and exact '+
+      'current stock on resume. Its dependency on percentage stats preserves prior armor rules.',
+  },
 ];

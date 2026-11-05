@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame} from './harness.ts';
+import {createHeadlessGame as createGame,type HeadlessGameOptions} from './harness.ts';
 import {Thing} from '../../src/game/packages.ts';
 import {armorMaximum,applySupplyEffect,supplyCanBenefit,livingPicker,refillArmor} from '../../src/game/local/Supplies.ts';
 import {applyWaveReward,rewardOffers} from '../../src/game/local/WaveDraft.ts';
@@ -7,6 +7,8 @@ import {syncVitals} from '../../src/game/local/SurvivalRules.ts';
 import {capture,applyToWorld} from '../../src/game/local/Resume.ts';
 import {capturePlayerStats} from '../../src/game/local/PlayerStats.ts';
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
+// v0.3.4's forty-point fragile shield remains an explicit historical oracle.
+const createHeadlessGame=(options:HeadlessGameOptions={})=>createGame({...options,classicFeatures:[...(options.classicFeatures??[]),'shield-boost-v1']});
 
 it('fills fragile armor completely from zero or residual stock regardless of supply efficiency',()=>{
  const g=createHeadlessGame(),p=g.players()[0];try{

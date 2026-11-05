@@ -16,7 +16,7 @@ import {mathRandom} from '../../src/engine/runtime.ts';
 import {dodgeChance} from '../../src/game/local/Dodge.ts';
 
 it('adds exact percentage points, displays matching single/double previews and caps every stat',()=>{
- const g=createHeadlessGame(),w=g.world(),p=g.players()[0];try{
+ const g=createHeadlessGame({classicFeatures:['shield-boost-v1']}),w=g.world(),p=g.players()[0];try{
   p.NewWeapon('uzi');p.SelectWeapon('uzi');const gun=p.mWeapon_Current;
   const stats=capturePlayerStats(w)[0]!;expect(stats.percentages!.damage).toBe(0);
   expect(rewardPreview(stats,'mobility',2)).toContain('+0% > +8%');expect(rewardPreview(stats,'dodge',2)).toContain('+0% > +6%');
