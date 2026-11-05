@@ -12,6 +12,7 @@ import { compactStat, draftBonuses } from '../WaveDraftRules.ts';
 import {TIERED_GROWTH_RULE,tieredLevelStats} from '../TieredGrowthRules.ts';
 import {combatWorld} from '../CombatRules.ts';
 import {capturePlayerStats} from '../PlayerStats.ts';
+import {percentText} from '../PercentStats.ts';
 
 export const GROWTH_HUD = { margin: 12, width: 210, height: 46, centerWidth: 172, top: 4 } as const;
 export function growthLayout(width: number): { left: number; right: number; center: number; bottom: number } {
@@ -138,15 +139,19 @@ function pauseGrowth(hud: any, state: GrowthState): void {
     const x=count===1?180:28+i*304,p=state.players[i]!;
     const heading=text(layer,'_Player'+i,x,99,280,22,MENU_FONT,14,0xffffff,false,'left',`P${i+1}  /  LV ${p.level}  /  ${growthAtMaximum(p)?'MAX':p.xp+'/'+xpRequired(p)+' XP'}`);
     if(heading.textWidth>276){const format=heading.getTextFormat();format.size*=276/heading.textWidth;heading.setTextFormat(format);}
+    let percentageBuild=false;
     if(p.endless){
       const session=netSession(),bonus=session?session.confirmedWaveDraft?.bonuses[i]:hud.mWorld.mUpgrades.waveDraft?draftBonuses(hud.mWorld,i):undefined;
       const tiered=p.tiered===TIERED_GROWTH_RULE,stats=tieredLevelStats(p.level),base=tiered?stats.vitality:200+4*(p.level-1),damage=tiered?stats.damage:.01*Math.max(0,p.level-125),capacity=tiered?stats.capacity:0;
       const modern=session?!!session.confirmedPlayerStats?.[i]?.previews:combatWorld(hud.mWorld);
       const ammoText=modern?'AMMO <3x':`AMMO +${compactStat(((1+capacity)*(1+.15*(bonus?.capacity??0))-1)*100)}%`;
       const actual=session?session.confirmedPlayerStats?.find(s=>s.index===i):capturePlayerStats(hud.mWorld).find(s=>s.index===i);
-      const caption=`HP ${compactStat(actual?.maximum??Math.round(base*(1+.1*(bonus?.health??0))))} / SHIELD ${compactStat(actual?.armorMaximum??Math.round(base*(1+.1*(bonus?.armor??0))))} | DMG +${compactStat(actual?.percentages?actual.percentages.damage*100:((1+damage)*(1+.08*(bonus?.damage??0))-1)*100)}% | ${actual?.percentages?'DODGE '+compactStat(actual.percentages.dodge*100)+'%':ammoText}`;
-      const summary=text(layer,'_GrowthStats'+i,x,122,280,16,BODY_FONT,10,0xcccccc,false,'left',caption);
-      if(summary.textWidth>276){const format=summary.getTextFormat();format.size*=276/summary.textWidth;summary.setTextFormat(format);}
+      const percentages=actual?.percentages;
+      percentageBuild=!!percentages;
+      const caption=percentages?`HP +${percentText(percentages.health)} / SHIELD +${percentText(percentages.armor)}\nDMG +${percentText(percentages.damage)} / DODGE ${percentText(percentages.dodge)}`
+       :`HP ${compactStat(actual?.maximum??Math.round(base*(1+.1*(bonus?.health??0))))} / SHIELD ${compactStat(actual?.armorMaximum??Math.round(base*(1+.1*(bonus?.armor??0))))} | DMG +${compactStat(((1+damage)*(1+.08*(bonus?.damage??0))-1)*100)}% | ${ammoText}`;
+      const summary=text(layer,'_GrowthStats'+i,x,122,280,percentages?32:16,BODY_FONT,percentages?12:10,0xcccccc,false,'left',caption,!!percentages);
+      if(!percentages&&summary.textWidth>276){const format=summary.getTextFormat();format.size*=276/summary.textWidth;summary.setTextFormat(format);}
     }
     const groups:Record<string,Record<string,boolean>>={pistol:{}};
     for(let n=1;n<=Math.min(MAX_LEVEL,p.level);n++)for(const item of hud.mWorld.mUpgrades.mMultipliers[n]??[]){
@@ -159,7 +164,7 @@ function pauseGrowth(hud: any, state: GrowthState): void {
     let row=0;
     for(const [key,name] of WEAPONS){
       if(!groups[key!])continue;
-      const y=(p.endless?144:129)+row++*(p.endless?31:34);
+      const y=(p.endless?percentageBuild?160:144:129)+row++*(p.endless?31:34);
       text(layer,`_Weapon${i}_${key}`,x,y,280,17,BODY_FONT,12,0xffffff,true,'left',name!);
       const flags=groups[key!]!, details:string[]=[];
       for(const [prop,label] of Object.entries(PERK_LABELS)){

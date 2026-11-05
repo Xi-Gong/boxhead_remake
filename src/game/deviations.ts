@@ -964,4 +964,11 @@ export const DEVIATIONS: Deviation[] = [
       'prediction metadata prevent one-shot actions crossing stages. Focus/device/pause release '+
       'guards and DOM repeat suppression stay input-owned. Legacy drafts retain their original path.',
   },
+  {
+    id:'PERCENTAGE_ONLY_SHEETS',file:'local/DraftWindow.ts; local/Net/GrowthHud.ts',
+    description:'Percentage-build stat sheets show only additive percentages and caps for all ten '+
+      'attributes, retaining level/XP and weapon/binding identity. Absolute health, shield, damage, '+
+      'rate, ammunition and enchantment stock are omitted. Shield shows the final-HP constraint; '+
+      'pause summaries use the same confirmed percentages. Simulation and legacy numeric sheets remain intact.',
+  },
 ];

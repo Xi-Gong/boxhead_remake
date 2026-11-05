@@ -75,11 +75,11 @@ function rows(s:PlayerStats|undefined):[string,string][]{
  const number=compactStat,ammo=(n:number)=>s.infinite?'INF':number(n),keys=(['A','Y']as const).filter(k=>s.bindings?.[k]===s.weaponId).join('/');
  if(s.percentages){const p=s.percentages,bonus=(key:PercentStat)=>'+'+percentText(p[key]),limit=(key:PercentStat)=>bonus(key)+' / '+PERCENT_STATS[key].cap+'%';
   return [['LEVEL / XP',`${number(s.level)} / ${number(s.xp)} / ${number(s.required)}`],
-   ['HEALTH',`${number(s.life)}/${number(s.maximum)} (${bonus('health')})`],['SHIELD',`${number(s.armor)}/${number(s.armorMaximum)} (${bonus('armor')})`],
-   ['DAMAGE',`${bonus('damage')} / ${number(s.damage)}`],['FIRE RATE',`${bonus('haste')} / ${s.rate.toFixed(1)}/s`],
-   ['MOVEMENT',limit('mobility')],['AMMUNITION',`${ammo(s.ammo)}/${ammo(s.capacity)} (${bonus('capacity')})`],
+   ['HEALTH',limit('health')],['SHIELD',limit('armor')+' (HP 40%)'],
+   ['DAMAGE',limit('damage')],['FIRE RATE',limit('haste')],
+   ['MOVEMENT',limit('mobility')],['AMMO CAPACITY',limit('capacity')],
    ['SUPPLY',limit('scavenging')],['DODGE',limit('dodge')],['ENCHANT DMG',limit('enchantPower')],
-   ['ENCHANT SHOTS',`${number(s.enchantDurability??0)}/${number(s.enchantMaximum??0)} (${bonus('endurance')})`],['WEAPON',s.weapon+(keys?` [${keys}]`:'')]];
+   ['ENCHANT SHOTS',limit('endurance')],['WEAPON',s.weapon+(keys?` [${keys}]`:'')]];
  }
  return [['LEVEL / XP',`${number(s.level)} / ${number(s.xp)} / ${number(s.required)}`],['HEALTH',`${number(s.life)} / ${number(s.maximum)}`],
   ['SHIELD',`${number(s.armor)} / ${number(s.armorMaximum)}`],['MOVEMENT',`${Math.round(s.speed/.16*100)}%`],['WEAPON',s.weapon+(keys?` [${keys}]`:'')],
