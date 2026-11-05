@@ -39,7 +39,7 @@ export function renderWaveClear(world:any,state:WaveDraftState):void{
  const waiting=intro.remainingTicks>0;
  clip._Title.text=round.outcome==='survived'?'WAVE '+round.wave+' SURVIVED':round.outcome==='boss'||round.multiplier===2&&round.outcome!=='clear'?'BOSS DOWN!':'WAVE '+round.wave+' CLEARED!';
  clip._Timer.text=waiting?String(Math.ceil(intro.remainingTicks/CMain.mFPS)):'WAVE COMPLETE';
- clip._Info.text=waiting?'TAKE A BREATH / UPGRADES OPEN AFTER 3 SECONDS':round.multiplier===2?'DOUBLE REWARD / CHOOSE YOUR UPGRADE NEXT':'CHOOSE YOUR UPGRADE NEXT';
+ clip._Info.text=`REWARD x${round.multiplier} / ${waiting?'UPGRADES OPEN AFTER 3 SECONDS':'CHOOSE YOUR UPGRADE NEXT'}`;
  for(const index of indices){
   const side=clip['_Player'+index],entered=intro.entered[index],enabled=!waiting&&!entered;
   side._Status.text='P'+(index+1)+' / '+(entered?'WAITING FOR PARTNER':waiting?'WAVE COMPLETE':'READY TO ENTER');side._Status.textColor=entered?GREEN:INK;

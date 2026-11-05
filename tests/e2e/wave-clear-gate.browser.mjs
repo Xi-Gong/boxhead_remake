@@ -15,7 +15,7 @@ async function snapshot(g) {
  return g.expr(`(()=>{const w=m.mcWorld,r=w.mUpgrades.waveDraft.round;return {wave:w.mUpgrades.mLevelIndex,intro:r?.intro,chosen:r?.chosen,selected:r?.selected,confirmed:r?.confirmed,clearVisible:!!w._WaveClearHud?._visible,draftVisible:!!w._WaveDraftHud?._visible,lastRewardWave:w.mUpgrades.waveDraft.lastRewardWave};})()`);
 }
 async function picture(g,file,expr) {
- const geometry=await g.expr(`(()=>{const c=${expr};return {bounds:c.getBounds(m._parent),stage:m.mcWorld.mScreenSize,fields:[c._Title,c._Timer].filter(Boolean).map(f=>({text:f.text,font:f.getTextFormat().size,width:f._width,inkWidth:f.textWidth,bounds:f.getBounds(m._parent)}))};})()`);
+ const geometry=await g.expr(`(()=>{const c=${expr};return {bounds:c.getBounds(m._parent),stage:m.mcWorld.mScreenSize,fields:[c._Title,c._Timer,c._Info].filter(Boolean).map(f=>({text:f.text,font:f.getTextFormat().size,width:f._width,inkWidth:f.textWidth,bounds:f.getBounds(m._parent)}))};})()`);
  assert(geometry.bounds.xMin>=0&&geometry.bounds.xMax<=geometry.stage.x,'window fits stage horizontally');
  assert(geometry.bounds.yMin>=0&&geometry.bounds.yMax<=geometry.stage.y,'window fits stage vertically');
  for(const f of geometry.fields){assert(f.font>=12,'readable text size');assert(f.inkWidth<f.width,'text fits field');}
@@ -39,6 +39,7 @@ export async function verifyWaveClearGate(g,out,{mode='Single',checkPause=false}
   report.start=await g.expr('(()=>{const w=m.mcWorld,at=performance.now();w.mUpgrades.FinishTimedWave();return {at,wave:w.mUpgrades.mLevelIndex,fps:P.CMain.mFPS,tick:w.mTick,remaining:w.mUpgrades.waveDraft.round.intro.remainingTicks};})()');
   assert.equal(report.start.remaining,Math.ceil(3*report.start.fps),'three full seconds of simulation ticks');
   assert(await g.waitExpr(`${clear}?._visible`));
+  assert.equal(await g.expr(`${clear}._Info.text`),`REWARD x${await g.expr(`${round}.multiplier`)} / UPGRADES OPEN AFTER 3 SECONDS`,'locked result displays its exact reward multiplier');
   assert.deepEqual((await snapshot(g)).intro.entered,Array(count).fill(false));
   await g.clickClip(`${clear}._Player0._Continue`);
   await g.page.keyboard.press('Tab');
@@ -53,6 +54,7 @@ export async function verifyWaveClearGate(g,out,{mode='Single',checkPause=false}
    await g.page.keyboard.press('KeyP');assert(await g.waitExpr(`!m.mcWorld.mPaused&&${clear}._visible`));report.pauseFrozenTicks=paused;
   }
   assert(await g.waitExpr(`${round}.intro.remainingTicks===0`));
+  assert(await g.waitExpr(`${clear}._Info.text===('REWARD x'+${round}.multiplier+' / CHOOSE YOUR UPGRADE NEXT')`),'unlocked result retains its exact reward multiplier');
   report.elapsedToUnlockMs=await g.expr(`performance.now()-${report.start.at}`);
   // FinishTimedWave can occur between tick boundaries; account for at most one tick plus clock sampling jitter.
   assert(report.elapsedToUnlockMs>=3000-1000/report.start.fps-20,'locked duration follows three-second tick budget');
