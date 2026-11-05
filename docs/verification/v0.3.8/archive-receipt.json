@@ -1,0 +1,16 @@
+{
+  "version": "0.3.8",
+  "created": "2026-11-05T18:11:31.169Z",
+  "localArchive": "%USERPROFILE%/boxhead-exe-archive/v0.3.8/verification-20261106-published",
+  "fileCount": 885,
+  "bytes": 44656241,
+  "manifestSHA256": "8a16fc53beb2da12c07f2c4e7c1d4b81ccfc5c37184b673caa017842d429876a",
+  "portableArchive": {
+    "path": "%USERPROFILE%/boxhead-exe-archive/Boxhead 2Play Rooms-0.3.8-portable.exe",
+    "bytes": 101689625,
+    "sha256": "fb9fc79768902ca1b04e71d4a1409c2838dc5128e4cf9651537e7d275739747e"
+  },
+  "scope": "Private raw QA includes failed, interrupted and superseded attempts; only final evidence.json identifies acceptance. Executables, profiles, saves and caches excluded.",
+  "publicEvidence": "evidence.json",
+  "note": "LAN addresses stay in the private raw archive. Portable binaries are archived and published separately. The manifest receipt is written after copying to avoid a self-referential hash."
+}

@@ -1,5 +1,7 @@
 # v0.3.8 verification
 
+Formal release: [v0.3.8](https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.8). Annotated tag, both asset digests, independent download and an actual hidden/muted portable launch are verified; see [publication.json](publication.json).
+
 Final runtime **b488d9d4677d93d33346a36e98bdd1f4bc16119d** passed one clean default Vitest invocation: **2042 passed, zero failed, 71 existing conditional skips**. All **45 functional release gates** passed against the same asar, without reusing superseded-package results.
 
 This release lowers enemy pressure, strengthens the shotgun and shield, adds a mandatory three-second result screen with an explicit reward multiplier, requires fresh entry and deliberate card selection/READY, and displays percentage-only attributes. Separate negotiated capabilities preserve older-peer behavior and optional v2 save compatibility.
@@ -16,7 +18,7 @@ Three typechecks, production build and external directory/portable packaging pas
 | Renderer | dist/bundle/main-BIdt4GmZ.js |
 | Runtime/build input fingerprint | 00d457fa1c7e8098bcb72a7b05a1dbfd21e749d4e797c56ba96c6a9d76933b99 (433 files) |
 
-The fingerprint above records broad build-time inputs, including QA tools. The later release-coordinator change adds the retained supplemental checks; it changes that one broad input, while game/runtime source and all 70 packaged build files remain identical. Both identity records are retained. Publication, independent download/start and archive receipts are committed to main after release, without moving the annotated tag.
+The fingerprint above records broad build-time inputs, including QA tools. The later release-coordinator change adds the retained supplemental checks; it changes that one broad input, while game/runtime source and all 70 packaged build files remain identical. Both identity records are retained. Publication, independent download/start and archive receipts are committed on main after release, without moving the annotated tag.
 
 ## Coverage
 
@@ -49,4 +51,4 @@ The final artifact's first candidate UI attempt failed solely because its pause-
 
 The source-only legacy Boss 1× fixture also had one initial navigation timeout before gameplay assertions. An unchanged rerun passed, followed by the 2× case. Both attempts remain recorded. The engine's optional benchmark is explicitly disabled in the functional runner; all 265 assertions and snapshots remain enabled.
 
-English [release notes](release-notes.md), Chinese [PARITY history](../../../PARITY.md), and [machine-readable evidence](evidence.json). The [publication receipt on main](https://github.com/Xi-Gong/boxhead_remake/blob/main/docs/verification/v0.3.8/publication.json) and [archive receipt on main](https://github.com/Xi-Gong/boxhead_remake/blob/main/docs/verification/v0.3.8/archive-receipt.json) are populated after independent publication verification. Private profiles, caches and LAN addresses are excluded from public summaries.
+English [release notes](release-notes.md), Chinese [PARITY history](../../../PARITY.md), and [machine-readable evidence](evidence.json). The [publication receipt on main](https://github.com/Xi-Gong/boxhead_remake/blob/main/docs/verification/v0.3.8/publication.json) and [archive receipt on main](https://github.com/Xi-Gong/boxhead_remake/blob/main/docs/verification/v0.3.8/archive-receipt.json) record the completed independent publication verification and private raw archive. Private profiles, caches and LAN addresses are excluded from public summaries.

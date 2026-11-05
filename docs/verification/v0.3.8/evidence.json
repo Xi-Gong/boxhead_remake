@@ -1,5 +1,5 @@
 {
-  "status": "accepted-publication-pending",
+  "status": "published-and-independently-verified",
   "version": "0.3.8",
   "mode": "serial-hidden-functional-no-additional-benchmark-or-opt-in-soak",
   "builtFrom": "b488d9d4677d93d33346a36e98bdd1f4bc16119d",
@@ -1013,13 +1013,35 @@
     "No additional performance benchmark, speedup claim or opt-in long-soak campaign"
   ],
   "publication": {
-    "status": "pending",
+    "status": "published-and-independently-verified",
     "tag": "v0.3.8",
-    "receipt": "publication.json on main after independent download/start"
+    "annotatedTag": "943896acf563afc49e8b8dbbf10b5008f1ecedc5",
+    "tagCommit": "3b33e20e076c04a0d9dd8065df04c8aaf9bbe7ae",
+    "releaseUrl": "https://github.com/Xi-Gong/boxhead_remake/releases/tag/v0.3.8",
+    "publishedAt": "2026-11-05T18:07:48Z",
+    "verifiedAt": "2026-11-05T18:09:50.412Z",
+    "latest": true,
+    "assetsVerified": true,
+    "independentDownloadVerified": true,
+    "actualDownloadedPortableLaunch": true,
+    "receipt": "publication.json"
   },
   "archive": {
-    "status": "pending",
-    "rawDirectory": "generated/reports/v038/",
-    "receipt": "archive-receipt.json on main after publication"
+    "status": "archived",
+    "created": "2026-11-05T18:11:31.169Z",
+    "rawDirectory": "generated/reports/v038",
+    "fileCount": 885,
+    "bytes": 44656241,
+    "manifestSHA256": "8a16fc53beb2da12c07f2c4e7c1d4b81ccfc5c37184b673caa017842d429876a",
+    "portableArchive": {
+      "path": "%USERPROFILE%/boxhead-exe-archive/Boxhead 2Play Rooms-0.3.8-portable.exe",
+      "bytes": 101689625,
+      "sha256": "fb9fc79768902ca1b04e71d4a1409c2838dc5128e4cf9651537e7d275739747e"
+    },
+    "receipt": "archive-receipt.json"
+  },
+  "cleanup": {
+    "ok": true,
+    "raw": "generated/reports/v038/cleanup.json"
   }
 }
