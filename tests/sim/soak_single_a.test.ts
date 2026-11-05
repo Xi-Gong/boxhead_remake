@@ -35,7 +35,7 @@ describe('Single soak, difficulty 0 (Beginner)', () => {
     });
     // Keep the original combat-at-60s assertion on the prior objective/health profile.
     it(`legacy horde fixture room ${room}`,()=>{
-      const r=soak({classicFeatures:['horde-balance-v1'],mode:'Single',room,seed:1000+room,difficulty:0,ticks:1500,options:{infiniteLife:true}});
+      const r=soak({classicFeatures:['horde-balance-v1','enemy-relief-v1','shotgun-boost-v1'],mode:'Single',room,seed:1000+room,difficulty:0,ticks:1500,options:{infiniteLife:true}});
       expect(r.ticks,summary(r)).toBe(1500);expectHealthySoak(r,{running:true});
       expect(r.game.world().mUpgrades.timedWave.phase).toBe('combat');
       expect(r.game.world().mUpgrades.timedWave.remainingTicks).toBeGreaterThan(0);

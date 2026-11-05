@@ -1,5 +1,7 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame,KEYS} from './harness.ts';
+import {createHeadlessGame as boot,KEYS,type HeadlessGameOptions} from './harness.ts';
+// Preserve the original explicit-ready contract; the settlement capability has its own integration suite.
+const createHeadlessGame=(opts:HeadlessGameOptions={})=>boot({...opts,classicFeatures:[...(opts.classicFeatures??[]),'wave-clear-gate-v1']});
 import {noSpawn} from './fxkit.ts';
 import {beginWaveDraft,waveDraft,processWaveDraft} from '../../src/game/local/WaveDraft.ts';
 import {queueDraftChoice} from '../../src/game/local/WaveDraftInput.ts';
