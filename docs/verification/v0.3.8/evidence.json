@@ -1,0 +1,1025 @@
+{
+  "status": "accepted-publication-pending",
+  "version": "0.3.8",
+  "mode": "serial-hidden-functional-no-additional-benchmark-or-opt-in-soak",
+  "builtFrom": "b488d9d4677d93d33346a36e98bdd1f4bc16119d",
+  "finished": "2026-11-05T18:05:31.837Z",
+  "artifact": {
+    "exeBytes": 101689625,
+    "exeSHA256": "fb9fc79768902ca1b04e71d4a1409c2838dc5128e4cf9651537e7d275739747e",
+    "asarSHA256": "040d87b9c732c59a8eeb68ed40ef94b5cef891aef5658c99195491baf3f71721",
+    "renderer": "dist/bundle/main-BIdt4GmZ.js",
+    "runtimeInputsSHA256": "00d457fa1c7e8098bcb72a7b05a1dbfd21e749d4e797c56ba96c6a9d76933b99",
+    "inputCount": 433,
+    "packagedFilesCompared": 70,
+    "raw": "generated/reports/v038/candidate.json",
+    "postAcceptanceVerification": {
+      "raw": "generated/reports/v038/candidate-reverified.json",
+      "runtimeInputsSHA256": "7f47f9a0c2bbe60bcaa8ebe23b50d5328718f6ad5f8e8952ef9fa8d1b15e1387",
+      "changedBroadInputs": [
+        "tools/release-v034-gates.mjs"
+      ],
+      "note": "The broad build-time fingerprint includes QA tools. Only the release coordinator changed in that list after packaging, to retain supplemental gates; game/runtime inputs and all 70 packaged build files remain identical."
+    }
+  },
+  "windowsVersion": {
+    "stagedAsarSHA256": "040d87b9c732c59a8eeb68ed40ef94b5cef891aef5658c99195491baf3f71721",
+    "portableFileVersion": "0.3.8",
+    "version": "0.3.8",
+    "portableProductVersion": "0.3.8"
+  },
+  "capabilities": [
+    "enemy-relief-v1",
+    "shotgun-boost-v1",
+    "shield-boost-v1",
+    "wave-clear-gate-v1"
+  ],
+  "changes": {
+    "bossHealthMultiplier": 0.6,
+    "ordinaryDevilHealthMultiplier": 0.7,
+    "ordinaryZombieHealthMultiplier": 0.8,
+    "zombieDamageMultiplier": 0.85,
+    "zombieMovementMultiplier": 0.88,
+    "zombieCappedAttackAdvanceMultiplier": 0.85,
+    "shotgunDamageMultiplier": 1.15,
+    "shotgunFarRangeRetention": {
+      "before": 0.45,
+      "after": 0.55
+    },
+    "shieldBase": {
+      "before": 40,
+      "after": 60,
+      "startsEmpty": true
+    },
+    "settlementSeconds": 3,
+    "upgradeSelection": "Fresh per-player entry, no selected card, explicit selection and separate READY",
+    "attributeDisplay": "Ten percentage/cap rows; level/XP, weapon and A/Y bindings retained"
+  },
+  "staticAudit": {
+    "modules": 665,
+    "portedModules": 117,
+    "changedPorts": [],
+    "raw": "generated/reports/v038/code-inventory.json"
+  },
+  "vitest": {
+    "status": "passed-final-runtime",
+    "sourceCommit": "b488d9d4677d93d33346a36e98bdd1f4bc16119d",
+    "method": "Clean default serial invocation, maxWorkers=1 and no file parallelism",
+    "passed": 2042,
+    "failed": 0,
+    "conditional": 71,
+    "total": 2113,
+    "filesPassed": 179,
+    "filesSkipped": 2,
+    "independentScenarios": 37,
+    "conditionalBreakdown": {
+      "optInLongSoakNotEnabled": 63,
+      "removedOriginalReferences": 8
+    },
+    "noNewSkips": true,
+    "raw": "generated/reports/v038/full-default-release.log"
+  },
+  "finalAffectedChecks": {
+    "transportAndBridge": {
+      "passed": 108,
+      "failed": 0,
+      "raw": "generated/reports/v038/hello-after.log"
+    },
+    "rewardLabel": {
+      "beforeFailed": true,
+      "afterPassed": true,
+      "raw": [
+        "generated/reports/v038/reward-label-before.log",
+        "generated/reports/v038/reward-label-after.log"
+      ]
+    },
+    "typechecks": {
+      "configurations": 3,
+      "passed": true,
+      "raw": "generated/reports/v038/reward-label-build.log"
+    },
+    "freshBuild": true,
+    "externalPackaging": {
+      "directoryLog": "generated/reports/v038/package-final-dir.log",
+      "portableLog": "generated/reports/v038/package-final-portable.log"
+    },
+    "qaToolTypechecks": {
+      "passed": true,
+      "configurations": 3,
+      "raw": "generated/reports/v038/extra-gates-types.log"
+    }
+  },
+  "functional": {
+    "status": "passed",
+    "asarSHA256": "040d87b9c732c59a8eeb68ed40ef94b5cef891aef5658c99195491baf3f71721",
+    "expectedCaseCount": 45,
+    "completed": 45,
+    "failed": 0,
+    "currentArtifactCases": [
+      {
+        "name": "wave-clear-gate",
+        "code": 0,
+        "started": "2026-11-05T16:57:44.433Z",
+        "finished": "2026-11-05T17:00:16.060Z",
+        "log": "generated/reports/v038/release-gates/wave-clear-gate-1.log"
+      },
+      {
+        "name": "early-gameplay",
+        "code": 0,
+        "started": "2026-11-05T17:00:16.063Z",
+        "finished": "2026-11-05T17:01:43.186Z",
+        "log": "generated/reports/v038/release-gates/early-gameplay-1.log"
+      },
+      {
+        "name": "percent-ui",
+        "code": 0,
+        "started": "2026-11-05T17:01:43.186Z",
+        "finished": "2026-11-05T17:04:10.557Z",
+        "log": "generated/reports/v038/release-gates/percent-ui-1.log"
+      },
+      {
+        "name": "early-clear-ui",
+        "code": 0,
+        "started": "2026-11-05T17:04:10.557Z",
+        "finished": "2026-11-05T17:06:36.845Z",
+        "log": "generated/reports/v038/release-gates/early-clear-ui-1.log"
+      },
+      {
+        "name": "exact-wave",
+        "code": 0,
+        "started": "2026-11-05T17:06:36.846Z",
+        "finished": "2026-11-05T17:10:50.947Z",
+        "log": "generated/reports/v038/release-gates/exact-wave-1.log"
+      },
+      {
+        "name": "held-fire",
+        "code": 0,
+        "started": "2026-11-05T17:10:50.947Z",
+        "finished": "2026-11-05T17:11:17.258Z",
+        "log": "generated/reports/v038/release-gates/held-fire-1.log"
+      },
+      {
+        "name": "gamepad-layout",
+        "code": 0,
+        "started": "2026-11-05T17:11:17.259Z",
+        "finished": "2026-11-05T17:12:21.642Z",
+        "log": "generated/reports/v038/release-gates/gamepad-layout-1.log"
+      },
+      {
+        "name": "ui",
+        "code": 0,
+        "started": "2026-11-05T17:12:21.642Z",
+        "finished": "2026-11-05T17:17:47.593Z",
+        "log": "generated/reports/v038/release-gates/ui-1.log"
+      },
+      {
+        "name": "audio",
+        "code": 0,
+        "started": "2026-11-05T17:17:47.593Z",
+        "finished": "2026-11-05T17:19:37.728Z",
+        "log": "generated/reports/v038/release-gates/audio-1.log"
+      },
+      {
+        "name": "draft-stats",
+        "code": 0,
+        "started": "2026-11-05T17:19:37.729Z",
+        "finished": "2026-11-05T17:20:07.966Z",
+        "log": "generated/reports/v038/release-gates/draft-stats-1.log"
+      },
+      {
+        "name": "candidate",
+        "code": 0,
+        "started": "2026-11-05T17:23:16.429Z",
+        "finished": "2026-11-05T17:23:48.650Z",
+        "log": "generated/reports/v038/release-gates/candidate-2.log"
+      },
+      {
+        "name": "enchant-power",
+        "code": 0,
+        "started": "2026-11-05T17:23:48.650Z",
+        "finished": "2026-11-05T17:25:08.510Z",
+        "log": "generated/reports/v038/release-gates/enchant-power-1.log"
+      },
+      {
+        "name": "native-balance",
+        "code": 0,
+        "started": "2026-11-05T17:25:08.510Z",
+        "finished": "2026-11-05T17:29:13.752Z",
+        "log": "generated/reports/v038/release-gates/native-balance-1.log"
+      },
+      {
+        "name": "browser",
+        "code": 0,
+        "started": "2026-11-05T17:29:13.753Z",
+        "finished": "2026-11-05T17:31:53.363Z",
+        "log": "generated/reports/v038/release-gates/browser-1.log"
+      },
+      {
+        "name": "electron-play",
+        "code": 0,
+        "started": "2026-11-05T17:31:53.363Z",
+        "finished": "2026-11-05T17:34:33.883Z",
+        "log": "generated/reports/v038/release-gates/electron-play-1.log"
+      },
+      {
+        "name": "packaged-play",
+        "code": 0,
+        "started": "2026-11-05T17:34:33.884Z",
+        "finished": "2026-11-05T17:37:13.017Z",
+        "log": "generated/reports/v038/release-gates/packaged-play-1.log"
+      },
+      {
+        "name": "v012",
+        "code": 0,
+        "started": "2026-11-05T17:37:13.018Z",
+        "finished": "2026-11-05T17:38:00.150Z",
+        "log": "generated/reports/v038/release-gates/v012-1.log"
+      },
+      {
+        "name": "v019",
+        "code": 0,
+        "started": "2026-11-05T17:38:00.151Z",
+        "finished": "2026-11-05T17:38:44.175Z",
+        "log": "generated/reports/v038/release-gates/v019-1.log"
+      },
+      {
+        "name": "v020",
+        "code": 0,
+        "started": "2026-11-05T17:38:44.176Z",
+        "finished": "2026-11-05T17:39:25.619Z",
+        "log": "generated/reports/v038/release-gates/v020-1.log"
+      },
+      {
+        "name": "v023",
+        "code": 0,
+        "started": "2026-11-05T17:39:25.620Z",
+        "finished": "2026-11-05T17:40:03.949Z",
+        "log": "generated/reports/v038/release-gates/v023-1.log"
+      },
+      {
+        "name": "v024",
+        "code": 0,
+        "started": "2026-11-05T17:40:03.949Z",
+        "finished": "2026-11-05T17:41:20.968Z",
+        "log": "generated/reports/v038/release-gates/v024-1.log"
+      },
+      {
+        "name": "typing",
+        "code": 0,
+        "started": "2026-11-05T17:41:20.968Z",
+        "finished": "2026-11-05T17:41:46.680Z",
+        "log": "generated/reports/v038/release-gates/typing-1.log"
+      },
+      {
+        "name": "lanui",
+        "code": 0,
+        "started": "2026-11-05T17:41:46.681Z",
+        "finished": "2026-11-05T17:42:13.219Z",
+        "log": "generated/reports/v038/release-gates/lanui-1.log"
+      },
+      {
+        "name": "netretry",
+        "code": 0,
+        "started": "2026-11-05T17:42:13.220Z",
+        "finished": "2026-11-05T17:42:55.574Z",
+        "log": "generated/reports/v038/release-gates/netretry-1.log"
+      },
+      {
+        "name": "net",
+        "code": 0,
+        "started": "2026-11-05T17:42:55.575Z",
+        "finished": "2026-11-05T17:44:48.045Z",
+        "log": "generated/reports/v038/release-gates/net-1.log"
+      },
+      {
+        "name": "lan-functional-30",
+        "code": 0,
+        "started": "2026-11-05T17:44:48.046Z",
+        "finished": "2026-11-05T17:46:18.713Z",
+        "log": "generated/reports/v038/release-gates/lan-functional-30-1.log"
+      },
+      {
+        "name": "lan-functional-60",
+        "code": 0,
+        "started": "2026-11-05T17:46:18.713Z",
+        "finished": "2026-11-05T17:46:50.306Z",
+        "log": "generated/reports/v038/release-gates/lan-functional-60-1.log"
+      },
+      {
+        "name": "lan-functional-100",
+        "code": 0,
+        "started": "2026-11-05T17:46:50.307Z",
+        "finished": "2026-11-05T17:47:22.401Z",
+        "log": "generated/reports/v038/release-gates/lan-functional-100-1.log"
+      },
+      {
+        "name": "electron-smoke",
+        "code": 0,
+        "started": "2026-11-05T17:47:22.402Z",
+        "finished": "2026-11-05T17:47:41.011Z",
+        "log": "generated/reports/v038/release-gates/electron-smoke-1.log"
+      },
+      {
+        "name": "packaged-smoke",
+        "code": 0,
+        "started": "2026-11-05T17:47:41.013Z",
+        "finished": "2026-11-05T17:47:45.183Z",
+        "log": "generated/reports/v038/release-gates/packaged-smoke-1.log"
+      },
+      {
+        "name": "native",
+        "code": 0,
+        "started": "2026-11-05T17:47:45.183Z",
+        "finished": "2026-11-05T17:48:29.220Z",
+        "log": "generated/reports/v038/release-gates/native-1.log"
+      },
+      {
+        "name": "old-save",
+        "code": 0,
+        "started": "2026-11-05T17:48:29.221Z",
+        "finished": "2026-11-05T17:49:10.255Z",
+        "log": "generated/reports/v038/release-gates/old-save-1.log"
+      },
+      {
+        "name": "portable",
+        "code": 0,
+        "started": "2026-11-05T17:49:10.256Z",
+        "finished": "2026-11-05T17:50:18.782Z",
+        "log": "generated/reports/v038/release-gates/portable-1.log"
+      },
+      {
+        "name": "draft-input",
+        "code": 0,
+        "started": "2026-11-05T17:53:01.929Z",
+        "finished": "2026-11-05T17:53:40.871Z",
+        "log": "generated/reports/v038/release-gates/draft-input-1.log"
+      },
+      {
+        "name": "bitmap-blit",
+        "code": 0,
+        "started": "2026-11-05T17:53:40.872Z",
+        "finished": "2026-11-05T17:54:06.701Z",
+        "log": "generated/reports/v038/release-gates/bitmap-blit-1.log"
+      },
+      {
+        "name": "masked-copy",
+        "code": 0,
+        "started": "2026-11-05T17:54:06.701Z",
+        "finished": "2026-11-05T17:54:44.963Z",
+        "log": "generated/reports/v038/release-gates/masked-copy-1.log"
+      },
+      {
+        "name": "added-ui",
+        "code": 0,
+        "started": "2026-11-05T17:54:44.964Z",
+        "finished": "2026-11-05T17:56:00.929Z",
+        "log": "generated/reports/v038/release-gates/added-ui-1.log"
+      },
+      {
+        "name": "viewportPause",
+        "code": 0,
+        "started": "2026-11-05T17:56:00.930Z",
+        "finished": "2026-11-05T17:56:44.569Z",
+        "log": "generated/reports/v038/release-gates/viewportPause-1.log"
+      },
+      {
+        "name": "binding-spacing",
+        "code": 0,
+        "started": "2026-11-05T17:56:44.570Z",
+        "finished": "2026-11-05T17:57:05.771Z",
+        "log": "generated/reports/v038/release-gates/binding-spacing-1.log"
+      },
+      {
+        "name": "boss-health-1x",
+        "code": 0,
+        "started": "2026-11-05T17:58:43.242Z",
+        "finished": "2026-11-05T17:59:46.169Z",
+        "log": "generated/reports/v038/release-gates/boss-health-1x-2.log"
+      },
+      {
+        "name": "boss-health-2x",
+        "code": 0,
+        "started": "2026-11-05T17:59:46.170Z",
+        "finished": "2026-11-05T18:00:53.352Z",
+        "log": "generated/reports/v038/release-gates/boss-health-2x-1.log"
+      },
+      {
+        "name": "engine-browser",
+        "code": 0,
+        "started": "2026-11-05T18:00:53.353Z",
+        "finished": "2026-11-05T18:01:23.179Z",
+        "log": "generated/reports/v038/release-gates/engine-browser-1.log"
+      },
+      {
+        "name": "entrance-admission",
+        "code": 0,
+        "started": "2026-11-05T18:01:23.179Z",
+        "finished": "2026-11-05T18:02:21.013Z",
+        "log": "generated/reports/v038/release-gates/entrance-admission-1.log"
+      },
+      {
+        "name": "boss-lifecycle",
+        "code": 0,
+        "started": "2026-11-05T18:02:21.014Z",
+        "finished": "2026-11-05T18:02:49.166Z",
+        "log": "generated/reports/v038/release-gates/boss-lifecycle-1.log"
+      },
+      {
+        "name": "large-checkpoint",
+        "code": 0,
+        "started": "2026-11-05T18:02:49.166Z",
+        "finished": "2026-11-05T18:03:41.811Z",
+        "log": "generated/reports/v038/release-gates/large-checkpoint-1.log"
+      }
+    ],
+    "raw": "generated/reports/v038/release-gates/report.json",
+    "scope": "Serial hidden low-resolution functional acceptance, with isolated saves/ports; no performance benchmark or extreme stress",
+    "noPriorArtifactPassesReused": true,
+    "consoleChecks": {
+      "raw": "generated/reports/v038/playtest-console-summary.json",
+      "modes": {
+        "packaged-play": [
+          {
+            "mode": "Single",
+            "ok": true,
+            "scriptErrors": 0,
+            "consoleErrors": 0,
+            "warningCount": 0
+          },
+          {
+            "mode": "Coop",
+            "ok": true,
+            "scriptErrors": 0,
+            "consoleErrors": 0,
+            "warningCount": 0
+          },
+          {
+            "mode": "DeathMatch",
+            "ok": true,
+            "scriptErrors": 0,
+            "consoleErrors": 0,
+            "warningCount": 0
+          }
+        ],
+        "electron-play": [
+          {
+            "mode": "Single",
+            "ok": true,
+            "scriptErrors": 0,
+            "consoleErrors": 0,
+            "warningCount": 1
+          },
+          {
+            "mode": "Coop",
+            "ok": true,
+            "scriptErrors": 0,
+            "consoleErrors": 0,
+            "warningCount": 1
+          },
+          {
+            "mode": "DeathMatch",
+            "ok": true,
+            "scriptErrors": 0,
+            "consoleErrors": 0,
+            "warningCount": 1
+          }
+        ]
+      },
+      "note": "Source Electron emits its existing development CSP notice once per mode; all packaged playtest modes have zero script errors, console errors and warnings. No exception was suppressed."
+    }
+  },
+  "additionalInput": {
+    "ok": true,
+    "method": "Headless Chrome, real keyboard/mouse and injected gamepad mapping; one game only",
+    "gate": true,
+    "selected": [
+      0,
+      0
+    ],
+    "waitedWithoutDefaultMs": 14000,
+    "raw": "generated/reports/v038/draft-input/report.json",
+    "note": "Original real draft-input browser regression rerun on the final renderer as a coordinated release gate."
+  },
+  "screenshots": {
+    "local": {
+      "ok": true,
+      "version": "0.3.8",
+      "method": "Current production build, one headless 640x480 context at a time, real menu clicks, normal-value prepared UI scenes",
+      "images": [
+        {
+          "name": "menu.png",
+          "sha256": "144a85a21e3b657b489712ca968a8b48954ea4bb01181e3f4af8a37fd8c2915c"
+        },
+        {
+          "name": "gameplay.png",
+          "sha256": "85c8a6368c918d5e7c28e1d88e84b623d497715cbfd9ea397cac5b71af83c61c"
+        },
+        {
+          "name": "wave-clear.png",
+          "sha256": "bbf325bb70dcbe0df983f62216045ba0a5a13a21a65b2e4e076782571ec0246f"
+        },
+        {
+          "name": "upgrade-cards.png",
+          "sha256": "d5e9d1cd975c44c3d36a080273c3f70ed070ee21e54b0d82dfbc829a4a6453b3"
+        },
+        {
+          "name": "controller-layout.png",
+          "sha256": "30eb5b8e85af477c63e1477562cb9216094f78712c0753396605861d90e48499"
+        },
+        {
+          "name": "boss.png",
+          "sha256": "f0d22238763dbe29d7b2a80fddb728ff0da5069cdea1e8bacacdb5948fb75fa3"
+        },
+        {
+          "name": "coop-crate.png",
+          "sha256": "50bd5a05d38d547d4be0e785adc8f4c8468feb408df4177e0f6b1360d88b2c91"
+        },
+        {
+          "name": "devil-supplies.png",
+          "sha256": "5c0574538218b76e9f72a5a061b78b07cae9df0fcf443340c7a8cfa12468036b"
+        },
+        {
+          "name": "coop-stats.png",
+          "sha256": "3ea407b60cad785442f8448efbc58b643657a14e5b776ae9a68bdd355c61f9b7"
+        }
+      ],
+      "combat": {
+        "visible": true,
+        "weapon": "uzi",
+        "binding": "A",
+        "bounds": {
+          "xMin": 337.2,
+          "xMax": 361.2,
+          "yMin": 160.55,
+          "yMax": 173.55
+        },
+        "ammo": 0,
+        "durability": 138,
+        "glyphPixels": 9
+      },
+      "controller": "Injected SN30 identity and real dropdown selection illustrate layout; not physical-hardware evidence. Normal selected-wave-3 growth retained.",
+      "bossViewports": [
+        {
+          "width": 640,
+          "height": 480,
+          "playerHeight": 7.5,
+          "bars": [
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 206,
+                "xMax": 242,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 136
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 302,
+                "xMax": 338,
+                "yMin": 278,
+                "yMax": 285.5
+              },
+              "fillPixels": 136
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 398,
+                "xMax": 434,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 136
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 494,
+                "xMax": 530,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 136
+            }
+          ]
+        },
+        {
+          "width": 960,
+          "height": 540,
+          "playerHeight": 7.5,
+          "bars": [
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 222,
+                "xMax": 258,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 152
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 318,
+                "xMax": 354,
+                "yMin": 278,
+                "yMax": 285.5
+              },
+              "fillPixels": 152
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 414,
+                "xMax": 450,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 148
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 510,
+                "xMax": 546,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 148
+            }
+          ]
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "playerHeight": 7.5,
+          "bars": [
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 206,
+                "xMax": 242,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 72
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 302,
+                "xMax": 338,
+                "yMin": 278,
+                "yMax": 285.5
+              },
+              "fillPixels": 72
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 398,
+                "xMax": 434,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 72
+            },
+            {
+              "visible": true,
+              "width": 36,
+              "height": 7.5,
+              "bounds": {
+                "xMin": 494,
+                "xMax": 530,
+                "yMin": 269,
+                "yMax": 276.5
+              },
+              "fillPixels": 72
+            }
+          ]
+        }
+      ],
+      "crate": {
+        "position": {
+          "x": 240,
+          "y": 240
+        },
+        "payload": {
+          "weapons": [
+            {
+              "nameID": "uzi",
+              "ammo": 24,
+              "totalAmmo": 126
+            },
+            {
+              "nameID": "shotgun",
+              "ammo": 25,
+              "totalAmmo": 25
+            }
+          ],
+          "currentWeapon": "uzi"
+        },
+        "playerDead": true
+      },
+      "raw": "generated/reports/v038/readme-local/report.json"
+    },
+    "packagedLan": {
+      "ok": true,
+      "method": "Actual packaged TCP peers, normal wave-3 menu selection and earned starting build; real mouse/keys; shared-tick end-of-wave staging; no stat/inventory rewrites or infinite-life switch",
+      "raw": "generated/reports/v038/readme-lan/readme-lan.json",
+      "setupNote": "The shared launcher briefly enables the original infinite-life switch during setup, then disables it before starting the world. The README gameplay capture has no active infinite-life setting or rewritten stats/inventory."
+    },
+    "review": {
+      "ok": true,
+      "version": "0.3.8",
+      "asarSHA256": "040d87b9c732c59a8eeb68ed40ef94b5cef891aef5658c99195491baf3f71721",
+      "method": "Direct screenshot review with accompanying real-click, pixel and geometry assertions; no zai; injected pads establish mappings only",
+      "images": [
+        {
+          "path": "assets/readme/wave-clear.png",
+          "sha256": "bbf325bb70dcbe0df983f62216045ba0a5a13a21a65b2e4e076782571ec0246f",
+          "reviewedAt": "2026-11-05T17:00:53.646Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Single-640x480/locked.png",
+          "sha256": "49411ed9fab126eacdfaad5da03d427c376cff21a99662fd7a1e69e8117dd273",
+          "reviewedAt": "2026-11-05T17:00:53.647Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Single-640x480/unselected-cards.png",
+          "sha256": "a755a0476015cc28d283ac587f4892fdccacd9da28cac896687e473825f1cbc1",
+          "reviewedAt": "2026-11-05T17:00:53.648Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Single-960x540/locked.png",
+          "sha256": "349c7c5582882f404a1603bc6fb1780b7b88603e2984d5f9dce9ca1a41dd519b",
+          "reviewedAt": "2026-11-05T17:00:53.648Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Single-960x540/unselected-cards.png",
+          "sha256": "a4001da8887c71ac3c4640f28b8f7d3b63ad77c107617a6e0b1f6365c9e4e3e6",
+          "reviewedAt": "2026-11-05T17:00:53.649Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Single-480x720/locked.png",
+          "sha256": "b1c8f2d3f48c480e927ece93d006fdeb7db3dec3035cc23ffce6a58684254d8e",
+          "reviewedAt": "2026-11-05T17:00:53.649Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Single-480x720/unselected-cards.png",
+          "sha256": "a890db23b67245070437d7d4bee7ad2585ba1fba22d3a5c00c128e7481144f48",
+          "reviewedAt": "2026-11-05T17:00:53.649Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Coop-640x480/locked.png",
+          "sha256": "f184e90b04371a9940e434641f65a421aa53cc430f88b7e47e5db5c8bb3b6cc7",
+          "reviewedAt": "2026-11-05T17:00:53.650Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Coop-640x480/unselected-cards.png",
+          "sha256": "7a5de881ef9651af2a8045ebedfe11f4d31695ed27188e970cc02a5d55dea6e3",
+          "reviewedAt": "2026-11-05T17:00:53.650Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Coop-960x540/locked.png",
+          "sha256": "e0d0fb0248a29dbe80d1bea4530e22f19b2779afe0836eb182e8ae4c3aee4e35",
+          "reviewedAt": "2026-11-05T17:00:53.650Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Coop-960x540/unselected-cards.png",
+          "sha256": "e9fe021dec687c0d46cd2b9438a1a11a4c54b7389623e4b47fca55f734147a30",
+          "reviewedAt": "2026-11-05T17:00:53.651Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Coop-480x720/locked.png",
+          "sha256": "0a2f641d045ec5e6e580c66240fbcdb7aef535172bcde101f2e3c35353a79337",
+          "reviewedAt": "2026-11-05T17:00:53.651Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/wave-clear-gate/Coop-480x720/unselected-cards.png",
+          "sha256": "fc31f3323fd15f3f27a531a6ceacc1d5175b044b2496120cb1022b623e3270c0",
+          "reviewedAt": "2026-11-05T17:00:53.651Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/percent-ui/Single-640x480-stats.png",
+          "sha256": "9a8856dd7a0dafca284fa744ee94710b1b746785d0341d2c4d5aa24f46c6f178",
+          "reviewedAt": "2026-11-05T17:03:36.725Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/percent-ui/Single-960x540-stats.png",
+          "sha256": "2b5b45950e68280926645f860c325f6c4806588cc47dfbbb49bdf3dfd40fcba8",
+          "reviewedAt": "2026-11-05T17:03:36.726Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/percent-ui/Single-480x720-stats.png",
+          "sha256": "e6c6780a022ddbd009830586cc094e3bf4b6de89b92327b8901074ad5c9e45c6",
+          "reviewedAt": "2026-11-05T17:03:36.727Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/percent-ui/Coop-640x480-stats.png",
+          "sha256": "6d4a99b177eba3d98d8342d0679d98f3328499a86a0aac34531a8397100cb3c8",
+          "reviewedAt": "2026-11-05T17:03:36.727Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/percent-ui/Coop-960x540-stats.png",
+          "sha256": "be9ded945978d419f5073980956a407e402a92e9782bbe7714cd4d214b7f4217",
+          "reviewedAt": "2026-11-05T17:04:41.581Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/percent-ui/Coop-480x720-stats.png",
+          "sha256": "413c22728362114b02ee1ecad4a150c54c20b64a967e3aad083502c5a9462a34",
+          "reviewedAt": "2026-11-05T17:04:41.583Z"
+        },
+        {
+          "path": "assets/readme/menu.png",
+          "sha256": "144a85a21e3b657b489712ca968a8b48954ea4bb01181e3f4af8a37fd8c2915c",
+          "reviewedAt": "2026-11-05T17:04:48.178Z"
+        },
+        {
+          "path": "assets/readme/gameplay.png",
+          "sha256": "85c8a6368c918d5e7c28e1d88e84b623d497715cbfd9ea397cac5b71af83c61c",
+          "reviewedAt": "2026-11-05T17:04:48.180Z"
+        },
+        {
+          "path": "assets/readme/upgrade-cards.png",
+          "sha256": "d5e9d1cd975c44c3d36a080273c3f70ed070ee21e54b0d82dfbc829a4a6453b3",
+          "reviewedAt": "2026-11-05T17:04:48.180Z"
+        },
+        {
+          "path": "assets/readme/controller-layout.png",
+          "sha256": "30eb5b8e85af477c63e1477562cb9216094f78712c0753396605861d90e48499",
+          "reviewedAt": "2026-11-05T17:04:48.180Z"
+        },
+        {
+          "path": "assets/readme/boss.png",
+          "sha256": "f0d22238763dbe29d7b2a80fddb728ff0da5069cdea1e8bacacdb5948fb75fa3",
+          "reviewedAt": "2026-11-05T17:04:55.085Z"
+        },
+        {
+          "path": "assets/readme/coop-crate.png",
+          "sha256": "50bd5a05d38d547d4be0e785adc8f4c8468feb408df4177e0f6b1360d88b2c91",
+          "reviewedAt": "2026-11-05T17:04:55.087Z"
+        },
+        {
+          "path": "assets/readme/devil-supplies.png",
+          "sha256": "5c0574538218b76e9f72a5a061b78b07cae9df0fcf443340c7a8cfa12468036b",
+          "reviewedAt": "2026-11-05T17:04:55.087Z"
+        },
+        {
+          "path": "assets/readme/coop-stats.png",
+          "sha256": "3ea407b60cad785442f8448efbc58b643657a14e5b776ae9a68bdd355c61f9b7",
+          "reviewedAt": "2026-11-05T17:04:55.087Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/ui/debrief_01_paused.png",
+          "sha256": "5e04ef157fe95116a8cbdd4375f99650313f3fffa013e9d448c7f80fb5652166",
+          "reviewedAt": "2026-11-05T17:18:42.916Z"
+        },
+        {
+          "path": "generated/reports/v038/release-gates/ui/viewport_paused_1280x720.png",
+          "sha256": "62b4fe7fbf41c20d48bc71390b9ead09765b1a4378161a3644a88507db44d5a1",
+          "reviewedAt": "2026-11-05T17:18:42.917Z"
+        },
+        {
+          "path": "generated/reports/v038/candidate-fixture-corrected/pause.png",
+          "sha256": "fe7cbbdb1db84e0e0bcf4b7dc85e63c8f3b3bcc5ab5da7f8b42ac9fdfdbfcfc4",
+          "reviewedAt": "2026-11-05T17:23:46.689Z"
+        },
+        {
+          "path": "assets/readme/lan-growth.png",
+          "sha256": "eada6ce343d548475dc373c70c9a853e21471a08a357ffeada5ad16a6dcff8a8",
+          "reviewedAt": "2026-11-05T17:51:46.536Z"
+        },
+        {
+          "path": "generated/reports/v038/readme-lan/lan-growth.png",
+          "sha256": "eada6ce343d548475dc373c70c9a853e21471a08a357ffeada5ad16a6dcff8a8",
+          "reviewedAt": "2026-11-05T17:51:46.537Z"
+        },
+        {
+          "path": "generated/reports/v031/compact-hud/run-1793901524359-1x/priest.png",
+          "sha256": "1dd3d8617b52c5bd080dd045b9c38aeeca81f05ce984147cbfcc02bdcd0ec55b",
+          "reviewedAt": "2026-11-05T18:02:04.900Z"
+        },
+        {
+          "path": "generated/reports/v031/compact-hud/run-1793901524359-1x/three-bosses.png",
+          "sha256": "09898264b155a9b23fdf3cdc84f108ac76c2bbcf880ce08c6c32c3b902580d65",
+          "reviewedAt": "2026-11-05T18:02:04.902Z"
+        },
+        {
+          "path": "generated/reports/v031/compact-hud/run-1793901587269-2x/priest.png",
+          "sha256": "c51042fc3789ce485dcbbf4f516df6ec76c0d290cb0980c7d41b905bd5afbff0",
+          "reviewedAt": "2026-11-05T18:02:04.903Z"
+        },
+        {
+          "path": "generated/reports/v031/compact-hud/run-1793901587269-2x/three-bosses.png",
+          "sha256": "5a4faad30b4f9e7d2a645ebeba47c08e0c804db67485525c5eac491e9bee0792",
+          "reviewedAt": "2026-11-05T18:02:04.903Z"
+        }
+      ],
+      "finished": "2026-11-05T18:04:56.926Z"
+    }
+  },
+  "retainedAttempts": {
+    "firstDefaultSuite": {
+      "passed": 2033,
+      "failed": 8,
+      "conditional": 71,
+      "raw": "generated/reports/v038/full-default-1.log",
+      "resolution": "Explicit old horde/readiness fixtures and complete modern entry flow; all original assertions retained"
+    },
+    "earlierCleanSuite": {
+      "passed": 2041,
+      "failed": 0,
+      "conditional": 71,
+      "raw": "generated/reports/v038/full-default-final.log",
+      "note": "Predates TCP advertisement and result-label follow-ups; final clean invocation above supersedes its release scope"
+    },
+    "historicalFixtureRetest": {
+      "passed": 23,
+      "failed": 0,
+      "raw": "generated/reports/v038/legacy-fixtures.log"
+    },
+    "functionalFailedAttempts": [
+      {
+        "name": "candidate",
+        "code": 1,
+        "started": "2026-11-05T17:20:07.966Z",
+        "finished": "2026-11-05T17:20:35.348Z",
+        "log": "generated/reports/v038/release-gates/candidate-1.log"
+      },
+      {
+        "name": "boss-health-1x",
+        "code": 1,
+        "started": "2026-11-05T17:57:05.772Z",
+        "finished": "2026-11-05T17:57:44.916Z",
+        "log": "generated/reports/v038/release-gates/boss-health-1x-1.log"
+      }
+    ],
+    "pauseFixtureCorrection": {
+      "change": "Expected Flash CR instead of LF; all complete text/geometry/pixel/input assertions retained",
+      "runtimeChanged": false,
+      "standaloneChecksPassed": [
+        "candidate-fixture-corrected",
+        "pacing-ui-fixture"
+      ],
+      "raw": [
+        "generated/reports/v038/candidate-fixture-corrected.log",
+        "generated/reports/v038/pacing-ui-fixture.log"
+      ]
+    },
+    "supersededCandidates": [
+      {
+        "directory": "generated/reports/v038/superseded-candidate-1",
+        "reason": "Actual TCP hello omitted safe-entrances-v1; replaced before functional gates"
+      },
+      {
+        "directory": "generated/reports/v038/superseded-candidate-2",
+        "reason": "Result multiplier not explicit throughout wait; seven gates passed then owned coordinator/UI interrupted, not final acceptance"
+      }
+    ],
+    "environmentRaw": "generated/reports/v038/development-attempts.json",
+    "implementationHistory": "PARITY.md section 31"
+  },
+  "limits": [
+    "Injected pads prove mapping, not physical hardware",
+    "Same-machine isolated LAN does not establish two-computer physical-network behavior",
+    "Prepared encounters and input bots are not human win-rate measurements",
+    "No additional performance benchmark, speedup claim or opt-in long-soak campaign"
+  ],
+  "publication": {
+    "status": "pending",
+    "tag": "v0.3.8",
+    "receipt": "publication.json on main after independent download/start"
+  },
+  "archive": {
+    "status": "pending",
+    "rawDirectory": "generated/reports/v038/",
+    "receipt": "archive-receipt.json on main after publication"
+  }
+}
