@@ -15,7 +15,7 @@ try{
  const field=g.page.getByRole('textbox',{name:'Start wave'});await field.click();await g.page.keyboard.press('Control+A');await g.page.keyboard.type('5');await g.page.keyboard.press('Enter');await g.click(210,400);await g.click(380,230);assert(await g.waitExpr('m.mcWorld?.mLoaded'));
  await g.page.waitForTimeout(700);await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(150);
  report.pause=await g.expr(`({text:m.mcWorld.mHud.mcScreenPause._PersonalUpgrades._GrowthStats0.text,life:Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mMaxLife,bounds:m.mcWorld.mHud.mcScreenPause._PersonalUpgrades.getBounds(m.mcWorld.mHud.mcScreenPause)})`);
- if(await g.expr('m.mcWorld.mUpgrades.features?.includes("percent-stats-v1")'))assert.match(report.pause.text,/^HP \+\d+(?:\.\d+)?% \/ SHIELD \+\d+(?:\.\d+)?%\nDMG \+\d+(?:\.\d+)?% \/ DODGE \d+(?:\.\d+)?%$/);
+ if(await g.expr('m.mcWorld.mUpgrades.features?.includes("percent-stats-v1")'))assert.match(report.pause.text,/^HP \+\d+(?:\.\d+)?% \/ SHIELD \+\d+(?:\.\d+)?%\rDMG \+\d+(?:\.\d+)?% \/ DODGE \d+(?:\.\d+)?%$/);
  else assert(report.pause.text.startsWith('HP '+String(Math.round(report.pause.life))+' / SHIELD '));assert(report.pause.bounds.yMax<=480);
  const shot=await g.shot(`${out}/pause.png`,false);const png=PNG.sync.read(shot);assert(png.data.some((v,i)=>i%4!==3&&v<200));
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;

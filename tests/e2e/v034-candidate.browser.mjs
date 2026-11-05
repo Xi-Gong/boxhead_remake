@@ -46,7 +46,7 @@ export async function verifyV034Candidate(g,out){
   assert.equal(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mMaxLife'),173);
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.shot(`${out}/pause.png`,false);
   report.pause=await g.expr('(()=>{const layer=m.mcWorld.mHud.mcScreenPause._PersonalUpgrades,f=layer._GrowthStats0;return {text:f.text,font:f.getTextFormat().size,height:f._height,textHeight:f.textHeight,bounds:f.getBounds(layer),weapon:layer._Weapon0_pistol.getBounds(layer)};})()');
-  if(percent){assert.equal(report.pause.text,'HP +8% / SHIELD +0%\nDMG +0% / DODGE 0%');assert.equal(report.pause.font,12);assert(report.pause.textHeight<=report.pause.height+2);assert(report.pause.bounds.yMax<=report.pause.weapon.yMin);}
+  if(percent){assert.equal(report.pause.text,'HP +8% / SHIELD +0%\rDMG +0% / DODGE 0%');assert.equal(report.pause.font,12);assert(report.pause.textHeight<=report.pause.height+2);assert(report.pause.bounds.yMax<=report.pause.weapon.yMin);}
   else assert.match(report.pause.text,report.initial.features.includes('shield-boost-v1')?/HP 173 \/ SHIELD 60/:/HP 173 \/ SHIELD 40/);
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('!m.mcWorld.mPaused'));
   if(report.initial.features.includes('enchant-power-v1')){
