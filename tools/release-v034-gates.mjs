@@ -13,12 +13,13 @@ const identity={version,asarSha256:createHash('sha256').update(readFileSync(arch
 let report={...identity,ok:false,scope:'Serial hidden low-resolution functional acceptance, with isolated saves/ports; no performance benchmark or extreme stress',cases:[]};
 try{const previous=JSON.parse(readFileSync(file,'utf8'));if(previous.asarSha256===identity.asarSha256)report=previous;}catch{}
 const cases=[
- ...(['0.3.6','0.3.7'].includes(version)?[['early-gameplay','tests/e2e/early-gameplay.browser.mjs'],['percent-ui','tests/e2e/percent-stats.browser.mjs'],['early-clear-ui','tests/e2e/percent-stats.browser.mjs'],['exact-wave','tests/e2e/exact-wave.browser.mjs'],['held-fire','tests/e2e/held-fire.browser.mjs'],['gamepad-layout','tests/e2e/gamepad-layout.browser.mjs']]:[]),
- ['ui','tests/e2e/ui.browser.mjs'],['audio','tests/e2e/audio.browser.mjs'],['draft-stats','tests/e2e/draft-stats.browser.mjs'],['candidate','tests/e2e/v034-candidate.browser.mjs'],...(['0.3.6','0.3.7'].includes(version)?[['enchant-power','tests/e2e/enchant-power.browser.mjs']]:[]),['native-balance','tests/e2e/native-balance.browser.mjs'],
+ ...(version==='0.3.8'?[['wave-clear-gate','tests/e2e/wave-clear-gate.browser.mjs']]:[]),
+ ...(['0.3.6','0.3.7','0.3.8'].includes(version)?[['early-gameplay','tests/e2e/early-gameplay.browser.mjs'],['percent-ui','tests/e2e/percent-stats.browser.mjs'],['early-clear-ui','tests/e2e/percent-stats.browser.mjs'],['exact-wave','tests/e2e/exact-wave.browser.mjs'],['held-fire','tests/e2e/held-fire.browser.mjs'],['gamepad-layout','tests/e2e/gamepad-layout.browser.mjs']]:[]),
+ ['ui','tests/e2e/ui.browser.mjs'],['audio','tests/e2e/audio.browser.mjs'],['draft-stats','tests/e2e/draft-stats.browser.mjs'],['candidate','tests/e2e/v034-candidate.browser.mjs'],...(['0.3.6','0.3.7','0.3.8'].includes(version)?[['enchant-power','tests/e2e/enchant-power.browser.mjs']]:[]),['native-balance','tests/e2e/native-balance.browser.mjs'],
  ['browser','tests/sim/playtest.browser.mjs'],['electron-play','tests/sim/playtest.browser.mjs','--electron'],['packaged-play','tests/sim/playtest.browser.mjs','--packaged'],
  ...['v012','v019','v020','v023','v024','typing','lanui','netretry','net'].map(name=>[name,`tests/sim/playtest.${name}.mjs`]),
  ...[30,60,100].map(delay=>['lan-functional-'+delay,'tests/sim/playtest.netsmooth.mjs',String(delay)]),
- ['electron-smoke','tests/unit/platform/electron-smoke.run.ts'],['packaged-smoke','tests/unit/platform/electron-smoke.run.ts','--packaged-only'],['native','tests/e2e/release-native.electron.mjs'],['old-save','tests/e2e/saveCompatibility.electron.mjs'],['portable','tests/e2e/portable.electron.mjs'],
+ ['electron-smoke','tests/unit/platform/electron-smoke.run.ts','--skip-build'],['packaged-smoke','tests/unit/platform/electron-smoke.run.ts','--packaged-only'],['native','tests/e2e/release-native.electron.mjs'],['old-save','tests/e2e/saveCompatibility.electron.mjs'],['portable','tests/e2e/portable.electron.mjs'],
 ];
 const selected=process.argv.slice(2);if(selected.some(name=>!cases.some(c=>c[0]===name)))throw new Error('Unknown gate');
 for(const [name,...args]of cases){

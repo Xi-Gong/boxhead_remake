@@ -14,14 +14,18 @@ assert.equal(JSON.parse(asar.extractFile(archive,'package.json').toString()).ver
 const files=[];function walk(folder){for(const name of readdirSync(folder).sort()){const path=join(folder,name);if(statSync(path).isDirectory())walk(path);else if(!path.endsWith('.map'))files.push(path);}}
 walk('dist');walk('dist-electron');for(const file of files)assert(asar.extractFile(archive,file).equals(readFileSync(file)),`stale packaged file ${file}`);
 const renderer=files.find(p=>/main-[\w-]+\.js$/.test(p));assert(renderer);const script=readFileSync(renderer,'utf8');
-if(['0.3.5','0.3.6','0.3.7'].includes(version))for(const feature of ['difficulty-waves-v1','held-fire-v1'])assert(script.includes(feature),'missing '+feature);
-if(['0.3.6','0.3.7'].includes(version))for(const feature of ['horde-balance-v1','percent-stats-v1','clear-rewards-v1'])assert(script.includes(feature),'missing '+feature);
-if(version==='0.3.7'){
+if(['0.3.5','0.3.6','0.3.7','0.3.8'].includes(version))for(const feature of ['difficulty-waves-v1','held-fire-v1'])assert(script.includes(feature),'missing '+feature);
+if(['0.3.6','0.3.7','0.3.8'].includes(version))for(const feature of ['horde-balance-v1','percent-stats-v1','clear-rewards-v1'])assert(script.includes(feature),'missing '+feature);
+if(['0.3.7','0.3.8'].includes(version)){
  assert(script.includes('safe-entrances-v1'),'missing safe entrance admission');
  assert(readFileSync('dist-electron/main.cjs','utf8').includes('large-frames-v1'),'missing negotiated large checkpoint transfer');
 }
+if(version==='0.3.8')for(const feature of ['enemy-relief-v1','shotgun-boost-v1','shield-boost-v1','wave-clear-gate-v1']){
+ assert(script.includes(feature),'missing renderer capability '+feature);
+ assert(readFileSync('dist-electron/main.cjs','utf8').includes(feature),'missing desktop capability advertisement '+feature);
+}
 // Full animation names are composed during loading; inspect their prefixes here and the real sets at runtime.
-for(const marker of ['tiered-growth-v1','clearable-waves-v1','boss-encounters-v1','Polished_','Boss_','ClassicVariant_','combat-pve-v2','draft-ready-v1','FreshCombat_','FreshDemon_','Gunner_',...(['0.3.4','0.3.5','0.3.6','0.3.7'].includes(version)?['fragile-armor-v1','empty-weapons-v1','weapon-bindings-v1','enchant-durability-v1','native-bosses-v1']:[]),...(['0.3.5','0.3.6','0.3.7'].includes(version)?['empty-weapon-feedback-v1','enchant-power-v1','BOXHEAD_PAD_LAYOUT_V1','NINTENDO']:[])])assert(script.includes(marker),`missing new runtime marker ${marker}`);
+for(const marker of ['tiered-growth-v1','clearable-waves-v1','boss-encounters-v1','Polished_','Boss_','ClassicVariant_','combat-pve-v2','draft-ready-v1','FreshCombat_','FreshDemon_','Gunner_',...(['0.3.4','0.3.5','0.3.6','0.3.7','0.3.8'].includes(version)?['fragile-armor-v1','empty-weapons-v1','weapon-bindings-v1','enchant-durability-v1','native-bosses-v1']:[]),...(['0.3.5','0.3.6','0.3.7','0.3.8'].includes(version)?['empty-weapon-feedback-v1','enchant-power-v1','BOXHEAD_PAD_LAYOUT_V1','NINTENDO']:[])])assert(script.includes(marker),`missing new runtime marker ${marker}`);
 const inputs=execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{encoding:'utf8'}).split('\0').filter(p=>/^(src\/|electron\/|public\/assets\/|config\/|tools\/)/.test(p)||/^(package(?:-lock)?\.json|(?:gallery|index)\.html|vite\.config\.ts|electron-builder\.yml|tsconfig\.json)$/.test(p)).sort();
 const identities=inputs.map(path=>({path,sha256:hash(readFileSync(path))})),runtimeInputsSHA256=hash(identities.map(i=>i.path+'\0'+i.sha256+'\n').join(''));
 const report={ok:true,status:'candidate-not-published',sourceCommit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),version,exe,archive,exeBytes:statSync(exe).size,exeSHA256:hash(readFileSync(exe)),asarSHA256:hash(readFileSync(archive)),renderer:renderer.replaceAll('\\','/'),verifiedFiles:files.map(p=>p.replaceAll('\\','/')),runtimeInputsSHA256,inputCount:inputs.length,inputs:identities};

@@ -17,6 +17,7 @@ import {verifyEmptyFeedback} from './empty-feedback.browser.mjs';
 import {verifyNameSpacing} from './name-spacing.browser.mjs';
 import {verifyExactWaveCase} from './exact-wave.browser.mjs';
 import {verifyHeldFire} from './held-fire.browser.mjs';
+import {verifyWaveClearGate} from './wave-clear-gate.browser.mjs';
 
 const expected=process.env.BOXHEAD_QA_VERSION??JSON.parse(readFileSync('package.json','utf8')).version;
 const root=process.cwd(),out=resolve(process.env.BOXHEAD_QA_OUT??`generated/reports/v${expected.replaceAll('.','')}/portable`);
@@ -26,7 +27,7 @@ const port=await new Promise((resolvePort,reject)=>{const s=createServer();s.onc
 const child=spawn(exe,['--boxhead-multi','--boxhead-hidden','--window-position=-32000,0',`--remote-debugging-port=${port}`,
  '--disable-features=CalculateNativeWinOcclusion','--disable-backgrounding-occluded-windows','--disable-background-timer-throttling','--force-device-scale-factor=1'],
  {cwd:root,windowsHide:true,stdio:'ignore',env:{...process.env,BOXHEAD_USER_DATA:join(out,'data-'+expected)}});
-let browser,page;
+let browser,page,waveClearGate;
 try{
  const endpoint=`http://127.0.0.1:${port}`;
  let ready=false;
@@ -71,15 +72,25 @@ try{
   await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert.ok(await g.waitScreen('State_Main','Screen_Main'));
   await g.clickClip('m.mcScreen.mcContinue');assert.ok(await g.waitExpr('m.mcWorld?.mLoaded && g.state()==="State_RunWorld"'));
   const audio=await g.expr('g.audio()');assert.equal(audio.decoded,31);assert.equal(audio.state,'running');
+  if(expected==='0.3.8'&&process.env.BOXHEAD_QA_TIMED==='1'){
+   waveClearGate=await verifyWaveClearGate(g,join(out,'wave-clear-gate'),{mode:'Single',checkPause:true});
+   // Settlement advances to wave 2. Start a new wave-1 run through the menu before the existing candidate fixtures.
+   await page.keyboard.press('KeyP');assert.ok(await g.waitExpr('m.mcWorld.mPaused'));await page.waitForTimeout(700);
+   await g.clickClip('m.mcWorld.mHud.mcScreenPause._SaveQuit');assert.ok(await g.waitScreen('State_Main','Screen_Main'));
+   await g.clickClip('m.mcScreen.mcSinglePlay');assert.ok(await g.waitScreen('State_SelectWorld_Single','Screen_SelectWorld'));
+   const startWave=page.getByRole('textbox',{name:'Start wave'});await startWave.click();await page.keyboard.press('Control+A');await page.keyboard.type('1');await page.keyboard.press('Enter');await page.keyboard.press('Tab');
+   await g.clickClip('m.mcScreen.mcSubScreen.mcLevel_Selection.mcLevelIcons');assert.ok(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));
+   assert.equal(await g.expr('m.mcWorld.mUpgrades.mLevelIndex'),1);assert.equal(await g.expr('m.mcWorld.mUpgrades.lanGrowth.players[0].level'),1);await page.waitForTimeout(700);
+  }
   if(process.env.BOXHEAD_QA_NAME_SPACING==='1')await verifyNameSpacing(g,join(out,'name-spacing'));
   if(process.env.BOXHEAD_QA_ENCHANTMENT==='1')await verifyPersistentEnchantment(g,join(out,'enchantment'));
-  if(['0.3.5','0.3.6','0.3.7'].includes(expected)&&process.env.BOXHEAD_QA_TIMED==='1')await verifyEmptyFeedback(g,join(out,'empty-feedback'));
-  if(process.env.BOXHEAD_QA_TIMED==='1')await (['0.3.4','0.3.5','0.3.6','0.3.7'].includes(expected)?verifyV034Candidate:expected==='0.3.3'?verifyV033Candidate:expected==='0.3.2'?verifyV032Candidate:verifyV031Candidate)(g,join(out,'timed-candidate'));
+  if(['0.3.5','0.3.6','0.3.7','0.3.8'].includes(expected)&&process.env.BOXHEAD_QA_TIMED==='1')await verifyEmptyFeedback(g,join(out,'empty-feedback'));
+  if(process.env.BOXHEAD_QA_TIMED==='1')await (['0.3.4','0.3.5','0.3.6','0.3.7','0.3.8'].includes(expected)?verifyV034Candidate:expected==='0.3.3'?verifyV033Candidate:expected==='0.3.2'?verifyV032Candidate:verifyV031Candidate)(g,join(out,'timed-candidate'));
   if(process.env.BOXHEAD_QA_HELD_FIRE==='1')await verifyHeldFire(g,join(out,'held-fire'));
   assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(errors,[]);
   await g.shot(join(out,'final-portable.png'),false);
  }
- writeFileSync(join(out,'launch-'+version+'.json'),JSON.stringify({version,exe,executable,archive,extractedAsarSha256,verifiedRuntimeFiles,viewport,ok:true},null,2));
+ writeFileSync(join(out,'launch-'+version+'.json'),JSON.stringify({version,exe,executable,archive,extractedAsarSha256,verifiedRuntimeFiles,viewport,gatedSettlementChecked:waveClearGate?.ok===true,ok:true},null,2));
  console.log('PASS: actual portable',version,process.env.BOXHEAD_QA_CAPTURE_ASAR?'baseline extraction':'gameplay, save/continue and audio');
 }finally{
  if(page)await page.evaluate(()=>window.boxheadDesktop.quit()).catch(()=>{});
