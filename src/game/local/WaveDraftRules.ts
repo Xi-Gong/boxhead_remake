@@ -7,6 +7,8 @@ export type DraftOutcome='clear'|'boss'|'survived';
 export interface DraftRound {
   outcome?:DraftOutcome;
   readyRule?:typeof DRAFT_READY_RULE;
+  intro?:{remainingTicks:number;entered:boolean[]};
+  chosen?:boolean[];
   wave:number;remainingTicks:number;multiplier:number;
   offers:Reward[][];selected:number[];confirmed:boolean[];armed:boolean[];previousBits:number[];
 }
@@ -32,11 +34,12 @@ export function newWaveDraft(wave:number,modern=false,simplified=false,endurance
 export function copyWaveDraft(state:WaveDraftState|undefined):WaveDraftState|undefined {
   if(!state)return;
   const r=state.round;
-  return {...state,bonuses:[{...state.bonuses[0]},{...state.bonuses[1]}],...(r?{round:{...r,offers:r.offers.map(x=>[...x]),selected:[...r.selected],confirmed:[...r.confirmed],armed:[...r.armed],previousBits:[...r.previousBits]}}:{})};
+  return {...state,bonuses:[{...state.bonuses[0]},{...state.bonuses[1]}],...(r?{round:{...r,offers:r.offers.map(x=>[...x]),selected:[...r.selected],confirmed:[...r.confirmed],armed:[...r.armed],previousBits:[...r.previousBits],...(r.intro?{intro:{...r.intro,entered:[...r.intro.entered]}}:{}),...(r.chosen?{chosen:[...r.chosen]}:{})}}:{})};
 }
 /** Three explicit card clicks fit the existing seven-bit packet; 96 reserves both weapon-cycle bits. */
 export function encodeDraftChoice(choice:number):number {return 96+(choice+1);}
 export function decodeDraftChoice(bits:number):number|undefined {return bits>=97&&bits<=99?bits-97:undefined;}
 export function encodeDraftSelection(choice:number):number{return 100+choice;}
 export const DRAFT_CONFIRM=103;
+export const DRAFT_CONTINUE=106;
 export function compactStat(value:number):string {return Math.abs(value)<10000?String(Math.round(value)):value.toExponential(1);}

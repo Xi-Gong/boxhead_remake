@@ -13,6 +13,7 @@ export async function verifyReadmeLan(H,C,report,out){
  const target=Math.max(...await Promise.all(games.map(g=>g.expr('m.mcWorld.mTick'))))+60;
  for(const peer of [H,C])await peer.page.evaluate(target=>{const w=window.__game.main().mcWorld,process=w.Process;w.Process=function(...args){if(this.mTick===target)this.mUpgrades.FinishTimedWave();return process.apply(this,args);};},target);
  await both('m.mcWorld.mUpgrades.timedWave.phase==="draft"');
+ for(const [index,g]of games.entries())await g.enterUpgrades([index]);
  for(const [index,g]of games.entries())assert(await g.waitExpr(`typeof m.mcWorld._WaveDraftHud?._Player${index}?._Card0?.onRelease==="function"`));
  await games[0].clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');await games[0].clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');
  await both('m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]&&!m.mcWorld.mUpgrades.waveDraft.round.confirmed[1]');

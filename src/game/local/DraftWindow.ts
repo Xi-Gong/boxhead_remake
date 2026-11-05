@@ -9,6 +9,7 @@ import {statsOpen,toggleStats,statsKeyLabel,beginStatsBinding,statsBindingHint} 
 import {capturePlayerStats,type PlayerStats} from './PlayerStats.ts';
 import {PERCENT_STATS,percentText,type PercentStat} from './PercentStats.ts';
 import {DRAFT_CONFIRM,encodeDraftSelection,REWARD_LABELS,compactStat,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
+import {renderWaveClear,hideWaveClear,confirmKeyLabel} from './WaveClearUi.ts';
 type Preview=(stats:PlayerStats|undefined,reward:Reward,multiplier:number)=>string;
 interface View {clip:any;backdrop:any;players:any[];cards:any[][];wave:number;indices:number[];key:string;signature:string;size:string}
 const views=new WeakMap<object,View>();
@@ -62,7 +63,8 @@ function create(world:any,state:WaveDraftState,indices:number[]):View{
   text(side,'_Hint',0,262,column,17,BODY_FONT,12,MUTED,false,'center','');
   const ready=actionButton(side,'_Ready',column/2,296,column,30,'READY',13);
   ready.onRelease=()=>{const r=(netSession()?.confirmedWaveDraft??waveDraft(world))?.round;if(!r||r.confirmed[index])return;
-   r.readyRule?queueDraftCommand(world,index,DRAFT_CONFIRM,r.wave):queueDraftChoice(world,index,r.selected[index]!,r.wave);};
+   if(r.chosen&&!r.chosen[index])return;
+   r.readyRule?queueDraftCommand(world,index,DRAFT_CONFIRM,r.wave,'choices'):queueDraftChoice(world,index,r.selected[index]!,r.wave);};
   players[index]=side;
  }
  text(clip,'_Controls',12,382,WIDTH-24,17,BODY_FONT,12,INK,true,'center','');
@@ -99,6 +101,8 @@ function animate(view:View):void{
  }
 }
 export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview):void{
+ if(state.round?.intro){const old=views.get(world);if(old){old.clip._visible=false;old.backdrop._visible=false;}renderWaveClear(world,state);return;}
+ hideWaveClear(world);
  const round=state.round!,session=netSession(),indices=session?[session.role]:round.offers.map((_,i)=>i);let view=views.get(world);
  if(!view||view.wave!==round.wave||view.key!==indices.join(','))view=create(world,state,indices);
  view.clip._x=(world.mScreenSize.x-WIDTH)/2;view.clip._y=Math.max(64,(world.mScreenSize.y-HEIGHT)/2);
@@ -108,11 +112,11 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
  view.clip._Title.text=round.outcome==='clear'?'EARLY CLEAR!  DOUBLE REWARD':round.outcome==='survived'?'WAVE '+round.wave+' SURVIVED':round.multiplier===2?'BOSS DOWN!  DOUBLE REWARD':'WAVE '+round.wave+' CLEARED!';
  const partner=session?(round.confirmed[1-session.role]?'PARTNER READY':'PARTNER IS CHOOSING'):'';
  const stats=session?session.confirmedPlayerStats:capturePlayerStats(world),open=indices.map(i=>statsOpen(world,i));
- label(view.clip._Controls,`MOVE: SELECT   A: READY   X / ${indices.map(statsKeyLabel).join(' / ')}: ${open.some(Boolean)?'BACK TO UPGRADES':'VIEW STATS'}`,12);
+ label(view.clip._Controls,`MOVE: SELECT / ${indices.map(i=>'['+confirmKeyLabel(i)+']').join(' / ')} / PAD A: READY / X / ${indices.map(statsKeyLabel).join(' / ')}: ${open.some(Boolean)?'BACK':'STATS'}`,12);
  // Keep the full-width prompt above the cards; the persistent DOM pad selectors occupy the bottom row.
  view.clip._Controls._visible=false;
  view.clip._Clock.text=[round.readyRule?partner:`${Math.ceil(round.remainingTicks/CMain.mFPS)}s / DEFAULT: FIREPOWER`,view.clip._Controls.text].filter(Boolean).join(' / ');
- const signature=JSON.stringify([round.selected,round.confirmed,round.offers,round.multiplier,stats,open,statsBindingHint(world),indices.map(statsKeyLabel)]);
+ const signature=JSON.stringify([round.selected,round.chosen,round.confirmed,round.offers,round.multiplier,stats,open,statsBindingHint(world),indices.map(statsKeyLabel)]);
  if(signature===view.signature){animate(view);return;}view.signature=signature;
  for(const index of indices){
   const side=view.players[index],s=stats?.find(p=>p.index===index),ready=round.confirmed[index],opened=statsOpen(world,index),b=state.bonuses[index]!;
@@ -120,13 +124,13 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
   label(side._Bonuses,`LEVEL ${compactStat(s?.level??1)} / ${compactStat(s?.xp??0)} XP`,12);
   setButtonLabel(side._StatsButton,opened?'X / BACK':`X / ${statsKeyLabel(index)} STATS`);
   for(let choice=0;choice<3;choice++){
-   const card=view.cards[index]![choice],reward=round.offers[index]![choice]!,selected=round.selected[index]===choice,[amount,description]=benefit(reward,s,round.multiplier);
+   const card=view.cards[index]![choice],reward=round.offers[index]![choice]!,selected=(!round.chosen||round.chosen[index])&&round.selected[index]===choice,[amount,description]=benefit(reward,s,round.multiplier);
    if(card._selected!==selected){card._fromY=card._y;card._changedAt=nowMs();card._selected=selected;}
    card._visible=!opened;card._Face.clear();frame(card._Face,card._cardWidth,card._cardHeight,selected?0xfff0d9:CREAM,selected?RED:INK,selected?3:1.8);
    drawIcon(card._Icon,reward);label(card._Label,REWARD_LABELS[reward],indices.length===2?14:15);label(card._Benefit,amount,indices.length===2?19:25);card._Benefit.textColor=rewardColor(reward);label(card._Detail,description,12);
    label(card._Preview,preview(s,reward,round.multiplier),12);
    const mark=card._SelectedMark;mark.clear();mark._visible=selected;if(selected){mark.lineStyle(2.5,RED,100);mark.moveTo(card._cardWidth-25,12);mark.lineTo(card._cardWidth-20,17);mark.lineTo(card._cardWidth-11,7);}
-   card._alpha=ready?80:100;card.onRelease=!ready?()=>round.readyRule?queueDraftCommand(world,index,encodeDraftSelection(choice),round.wave):queueDraftChoice(world,index,choice,round.wave):undefined;card.useHandCursor=!!card.onRelease;
+   card._alpha=ready?80:100;card.onRelease=!ready?()=>round.readyRule?queueDraftCommand(world,index,encodeDraftSelection(choice),round.wave,'choices'):queueDraftChoice(world,index,choice,round.wave):undefined;card.useHandCursor=!!card.onRelease;
   }
   side._Stats._visible=opened;const values=rows(s);
   for(let row=0;row<values.length;row++){label(side._Stats['_Name'+row],values[row]?.[0]??'',12);label(side._Stats['_Value'+row],values[row]?.[1]??'',indices.length===2?12:15);side._Stats['_Value'+row].textColor=row===1?RED:row===2?BLUE:row===8?PURPLE:INK;}
@@ -135,8 +139,9 @@ export function renderDraftWindow(world:any,state:WaveDraftState,preview:Preview
   setButtonLabel(side._Stats._Bind,`CHANGE KEY: ${statsKeyLabel(index)} / PAD: X`);
   side._Hint.text=opened?(statsBindingHint(world)||(s?.percentages?shortcuts:'' )||(indices.length===2?`${shortcuts} / END ${b.endurance??0}${s?.enchantDamage?` / PWR ${b.enchantPower??0}`:''}`:`SOURCES: LEVEL + CHOICES / ENDURANCE ${b.endurance??0}${s?.enchantDamage?` / POWER ${b.enchantPower??0}`:''}`)):ready?'CHOICE LOCKED / WAITING FOR PARTNER':round.multiplier===2?(round.outcome?'DOUBLE GAINS / STAT CAPS APPLY':'EVERY BENEFIT IS DOUBLED'):'SELECT A CARD, THEN READY';
   side._Hint.textColor=ready&&!opened?GREEN:MUTED;
-  side._Ready._visible=!opened;setButtonLabel(side._Ready,ready?'READY! / WAITING':`READY / ${REWARD_LABELS[round.offers[index]![round.selected[index]!]!]}`);side._Ready.enabled=!ready;side._Ready._alpha=ready?70:100;
+  const chosen=!round.chosen||round.chosen[index];
+  side._Ready._visible=!opened;setButtonLabel(side._Ready,ready?'READY! / WAITING':!chosen?'SELECT A CARD':`READY / ${REWARD_LABELS[round.offers[index]![round.selected[index]!]!]}`);side._Ready.enabled=!ready&&chosen;side._Ready._alpha=ready||!chosen?55:100;
  }
  animate(view);
 }
-export function hideDraftWindow(world:any):void{const view=views.get(world);if(view){view.clip._visible=false;view.backdrop._visible=false;}}
+export function hideDraftWindow(world:any):void{hideWaveClear(world);const view=views.get(world);if(view){view.clip._visible=false;view.backdrop._visible=false;}}

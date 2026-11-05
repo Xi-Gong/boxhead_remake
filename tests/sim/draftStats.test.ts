@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame,KEYS} from './harness.ts';
+import {createHeadlessGame as boot,KEYS,type HeadlessGameOptions} from './harness.ts';
 import {CMain} from '../../src/game/packages.ts';
 import {beginWaveDraft,waveDraft} from '../../src/game/local/WaveDraft.ts';
 import {statsOpen,toggleStats,statsKeys,beginStatsBinding} from '../../src/game/local/DraftStatsInput.ts';
@@ -62,3 +62,6 @@ it('does not label finite sentinel-sized magazines infinite and keeps shortcut d
  expect(s.infinite).toBe(false);expect(rewardPreview(s,'capacity',1)).not.toMatch(/\bINF\b|FINITE WEAPONS/);
  CMain.mInput.KEY_FIRE2=CMain.mInput.mKey_List[82];expect(statsKeys()[1]).not.toBe(82);g.quit();
 });
+
+// Explicit pre-settlement input oracle; modern entry and selection have separate regressions.
+const createHeadlessGame=(opts:HeadlessGameOptions={})=>boot({...opts,classicFeatures:[...(opts.classicFeatures??[]),'wave-clear-gate-v1']});

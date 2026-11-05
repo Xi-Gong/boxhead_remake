@@ -955,4 +955,13 @@ export const DEVIATIONS: Deviation[] = [
       'retaining the final-HP 40% bound, empty initial shield, full useful crate refill and exact '+
       'current stock on resume. Its dependency on percentage stats preserves prior armor rules.',
   },
+  {
+    id:'WAVE_CLEAR_GATE',file:'local/WaveDraft.ts, WaveDraftRules.ts, WaveDraftInput.ts, WaveClearUi.ts, DraftWindow.ts, DraftStatsInput.ts, Gamepad.ts, Resume.ts; local/Net',
+    description:'Optional wave-clear-gate-v1 freezes combat for a mandatory three-second settlement, '+
+      'then requires a fresh per-player entry action before upgrades. No card is selected implicitly. '+
+      'Explicit selection and a separate READY grant each reward once. Snapshot-owned countdown, '+
+      'acknowledgements and choices survive saves and rollback; stage-tagged clicks and source-tick '+
+      'prediction metadata prevent one-shot actions crossing stages. Focus/device/pause release '+
+      'guards and DOM repeat suppression stay input-owned. Legacy drafts retain their original path.',
+  },
 ];

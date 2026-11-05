@@ -608,7 +608,7 @@ export class NetSession {
     if (this.rollback && this.predictionLimit > 0) rollbackPushSlot(this, world);
     this.applyPlayer(this.role, mine, t);
     this.applyPlayer((1 - this.role) as LanRole, remoteBits, t);
-    if (this.rollback) this.tickMeta.set(t, { remoteBits, predicted,remoteWeaponCommands:this.remoteWeaponCommands.get(t) });
+    if (this.rollback) this.tickMeta.set(t, { remoteBits, predicted,remoteDraftCommand:!!world.mUpgrades?.waveDraft?.round?.chosen&&remoteBits>=97&&remoteBits<=106,remoteWeaponCommands:this.remoteWeaponCommands.get(t) });
     this.stall(undefined);
     return predicted ? 'predicted' : 'confirmed';
   }
@@ -775,6 +775,7 @@ export class NetSession {
   /** Shared live/replay step. Only the confirmed frontier may commit external side effects. */
   executeWorldStep(world: any, tick: number): void {
     const meta = this.tickMeta.get(tick);
+    meta.remoteDraftCommand=!!world.mUpgrades?.waveDraft?.round?.chosen&&meta.remoteBits>=97&&meta.remoteBits<=106;
     delete meta.checkpoint;
     this.pendingSounds.delete(tick);
     this.events.begin(tick);

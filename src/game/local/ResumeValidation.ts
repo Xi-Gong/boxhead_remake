@@ -43,8 +43,12 @@ function draft(v:any):boolean{
  if(!numbers(r,['remainingTicks','multiplier'])||!integer(r.wave,1)||!Array.isArray(r.offers)||r.offers.length<1||r.offers.length>2
   ||!r.offers.every(row=>Array.isArray(row)&&row.length===3&&row.every(x=>rewards.includes(x))))return false;
  const count=r.offers.length;
+ const booleans=(x:any):boolean=>Array.isArray(x)&&x.length===count&&x.every(n=>typeof n==='boolean');
+ if(!optional(r.chosen,x=>booleans(x)&&r.readyRule==='draft-ready-v1')||!optional(r.intro,x=>record(x)&&integer(x.remainingTicks,0,150)&&booleans(x.entered)
+  &&r.readyRule==='draft-ready-v1'&&r.chosen!==undefined&&(x.remainingTicks===0||x.entered.every(v=>!v))))return false;
  return ['selected','confirmed','armed','previousBits'].every(k=>Array.isArray(r[k])&&r[k].length===count)
-  &&r.selected.every(n=>integer(n,0,2))&&r.confirmed.every(n=>typeof n==='boolean')&&r.armed.every(n=>typeof n==='boolean')&&r.previousBits.every(n=>integer(n,0,127));
+  &&r.selected.every(n=>integer(n,0,2))&&r.confirmed.every(n=>typeof n==='boolean')&&r.armed.every(n=>typeof n==='boolean')&&r.previousBits.every(n=>integer(n,0,127))
+  &&(!r.chosen||r.confirmed.every((v,i)=>!v||r.chosen[i]))&&(!r.intro||r.confirmed.every(v=>!v));
 }
 function boss(v:any):boolean{
  return numbers(v,['life','maximum'])&&string(v.kind)&&typeof v.defeated==='boolean'&&optional(v.id,string)

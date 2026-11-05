@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame,KEYS} from './harness.ts';
+import {createHeadlessGame as boot,KEYS,type HeadlessGameOptions} from './harness.ts';
 import {installGamepad} from '../../src/game/local/Gamepad.ts';
 import {beginWaveDraft,processWaveDraft,waveDraft} from '../../src/game/local/WaveDraft.ts';
 import {NetSession} from '../../src/game/local/Net/NetSession.ts';
@@ -62,3 +62,6 @@ it('routes both keyboard sets and either assigned pad to the LAN client draft wi
   }
  }finally{g.quit();}
 });
+
+// Explicit pre-settlement input oracle; modern entry and selection have separate regressions.
+const createHeadlessGame=(opts:HeadlessGameOptions={})=>boot({...opts,classicFeatures:[...(opts.classicFeatures??[]),'wave-clear-gate-v1']});

@@ -14,7 +14,7 @@ import { LAN_CHECKSUM_EVERY, PREDICT_MAX_LAG_TICKS, ROLLBACK_WINDOW_TICKS } from
 import { captureWorldSnap, restoreWorldSnap, type RingSlot, type SnapCtx } from './WorldSnap.ts';
 
 /** Per executed tick: the remote bits used, whether they were a prediction, and recomputable artifacts. */
-export interface TickMeta { remoteBits: number; predicted: boolean; sum?: string; endState?: string }
+export interface TickMeta { remoteBits: number; predicted: boolean; remoteDraftCommand?:boolean; sum?: string; endState?: string }
 export interface SoundCall { item: any; secOffset?: any; nLoop?: any }
 
 /**
@@ -55,7 +55,9 @@ export function predictedRemoteBits(session: any, tick: number): number {
   for (const [t, value] of session.remoteFrames as Map<number, number>) {
     if (t < tick && t > newest) { newest = t; bits = value; }
   }
-  return bits;
+  // A gated draft action is one shot, including the final READY which can enter combat.
+  // The same byte can be a valid held combat bitmap, so classify its original simulation tick.
+  return session.tickMeta?.get(newest)?.remoteDraftCommand?0:bits;
 }
 
 /** True when tick u may execute on prediction (not yet confirmed, within the depth bound). */
@@ -193,6 +195,7 @@ function replayTick(session: any, world: any, u: number): void {
     return;
   }
   session.soundRecordingTick = u;
+  const remoteDraftCommand=!!world.mUpgrades?.waveDraft?.round?.chosen&&bits1>=97&&bits1<=106;
   try {
     world.Process();
   } finally {
@@ -203,6 +206,7 @@ function replayTick(session: any, world: any, u: number): void {
   const meta: TickMeta = session.tickMeta.get(u) ?? { remoteBits: bits1, predicted: false };
   meta.remoteBits = bits1;
   meta.predicted = !session.remoteFrames.has(u);
+  meta.remoteDraftCommand=remoteDraftCommand;
   session.tickMeta.set(u, meta);
   if (u > 0 && u % LAN_CHECKSUM_EVERY === 0) meta.sum = session.computeChecksumString(world, u);
   if (!meta.predicted) session.maybeCheckpoint(world, u);

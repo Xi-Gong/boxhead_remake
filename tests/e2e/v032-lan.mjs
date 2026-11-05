@@ -90,9 +90,14 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
  await schedule(`for(const e of Object.values(w.mThing_Collection.mThings))if(e.mBossKind&&e.mLife>0){e.mLife=0;e.lanFatalSlot=0;e.CheckForDead();}`);
  await both('m.mcWorld.mUpgrades.timedWave.phase==="draft"&&m.mcWorld.mUpgrades.waveDraft.round.multiplier===2');
  if(power){await schedule(`w.mUpgrades.waveDraft.round.offers=w.mUpgrades.waveDraft.round.offers.map(cards=>['enchantPower',...cards.slice(1)]);`);await both('m.mcWorld.mUpgrades.waveDraft.round.offers.every(cards=>cards[0]==="enchantPower")');}
+ for(const [i,g]of games.entries())await g.enterUpgrades([i]);
  // The simulation can enter draft before the LAN confirmed HUD has rendered its cards.
  for(const [i,g]of games.entries())assert(await g.waitExpr(`typeof m.mcWorld._WaveDraftHud?._Player${i}?._Card0?.onRelease==="function"`));
  // Both supported keyboard sets must navigate the LAN client without moving P1.
+ if(await games[1].expr('m.mcWorld.mUpgrades.features.includes("wave-clear-gate-v1")')){
+  // Seed an explicit selection before checking the historical four-edge cycle; fresh-selection semantics have their own gate regression.
+  await games[1].clickClip('m.mcWorld._WaveDraftHud._Player1._Card0');await both('m.mcWorld.mUpgrades.waveDraft.round.chosen[1]');
+ }
  const initial=(await states())[0].round.selected;
  await C.page.keyboard.press('KeyS');await both(`m.mcWorld.mUpgrades.waveDraft.round.selected[1]===${(initial[1]+1)%3}`);
  await C.page.keyboard.press('ArrowDown');await both(`m.mcWorld.mUpgrades.waveDraft.round.selected[1]===${(initial[1]+2)%3}&&m.mcWorld.mUpgrades.waveDraft.round.selected[0]===${initial[0]}`);
@@ -135,6 +140,7 @@ export async function verifyV032Lan(H,C,report,out,simple=false,native=false){
   await resume();
   await schedule(`const c=w.mUpgrades.timedWave.clear;c.zombies=c.devils=0;w.mUpgrades.Process();const r=w.mUpgrades.waveDraft.round;if(!r||r.outcome!=='clear')throw new Error('finite early-clear outcome missing');r.offers=r.offers.map(()=>['dodge','health','capacity']);`);
   await both('m.mcWorld.mUpgrades.waveDraft.round?.outcome==="clear"&&m.mcWorld.mUpgrades.waveDraft.round.multiplier===2');
+  for(const [i,g]of games.entries())await g.enterUpgrades([i]);
   for(const [i,g]of games.entries()){
    assert(await g.waitExpr(`m.mcWorld._WaveDraftHud?._Player${i}?._Card0?._Benefit.text==="+6%"`));
    assert.match(await g.expr('m.mcWorld._WaveDraftHud._Title.text'),/EARLY CLEAR.*DOUBLE/);

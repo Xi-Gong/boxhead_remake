@@ -31,7 +31,7 @@ function fakePads() {
 
 describe('gamepad -> game (scope wiring)', () => {
   it('X opens both local sheets only during drafts and simultaneous pads toggle once',()=>{
-    const g=createHeadlessGame({mode:'Coop'}),w=g.world(),pads=fakePads(),gp=installGamepad({player:g.player,provider:pads.provider});
+    const g=createHeadlessGame({mode:'Coop',classicFeatures:['wave-clear-gate-v1']}),w=g.world(),pads=fakePads(),gp=installGamepad({player:g.player,provider:pads.provider});
     try{
       pads.set(0,{pressed:[2]});gp.poll(false);expect(statsOpen(w,0)).toBe(false);
       pads.set(0,{});gp.poll(false);beginWaveDraft(w);
@@ -40,7 +40,7 @@ describe('gamepad -> game (scope wiring)', () => {
     }finally{gp.dispose();g.quit();}
   });
   it('each pad chooses and confirms its own draft through the existing key slots',()=>{
-    const g=createHeadlessGame({mode:'Coop'}),w=g.world(),pads=fakePads();
+    const g=createHeadlessGame({mode:'Coop',classicFeatures:['wave-clear-gate-v1']}),w=g.world(),pads=fakePads();
     const gp=installGamepad({player:g.player,provider:pads.provider});
     try{
       pads.set(0,{pressed:[0]});gp.poll(false);g.tick(1);beginWaveDraft(w);g.tick(2);

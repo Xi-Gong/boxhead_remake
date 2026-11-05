@@ -13,7 +13,7 @@ try{
  }});
  await toMainMenu(g);await g.clickClip('m.mcScreen.mcCoopPlay');assert(await g.waitScreen('State_SelectWorld_Coop','Screen_SelectWorld'));
  await g.click(320,230);assert(await g.waitExpr('g.state()==="State_RunWorld"&&m.mcWorld?.mLoaded'));await g.page.waitForTimeout(700);
- await g.expr('(m.mcWorld.mUpgrades.timedWave.remainingTicks=1)');assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._visible'));
+ await g.expr('(m.mcWorld.mUpgrades.timedWave.remainingTicks=1)');await g.enterUpgrades();assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._visible'));
  await g.shot(out+'/cards.png',false);report.shots.push('cards.png');
  for(let i=0;i<2;i++)for(let c=0;c<3;c++){
   const path=`m.mcWorld._WaveDraftHud._Player${i}._Card${c}`,b=await g.centreOf(path);assert(b.w>=279&&b.h>=63);

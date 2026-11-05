@@ -102,6 +102,37 @@ export class Game {
     await this.pageClick(px, py);
     return c;
   }
+  /** Wait through the real settlement timer, then acknowledge with real clicks (all local players by default).
+   * LAN callers may pass their owned index; this does not wait for the other peer and deadlock serial callers.
+   * Dedicated gate tests separately exercise early input; this helper never rewrites clocks or selection state.
+   */
+  async enterUpgrades(indices) {
+    if (!(await this.waitExpr('!!m.mcWorld?.mUpgrades?.waveDraft?.round'))) throw new Error('no upgrade round');
+    if (!(await this.expr('!!m.mcWorld.mUpgrades.waveDraft.round.intro'))) {
+      if (!(await this.waitExpr('m.mcWorld._WaveDraftHud?._visible'))) throw new Error('upgrade cards did not appear');
+      return;
+    }
+    if (!(await this.waitExpr('m.mcWorld._WaveClearHud?._visible'))) throw new Error('settlement did not appear');
+    const owned = indices ?? await this.expr('[0,1].filter(i=>!!m.mcWorld._WaveClearHud?.["_Player"+i])');
+    if (!Array.isArray(owned) || !owned.length || owned.some(i=>i!==0&&i!==1)) throw new Error('no owned settlement player');
+    if (!(await this.waitExpr('!m.mcWorld.mUpgrades.waveDraft.round?.intro || m.mcWorld.mUpgrades.waveDraft.round.intro.remainingTicks===0'))) throw new Error('settlement timer did not finish');
+    for (const index of [...new Set(owned)]) {
+      const entered = `!m.mcWorld.mUpgrades.waveDraft.round?.intro || m.mcWorld.mUpgrades.waveDraft.round.intro.entered[${index}]`;
+      if (await this.expr(entered)) continue;
+      const button = `m.mcWorld._WaveClearHud._Player${index}._Continue`;
+      if (!(await this.waitExpr(`!!${button}&&${button}.enabled!==false`))) throw new Error(`P${index+1} continue stayed disabled`);
+      // A neutral sample after the locked period must precede this new click.
+      await this.page.waitForTimeout(100);
+      await this.clickClip(button);
+      if (!(await this.waitExpr(entered,1500))) {
+        await this.clickClip(button); // An offscreen first click may miss; verify the retry too.
+        if (!(await this.waitExpr(entered,1500))) throw new Error(`P${index+1} continue did not acknowledge`);
+      }
+    }
+    if (!(await this.expr('!!m.mcWorld.mUpgrades.waveDraft.round?.intro'))) {
+      if (!(await this.waitExpr('m.mcWorld._WaveDraftHud?._visible'))) throw new Error('upgrade cards did not appear');
+    }
+  }
   async shot(path, clip = true) {
     mkdirSync(dirname(path), { recursive: true });
     if (!clip) return this.page.screenshot({ path });

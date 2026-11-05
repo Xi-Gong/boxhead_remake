@@ -465,6 +465,7 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
   if(snap.timedWave&&!timedWave(world))return false;
   if(snap.waveDraft&&!waveDraft(world))return false;
   if(snap.waveDraft?.round?.readyRule&&!draftReadyConfigured())return false;
+  if((snap.waveDraft?.round?.intro||snap.waveDraft?.round?.chosen)&&!hasFeature(world,'wave-clear-gate-v1'))return false;
   if(snap.combat&&!combatConfigured())return false;
   if(snap.combat?.rule===SIMPLE_COMBAT_RULE&&configuredCombatRule()!==SIMPLE_COMBAT_RULE)return false;
   if((snap.bossWaves||snap.timedWave?.boss||snap.variants?.enemies.some(e=>e.fields.mBossKind))&&!bossWavesConfigured())return false;
@@ -490,6 +491,9 @@ export function applyToWorld(world: any, snap: RunSnapshot): boolean {
     if(waveDraft(world))u.waveDraft=copyWaveDraft(snap.waveDraft)??newWaveDraft(snap.wave,combatWorld(world),simplifiedWorld(world),durabilityEnabled(world),enchantPowerEnabled(world),percentStats(world));
     if(u.waveDraft?.round&&draftReadyConfigured()){
       u.waveDraft.round.readyRule='draft-ready-v1';u.waveDraft.round.remainingTicks=0;
+      if(hasFeature(world,'wave-clear-gate-v1')&&!u.waveDraft.round.chosen){
+        u.waveDraft.round.chosen=[...u.waveDraft.round.confirmed];u.waveDraft.round.armed.fill(false);u.waveDraft.round.previousBits.fill(0);
+      }
     }
     // Multiplier: climb step by step so tier upgrades activate at every crossed index (the LogKills path); a single
     // call would only activate the tiers of the final index. Decay below the built value is a plain set.

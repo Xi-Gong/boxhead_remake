@@ -3,12 +3,14 @@ import {Key} from '../../engine/runtime.ts';
 import {CMain,CSaveData,CInput} from '../packages.ts';
 import {netSession} from './Net/NetSession.ts';
 import {SLOT_ORDER} from './Net/NetSlot.ts';
+import {hasFeature} from './ModernFeatures.ts';
+import {flashKeyCode} from '../../engine/platform/Keyboard.ts';
 type Sheet={open:boolean;release:boolean};
 type View={wave:number;sheets:Sheet[];binding?:number;message:string;batch?:object};
 const views=new WeakMap<object,View>();
 function view(world:any):View{
  const wave=world.mUpgrades?.waveDraft?.round?.wave??-1;let v=views.get(world);
- if(!v||v.wave!==wave){v={wave,sheets:[{open:false,release:false},{open:false,release:false}],message:''};views.set(world,v);}return v;
+ if(!v||v.wave!==wave){const release=!!world.mUpgrades?.waveDraft?.round?.chosen;v={wave,sheets:[{open:false,release},{open:false,release}],message:''};views.set(world,v);}return v;
 }
 export function statsKeys():number[]{
  const keys=CSaveData.mSharedObject?.data?.mDraftStatsKeys;
@@ -22,9 +24,13 @@ export function statsKeys():number[]{
 }
 export function statsKeyLabel(index:number):string{const key=statsKeys()[index]!;return key===9?'TAB':String(CInput.mValidKeys?.[key]?.mName??String.fromCharCode(key)).replace(/^'(.)'$/,'$1');}
 export function statsOpen(world:any,index:number):boolean{return view(world).sheets[index]?.open??false;}
+/** A focus/device lifetime ended: drop sampled actions until a separate neutral sample. */
+export function invalidateDraftInputs(world:any):void{
+ if(hasFeature(world,'wave-clear-gate-v1')&&world.mUpgrades?.waveDraft?.round)for(const sheet of view(world).sheets)sheet.release=true;
+}
 export function toggleStats(world:any,index:number,batch?:object):void{
  const round=world.mUpgrades?.waveDraft?.round,s=netSession();
- if(!round||index>=round.offers.length||s&&s.role!==index)return;
+ if(!round||round.intro||index>=round.offers.length||s&&s.role!==index)return;
  const v=view(world);if(batch&&v.batch===batch)return;v.batch=batch;
  const open=!v.sheets[index]!.open;
  for(const i of s?[index]:round.offers.map((_:unknown,i:number)=>i)){v.sheets[i]!.open=open;v.sheets[i]!.release=true;}
@@ -32,6 +38,9 @@ export function toggleStats(world:any,index:number,batch?:object):void{
 }
 export function beginStatsBinding(world:any,index:number):void{view(world).binding=index;view(world).message='PRESS A KEY / ESC TO CANCEL';}
 export function statsBindingHint(world:any):string{return view(world).message;}
+export function draftPhysicalHeld(index:number):boolean{
+ return SLOT_ORDER.some(name=>(netSession()?['','2']:[index?'2':'']).some(post=>CMain.mInput?.['KEY_'+name+post]?.IsDown()));
+}
 export function draftInputBlocked(world:any,index:number):boolean{
  if(!world?.mUpgrades?.waveDraft?.round)return false;
  const sheet=view(world).sheets[index]!;
@@ -48,12 +57,35 @@ export function draftInputBlocked(world:any,index:number):boolean{
  return true;
 }
 export function installDraftStatsInput():void{
+ // Key._clear on blur intentionally forgets held keys. An OS repeat after focus returns
+ // must not recreate a fresh draft press. Capture before the platform's bubbling listener.
+ if(typeof window!=='undefined')window.addEventListener('keydown',event=>{
+  const world=CMain._this?.mcWorld,target=event.target;
+  if(!event.repeat||!hasFeature(world,'wave-clear-gate-v1')||!world.mUpgrades?.waveDraft?.round)return;
+  if(target instanceof HTMLElement&&(target.tagName==='INPUT'||target.tagName==='TEXTAREA'||target.isContentEditable))return;
+  const key=flashKeyCode(event),input=CMain.mInput;
+  if(SLOT_ORDER.some(name=>['','2'].some(post=>{const slot=input?.['KEY_'+name+post];return slot?.mKeycode===key||slot?.mKeycode_1===key;}))||statsKeys().includes(key)){
+   event.preventDefault();event.stopImmediatePropagation();
+  }
+ },true);
  const proto=CInput.prototype as any,process=proto.ProcessAllKeys;
  proto.ProcessAllKeys=function(this:any):any{
   const keys=statsKeys();for(let i=0;i<2;i++)if(this['KEY_STATS'+i]?.mKeycode!==keys[i])this.RegisterKey('KEY_STATS'+i,keys[i]);
   const result=process.call(this),world=CMain._this?.mcWorld;
   // Original CInput instances retain their Key listeners. Only the current world's input may toggle UI.
-  if(this!==CMain.mInput||!world?.mLoaded||world.mPaused||!world.mUpgrades?.waveDraft?.round)return result;
+  if(this!==CMain.mInput||!world?.mLoaded||!world.mUpgrades?.waveDraft?.round)return result;
+  const session=netSession();
+  if(hasFeature(world,'wave-clear-gate-v1')&&(world.mPaused||session&&(session.phase!=='playing'||session.netPaused||session.pauseBarrier.pending))){
+   for(const sheet of view(world).sheets)sheet.release=true;
+   for(const name of SLOT_ORDER)for(const post of ['','2']){this['KEY_'+name+post]?.IsPressed();this['KEY_'+name+post]?.IsReleased();}
+   for(const i of [0,1]){this['KEY_STATS'+i]?.IsPressed();this['KEY_STATS'+i]?.IsReleased();}
+   return result;
+  }
+  if(world.mPaused)return result;
+  if(world.mUpgrades.waveDraft.round.intro){
+   for(const i of [0,1]){this['KEY_STATS'+i]?.IsPressed();this['KEY_STATS'+i]?.IsReleased();}
+   return result;
+  }
   const v=view(world),code=Key.getCode();
   if(v.binding!==undefined&&Key.isDown(code)){
    const index=v.binding;

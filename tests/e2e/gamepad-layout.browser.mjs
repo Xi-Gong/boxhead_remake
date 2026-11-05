@@ -21,7 +21,7 @@ try{
  await press(0);assert(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mAmmo<100'));
  const ammo=await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mAmmo');await press(1,900);assert(await g.waitExpr('m.mcWorld.mUpgrades.weaponBindings[0].A==="uzi"'));assert.equal(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mAmmo'),ammo);
  await press(2,900);assert(await g.waitExpr('m.mcWorld.mUpgrades.weaponBindings[0].Y==="uzi"&&!m.mcWorld.mUpgrades.weaponBindings[0].A'));
- await g.expr('m.mcWorld.mUpgrades.FinishTimedWave()');assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._visible'));await press(3);assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Stats._visible'));
+ await g.expr('m.mcWorld.mUpgrades.FinishTimedWave()');await g.enterUpgrades();assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._visible'));await press(3);assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Stats._visible'));
  await press(1);assert(await g.expr('!m.mcWorld.mUpgrades.waveDraft.round.confirmed[0]'));await g.shot(`${out}/nintendo-stats.png`,false);
  // Actual DOM selectors must never cover the visible game instructions, with one or two pads.
  for(const size of [{width:640,height:480},{width:960,height:540},{width:480,height:720}])for(const pads of [1,2]){
@@ -35,7 +35,7 @@ try{
  await g.eval(()=>navigator.getGamepads=()=>[window.qaLetterPad]);await g.page.setViewportSize({width:640,height:480});await g.page.waitForTimeout(350);
  report.beforeClose=await g.expr('({state:g.state(),round:m.mcWorld.mUpgrades.waveDraft.round,fire:m.mInput?.KEY_FIRE?.IsDown(),stats:m.mcWorld._WaveDraftHud._Player0._Stats._visible})');
  await press(3);report.afterClose=await g.expr('({state:g.state(),round:m.mcWorld.mUpgrades.waveDraft.round,stats:m.mcWorld._WaveDraftHud?._Player0?._Stats?._visible})');
- assert(await g.waitExpr('!m.mcWorld._WaveDraftHud._Player0._Stats._visible',5000));await press(1);assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));
+ assert(await g.waitExpr('!m.mcWorld._WaveDraftHud._Player0._Stats._visible',5000));if(await g.expr('m.mcWorld.mUpgrades.features.includes("wave-clear-gate-v1")'))await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');await press(1);assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));
  assert.deepEqual(await g.scriptErrors(),[]);assert.deepEqual(g.log,[]);report.ok=true;
 }catch(error){report.error=String(error);await g.shot(`${out}/failed.png`,false);throw error;}finally{await g.close();await browser.close();writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));}
 console.log('PRINTED LETTER LAYOUT UI PASSED');

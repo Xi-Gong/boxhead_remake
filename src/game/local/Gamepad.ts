@@ -22,7 +22,7 @@ import { GamepadWatcher, navigatorPadProvider, STICK_DEADZONE, type PadDirs, typ
 import { STAGE_H, STAGE_W } from '../../engine/platform/Presenter.ts';
 import { Key, Mouse } from '../../engine/flash/input.ts';
 import { CMain, World } from '../packages.ts';
-import {toggleStats} from './DraftStatsInput.ts';
+import {toggleStats,invalidateDraftInputs} from './DraftStatsInput.ts';
 import {netSession} from './Net/NetSession.ts';
 import {hasFeature} from './ModernFeatures.ts';
 import {bindingsFor,queueWeaponCommand,setBindingProgress,type WeaponButton} from './WeaponBindings.ts';
@@ -101,7 +101,8 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
   type Hold={world:any;index:number;weapon:string;started:number;fired:boolean};
   const holds:[Partial<Record<WeaponButton,Hold>>,Partial<Record<WeaponButton,Hold>>]=[{},{}];
   // A is a shortcut in combat and a confirm in drafts. Keep physical entry state render-owned.
-  const draftEntries:[{world:any;wave:number;blockedA:boolean}|undefined,{world:any;wave:number;blockedA:boolean}|undefined]=[undefined,undefined];
+  type DraftEntry={world:any;wave:number;stage:string;blockedA:boolean};
+  const draftEntries:[DraftEntry|undefined,DraftEntry|undefined]=[undefined,undefined];
   const now=opts.now??(()=>performance.now());
   const cancelHolds=(slot:0|1):void=>{for(const value of Object.values(holds[slot]))if(value)setBindingProgress(value.world,value.index,undefined);holds[slot]={};};
   const pushedByPad = new Set<number>();
@@ -158,6 +159,10 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
 
   const releaseAll = (): void => {
     cancelHolds(0);cancelHolds(1);
+    const world=CMain?._this?.mcWorld;
+    if(hasFeature(world,'wave-clear-gate-v1')&&world.mUpgrades?.waveDraft?.round){
+      awaitRelease[0]=awaitRelease[1]=true;invalidateDraftInputs(world);
+    }
     draftEntries[0]=draftEntries[1]=undefined;
     wantedByPads.clear();
     for (const vk of [...pushedByPad]) {
@@ -218,7 +223,8 @@ export function installGamepad(opts: GamepadOptions): GamepadHandle {
     else{
       // A held before the transition must not become a fresh FIRE edge merely because its role changed.
       // World/wave identity survives rollback reconstruction; a genuinely new physical press stays usable.
-      if(entry?.world!==world||entry.wave!==round.wave)draftEntries[slot]={world,wave:round.wave,blockedA:h.has(face.A)&&!p.down.has(face.A)};
+      const stage=hasFeature(world,'wave-clear-gate-v1')?(round.intro?'intro':'choices')+(world.mPaused||session&&(session.phase!=='playing'||session.netPaused||session.pauseBarrier.pending)?':frozen':''):'';
+      if(entry?.world!==world||entry.wave!==round.wave||entry.stage!==stage)draftEntries[slot]={world,wave:round.wave,stage,blockedA:h.has(face.A)&&!p.down.has(face.A)};
       if(!h.has(face.A))draftEntries[slot]!.blockedA=false;
     }
     const actor=(Object.values(world?.mThing_Collection?.mPlayerThings??{})as any[]).find(player=>player.mPlayerIndex===index);

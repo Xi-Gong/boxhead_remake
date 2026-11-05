@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {createHeadlessGame} from './harness.ts';
+import {createHeadlessGame as boot,type HeadlessGameOptions} from './harness.ts';
 import {noSpawn} from './fxkit.ts';
 import {installGamepad} from '../../src/game/local/Gamepad.ts';
 import {bindingsFor,bindingProgress} from '../../src/game/local/WeaponBindings.ts';
@@ -38,3 +38,6 @@ it('changing layout cancels a held binding and waits for release instead of firi
  const pad=installGamepad({player:g.player,provider:()=>[{id:'Xbox',index:0,connected:true,axes:[0,0],buttons:Array.from({length:17},(_,i)=>({pressed:pressed.includes(i)}))}],now:()=>time,layoutStorage:memory()});
  try{noSpawn(g);p.NewWeapon('uzi');p.SelectWeapon('uzi');const ammo=p.mWeapon_Current.mAmmo;pad.poll(false);time=400;pad.poll(false);expect(bindingProgress(w,0)?.amount).toBe(.5);pad.setLayout(0,'nintendo');time=1200;pad.poll(false);g.tick(1);expect(bindingProgress(w,0)).toBeUndefined();expect(bindingsFor(w,0)).toEqual({});expect(p.mWeapon_Current.mAmmo).toBe(ammo);pressed=[];pad.poll(false);pressed=[0];pad.poll(false);g.tick(1);expect(p.mWeapon_Current.mAmmo).toBe(ammo-1);}finally{pad.dispose();g.quit();}
 });
+
+// Explicit pre-settlement input oracle; modern entry and selection have separate regressions.
+const createHeadlessGame=(opts:HeadlessGameOptions={})=>boot({...opts,classicFeatures:[...(opts.classicFeatures??[]),'wave-clear-gate-v1']});

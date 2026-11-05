@@ -35,6 +35,7 @@ export async function verifyV034Candidate(g,out){
   assert(glyphPixels>4);report.hudGlyphPixels=glyphPixels;
   await g.expr('(m.mcWorld.Process=window.qaCandidateProcess,delete window.qaCandidateProcess,true)');
   await g.expr(`(()=>{const w=m.mcWorld;w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers=[['health','armor','endurance']];})()`);
+  await g.enterUpgrades();
   assert(await g.waitExpr('m.mcWorld._WaveDraftHud?._Player0?._Card0?._Benefit.text==="+8%"'));await g.page.waitForTimeout(700);
   report.cards=await g.expr('Array.from({length:3},(_,i)=>{const c=m.mcWorld._WaveDraftHud._Player0["_Card"+i];return {benefit:c._Benefit.text,preview:c._Preview.text,x:c._x,y:c._y,width:c._cardWidth};})');
   assert.deepEqual(report.cards.map(c=>c.benefit),['+8%','+6%','+10%']);if(percent){assert.match(report.cards[1].preview,/0%.*6%/);assert.match(report.cards[2].preview,/0%.*10%/);}else{assert.match(report.cards[1].preview,/40.*42/);assert.match(report.cards[2].preview,/120.*131/);}assert(report.cards[0].x<report.cards[1].x&&report.cards[1].x<report.cards[2].x);
@@ -44,9 +45,10 @@ export async function verifyV034Candidate(g,out){
   await g.page.keyboard.press('Tab');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===2'));
   assert.equal(await g.expr('Object.values(m.mcWorld.mThing_Collection.mPlayerThings)[0].mMaxLife'),173);
   await g.page.keyboard.press('KeyP');assert(await g.waitExpr('m.mcWorld.mPaused'));await g.page.waitForTimeout(700);await g.shot(`${out}/pause.png`,false);
-  assert.match(await g.expr('m.mcWorld.mHud.mcScreenPause._PersonalUpgrades._GrowthStats0.text'),/HP 173 \/ SHIELD 40/);await g.page.keyboard.press('KeyP');assert(await g.waitExpr('!m.mcWorld.mPaused'));
+  assert.match(await g.expr('m.mcWorld.mHud.mcScreenPause._PersonalUpgrades._GrowthStats0.text'),report.initial.features.includes('shield-boost-v1')?/HP 173 \/ SHIELD 60/:/HP 173 \/ SHIELD 40/);await g.page.keyboard.press('KeyP');assert(await g.waitExpr('!m.mcWorld.mPaused'));
   if(report.initial.features.includes('enchant-power-v1')){
    await g.expr(`(()=>{const w=m.mcWorld;window.qaPowerBase=Object.values(w.mThing_Collection.mPlayerThings)[0].mWeapon_Current.mDamage;w.mUpgrades.FinishTimedWave();w.mUpgrades.waveDraft.round.offers=[['enchantPower','armor','endurance']];})()`);
+   await g.enterUpgrades();
    assert(await g.waitExpr('m.mcWorld._WaveDraftHud._Player0._Card0._Label.text==="ENCHANT POWER"'));
    assert.equal(await g.expr('m.mcWorld._WaveDraftHud._Player0._Card0._Benefit.text'),percent?'+3%':'+16.4%');assert.match(await g.expr('m.mcWorld._WaveDraftHud._Player0._Card0._Preview.text'),percent?/15%.*18%/:/15.0%.*16.4%/);
    await g.page.waitForTimeout(300);await g.shot(`${out}/enchant-power.png`,false);await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Card0');await g.clickClip('m.mcWorld._WaveDraftHud._Player0._Ready');assert(await g.waitExpr('m.mcWorld.mUpgrades.mLevelIndex===3'));

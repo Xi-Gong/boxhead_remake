@@ -12,7 +12,7 @@ import type {DraftOutcome} from './WaveDraftRules.ts';
 import {syncVitals,playerMaximum,playerArmorMaximum} from './SurvivalRules.ts';
 import {takeDraftChoice,draftSampleBits} from './WaveDraftInput.ts';
 import {durabilityEnabled,durabilityMaximum,syncDurability,enchantPowerEnabled,enchantmentDamage} from './EnchantmentRules.ts';
-import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,DRAFT_CONFIRM,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
+import {WAVE_DRAFT_RULE,DRAFT_READY_RULE,DRAFT_CONFIRM,DRAFT_CONTINUE,REWARDS,newWaveDraft,decodeDraftChoice,type Reward,type WaveDraftState} from './WaveDraftRules.ts';
 const classic=new WeakSet<object>();
 const classicReady=new WeakSet<object>();
 export function setClassicDraftReadyFixture(main:object):void{classicReady.add(main);}
@@ -71,12 +71,14 @@ export function beginWaveDraft(world:any,multiplier=1,outcome?:DraftOutcome):voi
   const state=waveDraft(world),timed=timedWave(world);if(!state||!timed||timed.phase==='draft')return;
   clearWaveCombat(world);timed.phase='draft';
   const count=World.CWorld.mGameMode==='Single'?1:2,indices=Array.from({length:count},(_,i)=>i);
+  const gated=hasFeature(world,'wave-clear-gate-v1')&&draftReadyConfigured();
   // Discard battle latches, while retaining held flags for the entry release guard.
   for(const i of indices)heldBits(player(world,i),i,true);
   state.round={...(hasFeature(world,'clear-rewards-v1')?{outcome:outcome??(multiplier===2?'boss':'survived')}:{}),wave:world.mUpgrades.mLevelIndex,remainingTicks:Math.ceil(CMain.mFPS*12),multiplier,
     ...(draftReadyConfigured()?{readyRule:DRAFT_READY_RULE,remainingTicks:0}:{}),
+    ...(gated?{intro:{remainingTicks:Math.ceil(CMain.mFPS*3),entered:indices.map(()=>false)},chosen:indices.map(()=>false)}:{}),
     offers:indices.map(i=>rewardOffers(player(world,i))),selected:indices.map(()=>0),confirmed:indices.map(()=>false),
-    armed:indices.map(i=>!(heldBits(player(world,i),i)&16)),previousBits:indices.map(i=>heldBits(player(world,i),i))};
+    armed:indices.map(i=>!gated&&!(heldBits(player(world,i),i)&16)),previousBits:indices.map(i=>heldBits(player(world,i),i))};
 }
 export function applyWaveReward(world:any,index:number,reward:Reward,multiplier:number):void {
   const state=waveDraft(world)!;const p=player(world,index);
@@ -93,11 +95,25 @@ export function applyWaveReward(world:any,index:number,reward:Reward,multiplier:
 }
 export function processWaveDraft(world:any):void {
   const state=waveDraft(world)!,round=state.round;if(!round)return;
+  const countdown=!!round.intro&&round.intro.remainingTicks>0;
+  if(countdown)round.intro!.remainingTicks--;
   for(let index=0;index<round.offers.length;index++){
     if(round.confirmed[index])continue;
     const p=player(world,index),s=netSession();
-    const bits=s?SLOT_ORDER.reduce((value,name,i)=>value|(s.slot(index,name)?.IsDown()?1<<i:0),0)
-      :takeDraftChoice(world,index)??heldBits(p,index,true);
+    // Always sample/consume physical latches even when a queued mouse command wins this tick.
+    const sampled=s?SLOT_ORDER.reduce((value,name,i)=>value|(s.slot(index,name)?.IsDown()?1<<i:0),0):heldBits(p,index,true);
+    const bits=s?sampled:takeDraftChoice(world,index)??sampled;
+    if(round.chosen){
+      round.previousBits[index]=bits;
+      if(countdown){round.armed[index]=false;continue;}
+      if(bits===0){round.armed[index]=true;continue;}
+      if(!round.armed[index])continue;
+      if(round.intro){if(bits===DRAFT_CONTINUE)round.intro.entered[index]=true;continue;}
+      if(bits>=100&&bits<=102){round.selected[index]=bits-100;round.chosen[index]=true;}
+      else if(bits===104||bits===105){round.selected[index]=round.chosen[index]?(round.selected[index]!+(bits===104?2:1))%3:bits===104?2:0;round.chosen[index]=true;}
+      else if(bits===DRAFT_CONFIRM&&round.chosen[index])round.confirmed[index]=true;
+      continue;
+    }
     const direct=decodeDraftChoice(bits),previous=round.previousBits[index]!,fresh=bits&~previous;
     if(!(bits&16))round.armed[index]=true;
     if(round.readyRule&&bits>=100&&bits<=102)round.selected[index]=bits-100;
@@ -110,6 +126,10 @@ export function processWaveDraft(world:any):void {
       if(round.armed[index]&&(fresh&16))round.confirmed[index]=true;
     }
     round.previousBits[index]=bits;
+  }
+  if(round.intro){
+    if(!countdown&&round.intro.entered.every(Boolean)){delete round.intro;round.armed.fill(false);round.previousBits.fill(0);}
+    return;
   }
   if(!round.readyRule&&--round.remainingTicks<=0){
     for(let i=0;i<round.confirmed.length;i++)if(!round.confirmed[i]){round.selected[i]=0;round.confirmed[i]=true;}
